@@ -1,0 +1,6 @@
+@use "tailwindcss";
+@source "../src/**/*.{ts,html}";
+
+@import 'variables';
+@import 'base';
+@import 'shared';

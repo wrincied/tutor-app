@@ -1,0 +1,24 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+  transition: background 0.2s, color 0.2s;
+}
+
+.app-content {
+  margin-left: var(--sidebar-w);
+  transition: margin-left 0.25s ease;
+  min-height: 100vh;
+  padding: 24px;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    padding-bottom: 72px;
+  }
+}

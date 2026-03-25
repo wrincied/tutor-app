@@ -1,0 +1,149 @@
+:host {
+  display: block;
+}
+
+// ─── Desktop sidebar ───────────────────────────────────────────────────────────
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: var(--sidebar-w, 220px);
+  background: var(--nav-bg);
+  border-right: 1px solid var(--nav-border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 8px;
+  transition: width 0.25s ease;
+  overflow: hidden;
+  z-index: 100;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.sidebar-logo {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--nav-accent);
+  padding: 8px 12px 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+
+  .collapsed & { opacity: 0; }
+}
+
+.sidebar-logo-short {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--nav-accent);
+  padding: 8px 12px 20px;
+  display: none;
+
+  .collapsed & { display: block; }
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--nav-text);
+  text-decoration: none;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+
+  svg { flex-shrink: 0; }
+
+  &:hover { background: var(--nav-hover); }
+
+  &.active {
+    background: var(--nav-active-bg);
+    color: var(--nav-accent);
+    font-weight: 500;
+  }
+
+  span {
+    transition: opacity 0.2s ease;
+    .collapsed & { opacity: 0; width: 0; overflow: hidden; }
+  }
+}
+
+.sidebar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--nav-text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  white-space: nowrap;
+  width: 100%;
+  transition: background 0.15s, color 0.15s;
+
+  svg { flex-shrink: 0; }
+
+  span {
+    transition: opacity 0.2s ease;
+    .collapsed & { opacity: 0; width: 0; overflow: hidden; }
+  }
+
+  &:hover { background: var(--nav-hover); }
+
+  &.logout:hover {
+    background: #fce8e6;
+    color: #c5221f;
+  }
+}
+
+// ─── Mobile bottom nav ─────────────────────────────────────────────────────────
+
+.bottom-nav {
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--nav-bg);
+    border-top: 1px solid var(--nav-border);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+  }
+}
+
+.bottom-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--nav-text);
+  text-decoration: none;
+  font-size: 10px;
+  flex: 1;
+  padding: 6px 0;
+  transition: color 0.15s;
+
+  svg { width: 22px; height: 22px; }
+
+  &.active { color: var(--nav-accent); }
+}

@@ -1,0 +1,70 @@
+<div class="page">
+  <div class="page-header">
+    <h1>Ученики</h1>
+    <button class="btn-primary" (click)="openCreate()">+ Добавить</button>
+  </div>
+
+  @if (loading()) {
+    <p class="hint">Загрузка...</p>
+  } @else if (students().length === 0) {
+    <p class="hint">Нет учеников. Добавьте первого.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Имя</th>
+            <th>Ставка</th>
+            <th>Баланс уроков</th>
+            <th>Часовой пояс</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of students(); track s._id) {
+            <tr>
+              <td>{{ s.name }}</td>
+              <td>{{ s.rate_per_hour }} / час</td>
+              <td>
+                {{ s.balance_lessons }}
+                <button class="btn-link" (click)="topup(s._id)">+ пополнить</button>
+              </td>
+              <td>{{ s.timezone }}</td>
+              <td class="actions">
+                <button class="btn-link" (click)="openEdit(s)">Изменить</button>
+                <button class="btn-link danger" (click)="remove(s._id)">Удалить</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (showForm()) {
+  <div class="modal-overlay" (click)="showForm.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ editTarget() ? 'Редактировать' : 'Новый ученик' }}</h2>
+
+      <form (ngSubmit)="save()">
+        <div class="field">
+          <label>Имя</label>
+          <input type="text" [(ngModel)]="form.name" name="name" required />
+        </div>
+        <div class="field">
+          <label>Ставка (в час)</label>
+          <input type="number" [(ngModel)]="form.rate_per_hour" name="rate" required min="1" />
+        </div>
+        <div class="field">
+          <label>Часовой пояс</label>
+          <input type="text" [(ngModel)]="form.timezone" name="timezone" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="showForm.set(false)">Отмена</button>
+          <button type="submit" class="btn-primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

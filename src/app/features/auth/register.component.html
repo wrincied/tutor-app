@@ -1,0 +1,36 @@
+<div class="auth-page">
+  <span class="auth-logo">TutorApp</span>
+
+  <div class="auth-card">
+    <h1>Создать аккаунт</h1>
+    <p class="subtitle">для репетитора</p>
+
+    @if (error()) {
+      <div class="auth-error">{{ error() }}</div>
+    }
+
+    <form (ngSubmit)="submit()" class="auth-form">
+      <div class="field">
+        <input type="email" [(ngModel)]="email" name="email" required placeholder=" " />
+        <label>Email</label>
+      </div>
+
+      <div class="field">
+        <input type="password" [(ngModel)]="password" name="password" required placeholder=" " />
+        <label>Пароль</label>
+      </div>
+
+      <div class="field">
+        <input type="password" [(ngModel)]="passwordConfirm" name="passwordConfirm" required placeholder=" " />
+        <label>Повторите пароль</label>
+      </div>
+
+      <div class="auth-actions">
+        <a routerLink="/login">Уже есть аккаунт</a>
+        <button type="submit" [disabled]="loading()">
+          {{ loading() ? 'Создаём...' : 'Создать' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
