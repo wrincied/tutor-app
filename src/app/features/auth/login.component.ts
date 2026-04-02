@@ -21,8 +21,10 @@ export class LoginComponent {
   submit() {
     this.error.set('');
     this.loading.set(true);
+    
     this.auth.login(this.email, this.password).subscribe({
       next: () => this.router.navigate(['/app/home']),
+      
       error: (err) => {
         console.error('[Login error]', err);
         this.error.set('Неверный email или пароль');

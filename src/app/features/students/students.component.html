@@ -1,22 +1,22 @@
 <div class="page">
   <div class="page-header">
-    <h1>Ученики</h1>
-    <button class="btn-primary" (click)="openCreate()">+ Добавить</button>
+    <h1>{{ i18n.nav().students }}</h1>
+    <button type="button" class="btn-primary" (click)="openCreate()">{{ t.addButton }}</button>
   </div>
 
   @if (loading()) {
-    <p class="hint">Загрузка...</p>
+    <p class="hint">{{ t.loading }}</p>
   } @else if (students().length === 0) {
-    <p class="hint">Нет учеников. Добавьте первого.</p>
+    <p class="hint">{{ t.emptyState }}</p>
   } @else {
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Имя</th>
-            <th>Ставка</th>
-            <th>Баланс уроков</th>
-            <th>Часовой пояс</th>
+            <th>{{ t.name }}</th>
+            <th>{{ t.rateColumn }}</th>
+            <th>{{ t.balanceLessons }}</th>
+            <th>{{ t.timezone }}</th>
             <th></th>
           </tr>
         </thead>
@@ -24,15 +24,19 @@
           @for (s of students(); track s._id) {
             <tr>
               <td>{{ s.name }}</td>
-              <td>{{ s.rate_per_hour }} / час</td>
+              <td>
+                {{ s.rate_per_hour }} {{ i18n.currencyLabel(rateCurrencyOf(s)) }} {{ t.perHour }}
+              </td>
               <td>
                 {{ s.balance_lessons }}
-                <button class="btn-link" (click)="topup(s._id)">+ пополнить</button>
+                <button type="button" class="btn-link" (click)="openTopup(s._id)">+ {{ t.topup }}</button>
               </td>
               <td>{{ s.timezone }}</td>
               <td class="actions">
-                <button class="btn-link" (click)="openEdit(s)">Изменить</button>
-                <button class="btn-link danger" (click)="remove(s._id)">Удалить</button>
+                <button type="button" class="btn-link" (click)="openEdit(s)">{{ t.edit }}</button>
+                <button type="button" class="btn-link danger" (click)="openDeleteConfirm(s._id)">
+                  {{ t.delete }}
+                </button>
               </td>
             </tr>
           }
@@ -43,28 +47,142 @@
 </div>
 
 @if (showForm()) {
-  <div class="modal-overlay" (click)="showForm.set(false)">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <h2>{{ editTarget() ? 'Редактировать' : 'Новый ученик' }}</h2>
+  <div class="modal-overlay" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" [attr.aria-labelledby]="'student-form-title'">
+      <div class="modal-header">
+        <h2 id="student-form-title">{{ editTarget() ? t.editModalTitle : t.newStudent }}</h2>
+        <button type="button" class="modal-close" (click)="closeForm()" [attr.aria-label]="t.close">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-      <form (ngSubmit)="save()">
+      <form (ngSubmit)="save()" class="modal-body">
         <div class="field">
-          <label>Имя</label>
-          <input type="text" [(ngModel)]="form.name" name="name" required />
+          <label for="st-name">{{ t.name }}</label>
+          <input id="st-name" type="text" [(ngModel)]="form.name" name="name" required autocomplete="name" />
         </div>
+        <div class="field field--rate-row">
+          <label for="st-rate">{{ t.ratePerHour }}</label>
+          <div class="rate-row">
+            <input
+              id="st-rate"
+              type="number"
+              [(ngModel)]="form.rate_per_hour"
+              name="rate"
+              required
+              min="1"
+              inputmode="decimal"
+              class="rate-row__amount"
+            />
+            <div class="field field--nested">
+              <label for="st-currency" class="sr-only">{{ t.currency }}</label>
+              <select
+                id="st-currency"
+                [(ngModel)]="form.rate_currency"
+                name="rate_currency"
+                class="rate-row__currency"
+              >
+                @for (c of rateCurrencies; track c) {
+                  <option [value]="c">{{ i18n.currencyLabel(c) }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field field--checkbox">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [ngModel]="autoTimezone"
+              (ngModelChange)="onAutoTimezoneChange($event)"
+              name="autoTz"
+            />
+            <span>{{ t.autoTimezone }}</span>
+          </label>
+        </div>
+
         <div class="field">
-          <label>Ставка (в час)</label>
-          <input type="number" [(ngModel)]="form.rate_per_hour" name="rate" required min="1" />
+          <label for="st-tz">{{ t.timezone }}</label>
+          @if (autoTimezone) {
+            <input
+              id="st-tz"
+              type="text"
+              [value]="form.timezone"
+              readonly
+              class="input-readonly"
+              [attr.name]="'tz-display'"
+            />
+          } @else {
+            <select id="st-tz" [(ngModel)]="form.timezone" name="timezone">
+              @for (tz of timezoneSelectOptions(); track tz) {
+                <option [value]="tz">{{ tz }}</option>
+              }
+            </select>
+          }
         </div>
-        <div class="field">
-          <label>Часовой пояс</label>
-          <input type="text" [(ngModel)]="form.timezone" name="timezone" />
-        </div>
+
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="showForm.set(false)">Отмена</button>
-          <button type="submit" class="btn-primary">Сохранить</button>
+          <button type="button" class="btn-secondary" (click)="closeForm()">{{ t.cancel }}</button>
+          <button type="submit" class="btn-primary">{{ t.save }}</button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+@if (deleteTargetId()) {
+  <div class="modal-overlay" role="presentation">
+    <div class="modal modal--confirm" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2 id="del-title">{{ t.delete }}</h2>
+        <button type="button" class="modal-close" (click)="cancelDelete()" [attr.aria-label]="t.close">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-text">{{ t.deleteConfirm }}</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="cancelDelete()">{{ t.cancel }}</button>
+          <button type="button" class="btn-primary danger" (click)="confirmDelete()">{{ t.delete }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (topupTargetId()) {
+  <div class="modal-overlay" role="presentation">
+    <div class="modal modal--confirm" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2>{{ t.topupTitle }}</h2>
+        <button type="button" class="modal-close" (click)="closeTopup()" [attr.aria-label]="t.close">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="topup-n">{{ t.topupHint }}</label>
+          <input
+            id="topup-n"
+            type="number"
+            [(ngModel)]="topupLessonsInput"
+            name="topupLessons"
+            min="1"
+            inputmode="numeric"
+          />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeTopup()">{{ t.cancel }}</button>
+          <button type="button" class="btn-primary" (click)="applyTopup()">{{ t.topupApply }}</button>
+        </div>
+      </div>
     </div>
   </div>
 }

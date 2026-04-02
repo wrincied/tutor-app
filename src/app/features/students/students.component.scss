@@ -1,2 +1,226 @@
-// Специфичные стили для Students component
-// Переиспользуемые стили из _shared.scss
+:host {
+  display: block;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.field--rate-row {
+  margin-bottom: 16px;
+}
+
+.rate-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  @media (min-width: 400px) {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 12px;
+  }
+}
+
+.rate-row__amount {
+  flex: 1;
+  min-width: 0;
+}
+
+.field--nested {
+  margin-bottom: 0;
+  flex: 1;
+
+  @media (min-width: 400px) {
+    flex: 0 0 min(100%, 200px);
+  }
+}
+
+.rate-row__currency {
+  width: 100%;
+}
+
+.page-header {
+  flex-wrap: wrap;
+  gap: 12px;
+
+  h1 {
+    font-size: clamp(1.125rem, 4vw, 1.375rem);
+  }
+
+  .btn-primary {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+}
+
+// Mobile first: лист снизу, без закрытия по клику на фон
+.modal-overlay {
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+
+  @media (min-width: 640px) {
+    align-items: center;
+    padding: 16px;
+  }
+}
+
+.modal {
+  max-width: 100%;
+  width: 100%;
+  max-height: min(92dvh, 720px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-radius: 16px 16px 0 0;
+  box-sizing: border-box;
+
+  @media (min-width: 640px) {
+    border-radius: 12px;
+    max-width: 420px;
+    max-height: min(90vh, 720px);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 16px 12px 0 16px;
+
+  h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.35;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.modal-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin: -6px -4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--nav-hover);
+    color: var(--text-primary);
+  }
+}
+
+.modal-body {
+  padding: 12px 16px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  margin-top: 8px;
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+    width: 100%;
+
+    @media (min-width: 640px) {
+      width: auto;
+      min-width: 100px;
+    }
+  }
+}
+
+.field--checkbox {
+  margin-bottom: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    margin-top: 2px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+}
+
+.input-readonly {
+  opacity: 0.9;
+  cursor: default;
+  background: var(--nav-hover) !important;
+}
+
+.confirm-text {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.btn-primary.danger {
+  background: #c5221f;
+
+  &:hover {
+    opacity: 0.92;
+  }
+}
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 639px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header .btn-primary {
+    width: 100%;
+  }
+
+  table .actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}

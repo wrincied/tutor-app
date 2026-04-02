@@ -1,0 +1,192 @@
+/* 1. Основной контейнер */
+.flatpickr-calendar {
+  background: var(--nav-bg) !important;
+  border: 1px solid var(--nav-border) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2) !important;
+  color: var(--text-primary) !important;
+  font-family: inherit;
+
+  /* Хвост (стрелочка сверху) — тоже красим */
+  &.arrowTop:before,
+  &.arrowTop:after {
+    border-bottom-color: var(--nav-bg) !important;
+  }
+}
+
+/* 2. Заголовок (Месяц и Год) */
+.flatpickr-month {
+  color: var(--text-primary) !important;
+  fill: var(--text-primary) !important;
+  height: 40px !important;
+}
+
+/* Убираем убогий выпадающий список месяца */
+.flatpickr-monthDropdown-months {
+  appearance: none;
+  -webkit-appearance: none;
+  pointer-events: none; // Делаем просто текстом
+  background: transparent !important;
+  border: none !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  color: var(--text-primary) !important;
+  padding: 0 !important;
+}
+.flatpickr-current-month {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+/* Стилизация года (убираем стрелочки) */
+.numInputWrapper {
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+  background: var(--nav-hover) !important;
+  border-radius: 8px !important;
+  padding: 0 4px !important;
+  margin-left: 5px;
+
+  /* Само число года */
+  input.cur-year {
+    order: 2; // Ставим число в центр
+    font-weight: 700 !important;
+    color: var(--nav-accent) !important; // Год будет выделен зеленым
+    font-size: 1.1rem !important;
+    width: 45px !important;
+    padding: 0 !important;
+    text-align: center !important;
+  }
+
+  /* Превращаем мелкие спиннеры в кнопки */
+  span {
+    position: static !important; // Выбиваем из абсолютного позиционирования
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 24px !important;
+    height: 24px !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    background: transparent !important;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--nav-active-bg) !important;
+    }
+
+    /* Рисуем стрелку Вверх (ставим слева или справа — как удобнее) */
+    &.arrowUp {
+      order: 3; // Стрелка "плюс" будет справа
+      &:after {
+        border-bottom-color: var(--text-secondary) !important;
+        border-width: 0 4px 6px 4px !important;
+        top: 35% !important;
+      }
+    }
+
+    /* Рисуем стрелку Вниз */
+    &.arrowDown {
+      order: 1; // Стрелка "минус" будет слева
+      &:after {
+        border-top-color: var(--text-secondary) !important;
+        border-width: 6px 4px 0 4px !important;
+        top: 40% !important;
+      }
+    }
+  }
+}
+/* 3. Дни недели и Сетка */
+.flatpickr-weekday {
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.flatpickr-day {
+  color: var(--text-primary) !important;
+  border-radius: 8px !important; // Квадратно-скругленные как ячейки таблиц
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--nav-hover) !important;
+    border-color: transparent !important;
+  }
+
+  /* Сегодняшний день */
+  &.today {
+    border-color: var(--nav-accent) !important;
+    color: var(--nav-accent) !important;
+    font-weight: bold;
+
+    &:hover {
+      background: var(--nav-active-bg) !important;
+      color: var(--nav-accent) !important;
+    }
+  }
+
+  /* Выбранный день (Зеленый Google) */
+  &.selected,
+  &.selected:hover,
+  &.selected:focus {
+    background: var(--nav-accent) !important;
+    border-color: var(--nav-accent) !important;
+    color: #ffffff !important;
+  }
+
+  /* Соседние месяцы */
+  &.prevMonthDay,
+  &.nextMonthDay {
+    color: var(--text-secondary) !important;
+    opacity: 0.4;
+  }
+}
+
+/* 4. Блок времени */
+.flatpickr-time {
+  border-top: 1px solid var(--nav-border) !important;
+  height: 45px !important;
+
+  input {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+
+    &:hover,
+    &:focus {
+      background: var(--nav-hover) !important;
+    }
+  }
+
+  .flatpickr-time-separator,
+  .flatpickr-am-pm {
+    color: var(--text-primary) !important;
+  }
+
+  /* Скрываем стрелочки времени (по желанию, либо стилизуем) */
+//   .numInputWrapper span {
+//     border: none !important;
+//     &.arrowUp:after {
+//       border-bottom-color: var(--text-secondary) !important;
+//     }
+//     &.arrowDown:after {
+//       border-top-color: var(--text-secondary) !important;
+//     }
+//   }
+}
+
+/* 5. Навигация (Стрелки) */
+.flatpickr-prev-month,
+.flatpickr-next-month {
+  padding: 10px !important;
+  color: var(--text-secondary) !important;
+  fill: var(--text-secondary) !important;
+
+  &:hover {
+    background: var(--nav-hover) !important;
+    border-radius: 50%;
+    svg {
+      fill: var(--nav-accent) !important;
+    }
+  }
+}

@@ -1,6 +1,8 @@
 // Переиспользуемые классы: кнопки, таблица, модалка, поля форм
 
-.page { max-width: 960px; }
+.page {
+  max-width: 100%;
+}
 
 .page-header {
   display: flex;
@@ -8,10 +10,18 @@
   justify-content: space-between;
   margin-bottom: 24px;
 
-  h1 { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+  h1 {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
 }
 
-.hint { color: var(--text-secondary); font-size: 14px; margin-top: 32px; }
+.hint {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 32px;
+}
 
 // ─── Кнопки ────────────────────────────────────────────────────────────────────
 
@@ -24,7 +34,9 @@
   font-size: 14px;
   cursor: pointer;
   transition: opacity 0.15s;
-  &:hover { opacity: 0.88; }
+  &:hover {
+    opacity: 0.88;
+  }
 }
 
 .btn-secondary {
@@ -36,7 +48,9 @@
   font-size: 14px;
   cursor: pointer;
   transition: background 0.15s;
-  &:hover { background: var(--nav-hover); }
+  &:hover {
+    background: var(--nav-hover);
+  }
 }
 
 .btn-link {
@@ -47,8 +61,15 @@
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
-  &:hover { background: var(--nav-active-bg); }
-  &.danger { color: #c5221f; &:hover { background: #fce8e6; } }
+  &:hover {
+    background: var(--nav-active-bg);
+  }
+  &.danger {
+    color: #c5221f;
+    &:hover {
+      background: #fce8e6;
+    }
+  }
 }
 
 // ─── Таблица ───────────────────────────────────────────────────────────────────
@@ -80,10 +101,17 @@ table {
     color: var(--text-primary);
   }
 
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--nav-hover); }
+  tr:last-child td {
+    border-bottom: none;
+  }
+  tr:hover td {
+    background: var(--nav-hover);
+  }
 
-  .actions { display: flex; gap: 4px; }
+  .actions {
+    display: flex;
+    gap: 4px;
+  }
 }
 
 // ─── Модалка ───────────────────────────────────────────────────────────────────
@@ -106,7 +134,11 @@ table {
   max-width: 420px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
 
-  h2 { font-size: 18px; font-weight: 500; margin-bottom: 20px; }
+  h2 {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
 }
 
 .modal-actions {
@@ -124,9 +156,13 @@ table {
   gap: 6px;
   margin-bottom: 16px;
 
-  label { font-size: 13px; color: var(--text-secondary); }
+  label {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
 
-  input, select {
+  input,
+  select {
     border: 1px solid var(--nav-border);
     border-radius: 6px;
     padding: 8px 12px;
@@ -135,6 +171,315 @@ table {
     color: var(--text-primary);
     outline: none;
     transition: border-color 0.15s;
-    &:focus { border-color: var(--nav-accent); }
+    &:focus {
+      border-color: var(--nav-accent);
+    }
+  }
+}
+
+// From src/app/features/auth/auth.scss
+.auth-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+
+  .auth-logo {
+    font-size: 22px;
+    font-weight: 500;
+    color: #202124;
+    letter-spacing: -0.3px;
+    margin-bottom: 28px;
+  }
+
+  .auth-card {
+    background: #fff;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 396px;
+    padding: 48px 40px 36px;
+
+    h1 {
+      font-size: 24px;
+      font-weight: 400;
+      color: #202124;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #5f6368;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+  }
+
+  .auth-error {
+    background: #fce8e6;
+    color: #c5221f;
+    font-size: 13px;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .field {
+    position: relative;
+
+    input {
+      width: 100%;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      padding: 13px 12px 8px;
+      font-size: 14px;
+      color: #202124;
+      background: #fff;
+      outline: none;
+      transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+
+      &:focus {
+        border-color: #0f9d58;
+        box-shadow: 0 0 0 1px #0f9d58;
+      }
+
+      &:focus + label,
+      &:not(:placeholder-shown) + label {
+        top: 6px;
+        font-size: 11px;
+        color: #5f6368;
+      }
+
+      &:focus + label {
+        color: #0f9d58;
+      }
+    }
+
+    label {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #5f6368;
+      pointer-events: none;
+      transition:
+        top 0.15s,
+        font-size 0.15s,
+        color 0.15s;
+      background: #fff;
+      padding: 0 2px;
+    }
+  }
+
+  .auth-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+
+    a {
+      font-size: 14px;
+      color: #0f9d58;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    button {
+      background: #0f9d58;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 9px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+
+      &:hover {
+        background: #066535;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+    }
+  }
+}
+
+// From src/app/shared/navbar/navbar.component.scss
+:host {
+  display: block;
+}
+
+// ─── Desktop sidebar ───────────────────────────────────────────────────────────
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: var(--sidebar-w, 220px);
+  background: var(--nav-bg);
+  border-right: 1px solid var(--nav-border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 8px;
+  transition: width 0.25s ease;
+  overflow: hidden;
+  z-index: 100;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.sidebar-logo {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--nav-accent);
+  padding: 8px 12px 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+
+  .collapsed & { opacity: 0; }
+}
+
+.sidebar-logo-short {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--nav-accent);
+  padding: 8px 12px 20px;
+  display: none;
+
+  .collapsed & { display: block; }
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--nav-text);
+  text-decoration: none;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+
+  svg { flex-shrink: 0; }
+
+  &:hover { background: var(--nav-hover); }
+
+  &.active {
+    background: var(--nav-active-bg);
+    color: var(--nav-accent);
+    font-weight: 500;
+  }
+
+  span {
+    transition: opacity 0.2s ease;
+    .collapsed & { opacity: 0; width: 0; overflow: hidden; }
+  }
+}
+
+.sidebar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--nav-text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  white-space: nowrap;
+  width: 100%;
+  transition: background 0.15s, color 0.15s;
+
+  svg { flex-shrink: 0; }
+
+  span {
+    transition: opacity 0.2s ease;
+    .collapsed & { opacity: 0; width: 0; overflow: hidden; }
+  }
+
+  &:hover { background: var(--nav-hover); }
+
+  &.logout:hover {
+    background: #fce8e6;
+    color: #c5221f;
+  }
+}
+
+// ─── Mobile bottom nav ─────────────────────────────────────────────────────────
+
+.bottom-nav {
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--nav-bg);
+    border-top: 1px solid var(--nav-border);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+  }
+}
+
+.bottom-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--nav-text);
+  text-decoration: none;
+  font-size: 10px;
+  flex: 1;
+  padding: 6px 0;
+  transition: color 0.15s;
+
+  svg { width: 22px; height: 22px; }
+
+  &.active { color: var(--nav-accent); }
+}
+
+// Горизонтальные списки без полосы прокрутки (Tailwind: класс `no-scrollbar`)
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
   }
 }

@@ -16,7 +16,14 @@
       </div>
 
       <div class="field">
-        <input type="password" [(ngModel)]="password" name="password" required placeholder=" " />
+        <input
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          required
+          placeholder=" "
+          autocomplete="current-password"
+        />
         <label>Пароль</label>
       </div>
 

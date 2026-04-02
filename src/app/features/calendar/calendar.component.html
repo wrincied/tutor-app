@@ -1,1 +1,304 @@
-<div>Calendar</div>
+<div class="min-h-dvh bg-slate-50">
+  <div class="max-w-2xl mx-auto py-8 px-4">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Расписание</h1>
+      <button
+        type="button"
+        class="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium transition-all shadow-sm"
+        (click)="openLessonForm()"
+      >
+        Добавить урок
+      </button>
+    </div>
+
+    @if (loadError) {
+      <p class="text-red-600 text-sm font-medium">{{ loadError }}</p>
+    } @else if (!hasLoaded()) {
+      <div
+        class="bg-white p-12 rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400"
+      >
+        <p class="text-base font-medium">Загрузка расписания…</p>
+      </div>
+    } @else {
+      <!-- Полоса дат -->
+      <div
+        class="flex gap-2 overflow-x-auto pb-4 no-scrollbar"
+        role="tablist"
+        aria-label="Выбор дня"
+      >
+        @for (day of calendarDays(); track day.getTime()) {
+          @let sel = isSameLocalDay(day, selectedDate());
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="sel"
+            class="flex flex-col items-center justify-center min-w-[60px] p-3 rounded-2xl cursor-pointer transition-all shrink-0"
+            [ngClass]="
+              sel
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                : 'bg-white border border-gray-100 hover:bg-gray-50 text-gray-900'
+            "
+            (click)="selectDay(day)"
+          >
+            <span class="text-[10px] uppercase opacity-70" [class.text-gray-500]="!sel">
+              {{ formatWeekdayShort(day) }}
+            </span>
+            <span class="text-lg font-bold tabular-nums">{{ formatDayOfMonth(day) }}</span>
+            <span class="mt-1 flex h-3 items-center justify-center">
+              @if (hasLessonsOnDay(day)) {
+                <span class="w-1 h-1 rounded-full bg-current" aria-hidden="true"></span>
+              }
+            </span>
+          </button>
+        }
+      </div>
+
+      <!-- Agenda -->
+      @if (lessons().length === 0) {
+        <div
+          class="bg-white p-12 rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400"
+        >
+          <p class="text-lg font-semibold text-gray-500 mb-2">Пока нет уроков</p>
+          <p class="text-sm max-w-xs mx-auto">
+            Создайте первый урок — он появится в расписании и в финансовой сводке.
+          </p>
+        </div>
+      } @else if (lessonsForSelectedDate().length === 0) {
+        <div
+          class="bg-white p-12 rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400"
+        >
+          <p class="text-lg font-semibold text-gray-500 mb-2">Свободный день</p>
+          <p class="text-sm max-w-xs mx-auto">
+            На {{ formatAgendaDayHeading(selectedDate()) }} уроки не запланированы. Выберите другую
+            дату или добавьте урок.
+          </p>
+        </div>
+      } @else {
+        <h2
+          class="text-sm font-bold text-gray-400 mb-4 sticky top-0 bg-white/80 backdrop-blur-sm z-10 py-2 -mx-1 px-1"
+        >
+          {{ formatAgendaDayHeading(selectedDate()) }}
+        </h2>
+
+        <div class="flex flex-col w-full">
+          @for (lesson of lessonsForSelectedDate(); track lesson._id) {
+            <div
+              [ngClass]="lessonCardClass(lesson)"
+              (click)="openEditLesson(lesson)"
+              (keydown.enter)="openEditLesson(lesson)"
+              (keydown.space)="$event.preventDefault(); openEditLesson(lesson)"
+              tabindex="0"
+              role="button"
+            >
+              <div
+                class="w-20 shrink-0 font-bold text-gray-900 border-r border-gray-200 pr-4 text-sm leading-tight"
+              >
+                @if (getLessonSlot(lesson); as slot) {
+                  <div>{{ slot.start | date: 'HH:mm' }}</div>
+                  <div class="text-gray-400 font-semibold text-xs mt-0.5">
+                    {{ slot.end | date: 'HH:mm' }}
+                  </div>
+                } @else {
+                  <span class="text-gray-400">—</span>
+                }
+              </div>
+
+              <div class="flex-grow min-w-0">
+                <p class="text-base font-bold text-gray-900 truncate">
+                  {{ getStudentName(lesson.student_id) }}
+                </p>
+                @if (getStudentLocalTimeLabel(lesson); as stLabel) {
+                  <p class="text-xs text-gray-500 mt-1">Student Time: {{ stLabel }}</p>
+                }
+                <p class="text-xs text-gray-500 mt-1 truncate">
+                  {{ lesson.title || 'Без названия' }}
+                </p>
+              </div>
+
+              <div class="flex flex-col items-end gap-2 shrink-0">
+                <span class="font-bold text-blue-600 tabular-nums text-sm sm:text-base">
+                  {{
+                    lesson.lesson_price
+                      | currency: getStudentCurrency(lesson.student_id) : 'symbol' : '1.0-2'
+                  }}
+                </span>
+                <span [class]="statusBadgeClass(lesson.status)">{{ lesson.status }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>
+
+@if (showLessonForm()) {
+  <div class="modal-overlay" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2>{{ editLessonTarget() ? 'Редактировать' : 'Новый урок' }}</h2>
+        <button type="button" class="modal-close" (click)="closeLessonForm()" aria-label="Закрыть">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form (ngSubmit)="saveLesson()" class="modal-body">
+        @if (studentsLoadError) {
+          <p class="text-red-600 text-sm">{{ studentsLoadError }}</p>
+        }
+
+        <div class="field">
+          <label for="lesson-student">Ученик</label>
+          <select
+            id="lesson-student"
+            name="student_id"
+            [(ngModel)]="form.student_id"
+            (change)="onStudentSelectChange($event)"
+          >
+            <option value="">— Выберите ученика —</option>
+            @for (s of students(); track s._id) {
+              <option [value]="s._id">{{ s.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="lesson-price">Цена урока</label>
+          <input
+            id="lesson-price"
+            type="number"
+            name="lesson_price"
+            [(ngModel)]="form.lesson_price"
+            required
+            min="0"
+            step="0.01"
+            inputmode="decimal"
+          />
+        </div>
+
+        <div class="field">
+          <label for="lesson-status">Статус</label>
+          <select id="lesson-status" name="status" [(ngModel)]="form.status">
+            @for (st of statusOptions; track st) {
+              <option [value]="st">{{ st }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="lesson-title">Название</label>
+          <input id="lesson-title" type="text" name="title" [(ngModel)]="form.title" />
+        </div>
+
+        <div class="field">
+          <span class="block text-sm font-medium mb-2">Длительность</span>
+          <div class="flex flex-wrap gap-2 mb-3">
+            @for (m of durationPresets; track m) {
+              <button
+                type="button"
+                class="!px-3.5 !py-2 inline-flex items-center rounded-full text-sm font-medium transition-all border-none cursor-pointer"
+                [ngClass]="{
+                  'bg-blue-600 text-white shadow-md':
+                    durationChipMode() === 'preset' && duration() === m,
+                  'bg-slate-100 text-slate-600 hover:bg-slate-200': !(
+                    durationChipMode() === 'preset' && duration() === m
+                  ),
+                }"
+                (click)="selectDurationPreset(m)"
+              >
+                {{ formatDurationPresetLabel(m) }}
+              </button>
+            }
+            <button
+              type="button"
+              class="!px-3.5 !py-2 inline-flex items-center rounded-full text-sm font-medium transition-all border-none cursor-pointer"
+              [ngClass]="
+                durationChipMode() === 'custom'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              "
+              (click)="selectDurationCustom()"
+            >
+              Своя
+            </button>
+          </div>
+          @if (durationChipMode() === 'custom') {
+            <div class="mb-3">
+              <label class="text-xs text-slate-500" for="lesson-custom-duration"
+                >Минуты (5–480)</label
+              >
+              <input
+                id="lesson-custom-duration"
+                type="number"
+                name="customLessonDuration"
+                min="5"
+                max="480"
+                step="5"
+                class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                [ngModel]="duration()"
+                (ngModelChange)="onCustomDurationInput($event)"
+              />
+            </div>
+          }
+
+          <label for="lesson-when" class="block text-sm font-medium mb-1">Дата и время</label>
+          <div class="relative">
+            <input
+              #lessonDateInput
+              id="lesson-when"
+              type="text"
+              name="lessonScheduledDisplay"
+              readonly
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-11 cursor-pointer text-slate-900"
+              placeholder="Выберите дату и время"
+              autocomplete="off"
+            />
+            <span
+              class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            >
+            </span>
+          </div>
+          @if (getSchedulePreviewText(); as preview) {
+            <p class="text-sm text-slate-600 mt-2">Окончание: {{ preview }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="lesson-notes">Заметки</label>
+          <textarea id="lesson-notes" name="notes" rows="2" [(ngModel)]="form.notes"></textarea>
+        </div>
+
+        @if (saveLessonError) {
+          <p class="text-red-600 text-sm">{{ saveLessonError }}</p>
+        }
+
+        <div class="modal-actions">
+          @if (editLessonTarget()) {
+            <button
+              type="button"
+              class="text-red-600 hover:bg-red-50 px-4 py-2 rounded-xl transition-all mr-auto border-0 bg-transparent cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              [disabled]="savingLesson() || deletingLesson()"
+              (click)="deleteLesson()"
+            >
+              {{ deletingLesson() ? 'Удаление…' : 'Удалить' }}
+            </button>
+          }
+          <button type="button" class="btn-link" (click)="closeLessonForm()">Отмена</button>
+          <button type="submit" class="btn-primary" [disabled]="savingLesson() || deletingLesson()">
+            {{ savingLesson() ? 'Сохранение…' : 'Сохранить' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 
-const API = 'http://localhost:3000/api';
-const TOKEN_KEY = 'tutor_token';
+const API = 'http://localhost:3001/api';
+/** Совпадает с тем, что ожидает интерцептор и типичный фронт: localStorage.getItem('token'). */
+const TOKEN_KEY = 'token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -14,15 +15,15 @@ export class AuthService {
   isLoggedIn = signal<boolean>(!!localStorage.getItem(TOKEN_KEY));
 
   register(email: string, password: string) {
-    return this.http.post<{ token: string }>(`${API}/auth/register`, { email, password }).pipe(
-      tap((res) => this.saveToken(res.token)),
-    );
+    return this.http
+      .post<{ token: string }>(`${API}/auth/register`, { email, password })
+      .pipe(tap((res) => this.saveToken(res.token)));
   }
 
   login(email: string, password: string) {
-    return this.http.post<{ token: string }>(`${API}/auth/login`, { email, password }).pipe(
-      tap((res) => this.saveToken(res.token)),
-    );
+    return this.http
+      .post<{ token: string }>(`${API}/auth/login`, { email, password })
+      .pipe(tap((res) => this.saveToken(res.token)));
   }
 
   logout() {
