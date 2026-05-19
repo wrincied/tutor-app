@@ -1,26 +1,27 @@
+
 :root {
   --sidebar-w: 220px;
 
   // Google Sheets — light
-  --nav-bg:        #fff;
-  --nav-border:    #e0e0e0;
-  --nav-text:      #3c4043;
-  --nav-hover:     #f1f3f4;
-  --nav-accent:    #0f9d58;
+  --nav-bg: #fff;
+  --nav-border: #e0e0e0;
+  --nav-text: #3c4043;
+  --nav-hover: #f1f3f4;
+  --nav-accent: #0f9d58;
   --nav-active-bg: #e6f4ea;
-  --page-bg:       #f8f9fa;
-  --text-primary:  #202124;
-  --text-secondary:#5f6368;
+  --page-bg: #f8f9fa;
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
 }
 
 [data-theme='dark'] {
-  --nav-bg:        #2d2d2d;
-  --nav-border:    #4a4a4a;
-  --nav-text:      #e0e0e0;
-  --nav-hover:     #383838;
-  --nav-accent:    #34a853;
+  --nav-bg: #2d2d2d;
+  --nav-border: #4a4a4a;
+  --nav-text: #e0e0e0;
+  --nav-hover: #383838;
+  --nav-accent: #34a853;
   --nav-active-bg: #2a4a35;
-  --page-bg:       #242424;
-  --text-primary:  #e8eaed;
-  --text-secondary:#9aa0a6;
+  --page-bg: #242424;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
 }

@@ -1,82 +1,70 @@
 import {
-  ChangeDetectorRef,
   Component,
   computed,
-  ElementRef,
+  DestroyRef,
   inject,
-  NgZone,
   OnInit,
+  PLATFORM_ID,
   signal,
-  ViewChild,
 } from '@angular/core';
-import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
+import { CurrencyPipe, isPlatformBrowser } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import flatpickr from 'flatpickr';
-import type { Instance as FlatpickrInstance } from 'flatpickr/dist/types/instance';
 import { LessonService } from '../../core/services/lesson.service';
 import { StudentService, type Student } from '../../core/services/student.service';
 import type { Lesson, LessonStatus } from '@interfaces';
+import { DEFAULT_STUDENT_BORDER_COLOR } from '../../core/utils/pastel-color';
+
+export type CalendarViewMode = '1' | '3' | '7' | '30';
+
+/** Ответ API до нормализации (legacy-поля и статусы). */
+type LessonApiRow = Omit<Lesson, 'status'> & {
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [FormsModule, DatePipe, CurrencyPipe, NgClass],
+  imports: [FormsModule, CurrencyPipe],
   templateUrl: './calendar.component.html',
+  styleUrl: './calendar.component.scss',
 })
 export class CalendarComponent implements OnInit {
-  private lessonsSvc = inject(LessonService);
-  private studentSvc = inject(StudentService);
-  private cdr = inject(ChangeDetectorRef);
-  private ngZone = inject(NgZone);
+  private readonly lessonsSvc = inject(LessonService);
+  private readonly studentSvc = inject(StudentService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
 
-  @ViewChild('lessonDateInput', { read: ElementRef }) lessonDateInput?: ElementRef<HTMLInputElement>;
+  /** 60px = 1 час; 1px = 1 минута */
+  readonly hourHeightPx = 60;
+  readonly minuteHeightPx = 1;
+  readonly gridHeightPx = 24 * 60;
+  readonly hours = Array.from({ length: 24 }, (_, i) => i);
+  readonly viewModes: readonly CalendarViewMode[] = ['1', '3', '7', '30'];
 
-  private fp: FlatpickrInstance | null = null;
-
+  currentDate = signal<Date>(new Date());
+  viewMode = signal<CalendarViewMode>('7');
   lessons = signal<Lesson[]>([]);
   students = signal<Student[]>([]);
+
   loadError: string | null = null;
   hasLoaded = signal(false);
-
-  /** Якорь полосы: начало «сегодня» (локально), фиксируется при создании компонента. */
-  private readonly stripStart = signal<Date>(this.startOfLocalDay(new Date()));
-
-  selectedDate = signal<Date>(this.startOfLocalDay(new Date()));
-
-  /** 14 дней, начиная с `stripStart`. */
-  calendarDays = computed(() => {
-    const start = this.stripStart();
-    return Array.from({ length: 14 }, (_, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      return d;
-    });
-  });
-
-  /** Уроки выбранного календарного дня (по локальной дате `scheduledAt`). */
-  lessonsForSelectedDate = computed(() => {
-    const sel = this.startOfLocalDay(this.selectedDate());
-    const next = new Date(sel);
-    next.setDate(next.getDate() + 1);
-    return this.lessons()
-      .filter((l) => {
-        if (!l.scheduledAt) {
-          return false;
-        }
-        const t = new Date(l.scheduledAt);
-        return t >= sel && t < next;
-      })
-      .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
-  });
-
-  /** ISO 4217 по `student_id` — пересчитывается только при изменении `students()`. */
-  private readonly studentCurrencyById = computed(() => {
-    const m = new Map<string, string>();
-    for (const s of this.students()) {
-      m.set(s._id, s.rate_currency ?? 'RUB');
-    }
-    return m;
-  });
+  isNarrowViewport = signal(true);
+  studentsSidebarOpen = signal(false);
+  studentsSidebarQuery = signal('');
+  focusedStudentId = signal<string | null>(null);
+  lessonFormStep = signal<1 | 2>(1);
+  scheduledAtLocal = signal('');
+  /** Id урока, перетаскиваемого через native drag-and-drop. */
+  private readonly dragLessonId = signal<string | null>(null);
+  /** Live-позиция карточки до drop (обновляется на dragover). */
+  private readonly dragPreview = signal<{ lessonId: string; scheduledAt: string } | null>(
+    null,
+  );
+  private dragGhostEl: HTMLElement | null = null;
+  private suppressLessonClickUntil = 0;
 
   showLessonForm = signal(false);
   editLessonTarget = signal<Lesson | null>(null);
@@ -84,27 +72,132 @@ export class CalendarComponent implements OnInit {
   savingLesson = signal(false);
   deletingLesson = signal(false);
   saveLessonError: string | null = null;
+  /** Модалка: слот занят (drag-and-drop или сохранение урока). */
+  scheduleConflictMessage = signal<string | null>(null);
+  /** Подтверждение переноса перед уведомлением ученика через бота. */
+  dragMoveConfirm = signal<{ lesson: Lesson; scheduledAt: string } | null>(null);
+
+  private static readonly SCHEDULE_CONFLICT_MSG =
+    'На это время нет свободного слота — уже запланирован другой урок.';
 
   form = {
     student_id: '',
-    lesson_price: 0,
-    title: '',
     status: 'scheduled' as LessonStatus,
     notes: '',
     scheduledAt: '',
   };
 
-  /** Длительность урока в минутах (форма). */
   duration = signal(60);
-  /** Режим выбора: пресет или своё значение. */
   durationChipMode = signal<'preset' | 'custom'>('preset');
   readonly durationPresets: readonly number[] = [30, 45, 60, 90];
+  readonly statusOptions: LessonStatus[] = ['scheduled', 'completed', 'missed', 'canceled'];
 
-  readonly statusOptions: LessonStatus[] = ['scheduled', 'completed', 'cancelled'];
+  private readonly weekdayFmt = new Intl.DateTimeFormat('ru-RU', { weekday: 'short' });
+  private readonly monthYearFmt = new Intl.DateTimeFormat('ru-RU', {
+    month: 'long',
+    year: 'numeric',
+  });
+  readonly weekdayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
 
-  private readonly weekdayFmt = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
+  /** Режим «30» — обзор месяца клетками, без почасовой сетки. */
+  isMonthOverview = computed(() => this.viewMode() === '30');
+
+  columns = computed(() => {
+    const mode = this.viewMode();
+    if (mode === '30') {
+      return [];
+    }
+
+    const anchor = this.startOfLocalDay(this.currentDate());
+
+    if (mode === '7') {
+      const monday = this.startOfWeekMonday(anchor);
+      return Array.from({ length: 7 }, (_, i) => this.addDays(monday, i));
+    }
+
+    const count = Number(mode);
+    return Array.from({ length: count }, (_, i) => this.addDays(anchor, i));
+  });
+
+  /** Клетки календаря месяца (пн–вс, с хвостами соседних месяцев). */
+  monthOverviewCells = computed(() => {
+    const ref = this.startOfLocalDay(this.currentDate());
+    const year = ref.getFullYear();
+    const month = ref.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const lastOfMonth = new Date(year, month + 1, 0);
+
+    let cursor = this.startOfWeekMonday(firstOfMonth);
+    const cells: { date: Date; inMonth: boolean }[] = [];
+
+    while (true) {
+      cells.push({
+        date: new Date(cursor),
+        inMonth: cursor.getMonth() === month,
+      });
+      const weekEnded = cursor.getDay() === 0;
+      const passedLastDay = cursor >= lastOfMonth;
+      cursor = this.addDays(cursor, 1);
+      if (passedLastDay && weekEnded) {
+        break;
+      }
+      if (cells.length >= 42) {
+        break;
+      }
+    }
+
+    return cells;
+  });
+
+  gridTemplateColumns = computed(
+    () => `repeat(${this.columns().length}, minmax(120px, 1fr))`,
+  );
+
+  lessonsByDay = computed(() => {
+    const map = new Map<string, Lesson[]>();
+    const preview = this.dragPreview();
+    for (const lesson of this.lessons()) {
+      const scheduledAt =
+        preview?.lessonId === lesson._id ? preview.scheduledAt : lesson.scheduledAt;
+      if (!scheduledAt) {
+        continue;
+      }
+      const key = this.dayKey(new Date(scheduledAt));
+      const bucket = map.get(key);
+      if (bucket) {
+        bucket.push(lesson);
+      } else {
+        map.set(key, [lesson]);
+      }
+    }
+
+    for (const bucket of map.values()) {
+      bucket.sort(
+        (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+      );
+    }
+
+    return map;
+  });
+
+  private readonly studentCurrencyById = computed(() => {
+    const m = new Map<string, string>();
+    for (const s of this.students()) {
+      m.set(s._id, s.rate_currency ?? 'EUR');
+    }
+    return m;
+  });
+
+  filteredStudentsForSidebar = computed(() => {
+    const query = this.studentsSidebarQuery().trim().toLowerCase();
+    if (!query) {
+      return this.students();
+    }
+    return this.students().filter((student) => student.name.toLowerCase().includes(query));
+  });
 
   ngOnInit(): void {
+    this.initViewportSidebarMediaQuery();
     this.loadLessons();
     this.studentSvc.getAll().subscribe({
       next: (list) => this.students.set(list),
@@ -114,77 +207,198 @@ export class CalendarComponent implements OnInit {
     });
   }
 
+  private initViewportSidebarMediaQuery(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const applyViewport = () => {
+      const isNarrow = mediaQuery.matches;
+      this.isNarrowViewport.set(isNarrow);
+      if (!isNarrow) {
+        this.studentsSidebarOpen.set(false);
+      }
+    };
+    applyViewport();
+    mediaQuery.addEventListener('change', applyViewport);
+    this.destroyRef.onDestroy(() => mediaQuery.removeEventListener('change', applyViewport));
+  }
+
   startOfLocalDay(d: Date): Date {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
     return x;
   }
 
-  isSameLocalDay(a: Date, b: Date): boolean {
-    return (
-      a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate()
-    );
+  private startOfWeekMonday(d: Date): Date {
+    const x = this.startOfLocalDay(d);
+    const day = x.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    x.setDate(x.getDate() + diff);
+    return x;
   }
 
-  formatWeekdayShort(d: Date): string {
-    return this.weekdayFmt.format(d);
+  private addDays(d: Date, days: number): Date {
+    const x = new Date(d);
+    x.setDate(x.getDate() + days);
+    return x;
   }
 
-  formatDayOfMonth(d: Date): number {
-    return d.getDate();
+  dayKey(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
-  /** Заголовок agenda, напр. «Wed 8». */
-  formatAgendaDayHeading(d: Date): string {
-    return `${this.weekdayFmt.format(d)} ${d.getDate()}`;
+  lessonsForColumn(col: Date): Lesson[] {
+    return this.lessonsByDay().get(this.dayKey(col)) ?? [];
   }
 
-  selectDay(day: Date): void {
-    this.selectedDate.set(this.startOfLocalDay(new Date(day.getTime())));
+  displayScheduledAt(lesson: Lesson): string {
+    const preview = this.dragPreview();
+    if (preview?.lessonId === lesson._id) {
+      return preview.scheduledAt;
+    }
+    return lesson.scheduledAt;
   }
 
-  hasLessonsOnDay(day: Date): boolean {
-    const start = this.startOfLocalDay(day);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    return this.lessons().some((l) => {
-      if (!l.scheduledAt) {
-        return false;
-      }
-      const t = new Date(l.scheduledAt);
-      return t >= start && t < end;
-    });
+  calculateTop(scheduledAt: string): number {
+    const d = new Date(scheduledAt);
+    if (Number.isNaN(d.getTime())) {
+      return 0;
+    }
+    return (d.getHours() * 60 + d.getMinutes()) * this.minuteHeightPx;
+  }
+
+  calculateHeight(duration: number): number {
+    return Math.max(15, duration * this.minuteHeightPx);
+  }
+
+  formatHourLabel(hour: number): string {
+    return `${String(hour).padStart(2, '0')}:00`;
+  }
+
+  formatColumnHeader(col: Date): string {
+    return `${this.weekdayFmt.format(col)} ${col.getDate()}`;
+  }
+
+  isToday(col: Date): boolean {
+    return this.dayKey(col) === this.dayKey(new Date());
+  }
+
+  formatMonthYearLabel(): string {
+    const label = this.monthYearFmt.format(this.currentDate());
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  lessonCountForDay(day: Date): number {
+    return this.lessonsByDay().get(this.dayKey(day))?.length ?? 0;
+  }
+
+  /** Клик по клетке месяца → дневное расписание выбранной даты. */
+  openDayFromMonth(day: Date): void {
+    this.currentDate.set(this.startOfLocalDay(day));
+    this.viewMode.set('1');
+  }
+
+  navPrev(): void {
+    const next = new Date(this.currentDate());
+    const mode = this.viewMode();
+    if (mode === '30') {
+      next.setMonth(next.getMonth() - 1);
+    } else if (mode === '7') {
+      next.setDate(next.getDate() - 7);
+    } else {
+      next.setDate(next.getDate() - Number(mode));
+    }
+    this.currentDate.set(next);
+  }
+
+  navNext(): void {
+    const next = new Date(this.currentDate());
+    const mode = this.viewMode();
+    if (mode === '30') {
+      next.setMonth(next.getMonth() + 1);
+    } else if (mode === '7') {
+      next.setDate(next.getDate() + 7);
+    } else {
+      next.setDate(next.getDate() + Number(mode));
+    }
+    this.currentDate.set(next);
+  }
+
+  goToToday(): void {
+    this.currentDate.set(new Date());
+  }
+
+  setViewMode(mode: CalendarViewMode): void {
+    this.viewMode.set(mode);
+  }
+
+  toggleStudentsSidebar(): void {
+    this.studentsSidebarOpen.update((opened) => !opened);
+  }
+
+  selectSidebarStudent(studentId: string): void {
+    this.focusedStudentId.set(studentId);
+    if (this.isNarrowViewport()) {
+      this.studentsSidebarOpen.set(false);
+    }
+  }
+
+  clearStudentFocus(): void {
+    this.focusedStudentId.set(null);
+    this.studentsSidebarQuery.set('');
+  }
+
+  studentInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return (parts[0] || '?').slice(0, 2).toUpperCase();
   }
 
   getStudentName(studentId: string | null | undefined): string {
     if (!studentId) {
       return '(без ученика)';
     }
-    const s = this.students().find((x) => x._id === studentId);
-    return s?.name ?? '(без ученика)';
+    return this.students().find((x) => x._id === studentId)?.name ?? '(без ученика)';
   }
 
-  /** Код валюты для CurrencyPipe (профиль ученика или RUB). */
+  getStudentColor(studentId: string | null | undefined): string {
+    if (!studentId) {
+      return DEFAULT_STUDENT_BORDER_COLOR;
+    }
+    return (
+      this.students().find((x) => x._id === studentId)?.color_hex ??
+      DEFAULT_STUDENT_BORDER_COLOR
+    );
+  }
+
+  getSelectedStudent(): Student | undefined {
+    const selectedId = this.form.student_id;
+    if (!selectedId) {
+      return undefined;
+    }
+    return this.students().find((student) => student._id === selectedId);
+  }
+
+  formRateCurrencyCode(): string {
+    return this.getStudentCurrency(this.form.student_id);
+  }
+
+  onScheduledAtLocalChange(value: string): void {
+    this.scheduledAtLocal.set(value);
+    this.form.scheduledAt = value?.trim() ? new Date(value).toISOString() : '';
+  }
+
   getStudentCurrency(studentId: string | null | undefined): string {
     if (!studentId) {
-      return 'RUB';
+      return 'EUR';
     }
-    return this.studentCurrencyById().get(studentId) ?? 'RUB';
-  }
-
-  /** Интервал урока по `scheduledAt` и сохранённой `lesson_duration` (мин), по умолчанию 60. */
-  getLessonSlot(lesson: Lesson): { start: Date; end: Date } | null {
-    if (!lesson.scheduledAt) {
-      return null;
-    }
-    const start = new Date(lesson.scheduledAt);
-    if (Number.isNaN(start.getTime())) {
-      return null;
-    }
-    const mins = lesson.lesson_duration ?? 60;
-    return { start, end: new Date(start.getTime() + mins * 60 * 1000) };
+    return this.studentCurrencyById().get(studentId) ?? 'EUR';
   }
 
   formatDurationPresetLabel(minutes: number): string {
@@ -211,7 +425,6 @@ export class CalendarComponent implements OnInit {
     this.duration.set(Math.min(480, Math.max(5, Number.isNaN(n) ? 60 : n)));
   }
 
-  /** Текст вида «14:00 — 14:45» для превью в форме. */
   getSchedulePreviewText(): string | null {
     const raw = this.form.scheduledAt?.trim();
     if (!raw) {
@@ -230,157 +443,389 @@ export class CalendarComponent implements OnInit {
     return `${fmt.format(start)} — ${fmt.format(end)}`;
   }
 
-  private clampedDurationMinutes(): number {
-    const n = Math.round(Number(this.duration()));
-    if (Number.isNaN(n) || n < 5) {
-      return 60;
+  lessonCardClass(lesson: Lesson): Record<string, boolean> {
+    const focused = this.focusedStudentId();
+    const dragging = this.dragLessonId() === lesson._id;
+    return {
+      'cal-lesson-card': true,
+      'cal-lesson-card--scheduled': lesson.status === 'scheduled',
+      'cal-lesson-card--completed': lesson.status === 'completed',
+      'cal-lesson-card--missed': lesson.status === 'missed',
+      'cal-lesson-card--canceled': lesson.status === 'canceled',
+      'cal-lesson-card--focus-active': Boolean(focused && lesson.student_id === focused),
+      'cal-lesson-card--focus-dim': Boolean(focused && lesson.student_id !== focused),
+      'cal-lesson-card--dragging': dragging,
+    };
+  }
+
+  isDayDragTarget(col: Date): boolean {
+    const preview = this.dragPreview();
+    if (!preview?.scheduledAt) {
+      return false;
     }
-    return Math.min(480, n);
+    return this.dayKey(col) === this.dayKey(new Date(preview.scheduledAt));
   }
 
-  private destroyLessonFlatpickr(): void {
-    this.fp?.destroy();
-    this.fp = null;
+  dragSnapLineTop(col: Date): number | null {
+    const preview = this.dragPreview();
+    if (!preview?.scheduledAt || this.dragLessonId() === null) {
+      return null;
+    }
+    if (this.dayKey(col) !== this.dayKey(new Date(preview.scheduledAt))) {
+      return null;
+    }
+    return this.calculateTop(preview.scheduledAt);
   }
 
-  private initLessonFlatpickr(): void {
-    this.destroyLessonFlatpickr();
-    const el = this.lessonDateInput?.nativeElement;
-    if (!el) {
+  onDayColumnClick(col: Date, event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    if ((event.target as HTMLElement).closest('.cal-lesson-card')) {
+      return;
+    }
+    const rect = target.getBoundingClientRect();
+    const offsetY = event.clientY - rect.top + target.scrollTop;
+    const scheduledAt = this.isoFromDayAndOffset(this.dayKey(col), offsetY);
+    this.openNewLessonAt(scheduledAt);
+  }
+
+  onLessonDragStart(event: DragEvent, lesson: Lesson): void {
+    if (!lesson.scheduledAt) {
+      event.preventDefault();
       return;
     }
 
-    const existing = this.form.scheduledAt?.trim();
-    const parsed = existing ? new Date(existing) : null;
-    const defaultDate =
-      parsed && !Number.isNaN(parsed.getTime()) ? parsed : undefined;
+    event.stopPropagation();
+    this.suppressLessonClickUntil = Date.now() + 400;
+    this.dragLessonId.set(lesson._id);
+    this.dragPreview.set({ lessonId: lesson._id, scheduledAt: lesson.scheduledAt });
 
-    this.fp = flatpickr(el, {
-      enableTime: true,
-      time_24hr: true,
-      dateFormat: 'Y-m-d H:i',
-      defaultDate,
-      appendTo: document.body,
-      onChange: (dates) => {
-        const d = dates[0];
-        this.ngZone.run(() => {
-          if (d) {
-            this.form.scheduledAt = d.toISOString();
+    const card = (event.currentTarget as HTMLElement) ?? null;
+
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', lesson._id);
+      if (card) {
+        this.setDragImageFromCard(event, card);
+      }
+    }
+  }
+
+  onLessonDragEnd(): void {
+    this.removeDragGhost();
+    this.dragLessonId.set(null);
+    this.dragPreview.set(null);
+  }
+
+  onDayDragOver(event: DragEvent, col: Date): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    this.updateDragPreviewFromEvent(event, col);
+  }
+
+  onDayDrop(event: DragEvent, col: Date): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const lessonId =
+      this.dragLessonId() ?? event.dataTransfer?.getData('text/plain') ?? null;
+    const lesson = this.lessons().find((item) => item._id === lessonId);
+    if (!lesson) {
+      this.clearDragState();
+      return;
+    }
+
+    const preview = this.dragPreview();
+    const scheduledAt =
+      preview?.lessonId === lesson._id
+        ? preview.scheduledAt
+        : this.isoFromDayAndOffset(
+            this.dayKey(col),
+            this.offsetYInColumn(event, event.currentTarget as HTMLElement),
+          );
+
+    this.clearDragState();
+
+    if (this.shouldConfirmBotNotifyBeforeMove(lesson, scheduledAt)) {
+      this.dragMoveConfirm.set({ lesson, scheduledAt });
+      return;
+    }
+
+    this.persistLessonMove(lesson, scheduledAt);
+  }
+
+  dragMoveConfirmStudentName(): string {
+    const pending = this.dragMoveConfirm();
+    if (!pending?.lesson.student_id) {
+      return 'ученику';
+    }
+    return this.getStudentName(pending.lesson.student_id);
+  }
+
+  dragMoveConfirmTimeLabel(): string {
+    const pending = this.dragMoveConfirm();
+    if (!pending?.scheduledAt) {
+      return '';
+    }
+    return this.formatLessonDateTime(pending.scheduledAt);
+  }
+
+  confirmDragMove(): void {
+    const pending = this.dragMoveConfirm();
+    if (!pending) {
+      return;
+    }
+    this.dragMoveConfirm.set(null);
+    this.persistLessonMove(pending.lesson, pending.scheduledAt);
+  }
+
+  cancelDragMove(): void {
+    this.dragMoveConfirm.set(null);
+  }
+
+  private shouldConfirmBotNotifyBeforeMove(lesson: Lesson, scheduledAt: string): boolean {
+    if (lesson.status !== 'scheduled' || !lesson.scheduledAt) {
+      return false;
+    }
+    if (this.scheduleTimesEqual(lesson.scheduledAt, scheduledAt)) {
+      return false;
+    }
+    const student = this.students().find((item) => item._id === lesson.student_id);
+    return Boolean(student?.bot_active);
+  }
+
+  private scheduleTimesEqual(left: string, right: string): boolean {
+    const a = Date.parse(left);
+    const b = Date.parse(right);
+    if (Number.isNaN(a) || Number.isNaN(b)) {
+      return left === right;
+    }
+    return a === b;
+  }
+
+  private formatLessonDateTime(iso: string): string {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) {
+      return iso;
+    }
+    return new Intl.DateTimeFormat('ru-RU', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+  }
+
+  private updateDragPreviewFromEvent(event: DragEvent, col: Date): void {
+    const lessonId = this.dragLessonId();
+    if (!lessonId) {
+      return;
+    }
+    const columnEl = event.currentTarget as HTMLElement;
+    const offsetY = this.offsetYInColumn(event, columnEl);
+    const scheduledAt = this.isoFromDayAndOffset(this.dayKey(col), offsetY);
+    this.dragPreview.set({ lessonId, scheduledAt });
+  }
+
+  private offsetYInColumn(event: DragEvent, columnEl: HTMLElement): number {
+    const rect = columnEl.getBoundingClientRect();
+    return event.clientY - rect.top + columnEl.scrollTop;
+  }
+
+  private setDragImageFromCard(event: DragEvent, card: HTMLElement): void {
+    this.removeDragGhost();
+
+    const rect = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true) as HTMLElement;
+    ghost.classList.add('cal-lesson-card--drag-ghost');
+    ghost.style.position = 'absolute';
+    ghost.style.top = '-1000px';
+    ghost.style.left = '0';
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.pointerEvents = 'none';
+    document.body.appendChild(ghost);
+    this.dragGhostEl = ghost;
+
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+    event.dataTransfer?.setDragImage(ghost, offsetX, offsetY);
+  }
+
+  private removeDragGhost(): void {
+    this.dragGhostEl?.remove();
+    this.dragGhostEl = null;
+  }
+
+  private clearDragState(): void {
+    this.removeDragGhost();
+    this.dragLessonId.set(null);
+    this.dragPreview.set(null);
+  }
+
+  private persistLessonMove(lesson: Lesson, scheduledAt: string): void {
+    if (
+      this.hasScheduleConflict(
+        scheduledAt,
+        lesson.lesson_duration,
+        lesson._id,
+        lesson.status,
+      )
+    ) {
+      this.openScheduleConflict();
+      return;
+    }
+
+    const previous = [...this.lessons()];
+
+    this.lessons.update((list) =>
+      list.map((item) => (item._id === lesson._id ? { ...item, scheduledAt } : item)),
+    );
+
+    this.lessonsSvc
+      .update(lesson._id, {
+        student_id: lesson.student_id,
+        lesson_duration: lesson.lesson_duration,
+        status: lesson.status,
+        notes: lesson.notes,
+        scheduledAt,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.lessons.update((list) =>
+            list.map((item) =>
+              item._id === updated._id ? this.normalizeLesson(updated) : item,
+            ),
+          );
+        },
+        error: (err: HttpErrorResponse) => {
+          this.lessons.set(previous);
+          if (err.status === 409) {
+            this.openScheduleConflict();
+            return;
           }
-          this.cdr.markForCheck();
-        });
-      },
-    });
-  }
-
-  private scheduleLessonFlatpickrInit(): void {
-    this.cdr.markForCheck();
-    setTimeout(() => {
-      this.initLessonFlatpickr();
-      this.cdr.markForCheck();
-    }, 0);
-  }
-
-  /**
-   * Время урока в часовом поясе ученика, подпись вида «14:00 Berlin».
-   */
-  getStudentLocalTimeLabel(lesson: Lesson): string | null {
-    if (!lesson.scheduledAt || !lesson.student_id) {
-      return null;
-    }
-    const st = this.students().find((s) => s._id === lesson.student_id);
-    const tz = st?.timezone?.trim();
-    if (!tz) {
-      return null;
-    }
-    const d = new Date(lesson.scheduledAt);
-    if (Number.isNaN(d.getTime())) {
-      return null;
-    }
-    try {
-      const fmt = new Intl.DateTimeFormat('en-GB', {
-        timeZone: tz,
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
+          this.loadLessons();
+        },
       });
-      const time = fmt.format(d);
-      const city = tz.split('/').pop()?.replace(/_/g, ' ') ?? tz;
-      return `${time} ${city}`;
-    } catch {
+  }
+
+  openScheduleConflict(message?: string): void {
+    this.scheduleConflictMessage.set(
+      message ?? CalendarComponent.SCHEDULE_CONFLICT_MSG,
+    );
+  }
+
+  closeScheduleConflict(): void {
+    this.scheduleConflictMessage.set(null);
+  }
+
+  private hasScheduleConflict(
+    scheduledAt: string | null | undefined,
+    durationMinutes: number,
+    excludeLessonId: string | null,
+    status: LessonStatus = 'scheduled',
+  ): boolean {
+    if (status !== 'scheduled') {
+      return false;
+    }
+
+    const candidate = this.lessonInterval(scheduledAt, durationMinutes);
+    if (!candidate) {
+      return false;
+    }
+
+    for (const lesson of this.lessons()) {
+      if (excludeLessonId && lesson._id === excludeLessonId) {
+        continue;
+      }
+      if (lesson.status !== 'scheduled' || !lesson.scheduledAt) {
+        continue;
+      }
+      const other = this.lessonInterval(lesson.scheduledAt, lesson.lesson_duration);
+      if (!other) {
+        continue;
+      }
+      if (this.intervalsOverlap(candidate, other)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private lessonInterval(
+    scheduledAt: string | null | undefined,
+    durationMinutes: number,
+  ): { start: number; end: number } | null {
+    if (!scheduledAt) {
       return null;
     }
+    const start = Date.parse(scheduledAt);
+    if (Number.isNaN(start)) {
+      return null;
+    }
+    const duration = this.clampedDurationMinutes(durationMinutes);
+    return { start, end: start + duration * 60_000 };
   }
 
-  lessonCardClass(lesson: Lesson): Record<string, boolean> {
-    const base = {
-      'flex items-center gap-4 p-4 mb-3 rounded-2xl border transition-all hover:shadow-md cursor-pointer w-full text-left': true,
-    };
-    if (lesson.status === 'scheduled') {
-      return { ...base, 'bg-sky-50 border-sky-100': true };
-    }
-    if (lesson.status === 'completed') {
-      return { ...base, 'bg-gray-50 border-gray-100 grayscale-[0.5]': true };
-    }
-    if (lesson.status === 'cancelled') {
-      return { ...base, 'bg-red-50 border-red-100': true };
-    }
-    return { ...base, 'bg-white border-gray-100': true };
+  private intervalsOverlap(
+    a: { start: number; end: number },
+    b: { start: number; end: number },
+  ): boolean {
+    return Math.max(a.start, b.start) < Math.min(a.end, b.end);
   }
 
-  statusBadgeClass(status: LessonStatus): string {
-    const shell = 'px-2 py-0.5 rounded-full text-[10px] uppercase font-bold';
-    if (status === 'completed') {
-      return `${shell} bg-gray-200 text-gray-700`;
-    }
-    if (status === 'scheduled') {
-      return `${shell} bg-sky-200 text-sky-800`;
-    }
-    return `${shell} bg-red-200 text-red-800`;
+  private isoFromDayAndOffset(dayKey: string, offsetYPx: number): string {
+    const [y, m, d] = dayKey.split('-').map(Number);
+    const maxMinutes = 24 * 60 - 5;
+    const rawMinutes = Math.max(0, Math.min(maxMinutes, offsetYPx / this.minuteHeightPx));
+    const rounded = Math.round(rawMinutes / 15) * 15;
+    const hours = Math.floor(rounded / 60);
+    const minutes = rounded % 60;
+    return new Date(y, m - 1, d, hours, minutes, 0, 0).toISOString();
   }
 
-  private loadLessons(): void {
-    this.lessonsSvc.getAll().subscribe({
-      next: (data) => {
-        this.lessons.set(data);
-        this.loadError = null;
-        this.hasLoaded.set(true);
-      },
-      error: (err) => {
-        this.loadError = err?.error?.message ?? err?.message ?? 'Не удалось загрузить уроки';
-        this.hasLoaded.set(true);
-      },
-    });
-  }
-
-  openLessonForm(): void {
+  private openNewLessonAt(scheduledAt: string): void {
     this.editLessonTarget.set(null);
+    this.lessonFormStep.set(1);
     this.resetLessonForm();
+    this.form.scheduledAt = scheduledAt;
+    const local = new Date(new Date(scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000);
+    this.scheduledAtLocal.set(local.toISOString().slice(0, 16));
     this.saveLessonError = null;
     this.studentsLoadError = null;
     this.showLessonForm.set(true);
     this.ensureStudentsLoaded();
-    this.scheduleLessonFlatpickrInit();
   }
 
-  openEditLesson(lesson: Lesson): void {
+  openEditLesson(lesson: Lesson, clickEvent?: Event): void {
+    if (Date.now() < this.suppressLessonClickUntil) {
+      clickEvent?.preventDefault();
+      clickEvent?.stopPropagation();
+      return;
+    }
+    clickEvent?.stopPropagation();
     this.editLessonTarget.set(lesson);
+    this.lessonFormStep.set(1);
     this.saveLessonError = null;
     this.studentsLoadError = null;
     this.ensureStudentsLoaded();
-    const mins = lesson.lesson_duration ?? 60;
+    const mins = lesson.lesson_duration;
     this.duration.set(mins);
     this.durationChipMode.set(this.durationPresets.includes(mins) ? 'preset' : 'custom');
     this.form = {
       student_id: lesson.student_id || '',
-      lesson_price: lesson.lesson_price,
-      title: lesson.title || '',
       status: lesson.status,
       notes: lesson.notes || '',
-      scheduledAt: lesson.scheduledAt || '',
+      scheduledAt: lesson.scheduledAt,
     };
+    const local = new Date(
+      new Date(lesson.scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000,
+    );
+    this.scheduledAtLocal.set(local.toISOString().slice(0, 16));
     this.showLessonForm.set(true);
-    this.scheduleLessonFlatpickrInit();
   }
 
   private ensureStudentsLoaded(): void {
@@ -397,76 +842,147 @@ export class CalendarComponent implements OnInit {
   }
 
   closeLessonForm(): void {
-    this.destroyLessonFlatpickr();
     this.showLessonForm.set(false);
     this.editLessonTarget.set(null);
     this.deletingLesson.set(false);
+    this.lessonFormStep.set(1);
+  }
+
+  goToNotesStep(): void {
+    this.lessonFormStep.set(2);
+  }
+
+  backToMainStep(): void {
+    this.lessonFormStep.set(1);
   }
 
   private resetLessonForm(): void {
     this.duration.set(60);
     this.durationChipMode.set('preset');
+    this.scheduledAtLocal.set('');
     this.form = {
       student_id: '',
-      lesson_price: 0,
-      title: '',
       status: 'scheduled',
       notes: '',
       scheduledAt: '',
     };
   }
 
-  onStudentSelectChange(ev: Event): void {
-    const el = ev.target as HTMLSelectElement;
-    const selectedId = el.value;
-    this.form.student_id = selectedId;
-    const selectedStudent = this.students().find((s) => s._id === selectedId);
-    if (selectedStudent) {
-      this.form.lesson_price = selectedStudent.rate_per_hour;
+  private clampedDurationMinutes(raw?: number): number {
+    const minutes =
+      raw !== undefined ? Number(raw) : Math.round(Number(this.duration()));
+    if (Number.isNaN(minutes) || minutes < 5) {
+      return 60;
     }
+    return Math.min(480, Math.max(5, Math.round(minutes)));
+  }
+
+  private loadLessons(): void {
+    this.lessonsSvc.getAll().subscribe({
+      next: (data) => {
+        this.lessons.set(
+          data
+            .filter((l) => Boolean(l.scheduledAt))
+            .map((l) => this.normalizeLesson(l)),
+        );
+        this.loadError = null;
+        this.hasLoaded.set(true);
+      },
+      error: (err) => {
+        this.loadError = err?.error?.message ?? err?.message ?? 'Не удалось загрузить уроки';
+        this.hasLoaded.set(true);
+      },
+    });
+  }
+
+  private normalizeLesson(raw: LessonApiRow): Lesson {
+    const statusRaw = String(raw.status ?? 'scheduled');
+    const status: LessonStatus =
+      statusRaw === 'cancelled' ? 'canceled' : (statusRaw as LessonStatus);
+    return {
+      _id: raw._id,
+      student_id: raw.student_id,
+      status,
+      scheduledAt: String(raw.scheduledAt),
+      lesson_duration: raw.lesson_duration ?? 60,
+      lesson_price: raw.lesson_price ?? 0,
+      lesson_currency: raw.lesson_currency ?? 'EUR',
+      reminder_sent: raw.reminder_sent ?? false,
+      notes: raw.notes,
+      tutor: raw.tutor,
+      student_name: raw.student_name,
+      title: raw.title,
+    };
   }
 
   saveLesson(): void {
     this.saveLessonError = null;
+    if (!this.form.student_id?.trim()) {
+      this.saveLessonError = 'Выберите ученика';
+      return;
+    }
+
+    const duration = this.clampedDurationMinutes();
+    const scheduledAt = this.form.scheduledAt?.trim() || null;
+    const editing = this.editLessonTarget();
+    const excludeId = editing?._id ?? null;
+
+    if (
+      this.hasScheduleConflict(scheduledAt, duration, excludeId, this.form.status)
+    ) {
+      this.openScheduleConflict();
+      return;
+    }
+
     this.savingLesson.set(true);
-    const payload = {
-      student_id: this.form.student_id ? this.form.student_id : null,
-      lesson_price: Number(this.form.lesson_price),
-      lesson_duration: this.clampedDurationMinutes(),
+    const basePayload = {
+      student_id: this.form.student_id,
+      lesson_duration: duration,
       status: this.form.status,
-      title: this.form.title?.trim() || undefined,
       notes: this.form.notes?.trim() || undefined,
-      scheduledAt: this.form.scheduledAt?.trim() || null,
+      scheduledAt,
     };
 
-    const editing = this.editLessonTarget();
-
     if (editing) {
-      this.lessonsSvc.update(editing._id, payload).subscribe({
+      this.lessonsSvc.update(editing._id, basePayload).subscribe({
         next: (updated) => {
-          this.lessons.update((list) => list.map((l) => (l._id === updated._id ? updated : l)));
+          this.lessons.update((list) =>
+            list.map((l) => (l._id === updated._id ? this.normalizeLesson(updated) : l)),
+          );
           this.savingLesson.set(false);
           this.closeLessonForm();
         },
-        error: (err) => {
+        error: (err: HttpErrorResponse) => {
           this.savingLesson.set(false);
-          this.saveLessonError = err?.error?.message ?? err?.message ?? 'Не удалось сохранить урок';
+          this.handleLessonSaveError(err);
         },
       });
       return;
     }
 
-    this.lessonsSvc.create(payload).subscribe({
+    this.lessonsSvc.create(basePayload).subscribe({
       next: (created) => {
-        this.lessons.update((list) => [created, ...list]);
+        this.lessons.update((list) => [...list, this.normalizeLesson(created)]);
         this.savingLesson.set(false);
         this.closeLessonForm();
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         this.savingLesson.set(false);
-        this.saveLessonError = err?.error?.message ?? err?.message ?? 'Не удалось сохранить урок';
+        this.handleLessonSaveError(err);
       },
     });
+  }
+
+  private handleLessonSaveError(err: HttpErrorResponse): void {
+    if (err.status === 409) {
+      this.openScheduleConflict();
+      return;
+    }
+    this.saveLessonError = this.formatLessonSaveError(err);
+  }
+
+  private formatLessonSaveError(err: HttpErrorResponse): string {
+    return err?.error?.message ?? err?.error?.error ?? err?.message ?? 'Не удалось сохранить урок';
   }
 
   deleteLesson(): void {

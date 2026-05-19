@@ -3,6 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { StudentService, Student } from '../../core/services/student.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { RATE_CURRENCIES, type RateCurrency } from '@interfaces';
+import {
+  colorToHexForPicker,
+  generatePastelColor,
+  hexToStoredColor,
+} from '../../core/utils/pastel-color';
 
 /** IANA: репетитор в AT, ученики в KZ/BY/RU и др. */
 const TIMEZONE_PRESETS: string[] = [
@@ -48,6 +53,7 @@ export class StudentsComponent implements OnInit {
     rate_per_hour: 0,
     rate_currency: 'EUR' as RateCurrency,
     timezone: resolvedBrowserTimezone(),
+    color_hex: generatePastelColor(),
   };
 
   readonly rateCurrencies = RATE_CURRENCIES;
@@ -69,6 +75,34 @@ export class StudentsComponent implements OnInit {
   /** Для старых записей без валюты в API. */
   rateCurrencyOf(s: Student): RateCurrency {
     return s.rate_currency ?? 'EUR';
+  }
+
+  formColorPickerHex(): string {
+    return colorToHexForPicker(this.form.color_hex);
+  }
+
+  onFormColorPickerChange(hex: string): void {
+    this.form.color_hex = hexToStoredColor(hex);
+  }
+
+  randomizeFormColor(): void {
+    this.form.color_hex = generatePastelColor();
+  }
+
+  /** Для шаблона таблицы. */
+  readonly colorToHexForPicker = colorToHexForPicker;
+
+  onTableColorChange(student: Student, event: Event): void {
+    event.stopPropagation();
+    const hex = (event.target as HTMLInputElement).value;
+    const color_hex = hexToStoredColor(hex);
+    this.svc.update(student._id, { color_hex }).subscribe({
+      next: (updated) => {
+        this.students.update((list) =>
+          list.map((item) => (item._id === updated._id ? updated : item)),
+        );
+      },
+    });
   }
 
   load() {
@@ -126,6 +160,7 @@ export class StudentsComponent implements OnInit {
       rate_per_hour: 0,
       rate_currency: 'EUR',
       timezone: resolvedBrowserTimezone(),
+      color_hex: generatePastelColor(),
     };
     this.editTarget.set(null);
     this.showForm.set(true);
@@ -138,6 +173,7 @@ export class StudentsComponent implements OnInit {
       rate_per_hour: s.rate_per_hour,
       rate_currency: s.rate_currency ?? 'EUR',
       timezone: s.timezone || 'UTC',
+      color_hex: s.color_hex || generatePastelColor(),
     };
     this.editTarget.set(s);
     this.showForm.set(true);

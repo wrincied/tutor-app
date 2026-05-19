@@ -72,6 +72,8 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     topupHint: 'Сколько уроков добавить?',
     topupApply: 'Добавить',
     currency: 'Валюта',
+    calendarColor: 'Цвет в календаре',
+    randomColor: 'Случайный',
   },
   en: {
     addButton: '+ Add',
@@ -97,6 +99,8 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     topupHint: 'How many lessons to add?',
     topupApply: 'Add',
     currency: 'Currency',
+    calendarColor: 'Calendar color',
+    randomColor: 'Random',
   },
   de: {
     addButton: '+ Hinzufügen',
@@ -122,6 +126,8 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     topupHint: 'Wie viele Stunden hinzufügen?',
     topupApply: 'Hinzufügen',
     currency: 'Währung',
+    calendarColor: 'Kalenderfarbe',
+    randomColor: 'Zufällig',
   },
   kz: {
     addButton: '+ Қосу',
@@ -147,6 +153,8 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     topupHint: 'Қанша сабақ қосу керек?',
     topupApply: 'Қосу',
     currency: 'Валюта',
+    calendarColor: 'Күнтізбе түсі',
+    randomColor: 'Кездейсоқ',
   },
 };
 

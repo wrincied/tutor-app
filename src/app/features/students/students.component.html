@@ -14,6 +14,7 @@
         <thead>
           <tr>
             <th>{{ t.name }}</th>
+            <th class="col-color">{{ t.calendarColor }}</th>
             <th>{{ t.rateColumn }}</th>
             <th>{{ t.balanceLessons }}</th>
             <th>{{ t.timezone }}</th>
@@ -24,6 +25,15 @@
           @for (s of students(); track s._id) {
             <tr>
               <td>{{ s.name }}</td>
+              <td class="col-color">
+                <input
+                  type="color"
+                  class="student-color-input"
+                  [value]="colorToHexForPicker(s.color_hex)"
+                  (change)="onTableColorChange(s, $event)"
+                  [attr.aria-label]="t.calendarColor + ': ' + s.name"
+                />
+              </td>
               <td>
                 {{ s.rate_per_hour }} {{ i18n.currencyLabel(rateCurrencyOf(s)) }} {{ t.perHour }}
               </td>
@@ -89,6 +99,24 @@
                 }
               </select>
             </div>
+          </div>
+        </div>
+
+        <div class="field field--color">
+          <label for="st-color">{{ t.calendarColor }}</label>
+          <div class="color-picker-row">
+            <input
+              id="st-color"
+              type="color"
+              class="color-picker-row__input"
+              [value]="formColorPickerHex()"
+              (input)="onFormColorPickerChange($any($event.target).value)"
+              name="color_hex"
+            />
+            <span class="color-picker-row__value">{{ form.color_hex }}</span>
+            <button type="button" class="btn-secondary color-picker-row__random" (click)="randomizeFormColor()">
+              {{ t.randomColor }}
+            </button>
           </div>
         </div>
 

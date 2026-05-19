@@ -13,31 +13,29 @@ export class LessonService {
 
   /** GET /api/lessons */
   getAll() {
-    return this.http.get<Lesson[]>(API);
+    return this.http.get<(Lesson & { status?: string; createdAt?: string; updatedAt?: string })[]>(
+      API,
+    );
   }
 
-  /** POST /api/lessons */
+  /** POST /api/lessons — цена snapshot на сервере из профиля ученика */
   create(payload: {
-    student_id?: string | null;
-    lesson_price: number;
+    student_id: string;
     lesson_duration?: number;
     status?: Lesson['status'];
-    title?: string;
     notes?: string;
     scheduledAt?: string | null;
   }) {
     return this.http.post<Lesson>(API, payload);
   }
 
-  /** PUT /api/lessons/:id */
+  /** PUT /api/lessons/:id — lesson_price / lesson_currency не принимаются */
   update(
     id: string,
     payload: {
       student_id?: string | null;
-      lesson_price: number;
       lesson_duration?: number;
       status?: Lesson['status'];
-      title?: string;
       notes?: string;
       scheduledAt?: string | null;
     },

@@ -1,304 +1,433 @@
-<div class="min-h-dvh bg-slate-50">
-  <div class="max-w-2xl mx-auto py-8 px-4">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Расписание</h1>
-      <button
-        type="button"
-        class="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium transition-all shadow-sm"
-        (click)="openLessonForm()"
-      >
-        Добавить урок
-      </button>
-    </div>
-
+<div class="cal-page">
+  <div class="cal-page__inner">
     @if (loadError) {
-      <p class="text-red-600 text-sm font-medium">{{ loadError }}</p>
+      <p class="cal-error">{{ loadError }}</p>
     } @else if (!hasLoaded()) {
-      <div
-        class="bg-white p-12 rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400"
-      >
-        <p class="text-base font-medium">Загрузка расписания…</p>
+      <div class="cal-loading">
+        <p>Загрузка расписания…</p>
       </div>
     } @else {
-      <!-- Полоса дат -->
-      <div
-        class="flex gap-2 overflow-x-auto pb-4 no-scrollbar"
-        role="tablist"
-        aria-label="Выбор дня"
-      >
-        @for (day of calendarDays(); track day.getTime()) {
-          @let sel = isSameLocalDay(day, selectedDate());
-          <button
-            type="button"
-            role="tab"
-            [attr.aria-selected]="sel"
-            class="flex flex-col items-center justify-center min-w-[60px] p-3 rounded-2xl cursor-pointer transition-all shrink-0"
-            [ngClass]="
-              sel
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-                : 'bg-white border border-gray-100 hover:bg-gray-50 text-gray-900'
-            "
-            (click)="selectDay(day)"
-          >
-            <span class="text-[10px] uppercase opacity-70" [class.text-gray-500]="!sel">
-              {{ formatWeekdayShort(day) }}
-            </span>
-            <span class="text-lg font-bold tabular-nums">{{ formatDayOfMonth(day) }}</span>
-            <span class="mt-1 flex h-3 items-center justify-center">
-              @if (hasLessonsOnDay(day)) {
-                <span class="w-1 h-1 rounded-full bg-current" aria-hidden="true"></span>
-              }
-            </span>
-          </button>
-        }
-      </div>
-
-      <!-- Agenda -->
-      @if (lessons().length === 0) {
+      @if (isNarrowViewport() && studentsSidebarOpen()) {
         <div
-          class="bg-white p-12 rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400"
-        >
-          <p class="text-lg font-semibold text-gray-500 mb-2">Пока нет уроков</p>
-          <p class="text-sm max-w-xs mx-auto">
-            Создайте первый урок — он появится в расписании и в финансовой сводке.
-          </p>
-        </div>
-      } @else if (lessonsForSelectedDate().length === 0) {
-        <div
-          class="bg-white p-12 rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400"
-        >
-          <p class="text-lg font-semibold text-gray-500 mb-2">Свободный день</p>
-          <p class="text-sm max-w-xs mx-auto">
-            На {{ formatAgendaDayHeading(selectedDate()) }} уроки не запланированы. Выберите другую
-            дату или добавьте урок.
-          </p>
-        </div>
-      } @else {
-        <h2
-          class="text-sm font-bold text-gray-400 mb-4 sticky top-0 bg-white/80 backdrop-blur-sm z-10 py-2 -mx-1 px-1"
-        >
-          {{ formatAgendaDayHeading(selectedDate()) }}
-        </h2>
+          class="cal-backdrop"
+          role="presentation"
+          (click)="studentsSidebarOpen.set(false)"
+        ></div>
+      }
 
-        <div class="flex flex-col w-full">
-          @for (lesson of lessonsForSelectedDate(); track lesson._id) {
-            <div
-              [ngClass]="lessonCardClass(lesson)"
-              (click)="openEditLesson(lesson)"
-              (keydown.enter)="openEditLesson(lesson)"
-              (keydown.space)="$event.preventDefault(); openEditLesson(lesson)"
-              tabindex="0"
-              role="button"
+      <header class="cal-header">
+        <h1 class="cal-header__title">Расписание</h1>
+
+        <button type="button" class="cal-btn cal-btn--students" (click)="toggleStudentsSidebar()">
+          Ученики
+        </button>
+
+        <div class="cal-toolbar">
+          <button type="button" class="cal-btn" (click)="navPrev()" aria-label="Назад">‹</button>
+          <button type="button" class="cal-btn" (click)="goToToday()">Сегодня</button>
+          <button type="button" class="cal-btn" (click)="navNext()" aria-label="Вперёд">›</button>
+          @for (mode of viewModes; track mode) {
+            <button
+              type="button"
+              class="cal-toolbar__mode"
+              [class.cal-toolbar__mode--active]="viewMode() === mode"
+              (click)="setViewMode(mode)"
             >
-              <div
-                class="w-20 shrink-0 font-bold text-gray-900 border-r border-gray-200 pr-4 text-sm leading-tight"
-              >
-                @if (getLessonSlot(lesson); as slot) {
-                  <div>{{ slot.start | date: 'HH:mm' }}</div>
-                  <div class="text-gray-400 font-semibold text-xs mt-0.5">
-                    {{ slot.end | date: 'HH:mm' }}
+              {{ mode }}
+            </button>
+          }
+        </div>
+      </header>
+
+      <div class="cal-layout">
+        <section class="cal-grid-section" [class.cal-grid-section--month]="isMonthOverview()">
+          @if (isMonthOverview()) {
+            <div class="cal-month">
+              <p class="cal-month__title">{{ formatMonthYearLabel() }}</p>
+              <div class="cal-month__weekdays">
+                @for (label of weekdayLabels; track label) {
+                  <div class="cal-month__weekday">{{ label }}</div>
+                }
+              </div>
+              <div class="cal-month__grid">
+                @for (cell of monthOverviewCells(); track dayKey(cell.date)) {
+                  <button
+                    type="button"
+                    class="cal-month__cell"
+                    [class.cal-month__cell--outside]="!cell.inMonth"
+                    [class.cal-month__cell--today]="isToday(cell.date)"
+                    [class.cal-month__cell--has-lessons]="lessonCountForDay(cell.date) > 0"
+                    (click)="openDayFromMonth(cell.date)"
+                  >
+                    <span class="cal-month__day-num">{{ cell.date.getDate() }}</span>
+                    @if (lessonCountForDay(cell.date) > 0) {
+                      <span class="cal-month__badge">{{ lessonCountForDay(cell.date) }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="cal-grid-headers">
+              <div class="cal-grid-headers__corner"></div>
+              <div class="cal-grid-headers__scroll">
+                <div
+                  class="cal-grid-headers__row"
+                  [style.grid-template-columns]="gridTemplateColumns()"
+                >
+                  @for (col of columns(); track dayKey(col)) {
+                    <div class="cal-day-header" [class.cal-day-header--today]="isToday(col)">
+                      {{ formatColumnHeader(col) }}
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="cal-grid-body">
+              <div class="cal-time-axis" [style.height.px]="gridHeightPx">
+                @for (hour of hours; track hour) {
+                  <div class="cal-time-slot" [style.height.px]="hourHeightPx">
+                    {{ formatHourLabel(hour) }}
                   </div>
-                } @else {
-                  <span class="text-gray-400">—</span>
                 }
               </div>
 
-              <div class="flex-grow min-w-0">
-                <p class="text-base font-bold text-gray-900 truncate">
-                  {{ getStudentName(lesson.student_id) }}
-                </p>
-                @if (getStudentLocalTimeLabel(lesson); as stLabel) {
-                  <p class="text-xs text-gray-500 mt-1">Student Time: {{ stLabel }}</p>
-                }
-                <p class="text-xs text-gray-500 mt-1 truncate">
-                  {{ lesson.title || 'Без названия' }}
-                </p>
-              </div>
+              <div class="cal-days-scroll">
+                <div class="cal-days-grid" [style.grid-template-columns]="gridTemplateColumns()">
+                  @for (col of columns(); track dayKey(col)) {
+                    <div
+                      class="cal-day-column"
+                      [style.height.px]="gridHeightPx"
+                      [class.cal-day-column--drag-target]="isDayDragTarget(col)"
+                      (dragover)="onDayDragOver($event, col)"
+                      (drop)="onDayDrop($event, col)"
+                      (click)="onDayColumnClick(col, $event)"
+                    >
+                      @for (hour of hours; track hour) {
+                        <div class="cal-hour-line" [style.height.px]="hourHeightPx"></div>
+                      }
 
-              <div class="flex flex-col items-end gap-2 shrink-0">
-                <span class="font-bold text-blue-600 tabular-nums text-sm sm:text-base">
-                  {{
-                    lesson.lesson_price
-                      | currency: getStudentCurrency(lesson.student_id) : 'symbol' : '1.0-2'
-                  }}
-                </span>
-                <span [class]="statusBadgeClass(lesson.status)">{{ lesson.status }}</span>
+                      @if (dragSnapLineTop(col); as snapTop) {
+                        <div class="cal-drag-snap-line" [style.top.px]="snapTop"></div>
+                      }
+
+                      @for (lesson of lessonsForColumn(col); track lesson._id) {
+                        <div
+                          [class]="lessonCardClass(lesson)"
+                          [style.top.px]="calculateTop(displayScheduledAt(lesson))"
+                          [style.height.px]="calculateHeight(lesson.lesson_duration)"
+                          [style.border-left-color]="getStudentColor(lesson.student_id)"
+                          draggable="true"
+                          (dragstart)="onLessonDragStart($event, lesson)"
+                          (dragend)="onLessonDragEnd()"
+                          (click)="openEditLesson(lesson, $event)"
+                        >
+                          <p class="cal-lesson-card__title">
+                            {{ getStudentName(lesson.student_id) }}
+                          </p>
+                          <p class="cal-lesson-card__meta">{{ lesson.lesson_duration }} мин</p>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
             </div>
           }
-        </div>
-      }
+        </section>
+
+        <aside
+          class="cal-sidebar"
+          [class.cal-sidebar--drawer]="isNarrowViewport()"
+          [class.cal-sidebar--open]="isNarrowViewport() && studentsSidebarOpen()"
+        >
+          <div class="cal-sidebar__head">
+            <button type="button" class="cal-sidebar__clear" (click)="clearStudentFocus()">
+              Показать всех
+            </button>
+            <input
+              type="search"
+              class="cal-sidebar__search"
+              placeholder="Поиск ученика…"
+              [ngModel]="studentsSidebarQuery()"
+              (ngModelChange)="studentsSidebarQuery.set($event)"
+              autocomplete="off"
+            />
+          </div>
+          <ul class="cal-sidebar__list">
+            @for (sidebarStudent of filteredStudentsForSidebar(); track sidebarStudent._id) {
+              <li>
+                <button
+                  type="button"
+                  class="cal-sidebar__item-btn"
+                  [class.cal-sidebar__item-btn--active]="focusedStudentId() === sidebarStudent._id"
+                  [style.border-left-color]="
+                    focusedStudentId() === sidebarStudent._id
+                      ? getStudentColor(sidebarStudent._id)
+                      : null
+                  "
+                  (click)="selectSidebarStudent(sidebarStudent._id)"
+                >
+                  <span
+                    class="cal-sidebar__color-indicator"
+                    [style.background-color]="getStudentColor(sidebarStudent._id)"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="cal-sidebar__info">
+                    <span class="cal-sidebar__name">{{ sidebarStudent.name }}</span>
+                    <span class="cal-sidebar__rate">
+                      {{
+                        sidebarStudent.rate_per_hour
+                          | currency
+                            : sidebarStudent.rate_currency ?? 'EUR'
+                            : 'symbol-narrow'
+                            : '1.0-0'
+                      }}/ч
+                    </span>
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        </aside>
+      </div>
     }
   </div>
 </div>
 
 @if (showLessonForm()) {
   <div class="modal-overlay" role="presentation">
-    <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal w-full max-w-sm" role="dialog" aria-modal="true">
       <div class="modal-header">
-        <h2>{{ editLessonTarget() ? 'Редактировать' : 'Новый урок' }}</h2>
+        <h2>
+          @if (editLessonTarget()) {
+            Редактировать
+          } @else if (lessonFormStep() === 2) {
+            Заметки
+          } @else {
+            Новый урок
+          }
+        </h2>
         <button type="button" class="modal-close" (click)="closeLessonForm()" aria-label="Закрыть">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
 
-      <form (ngSubmit)="saveLesson()" class="modal-body">
+      <form class="modal-body" (ngSubmit)="saveLesson()">
         @if (studentsLoadError) {
-          <p class="text-red-600 text-sm">{{ studentsLoadError }}</p>
+          <p class="cal-form-error">{{ studentsLoadError }}</p>
         }
 
-        <div class="field">
-          <label for="lesson-student">Ученик</label>
-          <select
-            id="lesson-student"
-            name="student_id"
-            [(ngModel)]="form.student_id"
-            (change)="onStudentSelectChange($event)"
-          >
-            <option value="">— Выберите ученика —</option>
-            @for (s of students(); track s._id) {
-              <option [value]="s._id">{{ s.name }}</option>
-            }
-          </select>
-        </div>
+        @if (editLessonTarget()) {
+          <div class="cal-form-fields">
+            <select name="student_id" class="cal-field" [(ngModel)]="form.student_id">
+              <option value="">Ученик</option>
+              @for (formStudent of students(); track formStudent._id) {
+                <option [value]="formStudent._id">{{ formStudent.name }}</option>
+              }
+            </select>
 
-        <div class="field">
-          <label for="lesson-price">Цена урока</label>
-          <input
-            id="lesson-price"
-            type="number"
-            name="lesson_price"
-            [(ngModel)]="form.lesson_price"
-            required
-            min="0"
-            step="0.01"
-            inputmode="decimal"
-          />
-        </div>
-
-        <div class="field">
-          <label for="lesson-status">Статус</label>
-          <select id="lesson-status" name="status" [(ngModel)]="form.status">
-            @for (st of statusOptions; track st) {
-              <option [value]="st">{{ st }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="lesson-title">Название</label>
-          <input id="lesson-title" type="text" name="title" [(ngModel)]="form.title" />
-        </div>
-
-        <div class="field">
-          <span class="block text-sm font-medium mb-2">Длительность</span>
-          <div class="flex flex-wrap gap-2 mb-3">
-            @for (m of durationPresets; track m) {
-              <button
-                type="button"
-                class="!px-3.5 !py-2 inline-flex items-center rounded-full text-sm font-medium transition-all border-none cursor-pointer"
-                [ngClass]="{
-                  'bg-blue-600 text-white shadow-md':
-                    durationChipMode() === 'preset' && duration() === m,
-                  'bg-slate-100 text-slate-600 hover:bg-slate-200': !(
-                    durationChipMode() === 'preset' && duration() === m
-                  ),
-                }"
-                (click)="selectDurationPreset(m)"
-              >
-                {{ formatDurationPresetLabel(m) }}
-              </button>
-            }
-            <button
-              type="button"
-              class="!px-3.5 !py-2 inline-flex items-center rounded-full text-sm font-medium transition-all border-none cursor-pointer"
-              [ngClass]="
-                durationChipMode() === 'custom'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              "
-              (click)="selectDurationCustom()"
-            >
-              Своя
-            </button>
-          </div>
-          @if (durationChipMode() === 'custom') {
-            <div class="mb-3">
-              <label class="text-xs text-slate-500" for="lesson-custom-duration"
-                >Минуты (5–480)</label
-              >
-              <input
-                id="lesson-custom-duration"
-                type="number"
-                name="customLessonDuration"
-                min="5"
-                max="480"
-                step="5"
-                class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                [ngModel]="duration()"
-                (ngModelChange)="onCustomDurationInput($event)"
-              />
-            </div>
-          }
-
-          <label for="lesson-when" class="block text-sm font-medium mb-1">Дата и время</label>
-          <div class="relative">
             <input
-              #lessonDateInput
-              id="lesson-when"
-              type="text"
-              name="lessonScheduledDisplay"
-              readonly
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-11 cursor-pointer text-slate-900"
-              placeholder="Выберите дату и время"
-              autocomplete="off"
+              type="datetime-local"
+              class="cal-field"
+              name="scheduledAtLocal"
+              [ngModel]="scheduledAtLocal()"
+              (ngModelChange)="onScheduledAtLocalChange($event)"
             />
-            <span
-              class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-              aria-hidden="true"
-            >
-            </span>
+
+            <div class="cal-chips">
+              @for (presetMinutes of durationPresets; track presetMinutes) {
+                <button
+                  type="button"
+                  class="cal-chip"
+                  [class.cal-chip--active]="
+                    durationChipMode() === 'preset' && duration() === presetMinutes
+                  "
+                  (click)="selectDurationPreset(presetMinutes)"
+                >
+                  {{ formatDurationPresetLabel(presetMinutes) }}
+                </button>
+              }
+            </div>
+
+            <select name="status" class="cal-field" [(ngModel)]="form.status">
+              @for (statusOption of statusOptions; track statusOption) {
+                <option [value]="statusOption">{{ statusOption }}</option>
+              }
+            </select>
+
+            <textarea
+              name="notes"
+              rows="3"
+              class="cal-field cal-field--textarea"
+              placeholder="Заметки"
+              [(ngModel)]="form.notes"
+            ></textarea>
           </div>
-          @if (getSchedulePreviewText(); as preview) {
-            <p class="text-sm text-slate-600 mt-2">Окончание: {{ preview }}</p>
+
+          @if (saveLessonError) {
+            <p class="cal-form-error">{{ saveLessonError }}</p>
           }
-        </div>
 
-        <div class="field">
-          <label for="lesson-notes">Заметки</label>
-          <textarea id="lesson-notes" name="notes" rows="2" [(ngModel)]="form.notes"></textarea>
-        </div>
-
-        @if (saveLessonError) {
-          <p class="text-red-600 text-sm">{{ saveLessonError }}</p>
-        }
-
-        <div class="modal-actions">
-          @if (editLessonTarget()) {
+          <div class="cal-form-actions cal-form-actions--wrap">
             <button
               type="button"
-              class="text-red-600 hover:bg-red-50 px-4 py-2 rounded-xl transition-all mr-auto border-0 bg-transparent cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              class="cal-btn-delete"
               [disabled]="savingLesson() || deletingLesson()"
               (click)="deleteLesson()"
             >
               {{ deletingLesson() ? 'Удаление…' : 'Удалить' }}
             </button>
+            <button type="button" class="btn-link" (click)="closeLessonForm()">Отмена</button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="savingLesson() || deletingLesson()"
+            >
+              {{ savingLesson() ? 'Сохранение…' : 'Сохранить' }}
+            </button>
+          </div>
+        } @else if (lessonFormStep() === 1) {
+          <div class="cal-form-fields">
+            <select name="student_id" class="cal-field" [(ngModel)]="form.student_id">
+              <option value="">Ученик</option>
+              @for (formStudent of students(); track formStudent._id) {
+                <option [value]="formStudent._id">{{ formStudent.name }}</option>
+              }
+            </select>
+
+            <input
+              type="datetime-local"
+              class="cal-field"
+              name="scheduledAtLocalNew"
+              [ngModel]="scheduledAtLocal()"
+              (ngModelChange)="onScheduledAtLocalChange($event)"
+            />
+
+            @if (getSchedulePreviewText(); as preview) {
+              <p class="cal-form-preview">{{ preview }}</p>
+            }
+
+            <div class="cal-chips">
+              @for (presetMinutes of durationPresets; track presetMinutes) {
+                <button
+                  type="button"
+                  class="cal-chip"
+                  [class.cal-chip--active]="
+                    durationChipMode() === 'preset' && duration() === presetMinutes
+                  "
+                  (click)="selectDurationPreset(presetMinutes)"
+                >
+                  {{ formatDurationPresetLabel(presetMinutes) }}
+                </button>
+              }
+            </div>
+
+            <select name="statusNew" class="cal-field" [(ngModel)]="form.status">
+              @for (statusOption of statusOptions; track statusOption) {
+                <option [value]="statusOption">{{ statusOption }}</option>
+              }
+            </select>
+          </div>
+
+          @if (saveLessonError) {
+            <p class="cal-form-error">{{ saveLessonError }}</p>
           }
-          <button type="button" class="btn-link" (click)="closeLessonForm()">Отмена</button>
-          <button type="submit" class="btn-primary" [disabled]="savingLesson() || deletingLesson()">
-            {{ savingLesson() ? 'Сохранение…' : 'Сохранить' }}
-          </button>
-        </div>
+
+          <div class="cal-form-actions">
+            <button type="button" class="btn-link" (click)="closeLessonForm()">Отмена</button>
+            <button type="button" class="btn-link" (click)="goToNotesStep()">Заметки</button>
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="savingLesson()"
+              (click)="saveLesson()"
+            >
+              {{ savingLesson() ? 'Сохранение…' : 'Сохранить' }}
+            </button>
+          </div>
+        } @else {
+          <textarea
+            name="notesNew"
+            rows="4"
+            class="cal-field cal-field--textarea cal-field--textarea-lg"
+            placeholder="Заметки к уроку"
+            [(ngModel)]="form.notes"
+          ></textarea>
+
+          @if (saveLessonError) {
+            <p class="cal-form-error">{{ saveLessonError }}</p>
+          }
+
+          <div class="cal-form-actions">
+            <button type="button" class="btn-link" (click)="backToMainStep()">Назад</button>
+            <button type="submit" class="btn-primary" [disabled]="savingLesson()">
+              {{ savingLesson() ? 'Сохранение…' : 'Сохранить' }}
+            </button>
+          </div>
+        }
       </form>
+    </div>
+  </div>
+}
+
+@if (dragMoveConfirm()) {
+  <div
+    class="modal-overlay cal-drag-confirm-overlay"
+    role="presentation"
+    (click)="cancelDragMove()"
+  >
+    <div
+      class="cal-drag-confirm-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="cal-drag-confirm-title"
+      aria-describedby="cal-drag-confirm-desc"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="cal-drag-confirm-title" class="cal-drag-confirm-modal__title">Перенести урок?</h2>
+      <p id="cal-drag-confirm-desc" class="cal-drag-confirm-modal__message">
+        Ученику <strong>{{ dragMoveConfirmStudentName() }}</strong> будет отправлено уведомление в
+        Telegram о новом времени:
+        <strong>{{ dragMoveConfirmTimeLabel() }}</strong>.
+      </p>
+      <div class="cal-drag-confirm-modal__actions">
+        <button type="button" class="cal-drag-confirm-modal__btn-secondary" (click)="cancelDragMove()">
+          Отмена
+        </button>
+        <button type="button" class="cal-drag-confirm-modal__btn-primary" (click)="confirmDragMove()">
+          Перенести и уведомить
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (scheduleConflictMessage(); as conflictMsg) {
+  <div
+    class="modal-overlay cal-conflict-overlay"
+    role="presentation"
+    (click)="closeScheduleConflict()"
+  >
+    <div
+      class="cal-conflict-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="cal-conflict-title"
+      aria-describedby="cal-conflict-desc"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="cal-conflict-modal__icon" aria-hidden="true">
+        <img src="/assets/icons/icon-warning.svg" width="24" height="24" alt="" />
+      </div>
+      <h2 id="cal-conflict-title" class="cal-conflict-modal__title">Время занято</h2>
+      <p id="cal-conflict-desc" class="cal-conflict-modal__message">{{ conflictMsg }}</p>
+      <div class="cal-conflict-modal__actions">
+        <button type="button" class="cal-conflict-modal__btn" (click)="closeScheduleConflict()">
+          Понятно
+        </button>
+      </div>
     </div>
   </div>
 }

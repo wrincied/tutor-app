@@ -43,27 +43,32 @@ export interface StudentStrings {
   topupApply: string;
   /** Подпись поля выбора валюты */
   currency: string;
+  /** Цвет карточки урока в календаре */
+  calendarColor: string;
+  /** Кнопка случайного пастельного цвета */
+  randomColor: string;
 }
 
-/** Как в Firestore (backend lessonController): статус урока. */
-export type LessonStatus = 'scheduled' | 'completed' | 'cancelled';
+export type LessonStatus = 'scheduled' | 'completed' | 'missed' | 'canceled';
 
 /**
- * Урок в коллекции `lessons` (Node API сериализует Timestamps в ISO-строки).
- * Поля title, lesson_price, scheduledAt, status — основные для UI/расписания.
+ * Урок в коллекции `lessons`.
+ * `scheduledAt` + `lesson_duration` — интервал в БД (без миграции на start_at/end_at).
  */
 export interface Lesson {
   _id: string;
-  tutor: string;
   student_id: string | null;
-  student_name: string | null;
-  title: string;
-  lesson_price: number;
-  scheduledAt: string | null;
-  /** Длительность урока в минутах (по умолчанию на бэкенде 60). */
-  lesson_duration?: number;
   status: LessonStatus;
-  notes: string;
+  scheduledAt: string;
+  lesson_duration: number;
+  lesson_price: number;
+  lesson_currency: string;
+  reminder_sent: boolean;
+  notes?: string;
+  /** Legacy-поля API / Firestore (не используются в UI календаря). */
+  tutor?: string;
+  student_name?: string | null;
+  title?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -74,6 +79,8 @@ export interface Student {
   rate_per_hour: number;
   /** Код валюты ставки; у старых записей может не быть — тогда на фронте подставляем EUR. */
   rate_currency?: RateCurrency;
+  /** Пастельный цвет левой полосы карточки урока в календаре (HSL/hex). */
+  color_hex: string;
   balance_lessons: number;
   timezone: string;
   auto_debit_enabled: boolean;

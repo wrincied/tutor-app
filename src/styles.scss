@@ -1,11 +1,10 @@
 /* 1. Сначала ВСЕ @use и @import */
 @use 'tailwindcss';
-@use 'flatpickr/dist/flatpickr.min.css';
+// @use 'flatpickr/dist/flatpickr.min.css';
 
 @use './styles/variables';
 @use './styles/base';
 @use './styles/shared';
-@use './styles/flatpickr-calendar';
 
 /* 2. Только ПОТОМ настройки и директивы */
 @source "./**/*.{html,ts}";
