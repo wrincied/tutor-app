@@ -47,6 +47,18 @@ export interface StudentStrings {
   calendarColor: string;
   /** Кнопка случайного пастельного цвета */
   randomColor: string;
+  /** Уведомления ученику через Telegram-бота */
+  botNotifications: string;
+  botEnabled: string;
+  botDisabled: string;
+  botEnableTitle: string;
+  botEnableMessage: string;
+  botDisableTitle: string;
+  botDisableMessage: string;
+  botEnableConfirm: string;
+  botDisableConfirm: string;
+  quickActionsTitle: string;
+  lessonsShort: string;
 }
 
 export type LessonStatus = 'scheduled' | 'completed' | 'missed' | 'canceled';

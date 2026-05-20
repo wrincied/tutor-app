@@ -14,6 +14,7 @@ import { LessonService } from '../../core/services/lesson.service';
 import { StudentService, type Student } from '../../core/services/student.service';
 import type { Lesson, LessonStatus } from '@interfaces';
 import { DEFAULT_STUDENT_BORDER_COLOR } from '../../core/utils/pastel-color';
+import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 
 export type CalendarViewMode = '1' | '3' | '7' | '30';
 
@@ -27,7 +28,7 @@ type LessonApiRow = Omit<Lesson, 'status'> & {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe],
+  imports: [FormsModule, CurrencyPipe, AppDialogComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })

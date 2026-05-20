@@ -9,23 +9,52 @@
   } @else if (students().length === 0) {
     <p class="hint">{{ t.emptyState }}</p>
   } @else {
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ t.name }}</th>
-            <th class="col-color">{{ t.calendarColor }}</th>
-            <th>{{ t.rateColumn }}</th>
-            <th>{{ t.balanceLessons }}</th>
-            <th>{{ t.timezone }}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
+    <div class="students-list">
+      <div class="students-cards" role="list">
+        @for (s of students(); track s._id) {
+          <button type="button" class="student-card" role="listitem" (click)="openQuickActions(s)">
+            <span
+              class="student-card__color"
+              [style.background-color]="studentColor(s)"
+              aria-hidden="true"
+            ></span>
+            <span class="student-card__body">
+              <span class="student-card__name">{{ s.name }}</span>
+              <span class="student-card__meta">
+                <span>{{ s.rate_per_hour }} {{ i18n.currencyLabel(rateCurrencyOf(s)) }}{{ t.perHour }}</span>
+                <span class="student-card__dot" aria-hidden="true">·</span>
+                <span>{{ s.timezone }}</span>
+              </span>
+              <span class="student-card__balance">
+                {{ s.balance_lessons }} {{ t.lessonsShort }}
+              </span>
+            </span>
+            @if (s.bot_active) {
+              <span class="student-card__bot-badge" [attr.title]="t.botEnabled">TG</span>
+            }
+          </button>
+        }
+      </div>
+
+      <div class="students-grid">
+        <div class="students-grid__head">
+          <span class="students-grid__col students-grid__col--name">{{ t.name }}</span>
+          <span class="students-grid__col students-grid__col--color">{{ t.calendarColor }}</span>
+          <span class="students-grid__col students-grid__col--rate">{{ t.rateColumn }}</span>
+          <span class="students-grid__col students-grid__col--balance">{{ t.balanceLessons }}</span>
+          <span class="students-grid__col students-grid__col--tz">{{ t.timezone }}</span>
+          <span class="students-grid__col students-grid__col--bot">{{ t.botNotifications }}</span>
+          <span class="students-grid__col students-grid__col--actions"></span>
+        </div>
+
+        <div class="students-grid__body" role="list">
           @for (s of students(); track s._id) {
-            <tr>
-              <td>{{ s.name }}</td>
-              <td class="col-color">
+            <article class="students-grid__row" role="listitem">
+              <div class="students-grid__col students-grid__col--name">
+                <span class="students-grid__name">{{ s.name }}</span>
+              </div>
+
+              <div class="students-grid__col students-grid__col--color">
                 <input
                   type="color"
                   class="student-color-input"
@@ -33,28 +62,90 @@
                   (change)="onTableColorChange(s, $event)"
                   [attr.aria-label]="t.calendarColor + ': ' + s.name"
                 />
-              </td>
-              <td>
+              </div>
+
+              <div class="students-grid__col students-grid__col--rate">
                 {{ s.rate_per_hour }} {{ i18n.currencyLabel(rateCurrencyOf(s)) }} {{ t.perHour }}
-              </td>
-              <td>
-                {{ s.balance_lessons }}
+              </div>
+
+              <div class="students-grid__col students-grid__col--balance">
+                <span class="students-grid__balance">{{ s.balance_lessons }}</span>
                 <button type="button" class="btn-link" (click)="openTopup(s._id)">+ {{ t.topup }}</button>
-              </td>
-              <td>{{ s.timezone }}</td>
-              <td class="actions">
-                <button type="button" class="btn-link" (click)="openEdit(s)">{{ t.edit }}</button>
-                <button type="button" class="btn-link danger" (click)="openDeleteConfirm(s._id)">
-                  {{ t.delete }}
+              </div>
+
+              <div class="students-grid__col students-grid__col--tz">{{ s.timezone }}</div>
+
+              <div class="students-grid__col students-grid__col--bot">
+                <button
+                  type="button"
+                  class="bot-toggle"
+                  [class.bot-toggle--on]="s.bot_active"
+                  (click)="$event.stopPropagation(); requestBotToggle(s)"
+                >
+                  {{ s.bot_active ? t.botEnabled : t.botDisabled }}
                 </button>
-              </td>
-            </tr>
+              </div>
+
+              <div class="students-grid__col students-grid__col--actions">
+                <div class="students-grid__actions">
+                  <button type="button" class="btn-link" (click)="openEdit(s)">{{ t.edit }}</button>
+                  <button type="button" class="btn-link danger" (click)="openDeleteConfirm(s._id)">
+                    {{ t.delete }}
+                  </button>
+                </div>
+              </div>
+            </article>
           }
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   }
 </div>
+
+<app-dialog
+  [open]="!!quickActionsStudent()"
+  layout="sheet"
+  [title]="quickActionsStudent()?.name ?? t.quickActionsTitle"
+  [cancelLabel]="t.close"
+  (cancel)="closeQuickActions()"
+>
+  @if (quickActionsStudent(); as student) {
+    <div class="quick-actions">
+      <p class="quick-actions__summary">
+        <span
+          class="quick-actions__color"
+          [style.background-color]="studentColor(student)"
+          aria-hidden="true"
+        ></span>
+        <span>
+          {{ student.rate_per_hour }} {{ i18n.currencyLabel(rateCurrencyOf(student)) }}{{ t.perHour }} ·
+          {{ student.timezone }} · {{ student.balance_lessons }} {{ t.lessonsShort }}
+        </span>
+      </p>
+      <button type="button" class="quick-actions__btn" (click)="openTopupFromQuick()">
+        + {{ t.topup }}
+      </button>
+      <button type="button" class="quick-actions__btn" (click)="requestBotToggleFromQuick()">
+        {{ student.bot_active ? t.botDisableConfirm : t.botEnableConfirm }} — {{ t.botNotifications }}
+      </button>
+      <button type="button" class="quick-actions__btn" (click)="openEdit(student)">{{ t.edit }}</button>
+      <button type="button" class="quick-actions__btn quick-actions__btn--danger" (click)="openDeleteFromQuick()">
+        {{ t.delete }}
+      </button>
+    </div>
+  }
+</app-dialog>
+
+<app-dialog
+  [open]="!!botToggleConfirm()"
+  [title]="botToggleTitle()"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="botToggleConfirmLabel()"
+  (cancel)="cancelBotToggle()"
+  (confirm)="confirmBotToggle()"
+>
+  <p>{{ botToggleMessage() }}</p>
+</app-dialog>
 
 @if (showForm()) {
   <div class="modal-overlay" role="presentation">
@@ -62,9 +153,7 @@
       <div class="modal-header">
         <h2 id="student-form-title">{{ editTarget() ? t.editModalTitle : t.newStudent }}</h2>
         <button type="button" class="modal-close" (click)="closeForm()" [attr.aria-label]="t.close">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
 
@@ -122,6 +211,13 @@
 
         <div class="field field--checkbox">
           <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="form.bot_active" name="bot_active" />
+            <span>{{ t.botNotifications }}</span>
+          </label>
+        </div>
+
+        <div class="field field--checkbox">
+          <label class="checkbox-label">
             <input
               type="checkbox"
               [ngModel]="autoTimezone"
@@ -167,9 +263,7 @@
       <div class="modal-header">
         <h2 id="del-title">{{ t.delete }}</h2>
         <button type="button" class="modal-close" (click)="cancelDelete()" [attr.aria-label]="t.close">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
       <div class="modal-body">
@@ -189,9 +283,7 @@
       <div class="modal-header">
         <h2>{{ t.topupTitle }}</h2>
         <button type="button" class="modal-close" (click)="closeTopup()" [attr.aria-label]="t.close">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
       <div class="modal-body">

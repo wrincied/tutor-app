@@ -372,62 +372,28 @@
   </div>
 }
 
-@if (dragMoveConfirm()) {
-  <div
-    class="modal-overlay cal-drag-confirm-overlay"
-    role="presentation"
-    (click)="cancelDragMove()"
-  >
-    <div
-      class="cal-drag-confirm-modal"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="cal-drag-confirm-title"
-      aria-describedby="cal-drag-confirm-desc"
-      (click)="$event.stopPropagation()"
-    >
-      <h2 id="cal-drag-confirm-title" class="cal-drag-confirm-modal__title">Перенести урок?</h2>
-      <p id="cal-drag-confirm-desc" class="cal-drag-confirm-modal__message">
-        Ученику <strong>{{ dragMoveConfirmStudentName() }}</strong> будет отправлено уведомление в
-        Telegram о новом времени:
-        <strong>{{ dragMoveConfirmTimeLabel() }}</strong>.
-      </p>
-      <div class="cal-drag-confirm-modal__actions">
-        <button type="button" class="cal-drag-confirm-modal__btn-secondary" (click)="cancelDragMove()">
-          Отмена
-        </button>
-        <button type="button" class="cal-drag-confirm-modal__btn-primary" (click)="confirmDragMove()">
-          Перенести и уведомить
-        </button>
-      </div>
-    </div>
-  </div>
-}
+<app-dialog
+  [open]="!!dragMoveConfirm()"
+  title="Перенести урок?"
+  cancelLabel="Отмена"
+  confirmLabel="Перенести и уведомить"
+  (cancel)="cancelDragMove()"
+  (confirm)="confirmDragMove()"
+>
+  <p>
+    Ученику <strong>{{ dragMoveConfirmStudentName() }}</strong> будет отправлено уведомление в
+    Telegram о новом времени: <strong>{{ dragMoveConfirmTimeLabel() }}</strong>.
+  </p>
+</app-dialog>
 
-@if (scheduleConflictMessage(); as conflictMsg) {
-  <div
-    class="modal-overlay cal-conflict-overlay"
-    role="presentation"
-    (click)="closeScheduleConflict()"
-  >
-    <div
-      class="cal-conflict-modal"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="cal-conflict-title"
-      aria-describedby="cal-conflict-desc"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="cal-conflict-modal__icon" aria-hidden="true">
-        <img src="/assets/icons/icon-warning.svg" width="24" height="24" alt="" />
-      </div>
-      <h2 id="cal-conflict-title" class="cal-conflict-modal__title">Время занято</h2>
-      <p id="cal-conflict-desc" class="cal-conflict-modal__message">{{ conflictMsg }}</p>
-      <div class="cal-conflict-modal__actions">
-        <button type="button" class="cal-conflict-modal__btn" (click)="closeScheduleConflict()">
-          Понятно
-        </button>
-      </div>
-    </div>
-  </div>
-}
+<app-dialog
+  [open]="!!scheduleConflictMessage()"
+  variant="error"
+  iconSrc="/assets/icons/icon-warning.svg"
+  title="Время занято"
+  dismissLabel="Понятно"
+  (cancel)="closeScheduleConflict()"
+  (confirm)="closeScheduleConflict()"
+>
+  <p>{{ scheduleConflictMessage() }}</p>
+</app-dialog>
