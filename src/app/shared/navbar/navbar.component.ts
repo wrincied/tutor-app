@@ -1,8 +1,11 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, PLATFORM_ID, DestroyRef } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import type { Lang } from '@interfaces';
 import { I18nService } from '../../core/services/i18n.service';
+
+const SIDEBAR_COLLAPSE_BTN_MAX = 890;
 
 @Component({
   selector: 'app-navbar',
@@ -13,6 +16,8 @@ import { I18nService } from '../../core/services/i18n.service';
 export class NavbarComponent {
   auth = inject(AuthService);
   i18n = inject(I18nService);
+  private platformId = inject(PLATFORM_ID);
+  private destroyRef = inject(DestroyRef);
   collapsed = signal(false);
   dark = signal(false);
 
@@ -27,9 +32,17 @@ export class NavbarComponent {
     effect(() => {
       document.documentElement.setAttribute('data-theme', this.dark() ? 'dark' : 'light');
     });
-  }
 
-  // toggleSidebar() {
+    if (isPlatformBrowser(this.platformId)) {
+      const mq = window.matchMedia(`(max-width: ${SIDEBAR_COLLAPSE_BTN_MAX}px)`);
+      const onBreakpoint = () => {
+        if (!mq.matches) this.collapsed.set(false);
+      };
+      mq.addEventListener('change', onBreakpoint);
+      onBreakpoint();
+      this.destroyRef.onDestroy(() => mq.removeEventListener('change', onBreakpoint));
+    }
+  }
 
   toggle() {
     this.collapsed.update((v) => !v);

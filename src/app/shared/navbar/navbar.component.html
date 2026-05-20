@@ -1,7 +1,35 @@
 <!-- Desktop sidebar -->
 <aside class="sidebar" [class.collapsed]="collapsed()">
-  <div class="sidebar-logo">TutorApp</div>
-  <div class="sidebar-logo-short">T</div>
+  <div class="sidebar-head">
+    <div class="sidebar-logo">TutorAssistent</div>
+    <button
+      type="button"
+      class="sidebar-logo-toggle"
+      [class.sidebar-logo-toggle--collapsed]="collapsed()"
+      (click)="toggle()"
+      [attr.aria-label]="collapsed() ? i18n.nav().sidebarExpand : i18n.nav().sidebarCollapse"
+      [attr.aria-expanded]="!collapsed()"
+      [attr.title]="collapsed() ? i18n.nav().sidebarExpand : i18n.nav().sidebarCollapse"
+    >
+      @if (collapsed()) {
+        <span class="sidebar-logo-toggle__letter" aria-hidden="true">T</span>
+      } @else {
+        <svg
+          class="sidebar-logo-toggle__close"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      }
+    </button>
+  </div>
 
   <nav class="nav-links">
     <a routerLink="/app/home" routerLinkActive="active" class="nav-link">

@@ -7,64 +7,150 @@
         <p>Загрузка расписания…</p>
       </div>
     } @else {
-      @if (isNarrowViewport() && studentsSidebarOpen()) {
+      @if (
+        (isBottomNavLayout() && modesMenuOpen()) ||
+        (isNarrowViewport() && studentsSidebarOpen())
+      ) {
         <div
           class="cal-backdrop"
           role="presentation"
-          (click)="studentsSidebarOpen.set(false)"
+          (click)="modesMenuOpen.set(false); studentsSidebarOpen.set(false)"
         ></div>
       }
 
-      <header class="cal-header">
-        <h1 class="cal-header__title">Расписание</h1>
-
-        <button type="button" class="cal-btn cal-btn--students" (click)="toggleStudentsSidebar()">
-          Ученики
-        </button>
-
-        <div class="cal-toolbar">
-          <button type="button" class="cal-btn" (click)="navPrev()" aria-label="Назад">‹</button>
-          <button type="button" class="cal-btn" (click)="goToToday()">Сегодня</button>
-          <button type="button" class="cal-btn" (click)="navNext()" aria-label="Вперёд">›</button>
-          @for (mode of viewModes; track mode) {
+      @if (isBottomNavLayout()) {
+        <aside class="cal-modes-drawer" [class.cal-modes-drawer--open]="modesMenuOpen()">
+          <div class="cal-modes-drawer__head">
+            <h2 class="cal-modes-drawer__title">Режим</h2>
             <button
               type="button"
-              class="cal-toolbar__mode"
-              [class.cal-toolbar__mode--active]="viewMode() === mode"
-              (click)="setViewMode(mode)"
+              class="cal-modes-drawer__close"
+              (click)="modesMenuOpen.set(false)"
+              aria-label="Закрыть"
             >
-              {{ mode }}
+              <img src="/assets/icons/icon-close.svg" width="20" height="20" alt="" />
+            </button>
+          </div>
+          <nav class="cal-modes-drawer__nav">
+            @for (mode of viewModes; track mode) {
+              <button
+                type="button"
+                class="cal-modes-drawer__item"
+                [class.cal-modes-drawer__item--active]="viewMode() === mode"
+                (click)="setViewMode(mode)"
+              >
+                <span class="cal-modes-drawer__item-num">{{ mode }}</span>
+                <span class="cal-modes-drawer__item-label">{{ viewModeLabel(mode) }}</span>
+              </button>
+            }
+          </nav>
+        </aside>
+      }
+
+      <header class="cal-header">
+        <div class="cal-header__start">
+          @if (isBottomNavLayout()) {
+            <button
+              type="button"
+              class="cal-btn cal-btn--burger"
+              (click)="toggleModesMenu()"
+              [attr.aria-expanded]="modesMenuOpen()"
+              aria-label="Режим календаря"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
             </button>
           }
+          @if (isCompactHeader()) {
+            <p class="cal-header__period">{{ periodLabel() }}</p>
+          } @else {
+            <h1 class="cal-header__title">Расписание</h1>
+          }
+        </div>
+
+        <div class="cal-header__actions">
+          <button
+            type="button"
+            class="cal-btn cal-btn--students"
+            (click)="toggleStudentsSidebar()"
+            aria-label="Ученики"
+            title="Ученики"
+          >
+            <img
+              class="cal-btn__icon"
+              src="/assets/icons/icon-students.svg"
+              width="22"
+              height="22"
+              alt=""
+            />
+            <span class="cal-btn__label">Ученики</span>
+          </button>
+
+          <div class="cal-toolbar">
+            @if (!isCompactHeader()) {
+              <button type="button" class="cal-btn" (click)="navPrev()" aria-label="Назад">‹</button>
+            }
+            <button type="button" class="cal-btn" (click)="goToToday()">Сегодня</button>
+            @if (!isCompactHeader()) {
+              <button type="button" class="cal-btn" (click)="navNext()" aria-label="Вперёд">›</button>
+            }
+            @if (!isBottomNavLayout()) {
+              @for (mode of viewModes; track mode) {
+                <button
+                  type="button"
+                  class="cal-toolbar__mode"
+                  [class.cal-toolbar__mode--active]="viewMode() === mode"
+                  (click)="setViewMode(mode)"
+                >
+                  {{ mode }}
+                </button>
+              }
+            }
+          </div>
         </div>
       </header>
 
       <div class="cal-layout">
-        <section class="cal-grid-section" [class.cal-grid-section--month]="isMonthOverview()">
+        <section
+          class="cal-grid-section"
+          [class.cal-grid-section--month]="isMonthOverview()"
+          (touchstart)="onPeriodSwipeStart($event)"
+          (touchend)="onPeriodSwipeEnd($event)"
+        >
           @if (isMonthOverview()) {
             <div class="cal-month">
               <p class="cal-month__title">{{ formatMonthYearLabel() }}</p>
-              <div class="cal-month__weekdays">
-                @for (label of weekdayLabels; track label) {
-                  <div class="cal-month__weekday">{{ label }}</div>
-                }
-              </div>
-              <div class="cal-month__grid">
-                @for (cell of monthOverviewCells(); track dayKey(cell.date)) {
-                  <button
-                    type="button"
-                    class="cal-month__cell"
-                    [class.cal-month__cell--outside]="!cell.inMonth"
-                    [class.cal-month__cell--today]="isToday(cell.date)"
-                    [class.cal-month__cell--has-lessons]="lessonCountForDay(cell.date) > 0"
-                    (click)="openDayFromMonth(cell.date)"
-                  >
-                    <span class="cal-month__day-num">{{ cell.date.getDate() }}</span>
-                    @if (lessonCountForDay(cell.date) > 0) {
-                      <span class="cal-month__badge">{{ lessonCountForDay(cell.date) }}</span>
-                    }
-                  </button>
-                }
+              <div class="cal-month__frame">
+                <div class="cal-month__weekdays">
+                  @for (label of weekdayLabels; track label) {
+                    <div class="cal-month__weekday">{{ label }}</div>
+                  }
+                </div>
+                <div
+                  class="cal-month__grid"
+                  [style.--cal-month-weeks]="monthWeekRows()"
+                >
+                  @for (cell of monthOverviewCells(); track dayKey(cell.date)) {
+                    <button
+                      type="button"
+                      class="cal-month__cell"
+                      [class.cal-month__cell--outside]="!cell.inMonth"
+                      [class.cal-month__cell--today]="isToday(cell.date)"
+                      [class.cal-month__cell--has-lessons]="lessonCountForDay(cell.date) > 0"
+                      (click)="openDayFromMonth(cell.date)"
+                    >
+                      <span class="cal-month__day-num">{{ cell.date.getDate() }}</span>
+                      @if (lessonCountForDay(cell.date) > 0) {
+                        <span class="cal-month__dots" aria-hidden="true">
+                          <span class="cal-month__dot"></span>
+                        </span>
+                      }
+                    </button>
+                  }
+                </div>
               </div>
             </div>
           } @else {
@@ -192,6 +278,19 @@
           </ul>
         </aside>
       </div>
+
+      <button
+        type="button"
+        class="cal-fab"
+        (click)="openNewLessonFab()"
+        aria-label="Добавить урок"
+        title="Добавить урок"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
     }
   </div>
 </div>

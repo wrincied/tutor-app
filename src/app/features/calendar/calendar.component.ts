@@ -52,7 +52,12 @@ export class CalendarComponent implements OnInit {
 
   loadError: string | null = null;
   hasLoaded = signal(false);
+  /** Navbar снизу (как на телефоне), ≤768px */
+  isBottomNavLayout = signal(false);
+  /** Планшет/телефон: без стрелок навигации, ≤1023px */
+  isCompactHeader = signal(false);
   isNarrowViewport = signal(true);
+  modesMenuOpen = signal(false);
   studentsSidebarOpen = signal(false);
   studentsSidebarQuery = signal('');
   focusedStudentId = signal<string | null>(null);
@@ -150,9 +155,33 @@ export class CalendarComponent implements OnInit {
     return cells;
   });
 
-  gridTemplateColumns = computed(
-    () => `repeat(${this.columns().length}, minmax(120px, 1fr))`,
-  );
+  /** Число строк в сетке месяца (5 или 6). */
+  monthWeekRows = computed(() => Math.ceil(this.monthOverviewCells().length / 7));
+
+  gridTemplateColumns = computed(() => {
+    const count = this.columns().length;
+    return count > 0 ? `repeat(${count}, minmax(0, 1fr))` : 'none';
+  });
+
+  /** Подпись периода в шапке (вместо «Расписание» на узких экранах). */
+  periodLabel = computed(() => {
+    if (this.viewMode() === '30') {
+      return this.formatMonthYearLabel();
+    }
+    const cols = this.columns();
+    if (cols.length === 0) {
+      return '';
+    }
+    if (cols.length === 1) {
+      return this.formatColumnHeader(cols[0]);
+    }
+    const fmt = (d: Date) =>
+      d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    return `${fmt(cols[0])} – ${fmt(cols[cols.length - 1])}`;
+  });
+
+  private periodSwipeStart: { x: number; y: number } | null = null;
+  private readonly periodSwipeMinPx = 48;
 
   lessonsByDay = computed(() => {
     const map = new Map<string, Lesson[]>();
@@ -198,7 +227,8 @@ export class CalendarComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.initViewportSidebarMediaQuery();
+    this.initViewportMediaQueries();
+    this.initScrollLock();
     this.loadLessons();
     this.studentSvc.getAll().subscribe({
       next: (list) => this.students.set(list),
@@ -208,21 +238,42 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  private initViewportSidebarMediaQuery(): void {
+  private initScrollLock(): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    document.documentElement.classList.add('cal-scroll-lock');
+    this.destroyRef.onDestroy(() => {
+      document.documentElement.classList.remove('cal-scroll-lock');
+    });
+  }
+
+  private initViewportMediaQueries(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    const bottomNavMq = window.matchMedia('(max-width: 768px)');
+    const compactMq = window.matchMedia('(max-width: 1023px)');
     const applyViewport = () => {
-      const isNarrow = mediaQuery.matches;
-      this.isNarrowViewport.set(isNarrow);
-      if (!isNarrow) {
+      const bottomNav = bottomNavMq.matches;
+      const compact = compactMq.matches;
+      this.isBottomNavLayout.set(bottomNav);
+      this.isCompactHeader.set(compact);
+      this.isNarrowViewport.set(compact);
+      if (!compact) {
         this.studentsSidebarOpen.set(false);
+      }
+      if (!bottomNav) {
+        this.modesMenuOpen.set(false);
       }
     };
     applyViewport();
-    mediaQuery.addEventListener('change', applyViewport);
-    this.destroyRef.onDestroy(() => mediaQuery.removeEventListener('change', applyViewport));
+    bottomNavMq.addEventListener('change', applyViewport);
+    compactMq.addEventListener('change', applyViewport);
+    this.destroyRef.onDestroy(() => {
+      bottomNavMq.removeEventListener('change', applyViewport);
+      compactMq.removeEventListener('change', applyViewport);
+    });
   }
 
   startOfLocalDay(d: Date): Date {
@@ -281,7 +332,50 @@ export class CalendarComponent implements OnInit {
   }
 
   formatColumnHeader(col: Date): string {
-    return `${this.weekdayFmt.format(col)} ${col.getDate()}`;
+    const weekday = this.weekdayFmt.format(col).replace(/\./g, '');
+    if (this.isCompactHeader()) {
+      const shortDay = weekday.length > 2 ? weekday.slice(0, 2) : weekday;
+      return `${shortDay} ${col.getDate()}`;
+    }
+    return `${weekday} ${col.getDate()}`;
+  }
+
+  onPeriodSwipeStart(event: TouchEvent): void {
+    if (event.touches.length !== 1) {
+      return;
+    }
+    const target = event.target as HTMLElement;
+    if (target.closest('.cal-lesson-card') || this.dragLessonId()) {
+      return;
+    }
+    this.periodSwipeStart = {
+      x: event.touches[0].clientX,
+      y: event.touches[0].clientY,
+    };
+  }
+
+  onPeriodSwipeEnd(event: TouchEvent): void {
+    if (!this.periodSwipeStart || event.changedTouches.length !== 1) {
+      this.periodSwipeStart = null;
+      return;
+    }
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - this.periodSwipeStart.x;
+    const dy = touch.clientY - this.periodSwipeStart.y;
+    this.periodSwipeStart = null;
+
+    if (
+      Math.abs(dx) < this.periodSwipeMinPx ||
+      Math.abs(dx) <= Math.abs(dy)
+    ) {
+      return;
+    }
+
+    if (dx < 0) {
+      this.navNext();
+    } else {
+      this.navPrev();
+    }
   }
 
   isToday(col: Date): boolean {
@@ -335,6 +429,28 @@ export class CalendarComponent implements OnInit {
 
   setViewMode(mode: CalendarViewMode): void {
     this.viewMode.set(mode);
+    this.modesMenuOpen.set(false);
+  }
+
+  toggleModesMenu(): void {
+    this.modesMenuOpen.update((open) => !open);
+  }
+
+  viewModeLabel(mode: CalendarViewMode): string {
+    const labels: Record<CalendarViewMode, string> = {
+      '1': '1 день',
+      '3': '3 дня',
+      '7': '7 дней',
+      '30': 'Месяц',
+    };
+    return labels[mode];
+  }
+
+  openNewLessonFab(): void {
+    const now = new Date();
+    const minutes = Math.round(now.getMinutes() / 15) * 15;
+    now.setMinutes(minutes, 0, 0);
+    this.openNewLessonAt(now.toISOString());
   }
 
   toggleStudentsSidebar(): void {

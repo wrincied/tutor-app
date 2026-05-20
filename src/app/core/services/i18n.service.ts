@@ -15,6 +15,8 @@ const NAV: Record<Lang, NavStrings> = {
     themeLight: 'Светлая',
     logout: 'Выйти',
     language: 'Язык',
+    sidebarCollapse: 'Свернуть меню',
+    sidebarExpand: 'Развернуть меню',
   },
   en: {
     home: 'Home',
@@ -25,6 +27,8 @@ const NAV: Record<Lang, NavStrings> = {
     themeLight: 'Light',
     logout: 'Log out',
     language: 'Language',
+    sidebarCollapse: 'Collapse menu',
+    sidebarExpand: 'Expand menu',
   },
   de: {
     home: 'Start',
@@ -35,6 +39,8 @@ const NAV: Record<Lang, NavStrings> = {
     themeLight: 'Hell',
     logout: 'Abmelden',
     language: 'Sprache',
+    sidebarCollapse: 'Menü einklappen',
+    sidebarExpand: 'Menü ausklappen',
   },
   kz: {
     home: 'Басты',
@@ -45,6 +51,8 @@ const NAV: Record<Lang, NavStrings> = {
     themeLight: 'Жарық',
     logout: 'Шығу',
     language: 'Тіл',
+    sidebarCollapse: 'Мәзірді жию',
+    sidebarExpand: 'Мәзірді ашу',
   },
 };
 const STUDENTS: Record<Lang, StudentStrings> = {

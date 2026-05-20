@@ -21,4 +21,22 @@ body {
     margin-left: 0;
     padding-bottom: 72px;
   }
+
+  &:has(app-calendar) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: 0;
+
+    @media (max-width: 768px) {
+      padding-bottom: 56px;
+    }
+  }
+}
+
+html.cal-scroll-lock,
+html.cal-scroll-lock body {
+  overflow: hidden;
+  height: 100%;
 }

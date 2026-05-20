@@ -16,6 +16,8 @@ export interface NavStrings {
   themeLight: string;
   logout: string;
   language: string;
+  sidebarCollapse: string;
+  sidebarExpand: string;
 }
 
 export interface StudentStrings {
