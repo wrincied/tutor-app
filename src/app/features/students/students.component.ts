@@ -10,6 +10,7 @@ import {
   hexToStoredColor,
 } from '../../core/utils/pastel-color';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 
 /** IANA: репетитор в AT, ученики в KZ/BY/RU и др. */
 const TIMEZONE_PRESETS: string[] = [
@@ -37,7 +38,7 @@ function resolvedBrowserTimezone(): string {
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, AppDialogComponent],
+  imports: [FormsModule, AppDialogComponent, AppSelectComponent],
   templateUrl: './students.component.html',
   styleUrl: './students.component.scss',
 })
@@ -171,12 +172,18 @@ export class StudentsComponent implements OnInit {
     }
   }
 
-  timezoneSelectOptions(): string[] {
+  currencySelectOptions(): AppSelectOption[] {
+    return RATE_CURRENCIES.map((c) => ({
+      value: c,
+      label: this.i18n.currencyLabel(c),
+    }));
+  }
+
+  timezoneSelectOptionsList(): AppSelectOption[] {
     const tz = this.form.timezone;
-    if (tz && !TIMEZONE_PRESETS.includes(tz)) {
-      return [tz, ...TIMEZONE_PRESETS];
-    }
-    return [...TIMEZONE_PRESETS];
+    const zones =
+      tz && !TIMEZONE_PRESETS.includes(tz) ? [tz, ...TIMEZONE_PRESETS] : [...TIMEZONE_PRESETS];
+    return zones.map((zone) => ({ value: zone, label: zone }));
   }
 
   save() {

@@ -29,7 +29,7 @@ export class LessonService {
     return this.http.post<Lesson>(API, payload);
   }
 
-  /** PUT /api/lessons/:id — lesson_price / lesson_currency не принимаются */
+  /** PUT /api/lessons/:id — снапшот цены только на сервере; при смене student_id переснимается */
   update(
     id: string,
     payload: {

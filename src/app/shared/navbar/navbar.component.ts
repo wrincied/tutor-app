@@ -2,9 +2,7 @@ import { Component, inject, signal, effect, PLATFORM_ID, DestroyRef } from '@ang
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import type { Lang } from '@interfaces';
 import { I18nService } from '../../core/services/i18n.service';
-
 const SIDEBAR_COLLAPSE_BTN_MAX = 890;
 
 @Component({
@@ -19,7 +17,6 @@ export class NavbarComponent {
   private platformId = inject(PLATFORM_ID);
   private destroyRef = inject(DestroyRef);
   collapsed = signal(false);
-  dark = signal(false);
 
   constructor() {
     effect(() => {
@@ -27,10 +24,6 @@ export class NavbarComponent {
         '--sidebar-w',
         this.collapsed() ? '64px' : '220px',
       );
-    });
-
-    effect(() => {
-      document.documentElement.setAttribute('data-theme', this.dark() ? 'dark' : 'light');
     });
 
     if (isPlatformBrowser(this.platformId)) {
@@ -46,14 +39,5 @@ export class NavbarComponent {
 
   toggle() {
     this.collapsed.update((v) => !v);
-  }
-
-  toggleTheme() {
-    this.dark.update((v) => !v);
-  }
-
-  pickLang(code: Lang, menu: HTMLDetailsElement): void {
-    this.i18n.setLang(code);
-    menu.open = false;
   }
 }

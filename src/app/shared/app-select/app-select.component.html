@@ -1,0 +1,52 @@
+<div
+  class="app-select"
+  [class.app-select--open]="open()"
+  [class.app-select--above]="menuPlacement() === 'above'"
+  [class.app-select--below]="menuPlacement() === 'below'"
+  [class.app-select--compact]="size() === 'compact'"
+  (click)="$event.stopPropagation()"
+>
+  <button
+    type="button"
+    class="app-select__trigger"
+    [attr.id]="id()"
+    [attr.name]="name()"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-expanded]="open()"
+    [disabled]="isDisabled()"
+    aria-haspopup="listbox"
+    (click)="toggle($event)"
+  >
+    @if (displayDotColor(); as dotColor) {
+      <span class="app-select__dot" [style.background-color]="dotColor" aria-hidden="true"></span>
+    }
+    <span class="app-select__value">{{ displayLabel() }}</span>
+    <span class="app-select__chevron" aria-hidden="true"></span>
+  </button>
+
+  @if (open()) {
+    <ul class="app-select__menu" role="listbox">
+      @for (option of options(); track option.value) {
+        <li role="presentation">
+          <button
+            type="button"
+            class="app-select__option"
+            role="option"
+            [attr.aria-selected]="isSelected(option)"
+            [class.app-select__option--active]="isSelected(option)"
+            (click)="selectOption(option, $event)"
+          >
+            @if (option.dotColor) {
+              <span
+                class="app-select__dot"
+                [style.background-color]="option.dotColor"
+                aria-hidden="true"
+              ></span>
+            }
+            {{ option.label }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

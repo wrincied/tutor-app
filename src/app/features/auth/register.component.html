@@ -2,8 +2,8 @@
   <span class="auth-logo">TutorApp</span>
 
   <div class="auth-card">
-    <h1>Создать аккаунт</h1>
-    <p class="subtitle">для репетитора</p>
+    <h1>{{ i18n.authUi().registerTitle }}</h1>
+    <p class="subtitle">{{ i18n.authUi().registerSubtitle }}</p>
 
     @if (error()) {
       <div class="auth-error">{{ error() }}</div>
@@ -12,23 +12,29 @@
     <form (ngSubmit)="submit()" class="auth-form">
       <div class="field">
         <input type="email" [(ngModel)]="email" name="email" required placeholder=" " />
-        <label>Email</label>
+        <label>{{ i18n.authUi().email }}</label>
       </div>
 
       <div class="field">
         <input type="password" [(ngModel)]="password" name="password" required placeholder=" " />
-        <label>Пароль</label>
+        <label>{{ i18n.authUi().password }}</label>
       </div>
 
       <div class="field">
-        <input type="password" [(ngModel)]="passwordConfirm" name="passwordConfirm" required placeholder=" " />
-        <label>Повторите пароль</label>
+        <input
+          type="password"
+          [(ngModel)]="passwordConfirm"
+          name="passwordConfirm"
+          required
+          placeholder=" "
+        />
+        <label>{{ i18n.authUi().confirmPassword }}</label>
       </div>
 
       <div class="auth-actions">
-        <a routerLink="/login">Уже есть аккаунт</a>
+        <a routerLink="/login">{{ i18n.authUi().hasAccount }}</a>
         <button type="submit" [disabled]="loading()">
-          {{ loading() ? 'Создаём...' : 'Создать' }}
+          {{ loading() ? i18n.authUi().creating : i18n.authUi().createAccount }}
         </button>
       </div>
     </form>

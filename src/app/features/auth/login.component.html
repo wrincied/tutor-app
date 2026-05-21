@@ -2,8 +2,8 @@
   <span class="auth-logo">TutorApp</span>
 
   <div class="auth-card">
-    <h1>Войти</h1>
-    <p class="subtitle">в кабинет репетитора</p>
+    <h1>{{ i18n.authUi().loginTitle }}</h1>
+    <p class="subtitle">{{ i18n.authUi().loginSubtitle }}</p>
 
     @if (error()) {
       <div class="auth-error">{{ error() }}</div>
@@ -12,7 +12,7 @@
     <form (ngSubmit)="submit()" class="auth-form">
       <div class="field">
         <input type="email" [(ngModel)]="email" name="email" required placeholder=" " />
-        <label>Email</label>
+        <label>{{ i18n.authUi().email }}</label>
       </div>
 
       <div class="field">
@@ -24,13 +24,13 @@
           placeholder=" "
           autocomplete="current-password"
         />
-        <label>Пароль</label>
+        <label>{{ i18n.authUi().password }}</label>
       </div>
 
       <div class="auth-actions">
-        <a routerLink="/register">Создать аккаунт</a>
+        <a routerLink="/register">{{ i18n.authUi().noAccount }}</a>
         <button type="submit" [disabled]="loading()">
-          {{ loading() ? 'Входим...' : 'Войти' }}
+          {{ loading() ? i18n.authUi().loggingIn : i18n.authUi().login }}
         </button>
       </div>
     </form>

@@ -177,16 +177,14 @@
             />
             <div class="field field--nested">
               <label for="st-currency" class="sr-only">{{ t.currency }}</label>
-              <select
+              <app-select
                 id="st-currency"
+                class="rate-row__currency"
                 [(ngModel)]="form.rate_currency"
                 name="rate_currency"
-                class="rate-row__currency"
-              >
-                @for (c of rateCurrencies; track c) {
-                  <option [value]="c">{{ i18n.currencyLabel(c) }}</option>
-                }
-              </select>
+                size="compact"
+                [options]="currencySelectOptions()"
+              />
             </div>
           </div>
         </div>
@@ -240,11 +238,12 @@
               [attr.name]="'tz-display'"
             />
           } @else {
-            <select id="st-tz" [(ngModel)]="form.timezone" name="timezone">
-              @for (tz of timezoneSelectOptions(); track tz) {
-                <option [value]="tz">{{ tz }}</option>
-              }
-            </select>
+            <app-select
+              id="st-tz"
+              [(ngModel)]="form.timezone"
+              name="timezone"
+              [options]="timezoneSelectOptionsList()"
+            />
           }
         </div>
 

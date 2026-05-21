@@ -1,1 +1,250 @@
-<div>Finance</div>
+<div class="page finance-page">
+  <div class="page-header">
+    <h1>{{ i18n.nav().finance }}</h1>
+    <div class="finance-period" role="group" [attr.aria-label]="t.periodMonth">
+      <button
+        type="button"
+        class="finance-period__btn"
+        [class.finance-period__btn--active]="periodPreset() === 'month'"
+        (click)="setPeriod('month')"
+      >
+        {{ t.periodMonth }}
+      </button>
+      <button
+        type="button"
+        class="finance-period__btn"
+        [class.finance-period__btn--active]="periodPreset() === 'year'"
+        (click)="setPeriod('year')"
+      >
+        {{ t.periodYear }}
+      </button>
+      <button
+        type="button"
+        class="finance-period__btn"
+        [class.finance-period__btn--active]="periodPreset() === 'all'"
+        (click)="setPeriod('all')"
+      >
+        {{ t.periodAll }}
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p class="hint">{{ t.loading }}</p>
+  } @else if (error()) {
+    <p class="finance-page__error">{{ error() }}</p>
+  } @else if (summary(); as s) {
+    <p class="finance-disclaimer">{{ t.disclaimer }}</p>
+
+    @if (!hasLessonsInPeriod()) {
+      <p class="finance-note finance-note--warn">{{ t.lessonsEmptyHint }}</p>
+    }
+
+    <section class="finance-kpi" aria-label="Summary">
+      <article class="finance-kpi__card finance-kpi__card--income finance-kpi__card--wide">
+        <span class="finance-kpi__label">{{ t.totalIncomeCombined }}</span>
+        <strong class="finance-kpi__value">{{ formatMoney(combinedIncome(), s.currency) }}</strong>
+        <div class="finance-kpi__split">
+          <span>
+            {{ t.incomeCompletedPart }}:
+            <strong>{{ formatMoney(s.income.totalIncome, s.currency) }}</strong>
+            ({{ s.totals.completedLessonCount }})
+          </span>
+          <span>
+            {{ t.incomePlannedPart }}:
+            <strong>{{ formatMoney(s.income.scheduledIncome, s.currency) }}</strong>
+            ({{ s.totals.scheduledLessonCount }})
+          </span>
+        </div>
+      </article>
+      <article class="finance-kpi__card">
+        <span class="finance-kpi__label">{{ t.totalExpenses }}</span>
+        <strong class="finance-kpi__value">{{ formatMoney(s.income.totalExpenses, s.currency) }}</strong>
+      </article>
+      <article class="finance-kpi__card">
+        <span class="finance-kpi__label">{{ t.grossProfit }}</span>
+        <strong class="finance-kpi__value">{{ formatMoney(s.income.grossProfit, s.currency) }}</strong>
+      </article>
+      @if (s.austria; as at) {
+        <article class="finance-kpi__card finance-kpi__card--net">
+          <span class="finance-kpi__label">{{ t.netProfit }}</span>
+          <strong class="finance-kpi__value">{{ formatMoney(at.netProfit, s.currency) }}</strong>
+        </article>
+      }
+    </section>
+
+    <section class="finance-stats finance-stats--lessons">
+      <span>{{ t.totalLessons }}: <strong>{{ s.totals.lessonCount }}</strong></span>
+      <span>{{ t.scheduledLessons }}: <strong>{{ s.totals.scheduledLessonCount }}</strong></span>
+      <span>{{ t.completedLessons }}: <strong>{{ s.totals.completedLessonCount }}</strong></span>
+      @if (s.totals.missedLessonCount > 0) {
+        <span>{{ t.missedLessons }}: <strong>{{ s.totals.missedLessonCount }}</strong></span>
+      }
+      @if (s.totals.canceledLessonCount > 0) {
+        <span>{{ t.canceledLessons }}: <strong>{{ s.totals.canceledLessonCount }}</strong></span>
+      }
+      <span>{{ t.lessonHours }}: <strong>{{ formatHours(s.totals.totalLessonHours) }}</strong></span>
+      <span>{{ t.expensesCount }}: <strong>{{ s.totals.expenseCount }}</strong></span>
+    </section>
+
+    <p class="finance-note finance-note--muted">{{ t.markCompletedHint }}</p>
+
+    @if (showMixedCurrencyNote()) {
+      <p class="finance-note">{{ t.mixedCurrencyNote }}</p>
+      <ul class="finance-currency-list">
+        @for (row of combinedByCurrencyRows(); track row[0]) {
+          <li>
+            <span>{{ row[0] }}</span>
+            <strong>{{ formatMoney(row[1], row[0]) }}</strong>
+          </li>
+        }
+      </ul>
+    } @else if (combinedByCurrencyRows().length === 1) {
+      <p class="finance-note finance-note--muted">
+        {{ t.incomeByCurrency }}:
+        <strong>{{ formatMoney(combinedByCurrencyRows()[0][1], combinedByCurrencyRows()[0][0]) }}</strong>
+      </p>
+    }
+
+    <section class="finance-card">
+      <h2>{{ t.taxSection }}</h2>
+      @if (s.austria; as at) {
+        <dl class="finance-dl">
+          <div>
+            <dt>{{ t.taxableBase }}</dt>
+            <dd>{{ formatMoney(at.taxableBase, s.currency) }}</dd>
+          </div>
+          <div>
+            <dt>{{ t.socialInsurance }} ({{ formatPercent(at.socialInsuranceRate) }})</dt>
+            <dd>−{{ formatMoney(at.socialInsurance, s.currency) }}</dd>
+          </div>
+          <div>
+            <dt>{{ t.incomeTax }}</dt>
+            <dd>−{{ formatMoney(at.incomeTax, s.currency) }}</dd>
+          </div>
+          <div class="finance-dl__highlight">
+            <dt>{{ t.netProfit }}</dt>
+            <dd>{{ formatMoney(at.netProfit, s.currency) }}</dd>
+          </div>
+        </dl>
+
+        @if (s.salaryModel13_14; as sal) {
+          <h3 class="finance-card__sub">{{ t.salaryModelTitle }}</h3>
+          <dl class="finance-dl finance-dl--compact">
+            <div>
+              <dt>{{ t.monthlyEquivalent }}</dt>
+              <dd>{{ formatMoney(sal.monthlyEquivalentGross, s.currency) }}</dd>
+            </div>
+            <div>
+              <dt>{{ t.annualGross14 }}</dt>
+              <dd>{{ formatMoney(sal.annualGross14, s.currency) }}</dd>
+            </div>
+            <div>
+              <dt>{{ t.annualNetEstimate }}</dt>
+              <dd>{{ formatMoney(sal.annualEmployeeNetEstimate, s.currency) }}</dd>
+            </div>
+          </dl>
+        }
+      } @else {
+        <p class="finance-note">{{ t.taxNotConfigured }}</p>
+        <p class="finance-note">
+          {{ t.taxConfigureHint }}
+          <a routerLink="/app/account" class="finance-link">{{ i18n.nav().account }}</a>
+        </p>
+        <p class="finance-note finance-note--muted">
+          {{ i18n.accountUi().taxMode }}:
+          <strong>{{ i18n.taxModeLabel(s.tax_mode) }}</strong>
+        </p>
+      }
+    </section>
+
+    <section class="finance-card finance-expenses">
+      <div class="finance-expenses__head">
+        <h2>{{ t.expensesSection }}</h2>
+        <button type="button" class="btn-primary" (click)="openExpenseCreate()">{{ t.addExpense }}</button>
+      </div>
+
+      @if (filteredExpenses().length === 0) {
+        <p class="hint">{{ t.emptyExpenses }}</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="finance-table">
+            <thead>
+              <tr>
+                <th>{{ t.expenseDate }}</th>
+                <th>{{ t.expenseTitle }}</th>
+                <th>{{ t.expenseCategory }}</th>
+                <th class="finance-table__num">{{ t.expenseAmount }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of filteredExpenses(); track e._id) {
+                <tr>
+                  <td>{{ e.expense_date }}</td>
+                  <td>{{ e.title }}</td>
+                  <td>{{ e.category || '—' }}</td>
+                  <td class="finance-table__num">{{ formatMoney(e.amount, s.currency) }}</td>
+                  <td class="finance-table__actions">
+                    <button type="button" class="btn-link" (click)="openExpenseEdit(e)">{{ t.editExpense }}</button>
+                    <button type="button" class="btn-link danger" (click)="confirmDeleteExpense(e._id)">
+                      {{ t.deleteExpense }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>
+
+<app-dialog
+  [open]="expenseFormOpen()"
+  [title]="expenseEditTarget() ? t.editExpense : t.addExpense"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="expenseSaving() ? t.saving : t.save"
+  (cancel)="closeExpenseForm()"
+  (confirm)="saveExpense()"
+>
+  <form class="finance-expense-form" (ngSubmit)="saveExpense()">
+    <div class="field">
+      <input type="text" [(ngModel)]="expenseForm.title" name="expTitle" required placeholder=" " />
+      <label>{{ t.expenseTitle }}</label>
+    </div>
+    <div class="field">
+      <input
+        type="number"
+        [(ngModel)]="expenseForm.amount"
+        name="expAmount"
+        min="0"
+        step="0.01"
+        required
+        placeholder=" "
+      />
+      <label>{{ t.expenseAmount }}</label>
+    </div>
+    <div class="field">
+      <input type="date" [(ngModel)]="expenseForm.expense_date" name="expDate" required placeholder=" " />
+      <label>{{ t.expenseDate }}</label>
+    </div>
+    <div class="field">
+      <input type="text" [(ngModel)]="expenseForm.category" name="expCategory" placeholder=" " />
+      <label>{{ t.expenseCategory }}</label>
+    </div>
+  </form>
+</app-dialog>
+
+<app-dialog
+  [open]="expenseDeleteId() !== null"
+  [title]="t.deleteExpense"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="t.deleteExpense"
+  variant="error"
+  (cancel)="cancelDeleteExpense()"
+  (confirm)="deleteExpense()"
+>
+  <p>{{ t.deleteConfirm }}</p>
+</app-dialog>

@@ -42,6 +42,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/finance/finance.component').then((m) => m.FinanceComponent),
       },
+      {
+        path: 'account',
+        loadComponent: () =>
+          import('./features/account/account.component').then((m) => m.AccountComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

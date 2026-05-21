@@ -21,12 +21,12 @@
       @if (isBottomNavLayout()) {
         <aside class="cal-modes-drawer" [class.cal-modes-drawer--open]="modesMenuOpen()">
           <div class="cal-modes-drawer__head">
-            <h2 class="cal-modes-drawer__title">Режим</h2>
+            <h2 class="cal-modes-drawer__title">{{ i18n.calendarUi().modeDrawerTitle }}</h2>
             <button
               type="button"
               class="cal-modes-drawer__close"
               (click)="modesMenuOpen.set(false)"
-              aria-label="Закрыть"
+              [attr.aria-label]="i18n.studentsUi().close"
             >
               <img src="/assets/icons/icon-close.svg" width="20" height="20" alt="" />
             </button>
@@ -55,7 +55,7 @@
               class="cal-btn cal-btn--burger"
               (click)="toggleModesMenu()"
               [attr.aria-expanded]="modesMenuOpen()"
-              aria-label="Режим календаря"
+              [attr.aria-label]="i18n.calendarUi().modeDrawerTitle"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <line x1="3" y1="6" x2="21" y2="6"/>
@@ -67,7 +67,7 @@
           @if (isCompactHeader()) {
             <p class="cal-header__period">{{ periodLabel() }}</p>
           } @else {
-            <h1 class="cal-header__title">Расписание</h1>
+            <h1 class="cal-header__title">{{ i18n.calendarUi().title }}</h1>
           }
         </div>
 
@@ -76,8 +76,8 @@
             type="button"
             class="cal-btn cal-btn--students"
             (click)="toggleStudentsSidebar()"
-            aria-label="Ученики"
-            title="Ученики"
+            [attr.aria-label]="i18n.calendarUi().students"
+            [attr.title]="i18n.calendarUi().students"
           >
             <img
               class="cal-btn__icon"
@@ -86,16 +86,24 @@
               height="22"
               alt=""
             />
-            <span class="cal-btn__label">Ученики</span>
+            <span class="cal-btn__label">{{ i18n.calendarUi().students }}</span>
           </button>
 
           <div class="cal-toolbar">
             @if (!isCompactHeader()) {
-              <button type="button" class="cal-btn" (click)="navPrev()" aria-label="Назад">‹</button>
+              <button type="button" class="cal-btn" (click)="navPrev()" [attr.aria-label]="i18n.calendarUi().prev">‹</button>
             }
-            <button type="button" class="cal-btn" (click)="goToToday()">Сегодня</button>
+            <button
+              type="button"
+              class="cal-btn cal-btn--today"
+              (click)="goToToday()"
+              [attr.aria-label]="i18n.calendarUi().today"
+              [attr.title]="i18n.calendarUi().today"
+            >
+              <span class="cal-btn-today__frame">{{ todayDayOfMonth() }}</span>
+            </button>
             @if (!isCompactHeader()) {
-              <button type="button" class="cal-btn" (click)="navNext()" aria-label="Вперёд">›</button>
+              <button type="button" class="cal-btn" (click)="navNext()" [attr.aria-label]="i18n.calendarUi().next">›</button>
             }
             @if (!isBottomNavLayout()) {
               @for (mode of viewModes; track mode) {
@@ -125,7 +133,7 @@
               <p class="cal-month__title">{{ formatMonthYearLabel() }}</p>
               <div class="cal-month__frame">
                 <div class="cal-month__weekdays">
-                  @for (label of weekdayLabels; track label) {
+                  @for (label of weekdayLabels(); track label) {
                     <div class="cal-month__weekday">{{ label }}</div>
                   }
                 </div>
@@ -177,10 +185,16 @@
                     {{ formatHourLabel(hour) }}
                   </div>
                 }
+                @if (nowLineTopPx(); as nowTop) {
+                  <div class="cal-now-marker" [style.top.px]="nowTop">{{ nowTimeLabel() }}</div>
+                }
               </div>
 
               <div class="cal-days-scroll">
-                <div class="cal-days-grid" [style.grid-template-columns]="gridTemplateColumns()">
+                <div
+                  class="cal-days-grid"
+                  [style.grid-template-columns]="gridTemplateColumns()"
+                >
                   @for (col of columns(); track dayKey(col)) {
                     <div
                       class="cal-day-column"
@@ -198,6 +212,10 @@
                         <div class="cal-drag-snap-line" [style.top.px]="snapTop"></div>
                       }
 
+                      @if (isToday(col) && nowLineTopPx(); as nowTop) {
+                        <div class="cal-now-line" [style.top.px]="nowTop" aria-hidden="true"></div>
+                      }
+
                       @for (lesson of lessonsForColumn(col); track lesson._id) {
                         <div
                           [class]="lessonCardClass(lesson)"
@@ -212,7 +230,28 @@
                           <p class="cal-lesson-card__title">
                             {{ getStudentName(lesson.student_id) }}
                           </p>
-                          <p class="cal-lesson-card__meta">{{ lesson.lesson_duration }} мин</p>
+                          @if (lessonCardUseCompactMeta(lesson)) {
+                            <p class="cal-lesson-card__meta">
+                              {{ formatLessonRegion(lesson) }}
+                              · {{ formatLessonSnapshotRate(lesson) }}
+                              · {{ formatLessonDuration(lesson.lesson_duration) }}
+                            </p>
+                          } @else {
+                            <div class="cal-lesson-card__details">
+                              <p class="cal-lesson-card__detail">
+                                <span class="cal-lesson-card__lbl">{{ i18n.calendarUi().regionLabel }}</span>
+                                <span>{{ formatLessonRegion(lesson) }}</span>
+                              </p>
+                              <p class="cal-lesson-card__detail">
+                                <span class="cal-lesson-card__lbl">{{ i18n.calendarUi().rateLabel }}</span>
+                                <span>{{ formatLessonSnapshotRate(lesson) }}</span>
+                              </p>
+                              <p class="cal-lesson-card__detail">
+                                <span class="cal-lesson-card__lbl">{{ i18n.calendarUi().durationLabel }}</span>
+                                <span>{{ formatLessonDuration(lesson.lesson_duration) }}</span>
+                              </p>
+                            </div>
+                          }
                         </div>
                       }
                     </div>
@@ -230,12 +269,12 @@
         >
           <div class="cal-sidebar__head">
             <button type="button" class="cal-sidebar__clear" (click)="clearStudentFocus()">
-              Показать всех
+              {{ i18n.calendarUi().showAllStudents }}
             </button>
             <input
               type="search"
               class="cal-sidebar__search"
-              placeholder="Поиск ученика…"
+              [placeholder]="i18n.calendarUi().searchStudent"
               [ngModel]="studentsSidebarQuery()"
               (ngModelChange)="studentsSidebarQuery.set($event)"
               autocomplete="off"
@@ -269,7 +308,7 @@
                             : sidebarStudent.rate_currency ?? 'EUR'
                             : 'symbol-narrow'
                             : '1.0-0'
-                      }}/ч
+                      }}{{ i18n.studentsUi().perHour }}
                     </span>
                   </span>
                 </button>
@@ -283,8 +322,8 @@
         type="button"
         class="cal-fab"
         (click)="openNewLessonFab()"
-        aria-label="Добавить урок"
-        title="Добавить урок"
+        [attr.aria-label]="i18n.calendarUi().addLesson"
+        [attr.title]="i18n.calendarUi().addLesson"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"/>
@@ -301,14 +340,19 @@
       <div class="modal-header">
         <h2>
           @if (editLessonTarget()) {
-            Редактировать
+            {{ i18n.calendarUi().editLesson }}
           } @else if (lessonFormStep() === 2) {
-            Заметки
+            {{ i18n.calendarUi().notesStep }}
           } @else {
-            Новый урок
+            {{ i18n.calendarUi().newLesson }}
           }
         </h2>
-        <button type="button" class="modal-close" (click)="closeLessonForm()" aria-label="Закрыть">
+        <button
+          type="button"
+          class="modal-close"
+          (click)="closeLessonForm()"
+          [attr.aria-label]="i18n.studentsUi().close"
+        >
           <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
@@ -320,12 +364,32 @@
 
         @if (editLessonTarget()) {
           <div class="cal-form-fields">
-            <select name="student_id" class="cal-field" [(ngModel)]="form.student_id">
-              <option value="">Ученик</option>
-              @for (formStudent of students(); track formStudent._id) {
-                <option [value]="formStudent._id">{{ formStudent.name }}</option>
+            <app-select
+              name="student_id"
+              [(ngModel)]="form.student_id"
+              [options]="studentSelectOptions()"
+              [placeholder]="i18n.calendarUi().studentPlaceholder"
+              menuPlacement="above"
+            />
+
+            @if (editLessonTarget(); as editing) {
+              <p class="cal-form-preview cal-form-preview--snapshot">
+                {{ i18n.calendarUi().snapshotRateLabel }}
+                @if (lessonHasSnapshotRate(editing)) {
+                  {{
+                    editing.lesson_price
+                      | currency: editing.lesson_currency : 'symbol-narrow' : '1.0-0'
+                  }}/ч
+                } @else {
+                  —
+                }
+              </p>
+              @if (editLessonStudentChanged()) {
+                <p class="cal-form-preview cal-form-preview--hint">
+                  {{ i18n.calendarUi().snapshotWillUpdate }}
+                </p>
               }
-            </select>
+            }
 
             <input
               type="datetime-local"
@@ -350,17 +414,18 @@
               }
             </div>
 
-            <select name="status" class="cal-field" [(ngModel)]="form.status">
-              @for (statusOption of statusOptions; track statusOption) {
-                <option [value]="statusOption">{{ statusOption }}</option>
-              }
-            </select>
+            <app-select
+              name="status"
+              [(ngModel)]="form.status"
+              [options]="lessonStatusSelectOptions()"
+              menuPlacement="above"
+            />
 
             <textarea
               name="notes"
               rows="3"
               class="cal-field cal-field--textarea"
-              placeholder="Заметки"
+              [placeholder]="i18n.calendarUi().notesPlaceholder"
               [(ngModel)]="form.notes"
             ></textarea>
           </div>
@@ -376,25 +441,44 @@
               [disabled]="savingLesson() || deletingLesson()"
               (click)="deleteLesson()"
             >
-              {{ deletingLesson() ? 'Удаление…' : 'Удалить' }}
+              {{
+                deletingLesson()
+                  ? i18n.calendarUi().deletingLesson
+                  : i18n.calendarUi().deleteLesson
+              }}
             </button>
-            <button type="button" class="btn-link" (click)="closeLessonForm()">Отмена</button>
+            <button type="button" class="btn-link" (click)="closeLessonForm()">
+              {{ i18n.studentsUi().cancel }}
+            </button>
             <button
               type="submit"
               class="btn-primary"
               [disabled]="savingLesson() || deletingLesson()"
             >
-              {{ savingLesson() ? 'Сохранение…' : 'Сохранить' }}
+              {{
+                savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save
+              }}
             </button>
           </div>
         } @else if (lessonFormStep() === 1) {
           <div class="cal-form-fields">
-            <select name="student_id" class="cal-field" [(ngModel)]="form.student_id">
-              <option value="">Ученик</option>
-              @for (formStudent of students(); track formStudent._id) {
-                <option [value]="formStudent._id">{{ formStudent.name }}</option>
-              }
-            </select>
+            <app-select
+              name="student_id"
+              [(ngModel)]="form.student_id"
+              [options]="studentSelectOptions()"
+              [placeholder]="i18n.calendarUi().studentPlaceholder"
+              menuPlacement="above"
+            />
+
+            @if (selectedStudentForForm(); as picked) {
+              <p class="cal-form-preview cal-form-preview--snapshot">
+                {{ i18n.calendarUi().snapshotWillFix }}
+                {{
+                  picked.rate_per_hour
+                    | currency: picked.rate_currency ?? 'EUR' : 'symbol-narrow' : '1.0-0'
+                }}/ч
+              </p>
+            }
 
             <input
               type="datetime-local"
@@ -423,11 +507,12 @@
               }
             </div>
 
-            <select name="statusNew" class="cal-field" [(ngModel)]="form.status">
-              @for (statusOption of statusOptions; track statusOption) {
-                <option [value]="statusOption">{{ statusOption }}</option>
-              }
-            </select>
+            <app-select
+              name="status"
+              [(ngModel)]="form.status"
+              [options]="lessonStatusSelectOptions()"
+              menuPlacement="above"
+            />
           </div>
 
           @if (saveLessonError) {
@@ -435,15 +520,21 @@
           }
 
           <div class="cal-form-actions">
-            <button type="button" class="btn-link" (click)="closeLessonForm()">Отмена</button>
-            <button type="button" class="btn-link" (click)="goToNotesStep()">Заметки</button>
+            <button type="button" class="btn-link" (click)="closeLessonForm()">
+              {{ i18n.studentsUi().cancel }}
+            </button>
+            <button type="button" class="btn-link" (click)="goToNotesStep()">
+              {{ i18n.calendarUi().goToNotes }}
+            </button>
             <button
               type="button"
               class="btn-primary"
               [disabled]="savingLesson()"
               (click)="saveLesson()"
             >
-              {{ savingLesson() ? 'Сохранение…' : 'Сохранить' }}
+              {{
+                savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save
+              }}
             </button>
           </div>
         } @else {
@@ -451,7 +542,7 @@
             name="notesNew"
             rows="4"
             class="cal-field cal-field--textarea cal-field--textarea-lg"
-            placeholder="Заметки к уроку"
+            [placeholder]="i18n.calendarUi().notesNewPlaceholder"
             [(ngModel)]="form.notes"
           ></textarea>
 
@@ -460,9 +551,13 @@
           }
 
           <div class="cal-form-actions">
-            <button type="button" class="btn-link" (click)="backToMainStep()">Назад</button>
+            <button type="button" class="btn-link" (click)="backToMainStep()">
+              {{ i18n.calendarUi().back }}
+            </button>
             <button type="submit" class="btn-primary" [disabled]="savingLesson()">
-              {{ savingLesson() ? 'Сохранение…' : 'Сохранить' }}
+              {{
+                savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save
+              }}
             </button>
           </div>
         }
@@ -473,15 +568,17 @@
 
 <app-dialog
   [open]="!!dragMoveConfirm()"
-  title="Перенести урок?"
-  cancelLabel="Отмена"
-  confirmLabel="Перенести и уведомить"
+  [title]="i18n.calendarUi().moveLessonTitle"
+  [cancelLabel]="i18n.studentsUi().cancel"
+  [confirmLabel]="i18n.calendarUi().moveLessonConfirm"
   (cancel)="cancelDragMove()"
   (confirm)="confirmDragMove()"
 >
   <p>
-    Ученику <strong>{{ dragMoveConfirmStudentName() }}</strong> будет отправлено уведомление в
-    Telegram о новом времени: <strong>{{ dragMoveConfirmTimeLabel() }}</strong>.
+    {{ i18n.calendarUi().moveLessonBodyBefore }}
+    <strong>{{ dragMoveConfirmStudentName() }}</strong>
+    {{ i18n.calendarUi().moveLessonBodyAfter }}
+    <strong>{{ dragMoveConfirmTimeLabel() }}</strong>.
   </p>
 </app-dialog>
 
@@ -489,8 +586,8 @@
   [open]="!!scheduleConflictMessage()"
   variant="error"
   iconSrc="/assets/icons/icon-warning.svg"
-  title="Время занято"
-  dismissLabel="Понятно"
+  [title]="i18n.calendarUi().timeBusyTitle"
+  [dismissLabel]="i18n.calendarUi().ok"
   (cancel)="closeScheduleConflict()"
   (confirm)="closeScheduleConflict()"
 >

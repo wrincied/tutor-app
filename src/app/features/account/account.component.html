@@ -1,0 +1,345 @@
+<div class="account-page">
+
+  <h1 class="account-page__title">{{ i18n.accountUi().title }}</h1>
+
+
+
+  <section class="account-card account-card--settings">
+
+    <h2>{{ i18n.accountUi().settingsSection }}</h2>
+
+
+
+    <div class="account-setting">
+
+      <span class="account-setting__label">{{ i18n.accountUi().language }}</span>
+
+      <div class="account-langs" role="group" [attr.aria-label]="i18n.accountUi().language">
+
+        @for (code of i18n.allLangs; track code) {
+
+          <button
+
+            type="button"
+
+            class="account-lang-btn"
+
+            [class.account-lang-btn--active]="i18n.lang() === code"
+
+            (click)="pickLang(code)"
+
+            [attr.aria-label]="i18n.labelForLang(code)"
+
+            [attr.aria-pressed]="i18n.lang() === code"
+
+          >
+
+            <img [src]="flagIcon(code)" width="28" height="19" alt="" />
+
+            <span class="account-lang-btn__name">{{ i18n.labelForLang(code) }}</span>
+
+          </button>
+
+        }
+
+      </div>
+
+    </div>
+
+
+
+    <div class="account-setting">
+
+      <span class="account-setting__label">
+
+        {{ theme.dark() ? i18n.accountUi().themeLight : i18n.accountUi().themeDark }}
+
+      </span>
+
+      <button
+
+        type="button"
+
+        class="account-theme-btn"
+
+        (click)="theme.toggle()"
+
+        [attr.aria-label]="theme.dark() ? i18n.accountUi().themeLight : i18n.accountUi().themeDark"
+
+      >
+
+        @if (theme.dark()) {
+
+          <img src="/assets/icons/icon-sun.svg" width="22" height="22" alt="" />
+
+          <span>{{ i18n.accountUi().themeLight }}</span>
+
+        } @else {
+
+          <img src="/assets/icons/icon-moon.svg" width="22" height="22" alt="" />
+
+          <span>{{ i18n.accountUi().themeDark }}</span>
+
+        }
+
+      </button>
+
+    </div>
+
+  </section>
+
+
+
+  @if (loading()) {
+
+    <p class="account-page__hint">{{ i18n.accountUi().saving }}</p>
+
+  } @else {
+
+    @if (error()) {
+
+      <p class="account-page__error">{{ error() }}</p>
+
+    }
+
+    @if (saved()) {
+
+      <p class="account-page__success">{{ i18n.accountUi().saved }}</p>
+
+    }
+
+
+
+    <form class="account-form" (ngSubmit)="save()">
+
+      <section class="account-card">
+
+        <h2>{{ i18n.accountUi().accountSection }}</h2>
+
+
+
+        <h3 class="account-card__subtitle">{{ i18n.accountUi().emailSection }}</h3>
+
+        <div class="field">
+
+          <input type="email" [(ngModel)]="newEmail" name="email" required placeholder=" " />
+
+          <label>{{ i18n.accountUi().newEmail }}</label>
+
+        </div>
+
+
+
+        <h3 class="account-card__subtitle">{{ i18n.accountUi().passwordSection }}</h3>
+
+        <div class="field">
+
+          <input
+
+            type="password"
+
+            [(ngModel)]="currentPassword"
+
+            name="currentPassword"
+
+            placeholder=" "
+
+            autocomplete="current-password"
+
+          />
+
+          <label>{{ i18n.accountUi().currentPassword }}</label>
+
+        </div>
+
+        <div class="field">
+
+          <input
+
+            type="password"
+
+            [(ngModel)]="newPassword"
+
+            name="newPassword"
+
+            placeholder=" "
+
+            autocomplete="new-password"
+
+          />
+
+          <label>{{ i18n.accountUi().newPassword }}</label>
+
+        </div>
+
+        <div class="field">
+
+          <input
+
+            type="password"
+
+            [(ngModel)]="confirmPassword"
+
+            name="confirmPassword"
+
+            placeholder=" "
+
+            autocomplete="new-password"
+
+          />
+
+          <label>{{ i18n.accountUi().confirmPassword }}</label>
+
+        </div>
+
+
+
+        <h3 class="account-card__subtitle">{{ i18n.accountUi().subscriptionSection }}</h3>
+
+        <p class="account-readonly account-readonly--plan">
+
+          <span class="account-readonly__label">{{ i18n.accountUi().subscriptionStatus }}</span>
+
+          <strong>{{ subscriptionLabel() }}</strong>
+
+        </p>
+
+        <p class="account-hint">{{ i18n.accountUi().subscriptionManagedByPayment }}</p>
+
+        <button type="button" class="account-learn-more" (click)="openSubscriptionInfo()">
+          {{ i18n.accountUi().subscriptionLearnMore }}
+        </button>
+
+        @if (canBuySubscription()) {
+
+          <div class="account-billing-actions">
+
+            <button
+
+              type="button"
+
+              class="btn-primary"
+
+              [disabled]="checkoutLoading()"
+
+              (click)="startProCheckout()"
+
+            >
+
+              {{
+
+                checkoutLoading() ? i18n.accountUi().checkoutLoading : i18n.accountUi().upgradePro
+
+              }}
+
+            </button>
+
+          </div>
+
+        }
+
+
+
+        <h3 class="account-card__subtitle">{{ i18n.accountUi().taxSection }}</h3>
+
+        @if (!taxModeConfigured()) {
+
+          <p class="account-hint account-hint--warn">{{ i18n.accountUi().taxModeRequiredHint }}</p>
+
+          <div class="field field--select">
+
+            <app-select
+
+              name="tax_mode"
+
+              [(ngModel)]="tax_mode"
+
+              [options]="taxModeSelectOptions()"
+
+              menuPlacement="below"
+
+            />
+
+            <label>{{ i18n.accountUi().taxMode }}</label>
+
+          </div>
+
+        } @else {
+
+          <p class="account-readonly">
+
+            <span class="account-readonly__label">{{ i18n.accountUi().taxMode }}</span>
+
+            <strong>{{ i18n.taxModeLabel(tax_mode) }}</strong>
+
+          </p>
+
+          <p class="account-hint">{{ i18n.accountUi().taxModeLockedHint }}</p>
+
+        }
+
+
+
+        <div class="field field--select">
+
+          <app-select
+
+            name="country"
+
+            [(ngModel)]="country_settings"
+
+            [options]="countrySelectOptions()"
+
+          />
+
+          <label>{{ i18n.accountUi().country }}</label>
+
+        </div>
+
+      </section>
+
+
+
+      <button type="submit" class="btn-primary account-form__submit" [disabled]="saving()">
+
+        {{ saving() ? i18n.accountUi().saving : i18n.accountUi().save }}
+
+      </button>
+
+    </form>
+
+  }
+
+  <app-dialog
+    [open]="subscriptionInfoOpen()"
+    [title]="i18n.accountUi().subscriptionModalTitle"
+    [dismissLabel]="i18n.accountUi().subscriptionModalClose"
+    (confirm)="closeSubscriptionInfo()"
+    (cancel)="closeSubscriptionInfo()"
+  >
+    <div class="subscription-modal">
+      <p class="subscription-modal__intro">{{ i18n.accountUi().subscriptionModalIntro }}</p>
+      <ul class="subscription-modal__features">
+        <li>{{ i18n.accountUi().subscriptionModalFeature1 }}</li>
+        <li>{{ i18n.accountUi().subscriptionModalFeature2 }}</li>
+        <li>{{ i18n.accountUi().subscriptionModalFeature3 }}</li>
+      </ul>
+      <p class="subscription-modal__country">
+        {{ i18n.accountUi().subscriptionPricesForCountry }}: <strong>{{ country_settings }}</strong>
+      </p>
+      <div class="subscription-modal__prices">
+        <div class="subscription-modal__price">
+          <span class="subscription-modal__price-label">{{ i18n.accountUi().subscriptionPriceMonthly }}</span>
+          <strong>{{ subscriptionMonthlyPrice() }}</strong>
+        </div>
+        <div class="subscription-modal__price">
+          <span class="subscription-modal__price-label">{{ i18n.accountUi().subscriptionPriceYearly }}</span>
+          <strong>{{ subscriptionYearlyPrice() }}</strong>
+        </div>
+      </div>
+    </div>
+  </app-dialog>
+
+</div>
+
+

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   selector: 'app-register',
@@ -12,6 +13,7 @@ import { AuthService } from '../../core/services/auth.service';
 export class RegisterComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
+  readonly i18n = inject(I18nService);
 
   email = '';
   password = '';
@@ -21,11 +23,11 @@ export class RegisterComponent {
 
   submit() {
     if (this.password !== this.passwordConfirm) {
-      this.error.set('Пароли не совпадают');
+      this.error.set(this.i18n.authUi().passwordsMismatch);
       return;
     }
     if (this.password.length < 6) {
-      this.error.set('Пароль должен быть не менее 6 символов');
+      this.error.set(this.i18n.authUi().passwordMinLength);
       return;
     }
     this.error.set('');
@@ -34,7 +36,7 @@ export class RegisterComponent {
       next: () => this.router.navigate(['/app/home']),
       error: (err) => {
         console.error('[Register error]', err);
-        this.error.set(err?.error?.message || 'Ошибка регистрации');
+        this.error.set(err?.error?.message || this.i18n.authUi().registerError);
         this.loading.set(false);
       },
     });
