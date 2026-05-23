@@ -25,7 +25,9 @@
       <button type="button" class="btn-secondary" [disabled]="loading()" (click)="checkVerified()">
         {{ i18n.authUi().verifyRefreshStatus }}
       </button>
-      <button type="button" class="btn-link danger" (click)="signOut()">{{ i18n.authUi().signOut }}</button>
+      <button type="button" class="btn-link danger" (click)="signOut()">
+        {{ i18n.authUi().signOut }}
+      </button>
     </div>
   </div>
 </div>
