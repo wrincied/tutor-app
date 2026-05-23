@@ -22,7 +22,3 @@ runConfig:
   # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
   # - variable: MY_SECRET
   #   secret: mySecretRef
-env:
-  - variable: NPM_CONFIG_LEGACY_PEER_DEPS
-    value: "true"
-    availability: [BUILD]
