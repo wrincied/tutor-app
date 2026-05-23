@@ -1,19 +1,32 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import type { Expense, FinanceSummary } from '@interfaces';
+import {
+  FINANCE_REPORT_CURRENCIES,
+  type Expense,
+  type FinanceSummary,
+} from '@interfaces';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import {
   financePeriodRange,
   type FinancePeriodPreset,
 } from '../../core/utils/finance-period';
+import { convertWithEurRates } from '../../core/utils/finance-currency';
+import {
+  expenseAmountInReportCurrency,
+  remapFinanceSummary,
+} from '../../core/utils/finance-summary-currency';
+import { formatMoneyWithCode } from '../../core/utils/format-currency';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+
+const FINANCE_CURRENCY_STORAGE_KEY = 'finance_report_currency';
 
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [FormsModule, RouterLink, AppDialogComponent],
+  imports: [FormsModule, RouterLink, AppDialogComponent, AppSelectComponent],
   templateUrl: './finance.component.html',
   styleUrl: './finance.component.scss',
 })
@@ -22,11 +35,16 @@ export class FinanceComponent implements OnInit {
   readonly i18n = inject(I18nService);
 
   loading = signal(true);
+  readonly skeletonKpiSlots = [0, 1, 2, 3];
+  readonly skeletonLineSlots = [0, 1, 2];
   error = signal<string | null>(null);
   summary = signal<FinanceSummary | null>(null);
   expenses = signal<Expense[]>([]);
 
   periodPreset = signal<FinancePeriodPreset>('all');
+  reportCurrency = signal(this.readStoredReportCurrency());
+
+  displayCurrency = computed(() => this.reportCurrency() || this.summary()?.currency || 'EUR');
   expenseFormOpen = signal(false);
   expenseEditTarget = signal<Expense | null>(null);
   expenseDeleteId = signal<string | null>(null);
@@ -46,14 +64,11 @@ export class FinanceComponent implements OnInit {
       .sort(([a], [b]) => a.localeCompare(b));
   });
 
-  combinedByCurrencyRows = computed(() => {
-    const by = this.summary()?.income.combinedByCurrency ?? {};
-    return Object.entries(by)
-      .filter(([, amount]) => amount > 0)
-      .sort(([a], [b]) => a.localeCompare(b));
+  showMixedCurrencyNote = computed(() => {
+    const codes = Object.keys(this.summary()?.income.byCurrency ?? {});
+    const report = this.displayCurrency();
+    return codes.length > 1 || codes.some((c) => c !== report);
   });
-
-  showMixedCurrencyNote = computed(() => this.combinedByCurrencyRows().length > 1);
 
   combinedIncome = computed(() => {
     const s = this.summary();
@@ -99,10 +114,42 @@ export class FinanceComponent implements OnInit {
     this.reload();
   }
 
+  currencySelectOptions(): AppSelectOption[] {
+    return FINANCE_REPORT_CURRENCIES.map((code) => ({
+      value: code,
+      label: code,
+    }));
+  }
+
+  setReportCurrency(code: string): void {
+    if (!code || code === this.reportCurrency()) {
+      return;
+    }
+    this.reportCurrency.set(code);
+    localStorage.setItem(FINANCE_CURRENCY_STORAGE_KEY, code);
+    const current = this.summary();
+    if (current) {
+      this.summary.set(remapFinanceSummary(current, code));
+    }
+    this.reload();
+  }
+
+  private readStoredReportCurrency(): string {
+    if (typeof localStorage === 'undefined') {
+      return '';
+    }
+    return localStorage.getItem(FINANCE_CURRENCY_STORAGE_KEY) ?? '';
+  }
+
   reload(): void {
     this.loading.set(true);
     this.error.set(null);
     const range = financePeriodRange(this.periodPreset());
+    const currency = this.reportCurrency();
+    const summaryQuery = {
+      ...range,
+      ...(currency ? { currency } : {}),
+    };
     let pending = 2;
     const finish = () => {
       pending -= 1;
@@ -111,9 +158,13 @@ export class FinanceComponent implements OnInit {
       }
     };
 
-    this.financeSvc.getSummary(range).subscribe({
+    this.financeSvc.getSummary(summaryQuery).subscribe({
       next: (data) => {
-        this.summary.set(data);
+        const target = this.reportCurrency() || data.currency;
+        if (!this.reportCurrency()) {
+          this.reportCurrency.set(target);
+        }
+        this.summary.set(remapFinanceSummary(data, target));
         finish();
       },
       error: () => {
@@ -135,12 +186,18 @@ export class FinanceComponent implements OnInit {
   }
 
   formatMoney(amount: number, currencyCode?: string): string {
-    const code = currencyCode ?? this.summary()?.currency ?? 'EUR';
-    return new Intl.NumberFormat(this.i18n.localeId(), {
-      style: 'currency',
-      currency: code,
-      maximumFractionDigits: 2,
-    }).format(amount);
+    const code = currencyCode ?? this.displayCurrency();
+    return formatMoneyWithCode(amount, code, this.i18n.localeId());
+  }
+
+  formatExpenseAmount(amount: number): string {
+    const summary = this.summary();
+    if (!summary) {
+      return this.formatMoney(amount);
+    }
+    return this.formatMoney(
+      expenseAmountInReportCurrency(amount, summary, this.displayCurrency()),
+    );
   }
 
   formatHours(hours: number): string {
@@ -154,6 +211,23 @@ export class FinanceComponent implements OnInit {
       style: 'percent',
       maximumFractionDigits: 2,
     }).format(rate);
+  }
+
+  convertToReport(amount: number, fromCurrency: string): number {
+    const s = this.summary();
+    if (!s?.exchangeRates?.rates) {
+      return amount;
+    }
+    return convertWithEurRates(amount, fromCurrency, this.displayCurrency(), s.exchangeRates.rates);
+  }
+
+  exchangeRatesLabel(): string {
+    const s = this.summary();
+    if (!s?.exchangeRates) {
+      return '';
+    }
+    const { asOf, source } = s.exchangeRates;
+    return `${this.t.ratesAsOf} ${asOf} (${source})`;
   }
 
   openExpenseCreate(): void {

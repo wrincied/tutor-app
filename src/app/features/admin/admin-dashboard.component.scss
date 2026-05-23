@@ -1,0 +1,135 @@
+:host {
+  display: block;
+}
+
+.admin-page__error {
+  margin: 0 0 1rem;
+  color: rgb(220 38 38);
+  font-size: 0.875rem;
+}
+
+.admin-page__success {
+  margin: 0 0 1rem;
+  color: var(--nav-accent);
+  font-size: 0.875rem;
+}
+
+.admin-kpi {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.admin-kpi__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--nav-border);
+  border-radius: 0.75rem;
+  background: var(--nav-bg);
+
+  &--wide {
+    @media (max-width: 899px) {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.admin-kpi__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.admin-kpi__value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1.1;
+
+  &--sm {
+    font-size: 1.125rem;
+    line-height: 1.35;
+  }
+}
+
+.admin-kpi__hint {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--nav-border);
+  border-radius: 0.75rem;
+  background: var(--nav-bg);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--nav-border);
+    vertical-align: middle;
+  }
+
+  th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: rgb(248 250 252 / 0.6);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover td {
+    background: var(--nav-hover);
+  }
+}
+
+.admin-table__empty {
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.admin-table__gift {
+  white-space: nowrap;
+}
+
+.admin-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--free {
+    background: rgb(241 245 249);
+    color: rgb(71 85 105);
+  }
+
+  &--pro {
+    background: rgb(220 252 231);
+    color: rgb(21 128 61);
+  }
+
+  &--trial {
+    background: rgb(254 243 199);
+    color: rgb(146 64 14);
+  }
+}

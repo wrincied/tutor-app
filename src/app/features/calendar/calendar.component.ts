@@ -1,22 +1,33 @@
 import {
+  afterNextRender,
   Component,
   computed,
   DestroyRef,
+  effect,
+  ElementRef,
   inject,
+  Injector,
   OnInit,
   PLATFORM_ID,
   signal,
+  viewChild,
 } from '@angular/core';
-import { CurrencyPipe, isPlatformBrowser } from '@angular/common';
+import { CurrencyPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { CalendarLessonDisplayService } from '../../core/services/calendar-lesson-display.service';
 import { LessonService } from '../../core/services/lesson.service';
 import { StudentService, type Student } from '../../core/services/student.service';
-import type { Lesson, LessonStatus } from '@interfaces';
+import { isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
+import type { CalendarLesson, Lesson, LessonStatus } from '@interfaces';
 import { DEFAULT_STUDENT_BORDER_COLOR } from '../../core/utils/pastel-color';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { I18nService } from '../../core/services/i18n.service';
+import { APP_OVERLAY_LAYER_OPEN } from '../../core/constants/overlay-layer';
+import { purgeStaleOverlayLayers } from '../../core/utils/purge-stale-overlay-layers';
+
+const CALENDAR_MODAL_OPEN_CLASS = 'app-calendar-modal-open';
 
 export type CalendarViewMode = '1' | '3' | '7' | '30';
 
@@ -37,8 +48,11 @@ type LessonApiRow = Omit<Lesson, 'status'> & {
 export class CalendarComponent implements OnInit {
   private readonly lessonsSvc = inject(LessonService);
   private readonly studentSvc = inject(StudentService);
+  private readonly lessonDisplay = inject(CalendarLessonDisplayService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
+  private readonly injector = inject(Injector);
   readonly i18n = inject(I18nService);
 
   /** 60px = 1 час; 1px = 1 минута */
@@ -46,6 +60,9 @@ export class CalendarComponent implements OnInit {
   readonly minuteHeightPx = 1;
   readonly gridHeightPx = 24 * 60;
   readonly hours = Array.from({ length: 24 }, (_, i) => i);
+  /** Плейсхолдеры скелета сетки (7 колонок). */
+  readonly skeletonGridCols = [0, 1, 2, 3, 4, 5, 6];
+  readonly skeletonHourRows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
   readonly viewModes: readonly CalendarViewMode[] = ['1', '3', '7', '30'];
 
   currentDate = signal<Date>(new Date());
@@ -69,14 +86,12 @@ export class CalendarComponent implements OnInit {
   /** Id урока, перетаскиваемого через native drag-and-drop. */
   private readonly dragLessonId = signal<string | null>(null);
   /** Live-позиция карточки до drop (обновляется на dragover). */
-  private readonly dragPreview = signal<{ lessonId: string; scheduledAt: string } | null>(
-    null,
-  );
+  private readonly dragPreview = signal<{ lessonId: string; scheduledAt: string } | null>(null);
   private dragGhostEl: HTMLElement | null = null;
   private suppressLessonClickUntil = 0;
 
   showLessonForm = signal(false);
-  editLessonTarget = signal<Lesson | null>(null);
+  editLessonTarget = signal<CalendarLesson | null>(null);
   studentsLoadError: string | null = null;
   savingLesson = signal(false);
   deletingLesson = signal(false);
@@ -85,6 +100,17 @@ export class CalendarComponent implements OnInit {
   scheduleConflictMessage = signal<string | null>(null);
   /** Подтверждение переноса перед уведомлением ученика через бота. */
   dragMoveConfirm = signal<{ lesson: Lesson; scheduledAt: string } | null>(null);
+  /** Списание баланса при missed/canceled — ждёт выбора в модалке. */
+  billingConfirm = signal<{
+    payload: {
+      student_id: string;
+      lesson_duration: number;
+      status: LessonStatus;
+      notes?: string;
+      scheduledAt: string | null;
+    };
+    editing: Lesson | null;
+  } | null>(null);
 
   form = {
     student_id: '',
@@ -103,6 +129,13 @@ export class CalendarComponent implements OnInit {
     missed: '#92400e',
     canceled: '#991b1b',
   };
+
+  viewModeSelectOptions = computed((): AppSelectOption[] =>
+    this.viewModes.map((mode) => ({
+      value: mode,
+      label: this.viewModeLabel(mode),
+    })),
+  );
 
   lessonStatusSelectOptions = computed((): AppSelectOption[] => {
     const t = this.i18n.calendarUi();
@@ -216,8 +249,16 @@ export class CalendarComponent implements OnInit {
     }).format(now);
   });
 
-  /** Подпись периода в шапке (вместо «Расписание» на узких экранах). */
-  periodLabel = computed(() => {
+  /** Календарная неделя (ISO) для текущего якоря даты, напр. «KW 12». */
+  calendarWeekLabel = computed(() => {
+    this.i18n.lang();
+    this.currentDate();
+    const week = this.isoWeekNumber(this.currentDate());
+    return this.i18n.calendarUi().calendarWeek.replace('{week}', String(week));
+  });
+
+  /** Диапазон дат / месяц в шапке (без номера недели). */
+  periodRangeLabel = computed(() => {
     this.i18n.lang();
     if (this.viewMode() === '30') {
       return this.formatMonthYearLabel();
@@ -230,8 +271,7 @@ export class CalendarComponent implements OnInit {
       return this.formatColumnHeader(cols[0]);
     }
     const locale = this.i18n.localeId();
-    const fmt = (d: Date) =>
-      d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+    const fmt = (d: Date) => d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
     return `${fmt(cols[0])} – ${fmt(cols[cols.length - 1])}`;
   });
 
@@ -241,10 +281,15 @@ export class CalendarComponent implements OnInit {
   private readonly nowTick = signal(0);
   private nowLineIntervalId: ReturnType<typeof setInterval> | null = null;
 
+  /** Уроки с UI-флагом `isLastPaid` для сетки календаря. */
+  displayLessons = computed(() =>
+    this.lessonDisplay.enrichForGrid(this.lessons(), this.students()),
+  );
+
   lessonsByDay = computed(() => {
-    const map = new Map<string, Lesson[]>();
+    const map = new Map<string, CalendarLesson[]>();
     const preview = this.dragPreview();
-    for (const lesson of this.lessons()) {
+    for (const lesson of this.displayLessons()) {
       const scheduledAt =
         preview?.lessonId === lesson._id ? preview.scheduledAt : lesson.scheduledAt;
       if (!scheduledAt) {
@@ -260,9 +305,7 @@ export class CalendarComponent implements OnInit {
     }
 
     for (const bucket of map.values()) {
-      bucket.sort(
-        (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
-      );
+      bucket.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
     }
 
     return map;
@@ -284,9 +327,31 @@ export class CalendarComponent implements OnInit {
     return this.students().filter((student) => student.name.toLowerCase().includes(query));
   });
 
+  private readonly gridScrollRef = viewChild<ElementRef<HTMLElement>>('gridScroll');
+
+  /** Любая модалка календаря — navbar снизу уходит под оверлей. */
+  private readonly calendarModalOpen = computed(
+    () =>
+      this.showLessonForm() ||
+      this.dragMoveConfirm() !== null ||
+      this.billingConfirm() !== null ||
+      this.scheduleConflictMessage() !== null,
+  );
+
+  constructor() {
+    effect(() => {
+      this.document.documentElement.classList.toggle(
+        CALENDAR_MODAL_OPEN_CLASS,
+        this.calendarModalOpen(),
+      );
+    });
+    this.destroyRef.onDestroy(() => {
+      this.document.documentElement.classList.remove(CALENDAR_MODAL_OPEN_CLASS);
+    });
+  }
+
   ngOnInit(): void {
     this.initViewportMediaQueries();
-    this.initScrollLock();
     this.initNowLineClock();
     this.loadLessons();
     this.studentSvc.getAll().subscribe({
@@ -297,20 +362,41 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  private initScrollLock(): void {
-    if (!isPlatformBrowser(this.platformId)) {
+  /** Прокрутка к текущему часу после отрисовки сетки. */
+  private scrollGridToNow(): void {
+    if (!isPlatformBrowser(this.platformId) || this.isMonthOverview()) {
       return;
     }
-    const compactMq = window.matchMedia('(max-width: 1023px)');
-    const apply = () => {
-      document.documentElement.classList.toggle('cal-scroll-lock', compactMq.matches);
-    };
-    apply();
-    compactMq.addEventListener('change', apply);
-    this.destroyRef.onDestroy(() => {
-      compactMq.removeEventListener('change', apply);
-      document.documentElement.classList.remove('cal-scroll-lock');
-    });
+    if (this.nowLineTopPx() === null) {
+      this.currentDate.set(new Date());
+      afterNextRender(
+        () => {
+          afterNextRender(() => this.applyScrollToNow(), { injector: this.injector });
+        },
+        { injector: this.injector },
+      );
+      return;
+    }
+    afterNextRender(() => this.applyScrollToNow(), { injector: this.injector });
+  }
+
+  private applyScrollToNow(attempt = 0): void {
+    if (!isPlatformBrowser(this.platformId) || this.isMonthOverview()) {
+      return;
+    }
+    const top = this.nowLineTopPx();
+    if (top === null) {
+      return;
+    }
+    const el = this.gridScrollRef()?.nativeElement;
+    if (!el) {
+      if (attempt < 8) {
+        requestAnimationFrame(() => this.applyScrollToNow(attempt + 1));
+      }
+      return;
+    }
+    const target = Math.max(0, top - el.clientHeight * 0.25);
+    el.scrollTop = target;
   }
 
   private initNowLineClock(): void {
@@ -339,9 +425,6 @@ export class CalendarComponent implements OnInit {
       this.isBottomNavLayout.set(bottomNav);
       this.isCompactHeader.set(compact);
       this.isNarrowViewport.set(compact);
-      if (!compact) {
-        this.studentsSidebarOpen.set(false);
-      }
       if (!bottomNav) {
         this.modesMenuOpen.set(false);
       }
@@ -359,6 +442,15 @@ export class CalendarComponent implements OnInit {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
     return x;
+  }
+
+  /** Номер ISO-календарной недели (1–53). */
+  private isoWeekNumber(date: Date): number {
+    const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const day = utc.getUTCDay() || 7;
+    utc.setUTCDate(utc.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+    return Math.ceil(((utc.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
   }
 
   private startOfWeekMonday(d: Date): Date {
@@ -382,7 +474,7 @@ export class CalendarComponent implements OnInit {
     return `${y}-${m}-${day}`;
   }
 
-  lessonsForColumn(col: Date): Lesson[] {
+  lessonsForColumn(col: Date): CalendarLesson[] {
     return this.lessonsByDay().get(this.dayKey(col)) ?? [];
   }
 
@@ -443,10 +535,7 @@ export class CalendarComponent implements OnInit {
     const dy = touch.clientY - this.periodSwipeStart.y;
     this.periodSwipeStart = null;
 
-    if (
-      Math.abs(dx) < this.periodSwipeMinPx ||
-      Math.abs(dx) <= Math.abs(dy)
-    ) {
+    if (Math.abs(dx) < this.periodSwipeMinPx || Math.abs(dx) <= Math.abs(dy)) {
       return;
     }
 
@@ -504,11 +593,19 @@ export class CalendarComponent implements OnInit {
 
   goToToday(): void {
     this.currentDate.set(new Date());
+    this.scrollGridToNow();
   }
 
   setViewMode(mode: CalendarViewMode): void {
     this.viewMode.set(mode);
     this.modesMenuOpen.set(false);
+    this.scrollGridToNow();
+  }
+
+  onViewModeSelect(value: string): void {
+    if (this.viewModes.includes(value as CalendarViewMode)) {
+      this.setViewMode(value as CalendarViewMode);
+    }
   }
 
   toggleModesMenu(): void {
@@ -539,9 +636,7 @@ export class CalendarComponent implements OnInit {
 
   selectSidebarStudent(studentId: string): void {
     this.focusedStudentId.set(studentId);
-    if (this.isNarrowViewport()) {
-      this.studentsSidebarOpen.set(false);
-    }
+    this.studentsSidebarOpen.set(false);
   }
 
   clearStudentFocus(): void {
@@ -564,13 +659,16 @@ export class CalendarComponent implements OnInit {
     return this.students().find((x) => x._id === studentId)?.name ?? '(без ученика)';
   }
 
+  isPackageLastBalance(student: Student): boolean {
+    return isPackageStudentWithLastBalance(student);
+  }
+
   getStudentColor(studentId: string | null | undefined): string {
     if (!studentId) {
       return DEFAULT_STUDENT_BORDER_COLOR;
     }
     return (
-      this.students().find((x) => x._id === studentId)?.color_hex ??
-      DEFAULT_STUDENT_BORDER_COLOR
+      this.students().find((x) => x._id === studentId)?.color_hex ?? DEFAULT_STUDENT_BORDER_COLOR
     );
   }
 
@@ -643,15 +741,15 @@ export class CalendarComponent implements OnInit {
   formatLessonRegion(lesson: Lesson): string {
     const tz =
       lesson.student_timezone?.trim() ||
-      this.students().find((s) => s._id === lesson.student_id)?.timezone?.trim() ||
+      this.students()
+        .find((s) => s._id === lesson.student_id)
+        ?.timezone?.trim() ||
       '';
     if (tz) {
       return this.formatTimezoneLabel(tz);
     }
     return (
-      CalendarComponent.CURRENCY_REGION[lesson.lesson_currency] ??
-      lesson.lesson_currency ??
-      '—'
+      CalendarComponent.CURRENCY_REGION[lesson.lesson_currency] ?? lesson.lesson_currency ?? '—'
     );
   }
 
@@ -724,7 +822,7 @@ export class CalendarComponent implements OnInit {
     return `${fmt.format(start)} — ${fmt.format(end)}`;
   }
 
-  lessonCardClass(lesson: Lesson): Record<string, boolean> {
+  lessonCardClass(lesson: CalendarLesson): Record<string, boolean> {
     const focused = this.focusedStudentId();
     const dragging = this.dragLessonId() === lesson._id;
     return {
@@ -763,8 +861,7 @@ export class CalendarComponent implements OnInit {
     if ((event.target as HTMLElement).closest('.cal-lesson-card')) {
       return;
     }
-    const rect = target.getBoundingClientRect();
-    const offsetY = event.clientY - rect.top + target.scrollTop;
+    const offsetY = this.offsetYInColumn(event, target);
     const scheduledAt = this.isoFromDayAndOffset(this.dayKey(col), offsetY);
     this.openNewLessonAt(scheduledAt);
   }
@@ -809,8 +906,7 @@ export class CalendarComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
 
-    const lessonId =
-      this.dragLessonId() ?? event.dataTransfer?.getData('text/plain') ?? null;
+    const lessonId = this.dragLessonId() ?? event.dataTransfer?.getData('text/plain') ?? null;
     const lesson = this.lessons().find((item) => item._id === lessonId);
     if (!lesson) {
       this.clearDragState();
@@ -842,6 +938,24 @@ export class CalendarComponent implements OnInit {
       return this.i18n.calendarUi().studentFallback;
     }
     return this.getStudentName(pending.lesson.student_id);
+  }
+
+  billingConfirmStudentName(): string {
+    const pending = this.billingConfirm();
+    if (!pending?.payload.student_id) {
+      return this.i18n.calendarUi().studentFallback;
+    }
+    return this.getStudentName(pending.payload.student_id);
+  }
+
+  billingConfirmBalanceAfterDeduct(): number {
+    const pending = this.billingConfirm();
+    if (!pending) {
+      return 0;
+    }
+    const student = this.students().find((s) => s._id === pending.payload.student_id);
+    const balance = Number(student?.balance_lessons ?? 0);
+    return Math.max(0, balance - 1);
   }
 
   private dateWeekdayFmt(): Intl.DateTimeFormat {
@@ -922,9 +1036,10 @@ export class CalendarComponent implements OnInit {
     this.dragPreview.set({ lessonId, scheduledAt });
   }
 
-  private offsetYInColumn(event: DragEvent, columnEl: HTMLElement): number {
+  private offsetYInColumn(event: MouseEvent | DragEvent, columnEl: HTMLElement): number {
     const rect = columnEl.getBoundingClientRect();
-    return event.clientY - rect.top + columnEl.scrollTop;
+    const y = event.clientY - rect.top;
+    return Math.max(0, Math.min(this.gridHeightPx, y));
   }
 
   private setDragImageFromCard(event: DragEvent, card: HTMLElement): void {
@@ -958,14 +1073,7 @@ export class CalendarComponent implements OnInit {
   }
 
   private persistLessonMove(lesson: Lesson, scheduledAt: string): void {
-    if (
-      this.hasScheduleConflict(
-        scheduledAt,
-        lesson.lesson_duration,
-        lesson._id,
-        lesson.status,
-      )
-    ) {
+    if (this.hasScheduleConflict(scheduledAt, lesson.lesson_duration, lesson._id, lesson.status)) {
       this.openScheduleConflict();
       return;
     }
@@ -987,9 +1095,7 @@ export class CalendarComponent implements OnInit {
       .subscribe({
         next: (updated) => {
           this.lessons.update((list) =>
-            list.map((item) =>
-              item._id === updated._id ? this.normalizeLesson(updated) : item,
-            ),
+            list.map((item) => (item._id === updated._id ? this.normalizeLesson(updated) : item)),
           );
         },
         error: (err: HttpErrorResponse) => {
@@ -1004,9 +1110,7 @@ export class CalendarComponent implements OnInit {
   }
 
   openScheduleConflict(message?: string): void {
-    this.scheduleConflictMessage.set(
-      message ?? this.i18n.calendarUi().scheduleConflict,
-    );
+    this.scheduleConflictMessage.set(message ?? this.i18n.calendarUi().scheduleConflict);
   }
 
   closeScheduleConflict(): void {
@@ -1084,7 +1188,9 @@ export class CalendarComponent implements OnInit {
     this.lessonFormStep.set(1);
     this.resetLessonForm();
     this.form.scheduledAt = scheduledAt;
-    const local = new Date(new Date(scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000);
+    const local = new Date(
+      new Date(scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000,
+    );
     this.scheduledAtLocal.set(local.toISOString().slice(0, 16));
     this.saveLessonError = null;
     this.studentsLoadError = null;
@@ -1092,7 +1198,7 @@ export class CalendarComponent implements OnInit {
     this.ensureStudentsLoaded();
   }
 
-  openEditLesson(lesson: Lesson, clickEvent?: Event): void {
+  openEditLesson(lesson: CalendarLesson, clickEvent?: Event): void {
     if (Date.now() < this.suppressLessonClickUntil) {
       clickEvent?.preventDefault();
       clickEvent?.stopPropagation();
@@ -1161,24 +1267,31 @@ export class CalendarComponent implements OnInit {
   }
 
   private clampedDurationMinutes(raw?: number): number {
-    const minutes =
-      raw !== undefined ? Number(raw) : Math.round(Number(this.duration()));
+    const minutes = raw !== undefined ? Number(raw) : Math.round(Number(this.duration()));
     if (Number.isNaN(minutes) || minutes < 5) {
       return 60;
     }
     return Math.min(480, Math.max(5, Math.round(minutes)));
   }
 
+  private refreshStudentsList(): void {
+    this.studentSvc.getAll().subscribe({
+      next: (list) => this.students.set(list),
+      error: () => {
+        /* keep previous list */
+      },
+    });
+  }
+
   private loadLessons(): void {
     this.lessonsSvc.getAll().subscribe({
       next: (data) => {
         this.lessons.set(
-          data
-            .filter((l) => Boolean(l.scheduledAt))
-            .map((l) => this.normalizeLesson(l)),
+          data.filter((l) => Boolean(l.scheduledAt)).map((l) => this.normalizeLesson(l)),
         );
         this.loadError = null;
         this.hasLoaded.set(true);
+        this.scrollGridToNow();
       },
       error: (err) => {
         this.loadError =
@@ -1202,6 +1315,13 @@ export class CalendarComponent implements OnInit {
       lesson_currency: raw.lesson_currency ?? 'EUR',
       student_timezone: raw.student_timezone,
       reminder_sent: raw.reminder_sent ?? false,
+      balance_debited: Boolean(
+        (raw as LessonApiRow & { balance_debited?: boolean }).balance_debited,
+      ),
+      billing_processed: Boolean(
+        (raw as LessonApiRow & { billing_processed?: boolean }).billing_processed ??
+        (raw as LessonApiRow & { balance_debited?: boolean }).balance_debited,
+      ),
       notes: raw.notes,
       tutor: raw.tutor,
       student_name: raw.student_name,
@@ -1221,14 +1341,11 @@ export class CalendarComponent implements OnInit {
     const editing = this.editLessonTarget();
     const excludeId = editing?._id ?? null;
 
-    if (
-      this.hasScheduleConflict(scheduledAt, duration, excludeId, this.form.status)
-    ) {
+    if (this.hasScheduleConflict(scheduledAt, duration, excludeId, this.form.status)) {
       this.openScheduleConflict();
       return;
     }
 
-    this.savingLesson.set(true);
     const basePayload = {
       student_id: this.form.student_id,
       lesson_duration: duration,
@@ -1237,34 +1354,140 @@ export class CalendarComponent implements OnInit {
       scheduledAt,
     };
 
+    if (this.needsBillingDecision(this.form.status, editing?.status)) {
+      purgeStaleOverlayLayers(this.document);
+      this.document.dispatchEvent(new CustomEvent(APP_OVERLAY_LAYER_OPEN));
+      this.showLessonForm.set(false);
+      this.billingConfirm.set({ payload: basePayload, editing: editing ?? null });
+      return;
+    }
+
+    this.persistLesson(basePayload, editing, false);
+  }
+
+  cancelBillingConfirm(): void {
+    this.billingConfirm.set(null);
+    this.closeLessonForm();
+  }
+
+  confirmBillingKeep(): void {
+    const pending = this.billingConfirm();
+    if (!pending) {
+      return;
+    }
+    this.billingConfirm.set(null);
+    this.persistLesson(pending.payload, pending.editing, false, pending);
+  }
+
+  confirmBillingDeduct(): void {
+    const pending = this.billingConfirm();
+    if (!pending) {
+      return;
+    }
+    this.billingConfirm.set(null);
+    this.persistLesson(pending.payload, pending.editing, true, pending);
+  }
+
+  private isMissedOrCanceledStatus(status: LessonStatus): boolean {
+    return status === 'missed' || status === 'canceled';
+  }
+
+  private needsBillingDecision(nextStatus: LessonStatus, previousStatus?: LessonStatus): boolean {
+    if (!this.isMissedOrCanceledStatus(nextStatus)) {
+      return false;
+    }
+    if (previousStatus === undefined) {
+      return true;
+    }
+    return !this.isMissedOrCanceledStatus(previousStatus);
+  }
+
+  private withBillingFlag<T extends { status: LessonStatus }>(
+    payload: T,
+    previousStatus: LessonStatus | undefined,
+    shouldDeduct: boolean,
+  ): T & { should_deduct_balance?: boolean } {
+    if (!this.needsBillingDecision(payload.status, previousStatus)) {
+      return payload;
+    }
+    return { ...payload, should_deduct_balance: shouldDeduct };
+  }
+
+  private persistLesson(
+    payload: {
+      student_id: string;
+      lesson_duration: number;
+      status: LessonStatus;
+      notes?: string;
+      scheduledAt: string | null;
+    },
+    editing: Lesson | null,
+    shouldDeduct: boolean,
+    billingRestore: {
+      payload: {
+        student_id: string;
+        lesson_duration: number;
+        status: LessonStatus;
+        notes?: string;
+        scheduledAt: string | null;
+      };
+      editing: Lesson | null;
+    } | null = null,
+  ): void {
+    this.savingLesson.set(true);
+    const body = this.withBillingFlag(payload, editing?.status, shouldDeduct);
+
     if (editing) {
-      this.lessonsSvc.update(editing._id, basePayload).subscribe({
+      this.lessonsSvc.update(editing._id, body).subscribe({
         next: (updated) => {
           this.lessons.update((list) =>
             list.map((l) => (l._id === updated._id ? this.normalizeLesson(updated) : l)),
           );
+          this.refreshStudentsList();
           this.savingLesson.set(false);
           this.closeLessonForm();
         },
         error: (err: HttpErrorResponse) => {
           this.savingLesson.set(false);
+          this.restoreBillingOnSaveError(billingRestore);
           this.handleLessonSaveError(err);
         },
       });
       return;
     }
 
-    this.lessonsSvc.create(basePayload).subscribe({
+    this.lessonsSvc.create(body).subscribe({
       next: (created) => {
         this.lessons.update((list) => [...list, this.normalizeLesson(created)]);
+        this.refreshStudentsList();
         this.savingLesson.set(false);
         this.closeLessonForm();
       },
       error: (err: HttpErrorResponse) => {
         this.savingLesson.set(false);
+        this.restoreBillingOnSaveError(billingRestore);
         this.handleLessonSaveError(err);
       },
     });
+  }
+
+  private restoreBillingOnSaveError(
+    billingRestore: {
+      payload: {
+        student_id: string;
+        lesson_duration: number;
+        status: LessonStatus;
+        notes?: string;
+        scheduledAt: string | null;
+      };
+      editing: Lesson | null;
+    } | null,
+  ): void {
+    if (!billingRestore) {
+      return;
+    }
+    this.billingConfirm.set(billingRestore);
+    this.showLessonForm.set(true);
   }
 
   private handleLessonSaveError(err: HttpErrorResponse): void {

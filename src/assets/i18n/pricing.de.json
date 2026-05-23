@@ -1,0 +1,50 @@
+{
+  "pricing": {
+    "title": "Mehr Zeit für den Unterricht, weniger Verwaltung",
+    "subtitle": "Simple4U automatisiert Planung, Stundenpakete und Finanzen. 14 Tage Pro gratis — ohne Karte.",
+    "toggle_monthly": "Monatlich",
+    "toggle_yearly": "Jährlich",
+    "save_badge": "20 %+ sparen",
+    "recommended_badge": "Empfohlen",
+    "free_plan": {
+      "name": "Start / Free",
+      "price": "0",
+      "period": "dauerhaft",
+      "cta": "Aktueller Tarif",
+      "features": [
+        "Bis zu 3 aktive Schüler",
+        "Manueller Unterrichtskalender",
+        "Einfache Stundenplan-Ansicht"
+      ]
+    },
+    "pro_plan": {
+      "name": "Simple4U Pro",
+      "period_m": "pro Monat",
+      "period_y": "pro Jahr",
+      "trial_badge": "14 Tage gratis",
+      "microcopy": "Keine Karte zum Start nötig. Jederzeit kündbar.",
+      "cta": "Pro starten",
+      "cta_loading": "Weiter zur Zahlung…",
+      "features": [
+        "Unbegrenzte Schüler und Gruppen",
+        "Intelligentes Billing (Package / Postpaid)",
+        "Schutz vor Fehlklicks (30-Min.-Puffer vor Abbuchung)",
+        "Telegram-Integration für Eltern und Schüler",
+        "SVS-Steuerschätzung und Finanzanalyse"
+      ]
+    },
+    "stripe_note": "Sichere Zahlung über Stripe. Kündigung mit einem Klick.",
+    "tax_required": "Bitte zuerst das Steuerregime im Konto festlegen — ohne diesen Schritt ist kein Checkout möglich.",
+    "already_pro": "Pro ist bereits aktiv",
+    "already_trial": "Pro-Testphase ist aktiv",
+    "faq": {
+      "title": "Häufige Fragen",
+      "q1": "Wie funktioniert die kostenlose Testphase?",
+      "a1": "14 Tage voller Pro-Zugang ohne Gebühr. Keine Karte zum Start. Danach Abo oder Free-Tarif.",
+      "q2": "Sind Zahlungen sicher?",
+      "a2": "Alle Zahlungen laufen über Stripe (PCI-DSS Level 1). Kartendaten speichern wir nicht.",
+      "q3": "Kann ich jederzeit kündigen?",
+      "a3": "Ja — mit einem Klick im Konto. Pro-Zugang bis Periodenende."
+    }
+  }
+}

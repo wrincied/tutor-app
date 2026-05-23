@@ -1,7 +1,8 @@
 export const environment = {
-  production: true,
+  production: false,
+  apiUrl: 'http://localhost:3001',
+  appUrl: 'http://localhost:4200',
   firebase: {
-    // Пока проект на старте, скопируй сюда то же самое, что и выше
     apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
     authDomain: 'tutorassis.firebaseapp.com',
     projectId: 'tutorassis',

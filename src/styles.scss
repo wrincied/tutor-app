@@ -3,11 +3,16 @@
 // @use 'flatpickr/dist/flatpickr.min.css';
 
 @use './styles/variables';
+@use './styles/forms' as *;
 @use './styles/base';
 @use './styles/shared';
+@use './styles/skeleton';
 
 /* 2. Только ПОТОМ настройки и директивы */
 @source "./**/*.{html,ts}";
+@source inline(
+  "modal-overlay-leave modal-sheet-leave modal-dialog-leave"
+);
 
 /* 3. Твои кастомные слои (если есть) */
 @layer base {

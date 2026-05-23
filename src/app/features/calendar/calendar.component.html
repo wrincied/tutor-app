@@ -3,14 +3,53 @@
     @if (loadError) {
       <p class="cal-error">{{ loadError }}</p>
     } @else if (!hasLoaded()) {
-      <div class="cal-loading">
-        <p>Загрузка расписания…</p>
+      <div
+        class="cal-skeleton"
+        role="status"
+        aria-busy="true"
+        [attr.aria-label]="i18n.calendarUi().loadSchedule"
+      >
+        <span class="sr-only">{{ i18n.sharedUi().loadingContent }}</span>
+        <div class="cal-skeleton__header">
+          <div class="cal-skeleton__header-text">
+            <span class="skeleton skeleton--line skeleton--line-lg" style="width: 42%"></span>
+            <span class="skeleton skeleton--line skeleton--line-sm" style="width: 28%"></span>
+          </div>
+          <div class="cal-skeleton__toolbar">
+            <span class="skeleton skeleton--btn" style="width: 2.5rem"></span>
+            <span class="skeleton skeleton--btn" style="width: 2.5rem"></span>
+            <span class="skeleton skeleton--btn" style="width: 2.5rem"></span>
+          </div>
+        </div>
+        <div class="cal-skeleton__grid-wrap">
+          <div class="cal-skeleton__day-headers">
+            <span class="cal-skeleton__corner"></span>
+            <div class="cal-skeleton__day-row">
+              @for (c of skeletonGridCols; track c) {
+                <span class="skeleton skeleton--line skeleton--line-sm"></span>
+              }
+            </div>
+          </div>
+          <div class="cal-skeleton__body">
+            <div class="cal-skeleton__axis">
+              @for (h of skeletonHourRows; track h) {
+                <span class="skeleton skeleton--line skeleton--line-sm"></span>
+              }
+            </div>
+            <div class="cal-skeleton__columns">
+              @for (c of skeletonGridCols; track c) {
+                <div class="cal-skeleton__column">
+                  @for (h of skeletonHourRows; track h) {
+                    <span class="skeleton skeleton--block cal-skeleton__hour"></span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
       </div>
     } @else {
-      @if (
-        (isBottomNavLayout() && modesMenuOpen()) ||
-        (isNarrowViewport() && studentsSidebarOpen())
-      ) {
+      @if ((isBottomNavLayout() && modesMenuOpen()) || studentsSidebarOpen()) {
         <div
           class="cal-backdrop"
           role="presentation"
@@ -57,25 +96,41 @@
               [attr.aria-expanded]="modesMenuOpen()"
               [attr.aria-label]="i18n.calendarUi().modeDrawerTitle"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="18" x2="21" y2="18"/>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
           }
-          @if (isCompactHeader()) {
-            <p class="cal-header__period">{{ periodLabel() }}</p>
-          } @else {
-            <h1 class="cal-header__title">{{ i18n.calendarUi().title }}</h1>
-          }
+          <div class="cal-header__titles">
+            @if (!isCompactHeader()) {
+              <h1 class="cal-header__title">{{ i18n.calendarUi().title }}</h1>
+            }
+            <p class="cal-header__period">
+              <span class="cal-header__week">{{ calendarWeekLabel() }}</span>
+              @if (periodRangeLabel(); as range) {
+                <span class="cal-header__range">{{ range }}</span>
+              }
+            </p>
+          </div>
         </div>
 
         <div class="cal-header__actions">
           <button
             type="button"
             class="cal-btn cal-btn--students"
+            [class.cal-btn--active]="studentsSidebarOpen()"
             (click)="toggleStudentsSidebar()"
+            [attr.aria-expanded]="studentsSidebarOpen()"
             [attr.aria-label]="i18n.calendarUi().students"
             [attr.title]="i18n.calendarUi().students"
           >
@@ -91,7 +146,14 @@
 
           <div class="cal-toolbar">
             @if (!isCompactHeader()) {
-              <button type="button" class="cal-btn" (click)="navPrev()" [attr.aria-label]="i18n.calendarUi().prev">‹</button>
+              <button
+                type="button"
+                class="cal-btn"
+                (click)="navPrev()"
+                [attr.aria-label]="i18n.calendarUi().prev"
+              >
+                ‹
+              </button>
             }
             <button
               type="button"
@@ -100,22 +162,32 @@
               [attr.aria-label]="i18n.calendarUi().today"
               [attr.title]="i18n.calendarUi().today"
             >
-              <span class="cal-btn-today__frame">{{ todayDayOfMonth() }}</span>
+              @if (isCompactHeader()) {
+                <span class="cal-btn-today__frame">{{ todayDayOfMonth() }}</span>
+              } @else {
+                <span class="cal-btn-today__label">{{ i18n.calendarUi().today }}</span>
+              }
             </button>
             @if (!isCompactHeader()) {
-              <button type="button" class="cal-btn" (click)="navNext()" [attr.aria-label]="i18n.calendarUi().next">›</button>
+              <button
+                type="button"
+                class="cal-btn"
+                (click)="navNext()"
+                [attr.aria-label]="i18n.calendarUi().next"
+              >
+                ›
+              </button>
             }
             @if (!isBottomNavLayout()) {
-              @for (mode of viewModes; track mode) {
-                <button
-                  type="button"
-                  class="cal-toolbar__mode"
-                  [class.cal-toolbar__mode--active]="viewMode() === mode"
-                  (click)="setViewMode(mode)"
-                >
-                  {{ mode }}
-                </button>
-              }
+              <app-select
+                class="cal-toolbar__mode-select"
+                [ngModel]="viewMode()"
+                (ngModelChange)="onViewModeSelect($event)"
+                [options]="viewModeSelectOptions()"
+                [ariaLabel]="i18n.calendarUi().modeDrawerTitle"
+                size="compact"
+                menuPlacement="below"
+              />
             }
           </div>
         </div>
@@ -131,33 +203,32 @@
           @if (isMonthOverview()) {
             <div class="cal-month">
               <p class="cal-month__title">{{ formatMonthYearLabel() }}</p>
-              <div class="cal-month__frame">
-                <div class="cal-month__weekdays">
-                  @for (label of weekdayLabels(); track label) {
-                    <div class="cal-month__weekday">{{ label }}</div>
-                  }
-                </div>
-                <div
-                  class="cal-month__grid"
-                  [style.--cal-month-weeks]="monthWeekRows()"
-                >
-                  @for (cell of monthOverviewCells(); track dayKey(cell.date)) {
-                    <button
-                      type="button"
-                      class="cal-month__cell"
-                      [class.cal-month__cell--outside]="!cell.inMonth"
-                      [class.cal-month__cell--today]="isToday(cell.date)"
-                      [class.cal-month__cell--has-lessons]="lessonCountForDay(cell.date) > 0"
-                      (click)="openDayFromMonth(cell.date)"
-                    >
-                      <span class="cal-month__day-num">{{ cell.date.getDate() }}</span>
-                      @if (lessonCountForDay(cell.date) > 0) {
-                        <span class="cal-month__dots" aria-hidden="true">
-                          <span class="cal-month__dot"></span>
-                        </span>
-                      }
-                    </button>
-                  }
+              <div class="cal-month__scroll">
+                <div class="cal-month__frame">
+                  <div class="cal-month__weekdays">
+                    @for (label of weekdayLabels(); track label) {
+                      <div class="cal-month__weekday">{{ label }}</div>
+                    }
+                  </div>
+                  <div class="cal-month__grid" [style.--cal-month-weeks]="monthWeekRows()">
+                    @for (cell of monthOverviewCells(); track dayKey(cell.date)) {
+                      <button
+                        type="button"
+                        class="cal-month__cell"
+                        [class.cal-month__cell--outside]="!cell.inMonth"
+                        [class.cal-month__cell--today]="isToday(cell.date)"
+                        [class.cal-month__cell--has-lessons]="lessonCountForDay(cell.date) > 0"
+                        (click)="openDayFromMonth(cell.date)"
+                      >
+                        <span class="cal-month__day-num">{{ cell.date.getDate() }}</span>
+                        @if (lessonCountForDay(cell.date) > 0) {
+                          <span class="cal-month__dots" aria-hidden="true">
+                            <span class="cal-month__dot"></span>
+                          </span>
+                        }
+                      </button>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
@@ -178,84 +249,93 @@
               </div>
             </div>
 
-            <div class="cal-grid-body">
-              <div class="cal-time-axis" [style.height.px]="gridHeightPx">
-                @for (hour of hours; track hour) {
-                  <div class="cal-time-slot" [style.height.px]="hourHeightPx">
-                    {{ formatHourLabel(hour) }}
-                  </div>
-                }
-                @if (nowLineTopPx(); as nowTop) {
-                  <div class="cal-now-marker" [style.top.px]="nowTop">{{ nowTimeLabel() }}</div>
-                }
-              </div>
-
-              <div class="cal-days-scroll">
-                <div
-                  class="cal-days-grid"
-                  [style.grid-template-columns]="gridTemplateColumns()"
-                >
-                  @for (col of columns(); track dayKey(col)) {
-                    <div
-                      class="cal-day-column"
-                      [style.height.px]="gridHeightPx"
-                      [class.cal-day-column--drag-target]="isDayDragTarget(col)"
-                      (dragover)="onDayDragOver($event, col)"
-                      (drop)="onDayDrop($event, col)"
-                      (click)="onDayColumnClick(col, $event)"
-                    >
-                      @for (hour of hours; track hour) {
-                        <div class="cal-hour-line" [style.height.px]="hourHeightPx"></div>
-                      }
-
-                      @if (dragSnapLineTop(col); as snapTop) {
-                        <div class="cal-drag-snap-line" [style.top.px]="snapTop"></div>
-                      }
-
-                      @if (isToday(col) && nowLineTopPx(); as nowTop) {
-                        <div class="cal-now-line" [style.top.px]="nowTop" aria-hidden="true"></div>
-                      }
-
-                      @for (lesson of lessonsForColumn(col); track lesson._id) {
-                        <div
-                          [class]="lessonCardClass(lesson)"
-                          [style.top.px]="calculateTop(displayScheduledAt(lesson))"
-                          [style.height.px]="calculateHeight(lesson.lesson_duration)"
-                          [style.border-left-color]="getStudentColor(lesson.student_id)"
-                          draggable="true"
-                          (dragstart)="onLessonDragStart($event, lesson)"
-                          (dragend)="onLessonDragEnd()"
-                          (click)="openEditLesson(lesson, $event)"
-                        >
-                          <p class="cal-lesson-card__title">
-                            {{ getStudentName(lesson.student_id) }}
-                          </p>
-                          @if (lessonCardUseCompactMeta(lesson)) {
-                            <p class="cal-lesson-card__meta">
-                              {{ formatLessonRegion(lesson) }}
-                              · {{ formatLessonSnapshotRate(lesson) }}
-                              · {{ formatLessonDuration(lesson.lesson_duration) }}
-                            </p>
-                          } @else {
-                            <div class="cal-lesson-card__details">
-                              <p class="cal-lesson-card__detail">
-                                <span class="cal-lesson-card__lbl">{{ i18n.calendarUi().regionLabel }}</span>
-                                <span>{{ formatLessonRegion(lesson) }}</span>
-                              </p>
-                              <p class="cal-lesson-card__detail">
-                                <span class="cal-lesson-card__lbl">{{ i18n.calendarUi().rateLabel }}</span>
-                                <span>{{ formatLessonSnapshotRate(lesson) }}</span>
-                              </p>
-                              <p class="cal-lesson-card__detail">
-                                <span class="cal-lesson-card__lbl">{{ i18n.calendarUi().durationLabel }}</span>
-                                <span>{{ formatLessonDuration(lesson.lesson_duration) }}</span>
-                              </p>
-                            </div>
-                          }
-                        </div>
-                      }
+            <div class="cal-grid-scroll" #gridScroll>
+              <div class="cal-grid-body" [style.--cal-grid-height.px]="gridHeightPx">
+                <div class="cal-time-axis">
+                  @for (hour of hours; track hour) {
+                    <div class="cal-time-slot" [style.height.px]="hourHeightPx">
+                      {{ formatHourLabel(hour) }}
                     </div>
                   }
+                  @if (nowLineTopPx(); as nowTop) {
+                    <div class="cal-now-marker" [style.top.px]="nowTop">{{ nowTimeLabel() }}</div>
+                  }
+                </div>
+
+                <div class="cal-days-scroll">
+                  <div class="cal-days-grid" [style.grid-template-columns]="gridTemplateColumns()">
+                    @for (col of columns(); track dayKey(col)) {
+                      <div
+                        class="cal-day-column"
+                        [class.cal-day-column--drag-target]="isDayDragTarget(col)"
+                        (dragover)="onDayDragOver($event, col)"
+                        (drop)="onDayDrop($event, col)"
+                        (click)="onDayColumnClick(col, $event)"
+                      >
+                        @for (hour of hours; track hour) {
+                          <div class="cal-hour-line" [style.height.px]="hourHeightPx"></div>
+                        }
+
+                        @if (dragSnapLineTop(col); as snapTop) {
+                          <div class="cal-drag-snap-line" [style.top.px]="snapTop"></div>
+                        }
+
+                        @if (isToday(col) && nowLineTopPx(); as nowTop) {
+                          <div
+                            class="cal-now-line"
+                            [style.top.px]="nowTop"
+                            aria-hidden="true"
+                          ></div>
+                        }
+
+                        @for (lesson of lessonsForColumn(col); track lesson._id) {
+                          <div
+                            [class]="lessonCardClass(lesson)"
+                            [class.cal-lesson-card--last-paid]="lesson.isLastPaid"
+                            [style.top.px]="calculateTop(displayScheduledAt(lesson))"
+                            [style.height.px]="calculateHeight(lesson.lesson_duration)"
+                            [style.border-left-color]="getStudentColor(lesson.student_id)"
+                            draggable="true"
+                            (dragstart)="onLessonDragStart($event, lesson)"
+                            (dragend)="onLessonDragEnd()"
+                            (click)="openEditLesson(lesson, $event)"
+                          >
+                            <p class="cal-lesson-card__title">
+                              {{ getStudentName(lesson.student_id) }}
+                            </p>
+                            @if (lessonCardUseCompactMeta(lesson)) {
+                              <p class="cal-lesson-card__meta">
+                                {{ formatLessonRegion(lesson) }}
+                                · {{ formatLessonSnapshotRate(lesson) }} ·
+                                {{ formatLessonDuration(lesson.lesson_duration) }}
+                              </p>
+                            } @else {
+                              <div class="cal-lesson-card__details">
+                                <p class="cal-lesson-card__detail">
+                                  <span class="cal-lesson-card__lbl">{{
+                                    i18n.calendarUi().regionLabel
+                                  }}</span>
+                                  <span>{{ formatLessonRegion(lesson) }}</span>
+                                </p>
+                                <p class="cal-lesson-card__detail">
+                                  <span class="cal-lesson-card__lbl">{{
+                                    i18n.calendarUi().rateLabel
+                                  }}</span>
+                                  <span>{{ formatLessonSnapshotRate(lesson) }}</span>
+                                </p>
+                                <p class="cal-lesson-card__detail">
+                                  <span class="cal-lesson-card__lbl">{{
+                                    i18n.calendarUi().durationLabel
+                                  }}</span>
+                                  <span>{{ formatLessonDuration(lesson.lesson_duration) }}</span>
+                                </p>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
@@ -263,9 +343,8 @@
         </section>
 
         <aside
-          class="cal-sidebar"
-          [class.cal-sidebar--drawer]="isNarrowViewport()"
-          [class.cal-sidebar--open]="isNarrowViewport() && studentsSidebarOpen()"
+          class="cal-sidebar cal-sidebar--drawer"
+          [class.cal-sidebar--open]="studentsSidebarOpen()"
         >
           <div class="cal-sidebar__head">
             <button type="button" class="cal-sidebar__clear" (click)="clearStudentFocus()">
@@ -273,7 +352,7 @@
             </button>
             <input
               type="search"
-              class="cal-sidebar__search"
+              class="app-input cal-sidebar__search"
               [placeholder]="i18n.calendarUi().searchStudent"
               [ngModel]="studentsSidebarQuery()"
               (ngModelChange)="studentsSidebarQuery.set($event)"
@@ -301,17 +380,36 @@
                   ></span>
                   <span class="cal-sidebar__info">
                     <span class="cal-sidebar__name">{{ sidebarStudent.name }}</span>
-                    <span class="cal-sidebar__rate">
-                      {{
-                        sidebarStudent.rate_per_hour
-                          | currency
-                            : sidebarStudent.rate_currency ?? 'EUR'
-                            : 'symbol-narrow'
-                            : '1.0-0'
-                      }}{{ i18n.studentsUi().perHour }}
+                    <span class="cal-sidebar__meta">
+                      <span
+                        class="cal-sidebar__balance"
+                        [class.cal-sidebar__balance--last]="isPackageLastBalance(sidebarStudent)"
+                      >
+                        {{ sidebarStudent.balance_lessons }}
+                        {{ i18n.studentsUi().lessonsShort }}
+                        @if (isPackageLastBalance(sidebarStudent)) {
+                          <span class="cal-sidebar__last-hint">
+                            · {{ i18n.calendarUi().lastLessonHint }}
+                          </span>
+                        }
+                      </span>
+                      <span class="cal-sidebar__rate">
+                        {{
+                          sidebarStudent.rate_per_hour
+                            | currency: sidebarStudent.rate_currency ?? 'EUR' : 'code' : '1.0-0'
+                        }}{{ i18n.studentsUi().perHour }}
+                      </span>
                     </span>
                   </span>
                 </button>
+              </li>
+            } @empty {
+              <li class="cal-sidebar__empty">
+                @if (students().length === 0) {
+                  {{ i18n.calendarUi().studentsSidebarEmpty }}
+                } @else {
+                  {{ i18n.calendarUi().studentsSidebarNoResults }}
+                }
               </li>
             }
           </ul>
@@ -325,9 +423,17 @@
         [attr.aria-label]="i18n.calendarUi().addLesson"
         [attr.title]="i18n.calendarUi().addLesson"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          aria-hidden="true"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
       </button>
     }
@@ -335,8 +441,18 @@
 </div>
 
 @if (showLessonForm()) {
-  <div class="modal-overlay" role="presentation">
-    <div class="modal w-full max-w-sm" role="dialog" aria-modal="true">
+  <div
+    class="modal-overlay modal-overlay--sheet"
+    role="presentation"
+    animate.leave="modal-overlay-leave"
+  >
+    <div
+      class="modal modal-sheet modal--lesson"
+      role="dialog"
+      aria-modal="true"
+      animate.leave="modal-sheet-leave"
+      (click)="$event.stopPropagation()"
+    >
       <div class="modal-header">
         <h2>
           @if (editLessonTarget()) {
@@ -357,6 +473,7 @@
         </button>
       </div>
 
+      <div class="modal-sheet__scroll">
       <form class="modal-body" (ngSubmit)="saveLesson()">
         @if (studentsLoadError) {
           <p class="cal-form-error">{{ studentsLoadError }}</p>
@@ -369,16 +486,22 @@
               [(ngModel)]="form.student_id"
               [options]="studentSelectOptions()"
               [placeholder]="i18n.calendarUi().studentPlaceholder"
-              menuPlacement="above"
+              [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
+              menuPlacement="below"
             />
+
+            @if (editLessonTarget()?.isLastPaid) {
+              <p class="cal-form-last-paid-warning" role="status">
+                {{ i18n.calendarUi().lastPaidPackageWarning }}
+              </p>
+            }
 
             @if (editLessonTarget(); as editing) {
               <p class="cal-form-preview cal-form-preview--snapshot">
                 {{ i18n.calendarUi().snapshotRateLabel }}
                 @if (lessonHasSnapshotRate(editing)) {
                   {{
-                    editing.lesson_price
-                      | currency: editing.lesson_currency : 'symbol-narrow' : '1.0-0'
+                    editing.lesson_price | currency: editing.lesson_currency : 'code' : '1.0-0'
                   }}/ч
                 } @else {
                   —
@@ -391,13 +514,17 @@
               }
             }
 
-            <input
-              type="datetime-local"
-              class="cal-field"
-              name="scheduledAtLocal"
-              [ngModel]="scheduledAtLocal()"
-              (ngModelChange)="onScheduledAtLocalChange($event)"
-            />
+            <div class="field field--datetime">
+              <label for="scheduledAtLocal">{{ i18n.calendarUi().scheduledAtLabel }}</label>
+              <input
+                id="scheduledAtLocal"
+                class="app-input app-input--datetime"
+                type="datetime-local"
+                name="scheduledAtLocal"
+                [ngModel]="scheduledAtLocal()"
+                (ngModelChange)="onScheduledAtLocalChange($event)"
+              />
+            </div>
 
             <div class="cal-chips">
               @for (presetMinutes of durationPresets; track presetMinutes) {
@@ -418,16 +545,20 @@
               name="status"
               [(ngModel)]="form.status"
               [options]="lessonStatusSelectOptions()"
-              menuPlacement="above"
+              menuPlacement="below"
+              mobileBackdropSheet
             />
 
-            <textarea
-              name="notes"
-              rows="3"
-              class="cal-field cal-field--textarea"
-              [placeholder]="i18n.calendarUi().notesPlaceholder"
-              [(ngModel)]="form.notes"
-            ></textarea>
+            <div class="field">
+              <label for="lesson-notes-edit">{{ i18n.calendarUi().notesPlaceholder }}</label>
+              <textarea
+                id="lesson-notes-edit"
+                name="notes"
+                rows="3"
+                [placeholder]="i18n.calendarUi().notesPlaceholder"
+                [(ngModel)]="form.notes"
+              ></textarea>
+            </div>
           </div>
 
           @if (saveLessonError) {
@@ -442,12 +573,10 @@
               (click)="deleteLesson()"
             >
               {{
-                deletingLesson()
-                  ? i18n.calendarUi().deletingLesson
-                  : i18n.calendarUi().deleteLesson
+                deletingLesson() ? i18n.calendarUi().deletingLesson : i18n.calendarUi().deleteLesson
               }}
             </button>
-            <button type="button" class="btn-link" (click)="closeLessonForm()">
+            <button type="button" class="btn-link danger" (click)="closeLessonForm()">
               {{ i18n.studentsUi().cancel }}
             </button>
             <button
@@ -455,9 +584,7 @@
               class="btn-primary"
               [disabled]="savingLesson() || deletingLesson()"
             >
-              {{
-                savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save
-              }}
+              {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}
             </button>
           </div>
         } @else if (lessonFormStep() === 1) {
@@ -467,26 +594,30 @@
               [(ngModel)]="form.student_id"
               [options]="studentSelectOptions()"
               [placeholder]="i18n.calendarUi().studentPlaceholder"
-              menuPlacement="above"
+              [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
+              menuPlacement="below"
             />
 
             @if (selectedStudentForForm(); as picked) {
               <p class="cal-form-preview cal-form-preview--snapshot">
                 {{ i18n.calendarUi().snapshotWillFix }}
                 {{
-                  picked.rate_per_hour
-                    | currency: picked.rate_currency ?? 'EUR' : 'symbol-narrow' : '1.0-0'
+                  picked.rate_per_hour | currency: picked.rate_currency ?? 'EUR' : 'code' : '1.0-0'
                 }}/ч
               </p>
             }
 
-            <input
-              type="datetime-local"
-              class="cal-field"
-              name="scheduledAtLocalNew"
-              [ngModel]="scheduledAtLocal()"
-              (ngModelChange)="onScheduledAtLocalChange($event)"
-            />
+            <div class="field field--datetime">
+              <label for="scheduledAtLocalNew">{{ i18n.calendarUi().scheduledAtLabel }}</label>
+              <input
+                id="scheduledAtLocalNew"
+                class="app-input app-input--datetime"
+                type="datetime-local"
+                name="scheduledAtLocalNew"
+                [ngModel]="scheduledAtLocal()"
+                (ngModelChange)="onScheduledAtLocalChange($event)"
+              />
+            </div>
 
             @if (getSchedulePreviewText(); as preview) {
               <p class="cal-form-preview">{{ preview }}</p>
@@ -511,7 +642,8 @@
               name="status"
               [(ngModel)]="form.status"
               [options]="lessonStatusSelectOptions()"
-              menuPlacement="above"
+              menuPlacement="below"
+              mobileBackdropSheet
             />
           </div>
 
@@ -520,7 +652,7 @@
           }
 
           <div class="cal-form-actions">
-            <button type="button" class="btn-link" (click)="closeLessonForm()">
+            <button type="button" class="btn-link danger" (click)="closeLessonForm()">
               {{ i18n.studentsUi().cancel }}
             </button>
             <button type="button" class="btn-link" (click)="goToNotesStep()">
@@ -532,19 +664,20 @@
               [disabled]="savingLesson()"
               (click)="saveLesson()"
             >
-              {{
-                savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save
-              }}
+              {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}
             </button>
           </div>
         } @else {
-          <textarea
-            name="notesNew"
-            rows="4"
-            class="cal-field cal-field--textarea cal-field--textarea-lg"
-            [placeholder]="i18n.calendarUi().notesNewPlaceholder"
-            [(ngModel)]="form.notes"
-          ></textarea>
+          <div class="field">
+            <label for="lesson-notes-new">{{ i18n.calendarUi().notesNewPlaceholder }}</label>
+            <textarea
+              id="lesson-notes-new"
+              name="notesNew"
+              rows="4"
+              [placeholder]="i18n.calendarUi().notesNewPlaceholder"
+              [(ngModel)]="form.notes"
+            ></textarea>
+          </div>
 
           @if (saveLessonError) {
             <p class="cal-form-error">{{ saveLessonError }}</p>
@@ -555,13 +688,12 @@
               {{ i18n.calendarUi().back }}
             </button>
             <button type="submit" class="btn-primary" [disabled]="savingLesson()">
-              {{
-                savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save
-              }}
+              {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}
             </button>
           </div>
         }
       </form>
+      </div>
     </div>
   </div>
 }
@@ -570,6 +702,7 @@
   [open]="!!dragMoveConfirm()"
   [title]="i18n.calendarUi().moveLessonTitle"
   [cancelLabel]="i18n.studentsUi().cancel"
+  [cancelDanger]="true"
   [confirmLabel]="i18n.calendarUi().moveLessonConfirm"
   (cancel)="cancelDragMove()"
   (confirm)="confirmDragMove()"
@@ -578,7 +711,32 @@
     {{ i18n.calendarUi().moveLessonBodyBefore }}
     <strong>{{ dragMoveConfirmStudentName() }}</strong>
     {{ i18n.calendarUi().moveLessonBodyAfter }}
-    <strong>{{ dragMoveConfirmTimeLabel() }}</strong>.
+    <strong>{{ dragMoveConfirmTimeLabel() }}</strong
+    >.
+  </p>
+</app-dialog>
+
+<app-dialog
+  [open]="!!billingConfirm()"
+  stackOnTop
+  [closeOnOverlay]="false"
+  [title]="i18n.calendarUi().billingTitle"
+  [cancelLabel]="i18n.studentsUi().cancel"
+  [secondaryLabel]="i18n.calendarUi().billingKeep"
+  [confirmLabel]="i18n.calendarUi().billingDeduct"
+  (cancel)="cancelBillingConfirm()"
+  (secondary)="confirmBillingKeep()"
+  (confirm)="confirmBillingDeduct()"
+>
+  <p>
+    {{ i18n.calendarUi().billingBodyBefore }}
+    <strong>{{ billingConfirmStudentName() }}</strong
+    >{{ i18n.calendarUi().billingBodyMiddle }}
+  </p>
+  <p class="cal-billing-balance-hint">
+    {{ i18n.calendarUi().billingBodyAfterDeduct }}
+    <strong>{{ billingConfirmBalanceAfterDeduct() }}</strong>
+    {{ i18n.studentsUi().lessonsShort }}
   </p>
 </app-dialog>
 

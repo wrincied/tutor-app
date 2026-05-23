@@ -1,21 +1,38 @@
 <div class="auth-page">
-  <span class="auth-logo">TutorApp</span>
+  <span class="auth-logo">Simple4U</span>
 
   <div class="auth-card">
     <h1>{{ i18n.authUi().loginTitle }}</h1>
     <p class="subtitle">{{ i18n.authUi().loginSubtitle }}</p>
 
+    @if (verifySuccess()) {
+      <div class="auth-banner-success">{{ i18n.authUi().verifySuccessBanner }}</div>
+    }
+
+    @if (consentDeclined()) {
+      <div class="auth-error">{{ i18n.authUi().onboardingDeclinedNotice }}</div>
+    }
+
     @if (error()) {
       <div class="auth-error">{{ error() }}</div>
     }
 
-    <form (ngSubmit)="submit()" class="auth-form">
-      <div class="field">
-        <input type="email" [(ngModel)]="email" name="email" required placeholder=" " />
+    <form (ngSubmit)="submit()" class="auth-form" autocomplete="on">
+      <div class="field field--float">
+        <input
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          required
+          placeholder=" "
+          autocomplete="username"
+          inputmode="email"
+          spellcheck="false"
+        />
         <label>{{ i18n.authUi().email }}</label>
       </div>
 
-      <div class="field">
+      <div class="field field--float">
         <input
           type="password"
           [(ngModel)]="password"
@@ -27,12 +44,70 @@
         <label>{{ i18n.authUi().password }}</label>
       </div>
 
+      <div class="auth-forgot-row">
+        <button
+          type="button"
+          class="auth-link-button"
+          [disabled]="loading()"
+          (click)="openResetModal()"
+        >
+          {{ i18n.authUi().forgotPassword }}
+        </button>
+      </div>
+
       <div class="auth-actions">
         <a routerLink="/register">{{ i18n.authUi().noAccount }}</a>
         <button type="submit" [disabled]="loading()">
           {{ loading() ? i18n.authUi().loggingIn : i18n.authUi().login }}
         </button>
       </div>
+
+      <div class="auth-divider">
+        <span>{{ i18n.authUi().orContinueWith }}</span>
+      </div>
+
+      <button
+        type="button"
+        class="auth-oauth-btn"
+        [disabled]="loading()"
+        (click)="signInWithGoogle()"
+      >
+        {{ i18n.authUi().continueWithGoogle }}
+      </button>
     </form>
   </div>
 </div>
+
+<app-dialog
+  [open]="resetModalOpen()"
+  [title]="i18n.authUi().resetPasswordModalTitle"
+  [cancelLabel]="resetModalSuccess() ? null : i18n.authUi().cancel"
+  [confirmLabel]="resetModalSuccess() ? null : i18n.authUi().resetPasswordSend"
+  [dismissLabel]="resetModalSuccess() ? i18n.authUi().close : null"
+  (cancel)="closeResetModal()"
+  (confirm)="onResetDialogConfirm()"
+>
+  @if (resetModalSuccess()) {
+    <p class="auth-dialog-success">{{ i18n.authUi().resetPasswordSent }}</p>
+  } @else {
+    <p class="auth-dialog-hint">{{ i18n.authUi().resetPasswordModalHint }}</p>
+    @if (resetModalError()) {
+      <div class="auth-error auth-error--dialog">{{ resetModalError() }}</div>
+    }
+    <div class="field field--float auth-dialog-field">
+      <input
+        type="email"
+        [(ngModel)]="resetModalEmail"
+        name="reset_email"
+        required
+        placeholder=" "
+        autocomplete="email"
+        [disabled]="resetLoading()"
+      />
+      <label>{{ i18n.authUi().email }}</label>
+    </div>
+    @if (resetLoading()) {
+      <p class="auth-dialog-status">{{ i18n.authUi().resetPasswordSending }}</p>
+    }
+  }
+</app-dialog>

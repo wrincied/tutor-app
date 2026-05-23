@@ -1,5 +1,5 @@
 <div class="auth-page">
-  <span class="auth-logo">TutorApp</span>
+  <span class="auth-logo">Simple4U</span>
 
   <div class="auth-card">
     <h1>{{ i18n.authUi().registerTitle }}</h1>
@@ -9,24 +9,41 @@
       <div class="auth-error">{{ error() }}</div>
     }
 
-    <form (ngSubmit)="submit()" class="auth-form">
-      <div class="field">
-        <input type="email" [(ngModel)]="email" name="email" required placeholder=" " />
+    <form (ngSubmit)="submit()" class="auth-form" autocomplete="on">
+      <div class="field field--float">
+        <input
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          required
+          placeholder=" "
+          autocomplete="email"
+          inputmode="email"
+          spellcheck="false"
+        />
         <label>{{ i18n.authUi().email }}</label>
       </div>
 
-      <div class="field">
-        <input type="password" [(ngModel)]="password" name="password" required placeholder=" " />
+      <div class="field field--float">
+        <input
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          required
+          placeholder=" "
+          autocomplete="new-password"
+        />
         <label>{{ i18n.authUi().password }}</label>
       </div>
 
-      <div class="field">
+      <div class="field field--float">
         <input
           type="password"
           [(ngModel)]="passwordConfirm"
           name="passwordConfirm"
           required
           placeholder=" "
+          autocomplete="new-password"
         />
         <label>{{ i18n.authUi().confirmPassword }}</label>
       </div>
@@ -37,6 +54,19 @@
           {{ loading() ? i18n.authUi().creating : i18n.authUi().createAccount }}
         </button>
       </div>
+
+      <div class="auth-divider">
+        <span>{{ i18n.authUi().orContinueWith }}</span>
+      </div>
+
+      <button
+        type="button"
+        class="auth-oauth-btn"
+        [disabled]="loading()"
+        (click)="signInWithGoogle()"
+      >
+        {{ i18n.authUi().continueWithGoogle }}
+      </button>
     </form>
   </div>
 </div>

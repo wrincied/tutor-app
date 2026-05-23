@@ -5,7 +5,21 @@
   </div>
 
   @if (loading()) {
-    <p class="hint">{{ t.loading }}</p>
+    <div class="skeleton-page" role="status" aria-busy="true" [attr.aria-label]="t.loading">
+      <span class="sr-only">{{ t.loading }}</span>
+      <div class="skeleton-cards">
+        @for (i of skeletonCardSlots; track i) {
+          <div class="skeleton-card">
+            <span class="skeleton skeleton--circle" style="width: 0.5rem; height: 2.5rem"></span>
+            <div class="skeleton-card__body">
+              <span class="skeleton skeleton--line" style="width: 72%"></span>
+              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 90%"></span>
+              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 40%"></span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
   } @else if (students().length === 0) {
     <p class="hint">{{ t.emptyState }}</p>
   } @else {
@@ -148,8 +162,19 @@
 </app-dialog>
 
 @if (showForm()) {
-  <div class="modal-overlay" role="presentation">
-    <div class="modal" role="dialog" aria-modal="true" [attr.aria-labelledby]="'student-form-title'">
+  <div
+    class="modal-overlay modal-overlay--sheet"
+    role="presentation"
+    animate.leave="modal-overlay-leave"
+  >
+    <div
+      class="modal modal-sheet"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'student-form-title'"
+      animate.leave="modal-sheet-leave"
+      (click)="$event.stopPropagation()"
+    >
       <div class="modal-header">
         <h2 id="student-form-title">{{ editTarget() ? t.editModalTitle : t.newStudent }}</h2>
         <button type="button" class="modal-close" (click)="closeForm()" [attr.aria-label]="t.close">
@@ -207,6 +232,62 @@
           </div>
         </div>
 
+        <fieldset class="field billing-section">
+          <legend>{{ t.billingSectionTitle }}</legend>
+          <div class="billing-type-options" role="radiogroup" [attr.aria-label]="t.billingSectionTitle">
+            <label class="billing-type-option">
+              <input
+                type="radio"
+                name="billing_type"
+                value="package"
+                [checked]="billingType() === 'package'"
+                (change)="setBillingType('package')"
+              />
+              <span>{{ t.billingTypePackage }}</span>
+            </label>
+            <label class="billing-type-option">
+              <input
+                type="radio"
+                name="billing_type"
+                value="postpaid"
+                [checked]="billingType() === 'postpaid'"
+                (change)="setBillingType('postpaid')"
+              />
+              <span>{{ t.billingTypePostpaid }}</span>
+            </label>
+          </div>
+          @if (isPackageBilling()) {
+            <div class="field">
+              <label for="st-balance">{{ t.balanceLessonsField }}</label>
+              <input
+                id="st-balance"
+                type="number"
+                [ngModel]="balanceLessons()"
+                (ngModelChange)="balanceLessons.set($event)"
+                name="balance_lessons"
+                min="0"
+                step="1"
+                inputmode="numeric"
+              />
+            </div>
+          }
+          @if (isPostpaidBilling()) {
+            <div class="field">
+              <label for="st-credit">{{ t.creditLimitField }}</label>
+              <input
+                id="st-credit"
+                type="number"
+                [ngModel]="creditLimit()"
+                (ngModelChange)="creditLimit.set($event)"
+                name="credit_limit"
+                min="0"
+                step="1"
+                inputmode="numeric"
+              />
+            </div>
+          }
+        </fieldset>
+
         <div class="field field--checkbox">
           <label class="checkbox-label">
             <input type="checkbox" [(ngModel)]="form.bot_active" name="bot_active" />
@@ -257,8 +338,18 @@
 }
 
 @if (deleteTargetId()) {
-  <div class="modal-overlay" role="presentation">
-    <div class="modal modal--confirm" role="dialog" aria-modal="true">
+  <div
+    class="modal-overlay modal-overlay--sheet"
+    role="presentation"
+    animate.leave="modal-overlay-leave"
+  >
+    <div
+      class="modal modal-sheet modal--confirm"
+      role="dialog"
+      aria-modal="true"
+      animate.leave="modal-sheet-leave"
+      (click)="$event.stopPropagation()"
+    >
       <div class="modal-header">
         <h2 id="del-title">{{ t.delete }}</h2>
         <button type="button" class="modal-close" (click)="cancelDelete()" [attr.aria-label]="t.close">
@@ -277,8 +368,18 @@
 }
 
 @if (topupTargetId()) {
-  <div class="modal-overlay" role="presentation">
-    <div class="modal modal--confirm" role="dialog" aria-modal="true">
+  <div
+    class="modal-overlay modal-overlay--sheet"
+    role="presentation"
+    animate.leave="modal-overlay-leave"
+  >
+    <div
+      class="modal modal-sheet modal--confirm"
+      role="dialog"
+      aria-modal="true"
+      animate.leave="modal-sheet-leave"
+      (click)="$event.stopPropagation()"
+    >
       <div class="modal-header">
         <h2>{{ t.topupTitle }}</h2>
         <button type="button" class="modal-close" (click)="closeTopup()" [attr.aria-label]="t.close">

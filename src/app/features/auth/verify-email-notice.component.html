@@ -1,0 +1,31 @@
+<div class="auth-page">
+  <span class="auth-logo">Simple4U</span>
+
+  <div class="auth-card">
+    <h1>{{ i18n.authUi().verifyNoticeTitle }}</h1>
+    <p class="subtitle">{{ i18n.authUi().verifyNoticeSubtitle }}</p>
+
+    @if (email) {
+      <p class="auth-email-display">{{ email }}</p>
+    }
+
+    <p class="auth-hint">{{ i18n.authUi().checkEmailPurgeHint }}</p>
+
+    @if (message()) {
+      <p class="auth-success">{{ message() }}</p>
+    }
+    @if (error()) {
+      <div class="auth-error">{{ error() }}</div>
+    }
+
+    <div class="auth-actions auth-actions--stack">
+      <button type="button" class="btn-primary" [disabled]="loading()" (click)="resend()">
+        {{ loading() ? i18n.authUi().checkEmailSending : i18n.authUi().resendVerification }}
+      </button>
+      <button type="button" class="btn-secondary" [disabled]="loading()" (click)="checkVerified()">
+        {{ i18n.authUi().verifyRefreshStatus }}
+      </button>
+      <button type="button" class="btn-link danger" (click)="signOut()">{{ i18n.authUi().signOut }}</button>
+    </div>
+  </div>
+</div>

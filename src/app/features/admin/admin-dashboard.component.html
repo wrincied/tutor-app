@@ -1,0 +1,92 @@
+<div class="page admin-page">
+  <header class="page-header">
+    <h1>{{ t().title }}</h1>
+  </header>
+
+  @if (loadError()) {
+    <p class="admin-page__error" role="alert">{{ loadError() }}</p>
+  }
+
+  @if (actionMessage()) {
+    <p class="admin-page__success" role="status">{{ actionMessage() }}</p>
+  }
+  @if (actionError()) {
+    <p class="admin-page__error" role="alert">{{ actionError() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="hint">{{ t().loading }}</p>
+  } @else {
+    @if (stats(); as s) {
+      <section class="admin-kpi" aria-label="Metrics">
+        <article class="admin-kpi__card">
+          <span class="admin-kpi__label">{{ t().metricTotalUsers }}</span>
+          <strong class="admin-kpi__value">{{ s.totalUsers }}</strong>
+        </article>
+        <article class="admin-kpi__card">
+          <span class="admin-kpi__label">{{ t().metricPaidUsers }}</span>
+          <strong class="admin-kpi__value">{{ s.paidUsers }}</strong>
+        </article>
+        <article class="admin-kpi__card">
+          <span class="admin-kpi__label">{{ t().metricConversion }}</span>
+          <strong class="admin-kpi__value">{{ s.conversionPercent }}%</strong>
+        </article>
+        <article class="admin-kpi__card admin-kpi__card--wide">
+          <span class="admin-kpi__label">{{ t().metricRevenue }}</span>
+          <strong class="admin-kpi__value admin-kpi__value--sm">{{ revenueLabel() }}</strong>
+          <span class="admin-kpi__hint">{{ t().revenueHint }}</span>
+        </article>
+      </section>
+    }
+
+    <section class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ t().tableEmail }}</th>
+            <th scope="col">{{ t().tableStatus }}</th>
+            <th scope="col">{{ t().tableRegistered }}</th>
+            <th scope="col">{{ t().tableActions }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (users().length === 0) {
+            <tr>
+              <td colspan="4" class="admin-table__empty">{{ t().noUsers }}</td>
+            </tr>
+          } @else {
+            @for (user of users(); track user._id) {
+              <tr>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span [class]="statusClass(user.subscription_status)">
+                    {{ statusLabel(user.subscription_status) }}
+                  </span>
+                </td>
+                <td>
+                  @if (user.createdAt) {
+                    {{ user.createdAt | date: 'dd.MM.yyyy HH:mm' }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn-secondary admin-table__gift"
+                    [disabled]="giftingUserId() === user._id"
+                    (click)="giftTrial(user)"
+                  >
+                    {{
+                      giftingUserId() === user._id ? t().giftingTrial : t().giftTrial
+                    }}
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</div>

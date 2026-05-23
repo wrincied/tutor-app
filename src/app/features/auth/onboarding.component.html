@@ -1,0 +1,170 @@
+<div class="auth-page auth-page--onboarding" [class.auth-page--submitting]="loading()">
+  @if (!loading()) {
+    <div class="onboarding-lock-screen" aria-hidden="true"></div>
+  }
+
+  @if (loading()) {
+    <div class="onboarding-submit-overlay" role="status" aria-live="polite" aria-busy="true">
+      <div class="onboarding-submit-overlay__panel">
+        <span class="onboarding-submit-overlay__spinner" aria-hidden="true"></span>
+        <p>{{ i18n.authUi().onboardingSubmitting }}</p>
+      </div>
+    </div>
+  }
+
+  <div class="auth-page__scroll">
+    <span class="auth-logo">Simple4U</span>
+
+    <div class="auth-card auth-card--onboarding">
+      <h1>{{ i18n.authUi().onboardingTitle }}</h1>
+      <p class="subtitle">{{ i18n.authUi().onboardingSubtitle }}</p>
+
+      @if (error()) {
+        <div class="auth-error">{{ error() }}</div>
+      }
+
+      <form class="auth-form" (ngSubmit)="submit()">
+        <div class="field field--float field--readonly">
+          <input
+            type="email"
+            [ngModel]="email"
+            name="email"
+            readonly
+            tabindex="-1"
+            placeholder=" "
+          />
+          <label>{{ i18n.authUi().email }}</label>
+        </div>
+
+        <div class="field field--float">
+          <input
+            type="text"
+            [(ngModel)]="firstName"
+            name="firstName"
+            required
+            placeholder=" "
+            autocomplete="given-name"
+            maxlength="60"
+            [disabled]="loading()"
+          />
+          <label>{{ i18n.authUi().onboardingFirstName }}</label>
+        </div>
+
+        <div class="field field--float">
+          <input
+            type="text"
+            [(ngModel)]="lastName"
+            name="lastName"
+            placeholder=" "
+            autocomplete="family-name"
+            maxlength="60"
+            [disabled]="loading()"
+          />
+          <label>{{ i18n.authUi().onboardingLastName }}</label>
+        </div>
+
+        <div class="field field--select onboarding-country">
+          <app-select
+            name="country"
+            [(ngModel)]="country"
+            [options]="countryOptions()"
+            [disabled]="loading()"
+            menuPlacement="below"
+          />
+          <label>{{ i18n.authUi().onboardingCountry }}</label>
+        </div>
+
+        <section class="onboarding-legal" aria-labelledby="onboarding-data-heading">
+          <h2 id="onboarding-data-heading" class="onboarding-legal__title">
+            {{ i18n.authUi().onboardingDataTitle }}
+          </h2>
+          <p class="onboarding-legal__text">{{ i18n.authUi().onboardingDataBody }}</p>
+          <ul class="onboarding-legal__list">
+            <li>{{ i18n.authUi().onboardingDataItem1 }}</li>
+            <li>{{ i18n.authUi().onboardingDataItem2 }}</li>
+            <li>{{ i18n.authUi().onboardingDataItem3 }}</li>
+          </ul>
+
+          <a
+            routerLink="/legal/data-processing"
+            class="onboarding-legal__link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ i18n.authUi().onboardingDataPolicyLink }}
+          </a>
+
+          <label class="onboarding-consent">
+            <input
+              type="checkbox"
+              [(ngModel)]="dataConsent"
+              name="dataConsent"
+              required
+              [disabled]="loading()"
+            />
+            <span>{{ i18n.authUi().onboardingDataConsentLabel }}</span>
+          </label>
+        </section>
+
+        <div class="auth-actions auth-actions--stack">
+          <button type="submit" class="auth-btn-primary" [disabled]="loading()">
+            {{ loading() ? i18n.authUi().onboardingSaving : i18n.authUi().onboardingContinue }}
+          </button>
+          <button
+            type="button"
+            class="auth-link-button auth-link-button--block"
+            [disabled]="loading()"
+            (click)="declineDataCollection()"
+          >
+            {{ i18n.authUi().onboardingDeclineData }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="onboarding-cookie-bar" aria-labelledby="onboarding-cookies-heading">
+    <div class="onboarding-cookie-bar__inner">
+      <h2 id="onboarding-cookies-heading" class="onboarding-cookie-bar__title">
+        {{ i18n.authUi().onboardingCookiesTitle }}
+      </h2>
+      <p class="onboarding-cookie-bar__text">
+        {{ i18n.authUi().onboardingCookiesBody }}
+        <a
+          routerLink="/legal/cookies"
+          class="onboarding-cookie-bar__link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ i18n.authUi().onboardingCookiePolicyLink }}
+        </a>
+      </p>
+      <p class="onboarding-cookie-bar__hint">{{ i18n.authUi().onboardingCookiesOptional }}</p>
+
+      <div
+        class="onboarding-cookie-actions"
+        role="group"
+        [attr.aria-label]="i18n.authUi().onboardingCookiesTitle"
+      >
+        <button
+          type="button"
+          class="onboarding-cookie-btn"
+          [class.onboarding-cookie-btn--active]="marketingCookies === true"
+          [disabled]="loading()"
+          (click)="acceptMarketingCookies()"
+        >
+          {{ i18n.authUi().onboardingCookiesAccept }}
+        </button>
+        <button
+          type="button"
+          class="onboarding-cookie-btn onboarding-cookie-btn--muted"
+          [class.onboarding-cookie-btn--active]="marketingCookies === false"
+          [disabled]="loading()"
+          (click)="declineMarketingCookies()"
+        >
+          {{ i18n.authUi().onboardingCookiesDecline }}
+        </button>
+      </div>
+    </div>
+  </footer>
+</div>

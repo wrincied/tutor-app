@@ -4,7 +4,9 @@ import type { Student } from '@interfaces';
 
 export type { Student } from '@interfaces';
 
-const API = 'http://localhost:3001/api/students';
+import { apiUrl } from '../config/api-url';
+
+const API = apiUrl('/students');
 
 @Injectable({ providedIn: 'root' })
 export class StudentService {

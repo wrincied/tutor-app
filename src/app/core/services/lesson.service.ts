@@ -5,7 +5,9 @@ import type { Lesson } from '@interfaces';
 
 export type { Lesson } from '@interfaces';
 
-const API = 'http://localhost:3001/api/lessons';
+import { apiUrl } from '../config/api-url';
+
+const API = apiUrl('/lessons');
 
 @Injectable({ providedIn: 'root' })
 export class LessonService {
@@ -25,6 +27,7 @@ export class LessonService {
     status?: Lesson['status'];
     notes?: string;
     scheduledAt?: string | null;
+    should_deduct_balance?: boolean;
   }) {
     return this.http.post<Lesson>(API, payload);
   }
@@ -38,9 +41,22 @@ export class LessonService {
       status?: Lesson['status'];
       notes?: string;
       scheduledAt?: string | null;
+      should_deduct_balance?: boolean;
     },
   ) {
     return this.http.put<Lesson>(`${API}/${id}`, payload);
+  }
+
+  /** POST /api/lessons/:id/cancel-with-billing — атомарная смена статуса и баланса */
+  cancelWithBilling(
+    id: string,
+    payload: {
+      student_id?: string;
+      status: 'missed' | 'canceled';
+      should_deduct_balance: boolean;
+    },
+  ) {
+    return this.http.post<{ lesson: Lesson }>(`${API}/${id}/cancel-with-billing`, payload);
   }
 
   /** DELETE /api/lessons/:id */

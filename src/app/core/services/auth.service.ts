@@ -1,43 +1,190 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { EnvironmentInjector, Injectable, computed, inject, runInInjectionContext } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs/operators';
+import {
+  Auth,
+  authState,
+  createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  reauthenticateWithCredential,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateEmail,
+  updatePassword,
+} from '@angular/fire/auth';
+import type { ActionCodeSettings, User } from 'firebase/auth';
+import { from, map, Observable, switchMap } from 'rxjs';
 
-const API = 'http://localhost:3001/api';
-/** Совпадает с тем, что ожидает интерцептор и типичный фронт: localStorage.getItem('token'). */
-const TOKEN_KEY = 'token';
+import { environment } from '../../../environments/environment';
+import { apiUrl } from '../config/api-url';
+import type { UserProfile } from '@interfaces';
+import { postAuthPath } from '../utils/post-auth-navigation';
+
+const API = apiUrl('');
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http = inject(HttpClient);
-  private router = inject(Router);
+  private readonly auth = inject(Auth);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly injector = inject(EnvironmentInjector);
 
-  isLoggedIn = signal<boolean>(!!localStorage.getItem(TOKEN_KEY));
+  readonly firebaseUser = toSignal(authState(this.auth), { initialValue: null });
+  readonly isLoggedIn = computed(() => this.firebaseUser() !== null);
+  readonly emailVerified = computed(() => this.firebaseUser()?.emailVerified === true);
 
-  register(email: string, password: string) {
-    return this.http
-      .post<{ token: string }>(`${API}/auth/register`, { email, password })
-      .pipe(tap((res) => this.saveToken(res.token)));
+  private appBaseUrl(): string {
+    return (
+      environment.appUrl?.replace(/\/$/, '') ||
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4200')
+    );
   }
 
-  login(email: string, password: string) {
-    return this.http
-      .post<{ token: string }>(`${API}/auth/login`, { email, password })
-      .pipe(tap((res) => this.saveToken(res.token)));
+  private verificationActionCodeSettings(): ActionCodeSettings {
+    return {
+      url: `${this.appBaseUrl()}/login?verify=success`,
+      handleCodeInApp: false,
+    };
   }
 
-  logout() {
-    localStorage.removeItem(TOKEN_KEY);
-    this.isLoggedIn.set(false);
-    this.router.navigate(['/login']);
+  private passwordResetActionCodeSettings(): ActionCodeSettings {
+    return {
+      url: `${this.appBaseUrl()}/login`,
+      handleCodeInApp: false,
+    };
   }
 
-  getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+  private fromAuth<T>(fn: () => Promise<T>): Observable<T> {
+    return from(runInInjectionContext(this.injector, fn));
   }
 
-  private saveToken(token: string) {
-    localStorage.setItem(TOKEN_KEY, token);
-    this.isLoggedIn.set(true);
+  sendPasswordReset(email: string): Observable<void> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) {
+      throw new Error('Email is required');
+    }
+    return this.fromAuth(() =>
+      sendPasswordResetEmail(this.auth, normalized, this.passwordResetActionCodeSettings()),
+    );
+  }
+
+  register(email: string, password: string): Observable<User> {
+    const normalized = email.trim().toLowerCase();
+    return this.fromAuth(() => createUserWithEmailAndPassword(this.auth, normalized, password)).pipe(
+      switchMap((cred) =>
+        this.fromAuth(() =>
+          sendEmailVerification(cred.user, this.verificationActionCodeSettings()),
+        ).pipe(map(() => cred.user)),
+      ),
+      switchMap((user) => this.bootstrapProfile().pipe(map(() => user))),
+    );
+  }
+
+  login(email: string, password: string): Observable<User> {
+    const normalized = email.trim().toLowerCase();
+    return this.fromAuth(() => signInWithEmailAndPassword(this.auth, normalized, password)).pipe(
+      switchMap((cred) => this.afterFirebaseSignIn(cred.user)),
+    );
+  }
+
+  loginWithGoogle(): Observable<User> {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    return this.fromAuth(() => signInWithPopup(this.auth, provider)).pipe(
+      switchMap((cred) => this.afterFirebaseSignIn(cred.user)),
+    );
+  }
+
+  /** Bootstrap + переход после входа (email / Google). */
+  navigateAfterAuth(profile: UserProfile, user: User): void {
+    const path = postAuthPath(profile, user.emailVerified === true);
+    const queryParams =
+      profile.data_consent_accepted === false ? { consent: 'declined' } : undefined;
+    void this.router.navigate([path], { queryParams });
+  }
+
+  private afterFirebaseSignIn(user: User): Observable<User> {
+    if (!user.emailVerified) {
+      return this.bootstrapProfile().pipe(map(() => user));
+    }
+    return this.bootstrapProfile().pipe(map(() => user));
+  }
+
+  resendVerificationEmail(): Observable<void> {
+    const user = this.auth.currentUser;
+    if (!user) {
+      throw new Error('Not signed in');
+    }
+    return this.fromAuth(() =>
+      sendEmailVerification(user, this.verificationActionCodeSettings()),
+    );
+  }
+
+  reloadUser(): Observable<User | null> {
+    const user = this.auth.currentUser;
+    if (!user) {
+      return from(Promise.resolve(null));
+    }
+    return this.fromAuth(() => user.reload()).pipe(map(() => this.auth.currentUser));
+  }
+
+  bootstrapProfile(): Observable<UserProfile> {
+    return this.http.post<UserProfile>(`${API}/auth/bootstrap`, {});
+  }
+
+  async getIdToken(): Promise<string | null> {
+    const user = this.auth.currentUser;
+    if (!user) {
+      return null;
+    }
+    return user.getIdToken();
+  }
+
+  updateCredentials(options: {
+    currentPassword: string;
+    newEmail?: string;
+    newPassword?: string;
+  }): Observable<User | null> {
+    const user = this.auth.currentUser;
+    if (!user?.email) {
+      throw new Error('Not signed in');
+    }
+    const credential = EmailAuthProvider.credential(user.email, options.currentPassword);
+    return this.fromAuth(() => reauthenticateWithCredential(user, credential)).pipe(
+      switchMap(() => {
+        const tasks: Promise<unknown>[] = [];
+        if (options.newPassword) {
+          tasks.push(updatePassword(user, options.newPassword));
+        }
+        if (options.newEmail) {
+          tasks.push(updateEmail(user, options.newEmail.trim().toLowerCase()));
+        }
+        return tasks.length
+          ? this.fromAuth(() => Promise.all(tasks))
+          : from(Promise.resolve());
+      }),
+      switchMap(() => {
+        if (options.newEmail) {
+          return this.fromAuth(() =>
+            sendEmailVerification(user, this.verificationActionCodeSettings()),
+          ).pipe(switchMap(() => this.fromAuth(() => user.reload())));
+        }
+        return this.fromAuth(() => user.reload());
+      }),
+      map(() => this.auth.currentUser),
+    );
+  }
+
+  logout(): Observable<void> {
+    return this.fromAuth(() => signOut(this.auth)).pipe(
+      map(() => {
+        void this.router.navigate(['/login']);
+      }),
+    );
   }
 }

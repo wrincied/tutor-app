@@ -1,11 +1,14 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { switchMap } from 'rxjs/operators';
 
 import type { Lang, SubscriptionStatus, TaxMode, UserProfile } from '@interfaces';
 
-import { BillingService } from '../../core/services/billing.service';
+import { AuthService } from '../../core/services/auth.service';
 
+import { BelarusFlagService, type BelarusFlagVariant } from '../../core/services/belarus-flag.service';
 import { I18nService } from '../../core/services/i18n.service';
 
 import { ThemeService } from '../../core/services/theme.service';
@@ -23,17 +26,7 @@ import {
   subscriptionStatusLabel,
 
 } from '../../core/utils/user-profile.utils';
-
-import {
-  formatSubscriptionPrice,
-  getSubscriptionPricing,
-} from '../../core/utils/subscription-pricing';
-import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
-
-
-
-const COUNTRIES = ['AT', 'DE', 'PL', 'RU', 'BY', 'KZ', 'US'] as const;
 
 
 
@@ -43,7 +36,7 @@ const COUNTRIES = ['AT', 'DE', 'PL', 'RU', 'BY', 'KZ', 'US'] as const;
 
   standalone: true,
 
-  imports: [FormsModule, AppSelectComponent, AppDialogComponent],
+  imports: [FormsModule, AppSelectComponent, RouterLink],
 
   templateUrl: './account.component.html',
 
@@ -55,23 +48,22 @@ export class AccountComponent implements OnInit {
 
   private readonly userSvc = inject(UserService);
 
-  private readonly billingSvc = inject(BillingService);
+  private readonly authSvc = inject(AuthService);
+
+  private readonly route = inject(ActivatedRoute);
+
+  private readonly router = inject(Router);
 
   readonly i18n = inject(I18nService);
 
   readonly theme = inject(ThemeService);
 
-  readonly countries = COUNTRIES;
-
-
+  readonly belarusFlag = inject(BelarusFlagService);
 
   loading = signal(true);
+  readonly skeletonFieldSlots = [0, 1, 2, 3];
 
   saving = signal(false);
-
-  checkoutLoading = signal(false);
-
-  subscriptionInfoOpen = signal(false);
 
   saved = signal(false);
 
@@ -83,6 +75,10 @@ export class AccountComponent implements OnInit {
 
 
 
+  firstName = '';
+
+  lastName = '';
+
   newEmail = '';
 
   currentPassword = '';
@@ -90,8 +86,6 @@ export class AccountComponent implements OnInit {
   newPassword = '';
 
   confirmPassword = '';
-
-  country_settings = 'AT';
 
   tax_mode: TaxMode | string = 'none';
 
@@ -143,34 +137,6 @@ export class AccountComponent implements OnInit {
 
   );
 
-
-
-  countrySelectOptions = computed((): AppSelectOption[] =>
-
-    this.countries.map((c) => ({ value: c, label: c })),
-
-  );
-
-  subscriptionPricing = computed(() => getSubscriptionPricing(this.country_settings));
-
-  subscriptionMonthlyPrice = computed(() => {
-    const p = this.subscriptionPricing();
-    return formatSubscriptionPrice(p.monthly, p.currency, this.i18n.localeId());
-  });
-
-  subscriptionYearlyPrice = computed(() => {
-    const p = this.subscriptionPricing();
-    return formatSubscriptionPrice(p.yearly, p.currency, this.i18n.localeId());
-  });
-
-  openSubscriptionInfo(): void {
-    this.subscriptionInfoOpen.set(true);
-  }
-
-  closeSubscriptionInfo(): void {
-    this.subscriptionInfoOpen.set(false);
-  }
-
   pickLang(code: Lang): void {
 
     this.i18n.setLang(code);
@@ -180,21 +146,21 @@ export class AccountComponent implements OnInit {
 
 
   flagIcon(code: Lang): string {
-
-    const icons: Record<Lang, string> = {
-
+    if (code === 'by') {
+      return this.belarusFlag.iconPath();
+    }
+    const icons: Record<Exclude<Lang, 'by'>, string> = {
       ru: '/assets/icons/flag-ru.svg',
-
       en: '/assets/icons/flag-en.svg',
-
-      de: '/assets/icons/flag-de.svg',
-
+      de: '/assets/icons/flag-at.svg',
       kz: '/assets/icons/flag-kz.svg',
-
+      uk: '/assets/icons/flag-uk.svg',
     };
-
     return icons[code];
+  }
 
+  pickBelarusFlag(variant: BelarusFlagVariant): void {
+    this.belarusFlag.setVariant(variant);
   }
 
 
@@ -215,27 +181,35 @@ export class AccountComponent implements OnInit {
 
     });
 
+    const billingResult = this.route.snapshot.queryParamMap.get('billing');
+    if (billingResult === 'success' || billingResult === 'cancel') {
+      void this.router.navigate(['/app/pricing'], {
+        queryParams: { billing: billingResult },
+        replaceUrl: true,
+      });
+      return;
+    }
   }
 
-
-
   private applyProfile(user: UserProfile): void {
-
     this.profile.set(user);
 
-    this.newEmail = user.email;
+    this.firstName = user.first_name ?? '';
+    this.lastName = user.last_name ?? '';
+    if (!this.firstName && user.name) {
+      const parts = user.name.trim().split(/\s+/);
+      this.firstName = parts[0] ?? '';
+      this.lastName = parts.slice(1).join(' ');
+    }
 
-    this.country_settings = user.country_settings || 'AT';
+    this.newEmail = user.email;
 
     this.tax_mode = (user.tax_mode as TaxMode) || 'none';
 
     this.subscription_status = (user.subscription_status as SubscriptionStatus) || 'free';
 
     this.loading.set(false);
-
   }
-
-
 
   save(): void {
 
@@ -257,13 +231,19 @@ export class AccountComponent implements OnInit {
 
 
 
-    const payload: Parameters<UserService['updateProfile']>[0] = {
+    const payload: Parameters<UserService['updateProfile']>[0] = {};
 
-      country_settings: this.country_settings,
-
-    };
-
-
+    const current = this.profile();
+    const trimmedFirst = this.firstName.trim();
+    const trimmedLast = this.lastName.trim();
+    if (
+      !current ||
+      trimmedFirst !== (current.first_name ?? '').trim() ||
+      trimmedLast !== (current.last_name ?? '').trim()
+    ) {
+      payload.first_name = trimmedFirst;
+      payload.last_name = trimmedLast;
+    }
 
     if (!this.taxModeConfigured()) {
 
@@ -281,103 +261,55 @@ export class AccountComponent implements OnInit {
 
 
 
-    const current = this.profile();
+    const emailChanging =
+      current && this.newEmail.trim() && this.newEmail.trim() !== current.email;
+    const passwordChanging = Boolean(this.newPassword);
 
-    if (current && this.newEmail.trim() && this.newEmail.trim() !== current.email) {
-
-      payload.email = this.newEmail.trim();
-
-    }
-
-    if (this.newPassword) {
-
-      payload.newPassword = this.newPassword;
-
-    }
-
-    if (payload.email || payload.newPassword) {
-
+    if (emailChanging || passwordChanging) {
       if (!this.currentPassword) {
-
         this.error.set(t.currentPasswordRequired);
-
         return;
-
       }
-
-      payload.currentPassword = this.currentPassword;
-
     }
-
-
 
     this.saving.set(true);
 
-    this.userSvc.updateProfile(payload).subscribe({
+    const profileUpdate$ = () => this.userSvc.updateProfile(payload);
 
-      next: (user) => {
+    const finish = (user: UserProfile) => {
+      this.applyProfile(user);
+      this.currentPassword = '';
+      this.newPassword = '';
+      this.confirmPassword = '';
+      this.saving.set(false);
+      this.saved.set(true);
+      if (emailChanging) {
+        void this.router.navigate(['/app/verify-email-notice']);
+      }
+    };
 
-        this.applyProfile(user);
-
-        this.currentPassword = '';
-
-        this.newPassword = '';
-
-        this.confirmPassword = '';
-
-        this.saving.set(false);
-
-        this.saved.set(true);
-
-      },
-
-      error: (err) => {
-
-        this.saving.set(false);
-
-        this.error.set(err?.error?.message ?? t.saveError);
-
-      },
-
-    });
-
-  }
-
-
-
-  startProCheckout(): void {
-
-    const t = this.i18n.accountUi();
-
-    if (!this.canBuySubscription()) {
-
-      this.error.set(t.taxRequiredForBilling);
-
+    if (emailChanging || passwordChanging) {
+      this.authSvc
+        .updateCredentials({
+          currentPassword: this.currentPassword,
+          newEmail: emailChanging ? this.newEmail.trim() : undefined,
+          newPassword: passwordChanging ? this.newPassword : undefined,
+        })
+        .pipe(switchMap(() => profileUpdate$()))
+        .subscribe({
+          next: (user) => finish(user),
+          error: (err) => {
+            this.saving.set(false);
+            this.error.set(err?.message || t.saveError);
+          },
+        });
       return;
-
     }
 
-    this.checkoutLoading.set(true);
-
-    this.error.set(null);
-
-    this.billingSvc.createCheckoutSession().subscribe({
-
-      next: ({ url }) => {
-
-        this.checkoutLoading.set(false);
-
-        if (url) {
-
-          window.location.href = url;
-
-        }
-
-      },
-
+    profileUpdate$().subscribe({
+      next: (user) => finish(user),
       error: (err) => {
-
-        this.checkoutLoading.set(false);
+        this.saving.set(false);
 
         this.error.set(err?.error?.message ?? t.saveError);
 

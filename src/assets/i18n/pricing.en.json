@@ -1,0 +1,50 @@
+{
+  "pricing": {
+    "title": "More time for teaching, less admin work",
+    "subtitle": "Simple4U automates scheduling, lesson packages, and finances. Start with 14 days of Pro free — no card required.",
+    "toggle_monthly": "Monthly",
+    "toggle_yearly": "Yearly",
+    "save_badge": "Save 20%+",
+    "recommended_badge": "Recommended",
+    "free_plan": {
+      "name": "Start / Free",
+      "price": "0",
+      "period": "forever",
+      "cta": "Current plan",
+      "features": [
+        "Up to 3 active students",
+        "Manual lesson calendar",
+        "Basic schedule view"
+      ]
+    },
+    "pro_plan": {
+      "name": "Simple4U Pro",
+      "period_m": "per month",
+      "period_y": "per year",
+      "trial_badge": "14 days free",
+      "microcopy": "No card required to start. Cancel anytime.",
+      "cta": "Start Pro",
+      "cta_loading": "Redirecting to checkout…",
+      "features": [
+        "Unlimited students and groups",
+        "Smart billing (Package / Postpaid)",
+        "Misclick protection (30-min buffer before debit)",
+        "Telegram integration for parents and students",
+        "SVS tax estimates and finance analytics"
+      ]
+    },
+    "stripe_note": "Secure checkout via Stripe. Cancel in one click.",
+    "tax_required": "Set your tax regime in Account first — checkout is unavailable until then.",
+    "already_pro": "You already have Pro",
+    "already_trial": "Pro trial is active",
+    "faq": {
+      "title": "Frequently asked questions",
+      "q1": "How does the free trial work?",
+      "a1": "You get full Pro access for 14 days at no charge. No card is required to start. After the trial you can subscribe or stay on Free.",
+      "q2": "Are my payments secure?",
+      "a2": "All payments are processed by Stripe, a PCI-DSS Level 1 certified provider. We never store your card details.",
+      "q3": "Can I cancel anytime?",
+      "a3": "Yes — cancel in one click from your account. Pro access remains until the end of the paid period."
+    }
+  }
+}

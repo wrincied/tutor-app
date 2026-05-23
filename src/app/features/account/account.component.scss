@@ -29,6 +29,17 @@
   margin-bottom: 1rem;
 }
 
+.account-password-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.account-skeleton {
+  margin-top: 0.5rem;
+}
+
 .account-setting {
   display: flex;
   flex-direction: column;
@@ -169,6 +180,16 @@
   &--warn {
     color: rgb(180 83 9);
   }
+
+  &--muted {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    opacity: 0.9;
+  }
+}
+
+.account-pricing-country {
+  margin-bottom: 0.75rem;
 }
 
 .account-readonly {
@@ -269,6 +290,13 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
 }
 
 .account-form__submit {

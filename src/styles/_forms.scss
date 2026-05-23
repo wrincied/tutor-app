@@ -1,0 +1,196 @@
+// Единая стилистика полей ввода (тема приложения / Google Sheets)
+
+@mixin app-input-surface {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--nav-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  min-height: 2.5rem;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.4;
+  background: var(--page-bg);
+  color: var(--text-primary);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+
+  &::placeholder {
+    color: var(--text-secondary);
+  }
+
+  &:hover:not(:disabled):not(:read-only) {
+    border-color: var(--text-secondary);
+  }
+
+  &:focus {
+    border-color: var(--nav-accent);
+    box-shadow: 0 0 0 1px var(--nav-accent);
+  }
+
+  &:disabled,
+  &:read-only {
+    opacity: 0.85;
+    cursor: not-allowed;
+    background: var(--nav-hover);
+  }
+}
+
+.app-input {
+  @include app-input-surface;
+}
+
+.app-input--datetime {
+  min-height: 2.75rem;
+  padding-right: 2.5rem;
+  font-variant-numeric: tabular-nums;
+  color-scheme: light dark;
+
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    margin-left: 0.125rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    opacity: 0.72;
+    transition:
+      opacity 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  &:hover:not(:disabled):not(:read-only)::-webkit-calendar-picker-indicator {
+    opacity: 1;
+    background-color: var(--nav-hover);
+  }
+
+  &:focus::-webkit-calendar-picker-indicator {
+    opacity: 1;
+  }
+}
+
+.field--datetime {
+  > label:first-child {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+}
+
+textarea.app-input,
+.app-input--textarea {
+  min-height: 5rem;
+  resize: vertical;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+// ─── Поле с подписью сверху (students, modals) ───────────────────────────────
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+
+  > label:first-child {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='file']),
+  select,
+  textarea {
+    @include app-input-surface;
+  }
+
+  input[type='datetime-local'],
+  input[type='date'],
+  input[type='time'] {
+    min-height: 2.75rem;
+    padding-right: 2.5rem;
+    font-variant-numeric: tabular-nums;
+    color-scheme: light dark;
+
+    &::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      margin-left: 0.125rem;
+      padding: 0.25rem;
+      border-radius: 4px;
+      opacity: 0.72;
+      transition:
+        opacity 0.15s ease,
+        background-color 0.15s ease;
+    }
+
+    &:hover:not(:disabled):not(:read-only)::-webkit-calendar-picker-indicator {
+      opacity: 1;
+      background-color: var(--nav-hover);
+    }
+
+    &:focus::-webkit-calendar-picker-indicator {
+      opacity: 1;
+    }
+  }
+
+  textarea {
+    min-height: 5rem;
+    resize: vertical;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--nav-accent);
+  }
+}
+
+// ─── Плавающая подпись (account, finance, auth) ──────────────────────────────
+
+.field--float {
+  position: relative;
+  gap: 0;
+  margin-bottom: 16px;
+
+  input:not([type='checkbox']):not([type='radio']):not([type='color']) {
+    padding: 13px 12px 8px;
+  }
+
+  label {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    pointer-events: none;
+    transition:
+      top 0.15s ease,
+      font-size 0.15s ease,
+      color 0.15s ease;
+    background: var(--page-bg);
+    padding: 0 2px;
+  }
+
+  input:focus + label,
+  input:not(:placeholder-shown) + label {
+    top: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  input:focus + label {
+    color: var(--nav-accent);
+  }
+}
+
+.input-readonly {
+  @include app-input-surface;
+  cursor: default;
+  background: var(--nav-hover);
+}

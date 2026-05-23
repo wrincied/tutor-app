@@ -1,7 +1,8 @@
 <div class="page finance-page">
   <div class="page-header">
     <h1>{{ i18n.nav().finance }}</h1>
-    <div class="finance-period" role="group" [attr.aria-label]="t.periodMonth">
+    <div class="finance-toolbar">
+      <div class="finance-period" role="group" [attr.aria-label]="t.periodMonth">
       <button
         type="button"
         class="finance-period__btn"
@@ -26,15 +27,53 @@
       >
         {{ t.periodAll }}
       </button>
+      </div>
+      <div class="finance-currency">
+        <label class="finance-currency__label" for="finance-report-currency">{{ t.reportCurrency }}</label>
+        <app-select
+          id="finance-report-currency"
+          class="finance-currency__select"
+          size="compact"
+          [ngModel]="reportCurrency()"
+          (ngModelChange)="setReportCurrency($event)"
+          name="financeReportCurrency"
+          [options]="currencySelectOptions()"
+        />
+      </div>
     </div>
   </div>
 
   @if (loading()) {
-    <p class="hint">{{ t.loading }}</p>
+    <div class="skeleton-page finance-skeleton" role="status" aria-busy="true" [attr.aria-label]="t.loading">
+      <span class="sr-only">{{ t.loading }}</span>
+      <span class="skeleton skeleton--line" style="width: 88%; max-width: 28rem"></span>
+      <span class="skeleton skeleton--line skeleton--line-sm" style="width: 72%; max-width: 22rem"></span>
+      <div class="skeleton-kpi-grid">
+        <div class="skeleton-kpi skeleton-kpi--wide">
+          <span class="skeleton skeleton--line skeleton--line-sm" style="width: 55%"></span>
+          <span class="skeleton skeleton--line skeleton--line-lg" style="width: 70%"></span>
+          <span class="skeleton skeleton--line skeleton--line-sm" style="width: 90%"></span>
+        </div>
+        @for (i of skeletonKpiSlots; track i) {
+          <div class="skeleton-kpi">
+            <span class="skeleton skeleton--line skeleton--line-sm" style="width: 60%"></span>
+            <span class="skeleton skeleton--line skeleton--line-lg" style="width: 50%"></span>
+          </div>
+        }
+      </div>
+      <div class="finance-skeleton__table">
+        @for (i of skeletonLineSlots; track i) {
+          <span class="skeleton skeleton--line skeleton--block"></span>
+        }
+      </div>
+    </div>
   } @else if (error()) {
     <p class="finance-page__error">{{ error() }}</p>
   } @else if (summary(); as s) {
     <p class="finance-disclaimer">{{ t.disclaimer }}</p>
+    <p class="finance-disclaimer finance-disclaimer--rates">
+      {{ t.conversionNote }} <strong>{{ displayCurrency() }}</strong>. {{ exchangeRatesLabel() }}
+    </p>
 
     @if (!hasLessonsInPeriod()) {
       <p class="finance-note finance-note--warn">{{ t.lessonsEmptyHint }}</p>
@@ -43,32 +82,32 @@
     <section class="finance-kpi" aria-label="Summary">
       <article class="finance-kpi__card finance-kpi__card--income finance-kpi__card--wide">
         <span class="finance-kpi__label">{{ t.totalIncomeCombined }}</span>
-        <strong class="finance-kpi__value">{{ formatMoney(combinedIncome(), s.currency) }}</strong>
+        <strong class="finance-kpi__value">{{ formatMoney(combinedIncome()) }}</strong>
         <div class="finance-kpi__split">
           <span>
             {{ t.incomeCompletedPart }}:
-            <strong>{{ formatMoney(s.income.totalIncome, s.currency) }}</strong>
+            <strong>{{ formatMoney(s.income.totalIncome) }}</strong>
             ({{ s.totals.completedLessonCount }})
           </span>
           <span>
             {{ t.incomePlannedPart }}:
-            <strong>{{ formatMoney(s.income.scheduledIncome, s.currency) }}</strong>
+            <strong>{{ formatMoney(s.income.scheduledIncome) }}</strong>
             ({{ s.totals.scheduledLessonCount }})
           </span>
         </div>
       </article>
       <article class="finance-kpi__card">
         <span class="finance-kpi__label">{{ t.totalExpenses }}</span>
-        <strong class="finance-kpi__value">{{ formatMoney(s.income.totalExpenses, s.currency) }}</strong>
+        <strong class="finance-kpi__value">{{ formatMoney(s.income.totalExpenses) }}</strong>
       </article>
       <article class="finance-kpi__card">
         <span class="finance-kpi__label">{{ t.grossProfit }}</span>
-        <strong class="finance-kpi__value">{{ formatMoney(s.income.grossProfit, s.currency) }}</strong>
+        <strong class="finance-kpi__value">{{ formatMoney(s.income.grossProfit) }}</strong>
       </article>
       @if (s.austria; as at) {
         <article class="finance-kpi__card finance-kpi__card--net">
           <span class="finance-kpi__label">{{ t.netProfit }}</span>
-          <strong class="finance-kpi__value">{{ formatMoney(at.netProfit, s.currency) }}</strong>
+          <strong class="finance-kpi__value">{{ formatMoney(at.netProfit) }}</strong>
         </article>
       }
     </section>
@@ -92,18 +131,21 @@
     @if (showMixedCurrencyNote()) {
       <p class="finance-note">{{ t.mixedCurrencyNote }}</p>
       <ul class="finance-currency-list">
-        @for (row of combinedByCurrencyRows(); track row[0]) {
+        @for (row of incomeByCurrencyRows(); track row[0]) {
           <li>
             <span>{{ row[0] }}</span>
-            <strong>{{ formatMoney(row[1], row[0]) }}</strong>
+            <span class="finance-currency-list__original">
+              {{ formatMoney(row[1], row[0]) }}
+              <span class="finance-currency-list__muted">({{ t.originalInCurrency }})</span>
+            </span>
+            @if (row[0] !== displayCurrency()) {
+              <strong class="finance-currency-list__converted">
+                ≈ {{ formatMoney(convertToReport(row[1], row[0])) }}
+              </strong>
+            }
           </li>
         }
       </ul>
-    } @else if (combinedByCurrencyRows().length === 1) {
-      <p class="finance-note finance-note--muted">
-        {{ t.incomeByCurrency }}:
-        <strong>{{ formatMoney(combinedByCurrencyRows()[0][1], combinedByCurrencyRows()[0][0]) }}</strong>
-      </p>
     }
 
     <section class="finance-card">
@@ -112,39 +154,21 @@
         <dl class="finance-dl">
           <div>
             <dt>{{ t.taxableBase }}</dt>
-            <dd>{{ formatMoney(at.taxableBase, s.currency) }}</dd>
+            <dd>{{ formatMoney(at.taxableBase) }}</dd>
           </div>
           <div>
             <dt>{{ t.socialInsurance }} ({{ formatPercent(at.socialInsuranceRate) }})</dt>
-            <dd>−{{ formatMoney(at.socialInsurance, s.currency) }}</dd>
+            <dd>−{{ formatMoney(at.socialInsurance) }}</dd>
           </div>
           <div>
             <dt>{{ t.incomeTax }}</dt>
-            <dd>−{{ formatMoney(at.incomeTax, s.currency) }}</dd>
+            <dd>−{{ formatMoney(at.incomeTax) }}</dd>
           </div>
           <div class="finance-dl__highlight">
             <dt>{{ t.netProfit }}</dt>
-            <dd>{{ formatMoney(at.netProfit, s.currency) }}</dd>
+            <dd>{{ formatMoney(at.netProfit) }}</dd>
           </div>
         </dl>
-
-        @if (s.salaryModel13_14; as sal) {
-          <h3 class="finance-card__sub">{{ t.salaryModelTitle }}</h3>
-          <dl class="finance-dl finance-dl--compact">
-            <div>
-              <dt>{{ t.monthlyEquivalent }}</dt>
-              <dd>{{ formatMoney(sal.monthlyEquivalentGross, s.currency) }}</dd>
-            </div>
-            <div>
-              <dt>{{ t.annualGross14 }}</dt>
-              <dd>{{ formatMoney(sal.annualGross14, s.currency) }}</dd>
-            </div>
-            <div>
-              <dt>{{ t.annualNetEstimate }}</dt>
-              <dd>{{ formatMoney(sal.annualEmployeeNetEstimate, s.currency) }}</dd>
-            </div>
-          </dl>
-        }
       } @else {
         <p class="finance-note">{{ t.taxNotConfigured }}</p>
         <p class="finance-note">
@@ -184,7 +208,7 @@
                   <td>{{ e.expense_date }}</td>
                   <td>{{ e.title }}</td>
                   <td>{{ e.category || '—' }}</td>
-                  <td class="finance-table__num">{{ formatMoney(e.amount, s.currency) }}</td>
+                  <td class="finance-table__num">{{ formatExpenseAmount(e.amount) }}</td>
                   <td class="finance-table__actions">
                     <button type="button" class="btn-link" (click)="openExpenseEdit(e)">{{ t.editExpense }}</button>
                     <button type="button" class="btn-link danger" (click)="confirmDeleteExpense(e._id)">
@@ -210,11 +234,11 @@
   (confirm)="saveExpense()"
 >
   <form class="finance-expense-form" (ngSubmit)="saveExpense()">
-    <div class="field">
+    <div class="field field--float">
       <input type="text" [(ngModel)]="expenseForm.title" name="expTitle" required placeholder=" " />
       <label>{{ t.expenseTitle }}</label>
     </div>
-    <div class="field">
+    <div class="field field--float">
       <input
         type="number"
         [(ngModel)]="expenseForm.amount"
@@ -226,11 +250,11 @@
       />
       <label>{{ t.expenseAmount }}</label>
     </div>
-    <div class="field">
+    <div class="field field--float">
       <input type="date" [(ngModel)]="expenseForm.expense_date" name="expDate" required placeholder=" " />
       <label>{{ t.expenseDate }}</label>
     </div>
-    <div class="field">
+    <div class="field field--float">
       <input type="text" [(ngModel)]="expenseForm.category" name="expCategory" placeholder=" " />
       <label>{{ t.expenseCategory }}</label>
     </div>

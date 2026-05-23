@@ -1,14 +1,32 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { Auth, authState } from '@angular/fire/auth';
+import { map, take } from 'rxjs/operators';
 
 export const authGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
+  const auth = inject(Auth);
   const router = inject(Router);
 
-  if (auth.isLoggedIn()) {
-    return true;
-  }
+  return authState(auth).pipe(
+    take(1),
+    map((user) => (user ? true : router.createUrlTree(['/login']))),
+  );
+};
 
-  return router.createUrlTree(['/login']);
+export const emailVerifiedGuard: CanActivateFn = () => {
+  const auth = inject(Auth);
+  const router = inject(Router);
+
+  return authState(auth).pipe(
+    take(1),
+    map((user) => {
+      if (!user) {
+        return router.createUrlTree(['/login']);
+      }
+      if (!user.emailVerified) {
+        return router.createUrlTree(['/app/verify-email-notice']);
+      }
+      return true;
+    }),
+  );
 };

@@ -1,45 +1,80 @@
+$dialog-desktop-min: 768px;
+$dialog-mobile-max: $dialog-desktop-min - 1px;
+
+// На body — вне overflow:hidden календаря и модалок с transform
+.app-dialog-portal-host {
+  position: static;
+  display: contents;
+}
+
 .app-dialog-overlay {
   position: fixed;
   inset: 0;
-  z-index: 300;
+  z-index: var(--z-app-dialog, var(--z-app-overlay));
+
+  &--on-top {
+    z-index: var(--z-app-dialog-top, 1400);
+  }
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   background: rgb(15 23 42 / 0.45);
+  opacity: 1;
 
-  /* Нижняя панель только на телефонах; с 768px (iPad+) — по центру, как на ПК */
-  &--sheet {
-    align-items: flex-end;
+  // Телефон: снизу
+  @media (max-width: $dialog-mobile-max) {
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
     padding: 0;
+    overflow: hidden;
+  }
 
-    @media (min-width: 768px) {
-      align-items: center;
-      padding: 1rem;
-    }
+  // Планшет/ПК: по центру
+  @media (min-width: $dialog-desktop-min) {
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
   }
 }
 
 .app-dialog {
   width: 100%;
-  max-width: 24rem;
-  padding: 1.25rem 1.5rem 1.5rem;
-  border: 1px solid var(--nav-border);
-  border-radius: 0.75rem;
-  background: var(--nav-bg);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.15);
+  height: auto;
   color: var(--text-primary);
+  border: 1px solid var(--nav-border);
+  background: var(--nav-bg);
+  -webkit-overflow-scrolling: touch;
 
-  &--sheet {
+  // Телефон: bottom sheet
+  @media (max-width: $dialog-mobile-max) {
+    align-self: stretch;
     max-width: 100%;
-    border-radius: 1rem 1rem 0 0;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 0.5rem);
+    max-height: calc(100svh - env(safe-area-inset-top, 0px) - 0.5rem);
+    overflow-x: hidden;
+    overflow-y: auto;
     padding: 1rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    border-radius: 1rem 1rem 0 0;
+    box-shadow: 0 -12px 40px rgb(15 23 42 / 0.18);
+    opacity: 1;
+    transform: translateY(0);
+    transform-origin: bottom center;
+  }
 
-    @media (min-width: 768px) {
-      max-width: 24rem;
-      border-radius: 0.75rem;
-      padding: 1.25rem 1.5rem 1.5rem;
-    }
+  // Планшет/ПК: по центру, скролл при длинном контенте
+  @media (min-width: $dialog-desktop-min) {
+    max-width: 24rem;
+    max-height: min(90dvh, calc(100dvh - 2rem));
+    max-height: min(90svh, calc(100svh - 2rem));
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.15);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 
   &--error {
@@ -89,6 +124,8 @@
   }
 
   &__body {
+    flex: 0 0 auto;
+    overflow: visible;
     font-size: 0.875rem;
     line-height: 1.55;
     color: var(--text-secondary);
@@ -113,7 +150,7 @@
 
   &__actions {
     display: flex;
-    flex-wrap: wrap;
+    // flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 1.25rem;
@@ -122,7 +159,7 @@
   &__btn {
     min-height: 2.75rem;
     border-radius: 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.1rem 0.5rem;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
@@ -133,22 +170,49 @@
       color: rgb(51 65 85);
 
       &:hover {
-        background: rgb(248 250 252);
+        background: rgb(210, 217, 227);
+        transition: all 0.15s ease;
+      }
+    }
+
+    &--danger {
+      border-color: rgb(248 113 113);
+      color: rgb(185 28 28);
+
+      &:hover {
+        background: rgb(254 242 242);
+      }
+    }
+
+    &--neutral {
+      border: 1px solid rgb(148 163 184);
+      background: #fff;
+      &:hover {
+        background: var(--nav-accent);
+        color: #fff;
       }
     }
 
     &--primary {
-      border: 1px solid var(--nav-accent);
-      background: var(--nav-accent);
-      color: #fff;
+      border: 1px solid rgb(148 163 184);
+      color: #374151;
 
       &:hover {
-        filter: brightness(0.92);
+        background: rgb(185 28 28);
+        color: #fff;
       }
 
       &:active {
         transform: translateY(1px);
       }
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-dialog-overlay,
+  .app-dialog,
+  .app-dialog--sheet {
+    transition: none !important;
   }
 }

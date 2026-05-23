@@ -1,0 +1,113 @@
+<div class="page pricing-page">
+  @if (loading()) {
+    <p class="pricing-page__status" role="status">{{ i18n.sharedUi().loadingContent }}</p>
+  } @else {
+    <header class="pricing-hero">
+      <h1 class="pricing-hero__title">{{ t.title }}</h1>
+      <p class="pricing-hero__subtitle">{{ t.subtitle }}</p>
+    </header>
+
+    <div class="pricing-toggle" role="group" [attr.aria-label]="t.toggleMonthly">
+      <button
+        type="button"
+        class="pricing-toggle__btn"
+        [class.pricing-toggle__btn--active]="billingInterval() === 'monthly'"
+        (click)="setBillingInterval('monthly')"
+      >
+        {{ t.toggleMonthly }}
+      </button>
+      <button
+        type="button"
+        class="pricing-toggle__btn"
+        [class.pricing-toggle__btn--active]="billingInterval() === 'yearly'"
+        (click)="setBillingInterval('yearly')"
+      >
+        {{ t.toggleYearly }}
+        <span class="pricing-toggle__badge">{{ t.saveBadge }}</span>
+      </button>
+    </div>
+
+    @if (error()) {
+      <p class="pricing-page__error" role="alert">{{ error() }}</p>
+    }
+
+    <div class="pricing-grid">
+      <article class="pricing-card pricing-card--free">
+        <h2 class="pricing-card__name">{{ t.freePlan.name }}</h2>
+        <p class="pricing-card__price">
+          <span class="pricing-card__amount">{{ freePriceLabel() }}</span>
+          <span class="pricing-card__period">{{ t.freePlan.period }}</span>
+        </p>
+        <ul class="pricing-card__features">
+          @for (feature of t.freePlan.features; track feature) {
+            <li>{{ feature }}</li>
+          }
+        </ul>
+        <button type="button" class="pricing-card__cta pricing-card__cta--ghost" disabled>
+          {{ isPro() || isTrial() ? t.freePlan.cta : subscriptionLabel() }}
+        </button>
+      </article>
+
+      <article class="pricing-card pricing-card--pro">
+        <span class="pricing-card__ribbon">{{ t.recommendedBadge }}</span>
+        <p class="pricing-card__trial">{{ t.proPlan.trialBadge }}</p>
+        <h2 class="pricing-card__name">{{ t.proPlan.name }}</h2>
+        <p class="pricing-card__price">
+          <span class="pricing-card__amount">{{ proPriceLabel() }}</span>
+          <span class="pricing-card__period">{{ proPeriodLabel() }}</span>
+        </p>
+        <p class="pricing-card__microcopy">{{ t.proPlan.microcopy }}</p>
+        <ul class="pricing-card__features">
+          @for (feature of t.proPlan.features; track feature) {
+            <li>{{ feature }}</li>
+          }
+        </ul>
+
+        @if (isPro()) {
+          <button type="button" class="pricing-card__cta" disabled>{{ t.alreadyPro }}</button>
+        } @else if (isTrial()) {
+          <button type="button" class="pricing-card__cta" disabled>{{ t.alreadyTrial }}</button>
+        } @else if (!taxModeConfigured()) {
+          <p class="pricing-card__hint">{{ t.taxRequired }}</p>
+          <a routerLink="/app/account" class="pricing-card__cta pricing-card__cta--link">{{
+            t.accountLink
+          }}</a>
+        } @else {
+          <button
+            type="button"
+            class="pricing-card__cta pricing-card__cta--primary"
+            [disabled]="checkoutLoading()"
+            (click)="startProCheckout()"
+          >
+            {{ checkoutLoading() ? t.proPlan.ctaLoading : t.proPlan.cta }}
+          </button>
+          <p class="pricing-card__stripe">{{ t.stripeNote }}</p>
+        }
+      </article>
+    </div>
+
+    <section class="pricing-faq" aria-labelledby="pricing-faq-title">
+      <h2 id="pricing-faq-title" class="pricing-faq__title">{{ t.faq.title }}</h2>
+      <div class="pricing-faq__list">
+        @for (item of t.faq.items; track item.q; let i = $index) {
+          <div class="pricing-faq__item" [class.pricing-faq__item--open]="isFaqOpen(i)">
+            <button
+              type="button"
+              class="pricing-faq__question"
+              [attr.aria-expanded]="isFaqOpen(i)"
+              (click)="toggleFaq(i)"
+            >
+              <span>{{ item.q }}</span>
+              <span class="pricing-faq__chevron" aria-hidden="true"></span>
+            </button>
+            @if (isFaqOpen(i)) {
+              <div class="pricing-faq__answer">
+                <p>{{ item.a }}</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

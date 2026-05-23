@@ -1,48 +1,82 @@
-@if (open()) {
-  <div
-    class="app-dialog-overlay"
-    [class.app-dialog-overlay--sheet]="layout() === 'sheet'"
-    role="presentation"
-    (click)="onOverlayClick()"
-  >
+<ng-template #overlayPortal>
+  @if (open()) {
     <div
-      class="app-dialog"
-      [class.app-dialog--error]="variant() === 'error'"
-      [class.app-dialog--sheet]="layout() === 'sheet'"
-      role="alertdialog"
-      aria-modal="true"
-      [attr.aria-labelledby]="'app-dialog-title'"
-      (click)="$event.stopPropagation()"
+      class="app-dialog-overlay"
+      [class.app-dialog-overlay--sheet]="layout() === 'sheet'"
+      [class.app-dialog-overlay--on-top]="stackOnTop()"
+      role="presentation"
+      animate.leave="modal-overlay-leave"
+      (click)="onOverlayClick()"
     >
-      @if (iconSrc(); as src) {
-        <div class="app-dialog__icon" aria-hidden="true">
-          <img [src]="src" width="24" height="24" alt="" />
+      <div
+        class="app-dialog"
+        [class.app-dialog--error]="variant() === 'error'"
+        [class.app-dialog--sheet]="layout() === 'sheet'"
+        role="alertdialog"
+        aria-modal="true"
+        [attr.aria-labelledby]="'app-dialog-title'"
+        [animate.leave]="layout() === 'sheet' ? 'modal-sheet-leave' : 'modal-dialog-leave'"
+        (click)="$event.stopPropagation()"
+      >
+        @if (iconSrc(); as src) {
+          <div class="app-dialog__icon" aria-hidden="true">
+            <img [src]="src" width="24" height="24" alt="" />
+          </div>
+        }
+
+        <h2 id="app-dialog-title" class="app-dialog__title">{{ title() }}</h2>
+
+        <div class="app-dialog__body">
+          <ng-content />
         </div>
-      }
 
-      <h2 id="app-dialog-title" class="app-dialog__title">{{ title() }}</h2>
-
-      <div class="app-dialog__body">
-        <ng-content />
-      </div>
-
-      <div class="app-dialog__actions">
-        @if (cancelLabel()) {
-          <button type="button" class="app-dialog__btn app-dialog__btn--secondary" (click)="cancel.emit()">
-            {{ cancelLabel() }}
-          </button>
-        }
-        @if (confirmLabel()) {
-          <button type="button" class="app-dialog__btn app-dialog__btn--primary" (click)="confirm.emit()">
-            {{ confirmLabel() }}
-          </button>
-        }
-        @if (dismissLabel() && !confirmLabel() && !cancelLabel()) {
-          <button type="button" class="app-dialog__btn app-dialog__btn--primary" (click)="onDismiss()">
-            {{ dismissLabel() }}
-          </button>
+        @if (
+          cancelLabel() ||
+          secondaryLabel() ||
+          confirmLabel() ||
+          (dismissLabel() && !confirmLabel() && !cancelLabel() && !secondaryLabel())
+        ) {
+          <div class="app-dialog__actions">
+            @if (cancelLabel()) {
+              <button
+                type="button"
+                class="app-dialog__btn app-dialog__btn--secondary"
+                [class.app-dialog__btn--danger]="cancelDanger()"
+                (click)="onCancelClick()"
+              >
+                {{ cancelLabel() }}
+              </button>
+            }
+            @if (secondaryLabel()) {
+              <button
+                type="button"
+                class="app-dialog__btn app-dialog__btn--neutral"
+                (click)="onSecondaryClick()"
+              >
+                {{ secondaryLabel() }}
+              </button>
+            }
+            @if (confirmLabel()) {
+              <button
+                type="button"
+                class="app-dialog__btn app-dialog__btn--primary"
+                (click)="onConfirmClick()"
+              >
+                {{ confirmLabel() }}
+              </button>
+            }
+            @if (dismissLabel() && !confirmLabel() && !cancelLabel()) {
+              <button
+                type="button"
+                class="app-dialog__btn app-dialog__btn--primary"
+                (click)="onDismiss()"
+              >
+                {{ dismissLabel() }}
+              </button>
+            }
+          </div>
         }
       </div>
     </div>
-  </div>
-}
+  }
+</ng-template>

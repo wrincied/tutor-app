@@ -1,8 +1,9 @@
-import { Component, inject, signal, effect, PLATFORM_ID, DestroyRef } from '@angular/core';
+import { Component, inject, signal, effect, PLATFORM_ID, DestroyRef, OnInit } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { UserService } from '../../core/services/user.service';
 const SIDEBAR_COLLAPSE_BTN_MAX = 890;
 
 @Component({
@@ -11,12 +12,14 @@ const SIDEBAR_COLLAPSE_BTN_MAX = 890;
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   auth = inject(AuthService);
   i18n = inject(I18nService);
+  private readonly userSvc = inject(UserService);
   private platformId = inject(PLATFORM_ID);
   private destroyRef = inject(DestroyRef);
   collapsed = signal(false);
+  isSuperAdmin = signal(false);
 
   constructor() {
     effect(() => {
@@ -37,7 +40,18 @@ export class NavbarComponent {
     }
   }
 
+  ngOnInit(): void {
+    this.userSvc.ensureProfile().subscribe({
+      next: (profile) => this.isSuperAdmin.set(profile.role === 'super_admin'),
+      error: () => this.isSuperAdmin.set(false),
+    });
+  }
+
   toggle() {
     this.collapsed.update((v) => !v);
+  }
+
+  logout(): void {
+    this.auth.logout().subscribe();
   }
 }

@@ -45,3 +45,6 @@ Thumbs.db
 
 # backend
 backend/
+src/environments/environment.ts # 
+src/environments/prodiction.environment.ts
+src/environments/development.environment.ts

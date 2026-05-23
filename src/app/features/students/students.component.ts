@@ -1,8 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { StudentService, Student } from '../../core/services/student.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { RATE_CURRENCIES, type RateCurrency } from '@interfaces';
+import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType } from '@interfaces';
 import {
   colorToHexForPicker,
   DEFAULT_STUDENT_BORDER_COLOR,
@@ -27,6 +27,13 @@ const TIMEZONE_PRESETS: string[] = [
   'Asia/Oral',
   'UTC',
 ];
+
+function resolveBillingType(raw?: string): StudentBillingType {
+  if (raw === 'postpaid' || raw === 'per_lesson' || raw === 'single') {
+    return 'postpaid';
+  }
+  return 'package';
+}
 
 function resolvedBrowserTimezone(): string {
   try {
@@ -59,7 +66,14 @@ export class StudentsComponent implements OnInit {
     bot_active: false,
   };
 
+  billingType = signal<StudentBillingType>('package');
+  balanceLessons = signal(0);
+  creditLimit = signal(0);
+  readonly isPackageBilling = computed(() => this.billingType() === 'package');
+  readonly isPostpaidBilling = computed(() => this.billingType() === 'postpaid');
+
   readonly rateCurrencies = RATE_CURRENCIES;
+  readonly skeletonCardSlots = [0, 1, 2, 3, 4, 5];
   autoTimezone = true;
 
   deleteTargetId = signal<string | null>(null);
@@ -130,6 +144,10 @@ export class StudentsComponent implements OnInit {
     }
   }
 
+  setBillingType(type: StudentBillingType): void {
+    this.billingType.set(type);
+  }
+
   openCreate() {
     this.autoTimezone = true;
     this.form = {
@@ -140,6 +158,9 @@ export class StudentsComponent implements OnInit {
       color_hex: generatePastelColor(),
       bot_active: false,
     };
+    this.billingType.set('package');
+    this.balanceLessons.set(0);
+    this.creditLimit.set(0);
     this.editTarget.set(null);
     this.showForm.set(true);
   }
@@ -155,6 +176,9 @@ export class StudentsComponent implements OnInit {
       color_hex: s.color_hex || generatePastelColor(),
       bot_active: Boolean(s.bot_active),
     };
+    this.billingType.set(resolveBillingType(s.billing_type));
+    this.balanceLessons.set(Number(s.balance_lessons) || 0);
+    this.creditLimit.set(Number(s.credit_limit) || 0);
     this.editTarget.set(s);
     this.showForm.set(true);
   }
@@ -188,13 +212,18 @@ export class StudentsComponent implements OnInit {
 
   save() {
     const target = this.editTarget();
-    const payload = {
+    const billing_type = this.billingType();
+    const payload: Partial<Student> = {
       name: this.form.name,
       rate_per_hour: this.form.rate_per_hour,
       rate_currency: this.form.rate_currency,
       timezone: this.form.timezone,
       color_hex: this.form.color_hex,
       bot_active: this.form.bot_active,
+      billing_type,
+      ...(billing_type === 'package'
+        ? { balance_lessons: this.balanceLessons() }
+        : { credit_limit: this.creditLimit() }),
     };
 
     if (target) {

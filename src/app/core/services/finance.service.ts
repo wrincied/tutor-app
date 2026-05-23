@@ -2,11 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import type { Expense, FinanceSummary } from '@interfaces';
 
-const API = 'http://localhost:3001/api/finance';
+import { apiUrl } from '../config/api-url';
+
+const API = apiUrl('/finance');
 
 export interface FinancePeriodQuery {
   from?: string;
   to?: string;
+  currency?: string;
 }
 
 export interface ExpensePayload {
@@ -27,6 +30,9 @@ export class FinanceService {
     }
     if (period?.to) {
       params = params.set('to', period.to);
+    }
+    if (period?.currency) {
+      params = params.set('currency', period.currency);
     }
     return this.http.get<FinanceSummary>(`${API}/summary`, { params });
   }
