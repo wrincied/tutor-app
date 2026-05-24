@@ -47,3 +47,4 @@ Thumbs.db
 backend/.env
 backend/.env.*
 backend/serviceAccountKey.json
+.firebase/
