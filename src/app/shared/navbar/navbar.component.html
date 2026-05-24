@@ -77,7 +77,10 @@
 
   <div class="sidebar-footer">
     <a routerLink="/app/account" routerLinkActive="active" class="sidebar-btn sidebar-btn--account">
-      <img src="/assets/icons/icon-account.svg" width="20" height="20" alt="" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
       <span>{{ i18n.nav().account }}</span>
     </a>
 
@@ -134,7 +137,10 @@
     </a>
   }
   <a routerLink="/app/account" routerLinkActive="active" class="bottom-link">
-    <img class="bottom-link__icon-img" src="/assets/icons/icon-account.svg" width="22" height="22" alt="" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
     {{ i18n.nav().account }}
   </a>
 </nav>

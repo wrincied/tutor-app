@@ -20,6 +20,11 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
   -webkit-overflow-scrolling: touch;
   background: rgb(15 23 42 / 0.45);
   opacity: 1;
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+  @starting-style {
+    opacity: 0;
+  }
 
   // Телефон: снизу
   @media (max-width: $dialog-mobile-max) {
@@ -61,6 +66,13 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     opacity: 1;
     transform: translateY(0);
     transform-origin: bottom center;
+    transition:
+      transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+    @starting-style {
+      transform: translateY(100%);
+    }
   }
 
   // Планшет/ПК: по центру, скролл при длинном контенте
@@ -75,6 +87,14 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     box-shadow: 0 12px 32px rgb(0 0 0 / 0.15);
     opacity: 1;
     transform: translateY(0) scale(1);
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(0.75rem) scale(0.97);
+    }
   }
 
   &--error {

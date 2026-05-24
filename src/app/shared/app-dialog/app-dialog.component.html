@@ -5,6 +5,7 @@
       [class.app-dialog-overlay--sheet]="layout() === 'sheet'"
       [class.app-dialog-overlay--on-top]="stackOnTop()"
       role="presentation"
+      animate.leave="modal-overlay-leave"
       (click)="onOverlayClick()"
     >
       <div
@@ -14,6 +15,7 @@
         role="alertdialog"
         aria-modal="true"
         [attr.aria-labelledby]="'app-dialog-title'"
+        [animate.leave]="layout() === 'sheet' ? 'modal-sheet-leave' : 'modal-dialog-leave'"
         (click)="$event.stopPropagation()"
       >
         @if (iconSrc(); as src) {

@@ -248,23 +248,13 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
   line-height: 1.15;
   transition: color 0.15s;
 
-  svg,
-  .bottom-link__icon-img {
+  svg {
     width: 22px;
     height: 22px;
     flex-shrink: 0;
   }
 
-  .bottom-link__icon-img {
-    display: block;
-    opacity: 0.85;
-  }
-
   &.active {
     color: var(--nav-accent);
-
-    .bottom-link__icon-img {
-      opacity: 1;
-    }
   }
 }

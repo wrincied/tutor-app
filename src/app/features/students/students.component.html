@@ -1,9 +1,10 @@
-<div class="page">
+<div class="page app-scroll-page students-page">
   <div class="page-header">
     <h1>{{ i18n.nav().students }}</h1>
     <button type="button" class="btn-primary" (click)="openCreate()">{{ t.addButton }}</button>
   </div>
 
+  <div class="scrollable-content">
   @if (loading()) {
     <div class="skeleton-page" role="status" aria-busy="true" [attr.aria-label]="t.loading">
       <span class="sr-only">{{ t.loading }}</span>
@@ -114,6 +115,17 @@
       </div>
     </div>
   }
+
+  @if (!loading()) {
+    <app-activity-log-panel
+      category="students"
+      [title]="t.activityLogSection"
+      [emptyText]="t.activityLogEmpty"
+      [strings]="i18n.activityLogUi()"
+      [reloadTrigger]="logReloadTrigger()"
+    />
+  }
+  </div>
 </div>
 
 <app-dialog
@@ -165,12 +177,14 @@
   <div
     class="modal-overlay modal-overlay--sheet"
     role="presentation"
+    animate.leave="modal-overlay-leave"
   >
     <div
       class="modal modal-sheet"
       role="dialog"
       aria-modal="true"
       [attr.aria-labelledby]="'student-form-title'"
+      animate.leave="modal-sheet-leave"
       (click)="$event.stopPropagation()"
     >
       <div class="modal-header">
@@ -339,11 +353,13 @@
   <div
     class="modal-overlay modal-overlay--sheet"
     role="presentation"
+    animate.leave="modal-overlay-leave"
   >
     <div
       class="modal modal-sheet modal--confirm"
       role="dialog"
       aria-modal="true"
+      animate.leave="modal-sheet-leave"
       (click)="$event.stopPropagation()"
     >
       <div class="modal-header">
@@ -367,11 +383,13 @@
   <div
     class="modal-overlay modal-overlay--sheet"
     role="presentation"
+    animate.leave="modal-overlay-leave"
   >
     <div
       class="modal modal-sheet modal--confirm"
       role="dialog"
       aria-modal="true"
+      animate.leave="modal-sheet-leave"
       (click)="$event.stopPropagation()"
     >
       <div class="modal-header">

@@ -29,9 +29,6 @@ import {
 } from '../../core/constants/overlay-layer';
 import { I18nService } from '../../core/services/i18n.service';
 
-/** Длинные списки (страны и т.п.) — bottom sheet на всех ширинах экрана. */
-const LARGE_OPTIONS_SHEET_THRESHOLD = 20;
-
 export interface AppSelectOption {
   value: string;
   label: string;
@@ -112,10 +109,8 @@ export class AppSelectComponent implements ControlValueAccessor, OnDestroy {
     if (this.mobileBackdropSheet() && this.mobileSheet()) {
       return true;
     }
-    return (
-      this.menuPlacement() === 'below' &&
-      (this.mobileSheet() || this.options().length > LARGE_OPTIONS_SHEET_THRESHOLD)
-    );
+    // На desktop — выпадающий список у триггера; sheet только на узком экране
+    return this.menuPlacement() === 'below' && this.mobileSheet();
   });
 
   protected readonly useMobileBackdropSheet = computed(

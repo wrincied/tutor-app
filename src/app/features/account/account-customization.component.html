@@ -74,7 +74,7 @@
       </div>
 
       <div class="account-workspace__grid">
-        <div class="field field--float account-workspace__name">
+        <!-- <div class="field field--float account-workspace__name">
           <input
             type="text"
             [ngModel]="profileSettings.workspace().name"
@@ -85,9 +85,10 @@
             autocomplete="organization"
           />
           <label>{{ i18n.accountUi().workspaceName }}</label>
-        </div>
+        </div> -->
 
-        <div class="field field--select">
+        <!-- <div class="field field--select">
+          <label>{{ i18n.accountUi().workspaceCurrency }}</label>
           <app-select
             name="workspaceCurrency"
             [ngModel]="profileSettings.workspace().currency"
@@ -95,10 +96,12 @@
             [options]="workspaceCurrencyOptions()"
             menuPlacement="below"
           />
-          <label>{{ i18n.accountUi().workspaceCurrency }}</label>
-        </div>
+          
+        </div> --> 
+        <!-- will be added later -->
 
         <div class="field field--select">
+          <label>{{ i18n.accountUi().workspaceDefaultDuration }}</label>
           <app-select
             name="workspaceDuration"
             [ngModel]="profileSettings.workspace().defaultLessonDuration + ''"
@@ -106,7 +109,7 @@
             [options]="workspaceDurationOptions()"
             menuPlacement="below"
           />
-          <label>{{ i18n.accountUi().workspaceDefaultDuration }}</label>
+          
         </div>
       </div>
 
@@ -116,6 +119,7 @@
 
       <div class="account-workspace__hours-row">
         <div class="field field--select account-workspace__hour">
+          <label>{{ i18n.accountUi().workingHoursStart }}</label>
           <app-select
             name="workingHoursStart"
             [ngModel]="profileSettings.workingHours().start"
@@ -123,10 +127,11 @@
             [options]="workingHourOptions()"
             menuPlacement="below"
           />
-          <label>{{ i18n.accountUi().workingHoursStart }}</label>
+
         </div>
 
         <div class="field field--select account-workspace__hour">
+          <label>{{ i18n.accountUi().workingHoursEnd }}</label>
           <app-select
             name="workingHoursEnd"
             [ngModel]="profileSettings.workingHours().end"
@@ -134,7 +139,6 @@
             [options]="workingHourOptions()"
             menuPlacement="below"
           />
-          <label>{{ i18n.accountUi().workingHoursEnd }}</label>
         </div>
       </div>
 

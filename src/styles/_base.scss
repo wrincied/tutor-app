@@ -127,6 +127,41 @@ app-navbar {
   }
 }
 
+// Плавное появление страниц при навигации (@starting-style; модалки — соседи .page/.cal-page)
+@mixin route-view-enter {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+}
+
+@mixin route-view-enter-fade {
+  opacity: 1;
+  transition: opacity 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+.app-page-host > router-outlet > * > :where(.page, .cal-page) {
+  @include route-view-enter;
+}
+
+.account-page__content > :where(app-account-customization, app-account-profile) {
+  @include route-view-enter-fade;
+}
+
+app-root > router-outlet > * > :where(.auth-page, .landing, .legal-page) {
+  @include route-view-enter;
+}
+
 .app-page-host > :where(
     app-home,
     app-students,
@@ -173,5 +208,13 @@ html.app-select-dropdown-open {
   html:has(.app-content > app-calendar) body {
     overflow: hidden;
     overscroll-behavior: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-page-host > router-outlet > * > :where(.page, .cal-page),
+  .account-page__content > :where(app-account-customization, app-account-profile),
+  app-root > router-outlet > * > :where(.auth-page, .landing, .legal-page) {
+    transition: none !important;
   }
 }

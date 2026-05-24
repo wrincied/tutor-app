@@ -4,6 +4,28 @@
   max-width: 100%;
 }
 
+.app-scroll-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+
+  > .page-header {
+    flex-shrink: 0;
+  }
+
+  > .scrollable-content {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
 .page-header {
   display: flex;
   align-items: center;
@@ -146,6 +168,11 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   z-index: var(--z-app-overlay);
   overscroll-behavior: contain;
   opacity: 1;
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+  @starting-style {
+    opacity: 0;
+  }
 
   // Телефон: всегда снизу
   @media (max-width: $modal-mobile-max) {
@@ -222,6 +249,13 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   -webkit-overflow-scrolling: touch;
   transform: translateY(0);
   transform-origin: bottom center;
+  transition:
+    transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+  @starting-style {
+    transform: translateY(100%);
+  }
 
   @media (min-width: $modal-desktop-min) {
     align-self: center;
@@ -235,6 +269,15 @@ $modal-mobile-max: $modal-desktop-min - 1px;
     transform: translateY(0) scale(1);
     transform-origin: center center;
     opacity: 1;
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(0.75rem) scale(0.97);
+    }
+
     overflow-x: auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -262,6 +305,79 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+// Закрытие модалок (animate.leave) — keyframes для надёжного animationend
+@keyframes modal-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-sheet-out-mobile {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes modal-sheet-out-desktop {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.97);
+  }
+}
+
+.modal-overlay-leave {
+  animation: modal-overlay-out 0.22s ease-in forwards;
+  pointer-events: none;
+}
+
+.modal-sheet-leave {
+  animation: modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  pointer-events: none;
+
+  @media (min-width: $modal-desktop-min) {
+    animation-name: modal-sheet-out-desktop;
+    animation-duration: 0.28s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+.modal-dialog-leave {
+  pointer-events: none;
+
+  @media (max-width: $modal-mobile-max) {
+    animation: modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  }
+
+  @media (min-width: $modal-desktop-min) {
+    animation: modal-sheet-out-desktop 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-sheet,
+  .modal:not(.modal-sheet) {
+    transition: none !important;
+  }
+
+  .modal-overlay-leave,
+  .modal-sheet-leave,
+  .modal-dialog-leave {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 // CDK Overlay (статус урока и т.п.) — поверх модалок

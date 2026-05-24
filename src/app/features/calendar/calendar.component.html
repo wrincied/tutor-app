@@ -477,11 +477,16 @@
 </div>
 
 @if (showLessonForm()) {
-  <div class="modal-overlay modal-overlay--sheet" role="presentation">
+  <div
+    class="modal-overlay modal-overlay--sheet"
+    role="presentation"
+    animate.leave="modal-overlay-leave"
+  >
     <div
       class="modal modal-sheet modal--lesson"
       role="dialog"
       aria-modal="true"
+      animate.leave="modal-sheet-leave"
       (click)="$event.stopPropagation()"
     >
       <div class="modal-header">

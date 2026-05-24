@@ -41,6 +41,10 @@ export class AppDialogComponent implements OnDestroy {
   private portalHost: HTMLElement | null = null;
   private bodyOutlet: DomPortalOutlet | null = null;
   private attachedPortal: EmbeddedViewRef<unknown> | null = null;
+  private detachScheduled: ReturnType<typeof setTimeout> | null = null;
+
+  /** Дольше самой leave-анимации (.modal-sheet-leave ≈ 320ms). */
+  private static readonly LEAVE_MS = 360;
 
   open = input(false, { transform: booleanAttribute });
   title = input.required<string>();
@@ -66,11 +70,12 @@ export class AppDialogComponent implements OnDestroy {
   constructor() {
     effect(() => {
       if (this.open()) {
+        this.cancelScheduledDetach();
         purgeStaleOverlayLayers(this.document);
         this.document.dispatchEvent(new CustomEvent(APP_OVERLAY_LAYER_OPEN));
         this.syncPortal();
-      } else {
-        this.detachPortal();
+      } else if (this.bodyOutlet?.hasAttached()) {
+        this.scheduleDetachPortal();
       }
     });
 
@@ -132,7 +137,28 @@ export class AppDialogComponent implements OnDestroy {
     this.attachedPortal = this.bodyOutlet.attach(new TemplatePortal(tpl, this.vcr));
   }
 
+  private cancelScheduledDetach(): void {
+    if (this.detachScheduled !== null) {
+      clearTimeout(this.detachScheduled);
+      this.detachScheduled = null;
+    }
+  }
+
+  /** Даём @if (open()) и animate.leave завершиться до detach CDK-портала. */
+  private scheduleDetachPortal(): void {
+    if (this.detachScheduled !== null) {
+      return;
+    }
+    this.detachScheduled = setTimeout(() => {
+      this.detachScheduled = null;
+      if (!this.open()) {
+        this.detachPortal();
+      }
+    }, AppDialogComponent.LEAVE_MS);
+  }
+
   private detachPortal(): void {
+    this.cancelScheduledDetach();
     if (this.bodyOutlet?.hasAttached()) {
       this.bodyOutlet.detach();
     }
