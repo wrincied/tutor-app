@@ -4,13 +4,12 @@
 }
 
 /* Плавающая подпись (.field--select) — значение ниже label */
-:host-context(.field--select) {
-  .app-select__trigger {
-    align-items: flex-end;
-    min-height: 2.75rem;
-    padding-top: 1.125rem;
-    padding-bottom: 0.375rem;
-  }
+.field--select app-select .app-select__trigger,
+:host-context(.field--select) .app-select__trigger {
+  align-items: flex-end;
+  min-height: 2.75rem;
+  padding-top: 1.125rem;
+  padding-bottom: 0.375rem;
 }
 
 
@@ -390,6 +389,27 @@ html.app-select-dropdown-open .app-select-portal-host--overlay {
   box-shadow: 0 8px 24px rgb(15 23 42 / 0.12);
   opacity: 1;
   transform: translateY(0) scale(1);
+  transition:
+    opacity 0.22s ease-out,
+    transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+
+  &.app-select__menu--placement-below {
+    transform-origin: top center;
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(-0.375rem) scale(0.98);
+    }
+  }
+
+  &.app-select__menu--placement-above {
+    transform-origin: bottom center;
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(0.375rem) scale(0.98);
+    }
+  }
 
   .app-select__option {
     display: flex;
@@ -458,6 +478,11 @@ html.app-select-dropdown-open .app-select-portal-host--overlay {
     pointer-events: auto;
     background: rgb(15 23 42 / 0.45);
     opacity: 1;
+    transition: opacity 0.22s ease-out;
+
+    @starting-style {
+      opacity: 0;
+    }
   }
 
   &--overlay .app-select__backdrop {
@@ -526,6 +551,12 @@ html.app-select-dropdown-open .app-select-portal-host--overlay {
     transform: translateY(0);
 
     transform-origin: bottom center;
+
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+
+    @starting-style {
+      transform: translateY(100%);
+    }
 
     &::before {
 
@@ -669,6 +700,8 @@ html.app-select-dropdown-open .app-select-portal-host--overlay {
 
   .app-select__menu,
 
+  .app-select__menu--floating,
+
   .app-select__backdrop,
 
   .app-select-backdrop-leave,
@@ -684,6 +717,8 @@ html.app-select-dropdown-open .app-select-portal-host--overlay {
 
 
   .app-select__menu,
+
+  .app-select__menu--floating,
 
   .app-select__menu--sheet {
 

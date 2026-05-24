@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildRruleFromConfig,
+  configFromPreset,
   formatRecurrenceSummary,
   parseRruleToConfig,
 } from './lesson-recurrence-config';
@@ -80,5 +81,22 @@ describe('lesson-recurrence-config', () => {
       count: null,
     };
     expect(formatRecurrenceSummary(config, labels, '2026-05-15')).toContain('15');
+  });
+
+  it('resets config when preset is none', () => {
+    const previous: RecurrenceRuleConfig = {
+      preset: 'weekly',
+      interval: 2,
+      byDay: ['MO', 'WE'],
+      customFreq: 'weekly',
+      endMode: 'count',
+      untilDate: null,
+      count: 12,
+    };
+    const next = configFromPreset('none', new Date('2026-05-15T10:00:00'), previous);
+    expect(next.preset).toBe('none');
+    expect(next.byDay).toEqual([]);
+    expect(next.interval).toBe(1);
+    expect(buildRruleFromConfig(next, '2026-05-15')).toBeNull();
   });
 });

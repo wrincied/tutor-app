@@ -41,7 +41,7 @@ export const DEFAULT_RECURRENCE_CONFIG: RecurrenceRuleConfig = {
   preset: 'none',
   interval: 1,
   byDay: [],
-  customFreq: 'weekly',
+  customFreq: 'daily',
   endMode: 'never',
   untilDate: null,
   count: 10,
@@ -70,7 +70,11 @@ function appendEndSegments(
   segments: string[],
   config: Pick<RecurrenceRuleConfig, 'endMode' | 'untilDate' | 'count'>,
 ): void {
-  if (config.endMode === 'until' && config.untilDate && /^\d{4}-\d{2}-\d{2}$/.test(config.untilDate)) {
+  if (
+    config.endMode === 'until' &&
+    config.untilDate &&
+    /^\d{4}-\d{2}-\d{2}$/.test(config.untilDate)
+  ) {
     segments.push(formatUntilForRrule(config.untilDate));
   } else if (config.endMode === 'count' && config.count) {
     segments.push(`COUNT=${clampCount(config.count)}`);
@@ -198,7 +202,7 @@ export function configFromPreset(
 ): RecurrenceRuleConfig {
   const base = previous ? { ...previous, preset } : { ...DEFAULT_RECURRENCE_CONFIG, preset };
   if (preset === 'none') {
-    return { ...base, preset: 'none', byDay: [] };
+    return { ...DEFAULT_RECURRENCE_CONFIG };
   }
   if (preset === 'daily') {
     return { ...base, preset, customFreq: 'daily', interval: base.interval || 1 };
@@ -241,7 +245,9 @@ export function formatRecurrenceSummary(
   } else if (config.preset === 'weekly' || (config.preset === 'custom' && freq === 'weekly')) {
     const days = config.byDay.map((code) => labels.weekdays[code]).join(', ');
     const weekly =
-      n === 1 ? labels.weekly.replace('{days}', days) : labels.weeklyInterval.replace('{n}', String(n)).replace('{days}', days);
+      n === 1
+        ? labels.weekly.replace('{days}', days)
+        : labels.weeklyInterval.replace('{n}', String(n)).replace('{days}', days);
     main = days ? weekly : labels.weekly.replace('{days}', '—');
   } else if (config.preset === 'monthly' || (config.preset === 'custom' && freq === 'monthly')) {
     const day = startDate?.slice(8, 10) ?? '—';

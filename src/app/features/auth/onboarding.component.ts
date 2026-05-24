@@ -1,10 +1,14 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, inject, OnInit, signal } from '@angular/core';
+
+import { DOCUMENT } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
 
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import type { UserProfile } from '@interfaces';
+
+import { purgeStaleOverlayLayers } from '../../core/utils/purge-stale-overlay-layers';
 
 import { AuthService } from '../../core/services/auth.service';
 
@@ -15,6 +19,8 @@ import { UserService } from '../../core/services/user.service';
 import { buildCountrySelectOptions } from '../../core/utils/country-select-options';
 
 import { splitDisplayName } from '../../core/utils/oauth-display-name';
+
+import { MarketingConsentService } from '../../core/services/marketing-consent.service';
 
 import { AppSelectComponent } from '../../shared/app-select';
 
@@ -41,8 +47,11 @@ export class OnboardingComponent implements OnInit {
   private readonly userSvc = inject(UserService);
 
   private readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly document = inject(DOCUMENT);
 
   readonly i18n = inject(I18nService);
+  readonly consent = inject(MarketingConsentService);
 
 
 
@@ -56,10 +65,6 @@ export class OnboardingComponent implements OnInit {
 
   dataConsent = false;
 
-  marketingCookies: boolean | null = null;
-
-
-
   loading = signal(false);
 
   error = signal('');
@@ -71,6 +76,7 @@ export class OnboardingComponent implements OnInit {
 
 
   ngOnInit(): void {
+    purgeStaleOverlayLayers(this.document);
 
     const profile = this.route.snapshot.data['profile'] as UserProfile | undefined;
 
@@ -120,22 +126,22 @@ export class OnboardingComponent implements OnInit {
 
     }
 
+    this.consent.syncFromProfile(profile);
+
+    this.cdr.markForCheck();
+
   }
 
 
 
   acceptMarketingCookies(): void {
-
-    this.marketingCookies = true;
-
+    this.consent.accept();
+    this.userSvc.updateMarketingCookies(true).subscribe({ error: () => {} });
   }
 
-
-
   declineMarketingCookies(): void {
-
-    this.marketingCookies = false;
-
+    this.consent.decline();
+    this.userSvc.updateMarketingCookies(false).subscribe({ error: () => {} });
   }
 
 
@@ -178,7 +184,7 @@ export class OnboardingComponent implements OnInit {
 
         data_consent_accepted: true,
 
-        marketing_cookies_accepted: this.marketingCookies === true,
+        marketing_cookies_accepted: this.consent.isAccepted(),
 
       })
 

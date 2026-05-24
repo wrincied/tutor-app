@@ -21,13 +21,19 @@
 
 .pricing-hero {
   flex-shrink: 0;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 56rem;
+  margin-inline: auto;
   margin-bottom: 1.75rem;
+  text-align: center;
 }
 
 .pricing-hero__title {
   margin: 0 0 0.75rem;
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-size: clamp(1rem, 3vw, 2rem);
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);
@@ -114,11 +120,7 @@
 
   &--pro {
     border-color: rgb(14 165 233 / 0.45);
-    background: linear-gradient(
-      165deg,
-      rgb(14 165 233 / 0.1) 0%,
-      var(--nav-bg) 45%
-    );
+    background: linear-gradient(165deg, rgb(14 165 233 / 0.1) 0%, var(--nav-bg) 45%);
     box-shadow: 0 12px 32px rgb(14 165 233 / 0.08);
   }
 }

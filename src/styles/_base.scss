@@ -158,8 +158,12 @@ app-navbar {
   @include route-view-enter-fade;
 }
 
-app-root > router-outlet > * > :where(.auth-page, .landing, .legal-page) {
+app-root > router-outlet > * > :where(.auth-page:not(.auth-page--onboarding), .landing, .legal-page) {
   @include route-view-enter;
+}
+
+app-root > router-outlet > * > .onboarding-shell {
+  @include route-view-enter-fade;
 }
 
 .app-page-host > :where(
@@ -214,7 +218,8 @@ html.app-select-dropdown-open {
 @media (prefers-reduced-motion: reduce) {
   .app-page-host > router-outlet > * > :where(.page, .cal-page),
   .account-page__content > :where(app-account-customization, app-account-profile),
-  app-root > router-outlet > * > :where(.auth-page, .landing, .legal-page) {
+  app-root > router-outlet > * > :where(.auth-page:not(.auth-page--onboarding), .landing, .legal-page),
+  app-root > router-outlet > * > .onboarding-shell {
     transition: none !important;
   }
 }

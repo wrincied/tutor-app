@@ -3,6 +3,8 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { AuthService } from './core/services/auth.service';
+import { AnalyticsService } from './core/services/analytics.service';
+import { SeoService } from './core/services/seo.service';
 import { ThemeService } from './core/services/theme.service';
 import { purgeStaleOverlayLayers } from './core/utils/purge-stale-overlay-layers';
 
@@ -19,6 +21,8 @@ export class App {
   private readonly document = inject(DOCUMENT);
 
   constructor() {
+    inject(SeoService);
+    inject(AnalyticsService);
     void this._theme;
     // После HMR могут остаться невидимые слои select — они блокируют клики по всему UI
     purgeStaleOverlayLayers(this.document);

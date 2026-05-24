@@ -100,8 +100,8 @@
         </div> --> 
         <!-- will be added later -->
 
-        <div class="field field--select">
-          <label>{{ i18n.accountUi().workspaceDefaultDuration }}</label>
+        <div class="account-workspace__duration">
+          <p class="account-setting__label">{{ i18n.accountUi().workspaceDefaultDuration }}</p>
           <app-select
             name="workspaceDuration"
             [ngModel]="profileSettings.workspace().defaultLessonDuration + ''"
@@ -109,7 +109,6 @@
             [options]="workspaceDurationOptions()"
             menuPlacement="below"
           />
-          
         </div>
       </div>
 
@@ -118,8 +117,8 @@
       </h3>
 
       <div class="account-workspace__hours-row">
-        <div class="field field--select account-workspace__hour">
-          <label>{{ i18n.accountUi().workingHoursStart }}</label>
+        <div class="account-workspace__hour">
+          <span class="account-setting__label">{{ i18n.accountUi().workingHoursStart }}</span>
           <app-select
             name="workingHoursStart"
             [ngModel]="profileSettings.workingHours().start"
@@ -127,11 +126,10 @@
             [options]="workingHourOptions()"
             menuPlacement="below"
           />
-
         </div>
 
-        <div class="field field--select account-workspace__hour">
-          <label>{{ i18n.accountUi().workingHoursEnd }}</label>
+        <div class="account-workspace__hour">
+          <span class="account-setting__label">{{ i18n.accountUi().workingHoursEnd }}</span>
           <app-select
             name="workingHoursEnd"
             [ngModel]="profileSettings.workingHours().end"

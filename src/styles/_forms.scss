@@ -189,6 +189,32 @@ textarea.app-input,
   }
 }
 
+// Select с плавающей подписью (label после app-select) — label всегда сверху
+.field--select {
+  position: relative;
+  gap: 0;
+  margin-bottom: 16px;
+
+  > app-select {
+    display: block;
+  }
+
+  > label {
+    position: absolute;
+    top: 6px;
+    left: 12px;
+    z-index: 2;
+    transform: none;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--text-secondary);
+    pointer-events: none;
+    background: var(--page-bg);
+    padding: 0 2px;
+  }
+}
+
 .input-readonly {
   @include app-input-surface;
   cursor: default;

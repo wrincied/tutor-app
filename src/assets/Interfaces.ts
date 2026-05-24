@@ -63,6 +63,28 @@ export interface PricingStrings {
   };
 }
 
+/** Ключи для document.title (route data `title` и SeoService). */
+export type PageTitleKey =
+  | 'default'
+  | 'landing'
+  | 'login'
+  | 'register'
+  | 'legalDataProcessing'
+  | 'legalCookies'
+  | 'verifyEmail'
+  | 'onboarding'
+  | 'home'
+  | 'students'
+  | 'calendar'
+  | 'finance'
+  | 'pricing'
+  | 'account'
+  | 'accountCustomization'
+  | 'accountProfile'
+  | 'admin';
+
+export type PageTitleStrings = Record<PageTitleKey, string>;
+
 export interface NavStrings {
   home: string;
   students: string;
@@ -225,7 +247,13 @@ export interface AccountStrings {
   saveError: string;
   subscriptionManagedByPayment: string;
   taxModeRequiredHint: string;
-  taxModeLockedHint: string;
+  taxModeLockedHintBefore: string;
+  taxModeLockedHintAfter: string;
+  taxSupportEmail: string;
+  taxModeConfirmTitle: string;
+  taxModeConfirmBody: string;
+  taxModeConfirmConfirm: string;
+  taxModeConfirmCancel: string;
   upgradePro: string;
   upgradeTrial: string;
   checkoutLoading: string;

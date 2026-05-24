@@ -1,6 +1,8 @@
 import { Injectable, computed, signal } from '@angular/core';
 import type {
   Lang,
+  PageTitleKey,
+  PageTitleStrings,
   NavStrings,
   StudentStrings,
   AccountStrings,
@@ -31,6 +33,7 @@ import {
   STUDENTS_UK,
   ACTIVITY_LOG_UK,
   TAX_MODE_LABELS_UK,
+  PAGE_TITLE_UK,
 } from '../i18n/locales/locale-uk';
 import {
   NAV_BY,
@@ -45,6 +48,7 @@ import {
   STUDENTS_BY,
   ACTIVITY_LOG_BY,
   TAX_MODE_LABELS_BY,
+  PAGE_TITLE_BY,
 } from '../i18n/locales/locale-by';
 import { PRICING } from '../i18n/pricing.locales';
 
@@ -117,6 +121,87 @@ const NAV: Record<Lang, NavStrings> = {
   by: NAV_BY,
 };
 
+const PAGE_TITLE: Record<Lang, PageTitleStrings> = {
+  ru: {
+    default: 'Simple4U — CRM и планировщик для репетиторов',
+    landing: 'Simple4U — CRM и планировщик для репетиторов',
+    login: 'Войти | Simple4U',
+    register: 'Регистрация | Simple4U',
+    legalDataProcessing: 'Обработка данных | Simple4U',
+    legalCookies: 'Cookies | Simple4U',
+    verifyEmail: 'Подтвердите email | Simple4U',
+    onboarding: 'Добро пожаловать | Simple4U',
+    home: 'Главная | Simple4U',
+    students: 'Ученики | Simple4U',
+    calendar: 'Расписание | Simple4U',
+    finance: 'Финансы | Simple4U',
+    pricing: 'Тарифные планы | Simple4U',
+    account: 'Личный кабинет | Simple4U',
+    accountCustomization: 'Настройки | Simple4U',
+    accountProfile: 'Профиль | Simple4U',
+    admin: 'Админ | Simple4U',
+  },
+  en: {
+    default: 'Simple4U | CRM & Scheduler for Tutors',
+    landing: 'Simple4U | CRM & Scheduler for Tutors',
+    login: 'Sign in | Simple4U',
+    register: 'Sign up | Simple4U',
+    legalDataProcessing: 'Data processing | Simple4U',
+    legalCookies: 'Cookies | Simple4U',
+    verifyEmail: 'Confirm your email | Simple4U',
+    onboarding: 'Welcome | Simple4U',
+    home: 'Home | Simple4U',
+    students: 'Students | Simple4U',
+    calendar: 'Schedule | Simple4U',
+    finance: 'Finance | Simple4U',
+    pricing: 'Pricing | Simple4U',
+    account: 'Account | Simple4U',
+    accountCustomization: 'Settings | Simple4U',
+    accountProfile: 'My Account | Simple4U',
+    admin: 'Admin | Simple4U',
+  },
+  de: {
+    default: 'Simple4U | CRM & Terminplaner für Nachhilfelehrer',
+    landing: 'Simple4U | CRM & Terminplaner für Nachhilfelehrer',
+    login: 'Anmelden | Simple4U',
+    register: 'Konto erstellen | Simple4U',
+    legalDataProcessing: 'Datenverarbeitung | Simple4U',
+    legalCookies: 'Cookies | Simple4U',
+    verifyEmail: 'E-Mail bestätigen | Simple4U',
+    onboarding: 'Willkommen | Simple4U',
+    home: 'Start | Simple4U',
+    students: 'Schüler | Simple4U',
+    calendar: 'Terminplaner | Simple4U',
+    finance: 'Finanzen | Simple4U',
+    pricing: 'Preise | Simple4U',
+    account: 'Mein Konto | Simple4U',
+    accountCustomization: 'Kontoeinstellungen | Simple4U',
+    accountProfile: 'Profil | Simple4U',
+    admin: 'Admin | Simple4U',
+  },
+  kz: {
+    default: 'Simple4U — Репетиторларға арналған CRM және кестелеуші',
+    landing: 'Simple4U — Репетиторларға арналған CRM және кестелеуші',
+    login: 'Кіру | Simple4U',
+    register: 'Тіркелу | Simple4U',
+    legalDataProcessing: 'Деректерді өңдеу | Simple4U',
+    legalCookies: 'Cookies | Simple4U',
+    verifyEmail: 'Email растаңыз | Simple4U',
+    onboarding: 'Қош келдіңіз | Simple4U',
+    home: 'Басты | Simple4U',
+    students: 'Оқушылар | Simple4U',
+    calendar: 'Сабақ кестесі | Simple4U',
+    finance: 'Қаржы | Simple4U',
+    pricing: 'Тарифтер | Simple4U',
+    account: 'Аккаунт | Simple4U',
+    accountCustomization: 'Параметрлер | Simple4U',
+    accountProfile: 'Профиль | Simple4U',
+    admin: 'Админ | Simple4U',
+  },
+  uk: PAGE_TITLE_UK,
+  by: PAGE_TITLE_BY,
+};
+
 const ACCOUNT: Record<Lang, AccountStrings> = {
   ru: {
     title: 'Аккаунт',
@@ -153,7 +238,15 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
       'Тариф меняется только после оплаты. Вручную изменить его нельзя.',
     taxModeRequiredHint:
       'Укажите налоговый режим один раз — без этого покупка подписки недоступна.',
-    taxModeLockedHint: 'Налоговый режим зафиксирован и не может быть изменён.',
+    taxModeLockedHintBefore: 'Чтобы изменить налоговый режим, напишите на ',
+    taxModeLockedHintAfter:
+      '. Самостоятельная смена в приложении появится чуть позже.',
+    taxSupportEmail: 'tutorassistent@gmail.com',
+    taxModeConfirmTitle: 'Подтверждение налогового режима',
+    taxModeConfirmBody:
+      'Вы подтверждаете, что выбираете режим «{mode}»? После сохранения профиля сменить его можно будет только через поддержку.',
+    taxModeConfirmConfirm: 'Подтвердить',
+    taxModeConfirmCancel: 'Отмена',
     upgradePro: 'Оформить Pro',
     upgradeTrial: 'Активировать пробный период (тест)',
     checkoutLoading: 'Переход к оплате…',
@@ -216,7 +309,14 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
       'Your plan only changes after payment. It cannot be edited manually.',
     taxModeRequiredHint:
       'Set your tax regime once — subscription purchase is unavailable until then.',
-    taxModeLockedHint: 'Tax regime is locked and cannot be changed.',
+    taxModeLockedHintBefore: 'To change your tax regime, email ',
+    taxModeLockedHintAfter: '. In-app changes will be available a bit later.',
+    taxSupportEmail: 'tutorassistent@gmail.com',
+    taxModeConfirmTitle: 'Confirm tax regime',
+    taxModeConfirmBody:
+      'Do you confirm that you are selecting «{mode}»? After saving your profile, you can only change it via support.',
+    taxModeConfirmConfirm: 'Confirm',
+    taxModeConfirmCancel: 'Cancel',
     upgradePro: 'Subscribe to Pro',
     upgradeTrial: 'Activate trial (test)',
     checkoutLoading: 'Redirecting to checkout…',
@@ -279,7 +379,14 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
       'Der Tarif ändert sich nur nach Zahlung. Manuelle Änderung ist nicht möglich.',
     taxModeRequiredHint:
       'Legen Sie das Steuerregime einmal fest — ohne dies ist kein Abo-Kauf möglich.',
-    taxModeLockedHint: 'Steuerregime ist gesperrt und kann nicht geändert werden.',
+    taxModeLockedHintBefore: 'Um das Steuerregime zu ändern, schreiben Sie an ',
+    taxModeLockedHintAfter: '. Die Änderung in der App kommt in Kürze.',
+    taxSupportEmail: 'tutorassistent@gmail.com',
+    taxModeConfirmTitle: 'Steuerregime bestätigen',
+    taxModeConfirmBody:
+      'Bestätigen Sie die Auswahl «{mode}»? Nach dem Speichern ist eine Änderung nur über den Support möglich.',
+    taxModeConfirmConfirm: 'Bestätigen',
+    taxModeConfirmCancel: 'Abbrechen',
     upgradePro: 'Pro abonnieren',
     upgradeTrial: 'Testphase aktivieren (Test)',
     checkoutLoading: 'Weiter zur Zahlung…',
@@ -338,19 +445,23 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     passwordsMismatch: 'Құпия сөздер сәйкес емес',
     currentPasswordRequired: 'Ағымдағы құпия сөзді енгізіңіз',
     saveError: 'Сақтау сәтсіз',
-    subscriptionManagedByPayment:
-      'Тариф тек төлемнен кейін өзгереді. Қолмен өзгерту мүмкін емес.',
-    taxModeRequiredHint:
-      'Салық режимін бір рет көрсетіңіз — олсыз жазылым сатып алу мүмкін емес.',
-    taxModeLockedHint: 'Салық режимі бекітілген, өзгерту мүмкін емес.',
+    subscriptionManagedByPayment: 'Тариф тек төлемнен кейін өзгереді. Қолмен өзгерту мүмкін емес.',
+    taxModeRequiredHint: 'Салық режимін бір рет көрсетіңіз — олсыз жазылым сатып алу мүмкін емес.',
+    taxModeLockedHintBefore: 'Салық режимін өзгерту үшін ',
+    taxModeLockedHintAfter: ' поштасына жазыңыз. Қосымшада өзгерту жақында қосылады.',
+    taxSupportEmail: 'tutorassistent@gmail.com',
+    taxModeConfirmTitle: 'Салық режимін растау',
+    taxModeConfirmBody:
+      '«{mode}» режимін таңдағаныңызды растайсыз ба? Профильді сақтағаннан кейін тек қолдау арқылы өзгертуге болады.',
+    taxModeConfirmConfirm: 'Растау',
+    taxModeConfirmCancel: 'Болдырмау',
     upgradePro: 'Pro рәсімдеу',
     upgradeTrial: 'Сынақ кезеңін қосу (тест)',
     checkoutLoading: 'Төлемге өту…',
     taxRequiredForBilling: 'Алдымен салық режимін сақтаңыз.',
     subscriptionLearnMore: 'Жазылымдар туралы толығырақ',
     subscriptionModalTitle: 'Pro жазылымы',
-    subscriptionModalIntro:
-      'Pro — кесте, оқушылар және қаржы құралдарына толық қолжетімділік.',
+    subscriptionModalIntro: 'Pro — кесте, оқушылар және қаржы құралдарына толық қолжетімділік.',
     subscriptionModalFeature1: 'Сабақты жылжыту және Telegram хабарландыруы',
     subscriptionModalFeature2: 'Сағаттық баға, снапшот және салық режимі',
     subscriptionModalFeature3: 'Өткізілген сабақтар бойынша қаржы есебі',
@@ -523,7 +634,8 @@ const AUTH: Record<Lang, AuthStrings> = {
     continueWithGoogle: 'Continue with Google',
     orContinueWith: 'or',
     oauthError: 'Google sign-in failed',
-    profileSyncError: 'Signed in, but your profile could not be loaded. Check your connection and try again.',
+    profileSyncError:
+      'Signed in, but your profile could not be loaded. Check your connection and try again.',
     onboardingTitle: 'Welcome',
     onboardingSubtitle: 'Complete your profile to get started',
     onboardingFirstName: 'First name',
@@ -539,8 +651,7 @@ const AUTH: Record<Lang, AuthStrings> = {
       'I agree to the processing of my personal data according to the policy',
     onboardingDataPolicyLink: 'Full data processing policy',
     onboardingCookiesTitle: 'Cookies',
-    onboardingCookiesBody:
-      'We use cookies for marketing and to improve your experience.',
+    onboardingCookiesBody: 'We use cookies for marketing and to improve your experience.',
     onboardingCookiesOptional: 'Optional, but we recommend setting a preference',
     onboardingCookiePolicyLink: 'Learn more about cookies',
     onboardingCookiesAccept: 'Accept',
@@ -574,13 +685,13 @@ const AUTH: Record<Lang, AuthStrings> = {
     passwordsMismatch: 'Passwörter stimmen nicht überein',
     passwordMinLength: 'Passwort mindestens 6 Zeichen',
     registerError: 'Registrierung fehlgeschlagen',
-    emailAlreadyInUse:
-      'Diese E-Mail ist bereits registriert. Melden Sie sich mit Ihrem Konto an.',
+    emailAlreadyInUse: 'Diese E-Mail ist bereits registriert. Melden Sie sich mit Ihrem Konto an.',
     emailAlreadyInUseGoogle:
       'Diese E-Mail ist mit Google-Anmeldung verknüpft. Nutzen Sie „Mit Google fortfahren“.',
     invalidEmail: 'Ungültige E-Mail-Adresse',
     checkEmailTitle: 'E-Mail bestätigen',
-    checkEmailSubtitle: 'Wir haben einen Bestätigungslink gesendet. Öffnen Sie ihn, um fortzufahren.',
+    checkEmailSubtitle:
+      'Wir haben einen Bestätigungslink gesendet. Öffnen Sie ihn, um fortzufahren.',
     checkEmailPurgeHint: 'Unbestätigte Konten werden nach 3 Tagen gelöscht.',
     checkEmailResent: 'Bestätigungs-E-Mail erneut gesendet',
     checkEmailResendError: 'E-Mail konnte nicht gesendet werden',
@@ -704,25 +815,21 @@ const AUTH: Record<Lang, AuthStrings> = {
     continueWithGoogle: 'Google арқылы кіру',
     orContinueWith: 'немесе',
     oauthError: 'Google арқылы кіру сәтсіз',
-    profileSyncError:
-      'Кіру сәтті, бірақ профиль жүктелмеді. Интернетті тексеріп, қайта көріңіз.',
+    profileSyncError: 'Кіру сәтті, бірақ профиль жүктелмеді. Интернетті тексеріп, қайта көріңіз.',
     onboardingTitle: 'Қош келдіңіз',
     onboardingSubtitle: 'Жұмысты бастау үшін профильді толтырыңыз',
     onboardingFirstName: 'Аты',
     onboardingLastName: 'Тегі',
     onboardingCountry: 'Ел',
     onboardingDataTitle: 'Деректерді өңдеу',
-    onboardingDataBody:
-      'Қызмет үшін жеке деректерді өңдейміз. Келісімсіз кіру мүмкін емес.',
+    onboardingDataBody: 'Қызмет үшін жеке деректерді өңдейміз. Келісімсіз кіру мүмкін емес.',
     onboardingDataItem1: 'Аккаунт және хабарландыру үшін байланыс деректері (email, аты)',
     onboardingDataItem2: 'Оқушы, сабақ және қаржы деректері — тек сіздің есебіңіз үшін',
     onboardingDataItem3: 'Қауіпсіздік үшін техникалық деректер (сессия, тіл)',
-    onboardingDataConsentLabel:
-      'Жеке деректерді саясатқа сәйкес өңдеуге келісемін',
+    onboardingDataConsentLabel: 'Жеке деректерді саясатқа сәйкес өңдеуге келісемін',
     onboardingDataPolicyLink: 'Деректерді өңдеу саясатының толық мәтіні',
     onboardingCookiesTitle: 'Cookies',
-    onboardingCookiesBody:
-      'Маркетинг және тәжірибені жақсарту үшін cookies қолданамыз.',
+    onboardingCookiesBody: 'Маркетинг және тәжірибені жақсарту үшін cookies қолданамыз.',
     onboardingCookiesOptional: 'Міндетті емес, бірақ таңдауды ұсынамыз',
     onboardingCookiePolicyLink: 'Cookies туралы толығырақ',
     onboardingCookiesAccept: 'Қабылдау',
@@ -735,8 +842,7 @@ const AUTH: Record<Lang, AuthStrings> = {
     onboardingFirstNameRequired: 'Атын енгізіңіз',
     onboardingSaveError: 'Профильді сақтау сәтсіз',
     onboardingDeclineError: 'Бас тартуды сақтау сәтсіз',
-    onboardingDeclinedNotice:
-      'Сіз деректерді өңдеуден бас тарттыңыз. Келісімсіз кіру мүмкін емес.',
+    onboardingDeclinedNotice: 'Сіз деректерді өңдеуден бас тарттыңыз. Келісімсіз кіру мүмкін емес.',
   },
   uk: AUTH_UK,
   by: AUTH_BY,
@@ -821,20 +927,17 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
     intro:
       'Бұл саясат Simple4U қандай деректерді өңдейтінін, не үшін және қандай құқықтарыңыз барын түсіндіреді.',
     section1Title: 'Кім өңдейді',
-    section1Body:
-      'Оператор — Simple4U иесі. Сұрақтар үшін аккаунт email-ін пайдаланыңыз.',
+    section1Body: 'Оператор — Simple4U иесі. Сұрақтар үшін аккаунт email-ін пайдаланыңыз.',
     section2Title: 'Қандай деректер',
     section2Body:
       'Email және аты; енгізілген оқушы, сабақ, баға және қаржы деректері; техникалық деректер (сессия, тіл, қателер журналы).',
     section3Title: 'Мақсаттар',
-    section3Body:
-      'Кесте, оқушылар және қаржы функциялары; қауіпсіздік және қолдау; жазылым шарты.',
+    section3Body: 'Кесте, оқушылар және қаржы функциялары; қауіпсіздік және қолдау; жазылым шарты.',
     section4Title: 'Құқықтық негіздер',
     section4Body:
       'Тіркелудегі келісім, шартты орындау және заңды мүдделер (қауіпсіздік, өнімді жақсарту).',
     section5Title: 'Құқықтарыңыз',
-    section5Body:
-      'Қол жеткізу, түзету, жою, келісімді кері алу — аккаунт email арқылы.',
+    section5Body: 'Қол жеткізу, түзету, жою, келісімді кері алу — аккаунт email арқылы.',
   },
   uk: LEGAL_DATA_UK,
   by: LEGAL_DATA_BY,
@@ -865,8 +968,7 @@ const LEGAL_COOKIES: Record<Lang, LegalCookiesStrings> = {
     intro:
       'Cookies are small browser files. We use them to run the service and, with your consent, for marketing.',
     section1Title: 'Strictly necessary cookies',
-    section1Body:
-      'Required for sign-in, session, and security. The app cannot work without them.',
+    section1Body: 'Required for sign-in, session, and security. The app cannot work without them.',
     section2Title: 'Analytics and product improvement',
     section2Body:
       'Help us understand usage (e.g. which screens are used most). Data is anonymised where possible.',
@@ -886,14 +988,12 @@ const LEGAL_COOKIES: Record<Lang, LegalCookiesStrings> = {
     section1Body:
       'Erforderlich für Anmeldung, Sitzung und Sicherheit. Ohne sie funktioniert die App nicht.',
     section2Title: 'Analyse und Produktverbesserung',
-    section2Body:
-      'Zeigen, wie die App genutzt wird. Daten werden wo möglich anonymisiert.',
+    section2Body: 'Zeigen, wie die App genutzt wird. Daten werden wo möglich anonymisiert.',
     section3Title: 'Marketing-Cookies',
     section3Body:
       'Nur nach Ihrer Zustimmung («Akzeptieren»). Für relevante Angebote und Messung von Werbung.',
     section4Title: 'Cookies verwalten',
-    section4Body:
-      'Zustimmung oder Ablehnung beim Onboarding oder in den Browser-Einstellungen.',
+    section4Body: 'Zustimmung oder Ablehnung beim Onboarding oder in den Browser-Einstellungen.',
   },
   kz: {
     ...LEGAL_COMMON.kz,
@@ -901,17 +1001,13 @@ const LEGAL_COOKIES: Record<Lang, LegalCookiesStrings> = {
     intro:
       'Cookies — браузердегі шағын файлдар. Қызмет үшін және келісіммен маркетинг үшін қолданамыз.',
     section1Title: 'Міндетті cookies',
-    section1Body:
-      'Кіру, сессия және қауіпсіздік үшін қажет. Оларсыз қызмет жұмыс істемейді.',
+    section1Body: 'Кіру, сессия және қауіпсіздік үшін қажет. Оларсыз қызмет жұмыс істемейді.',
     section2Title: 'Аналитика',
-    section2Body:
-      'Қолдануды түсінуге көмектеседі. Мүмкіндігінше анонимделген.',
+    section2Body: 'Қолдануды түсінуге көмектеседі. Мүмкіндігінше анонимделген.',
     section3Title: 'Маркетинг cookies',
-    section3Body:
-      'Тек «Қабылдау» басқаннан кейін. Ұсыныстар және жарнама тиімділігі үшін.',
+    section3Body: 'Тек «Қабылдау» басқаннан кейін. Ұсыныстар және жарнама тиімділігі үшін.',
     section4Title: 'Cookies басқару',
-    section4Body:
-      'Онбордингте қабылдау/бас тарту немесе браузер баптаулары.',
+    section4Body: 'Онбордингте қабылдау/бас тарту немесе браузер баптаулары.',
   },
   uk: LEGAL_COOKIES_UK,
   by: LEGAL_COOKIES_BY,
@@ -963,15 +1059,13 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
     deleteLessonConfirm: 'Вы уверены, что хотите удалить этот урок?',
     goToNotes: 'Заметки',
     back: 'Назад',
-    scheduleConflict:
-      'На это время нет свободного слота — уже запланирован другой урок.',
+    scheduleConflict: 'На это время нет свободного слота — уже запланирован другой урок.',
     timeBusyTitle: 'Время занято',
     ok: 'Понятно',
     moveLessonTitle: 'Перенести урок?',
     moveLessonConfirm: 'Перенести и уведомить',
     moveLessonBodyBefore: 'Ученику',
-    moveLessonBodyAfter:
-      'будет отправлено уведомление в Telegram о новом времени:',
+    moveLessonBodyAfter: 'будет отправлено уведомление в Telegram о новом времени:',
     studentFallback: 'ученику',
     loadSchedule: 'Загрузка расписания',
     loadLessonsError: 'Не удалось загрузить уроки',
@@ -985,8 +1079,7 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
       'Это последний оплаченный урок для данного ученика. Требуется обновление абонемента.',
     billingTitle: 'Списать урок с баланса?',
     billingBodyBefore: 'Урок отмечен как пропущенный или отменённый. Ученик',
-    billingBodyMiddle:
-      ' — списать один урок с баланса или оставить баланс без изменений?',
+    billingBodyMiddle: ' — списать один урок с баланса или оставить баланс без изменений?',
     billingBodyAfterDeduct: 'После списания на балансе останется:',
     billingDeduct: 'Списать урок',
     billingKeep: 'Оставить баланс',
@@ -1096,8 +1189,7 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
     deleteLessonError: 'Could not delete lesson',
     balanceLabel: 'Balance',
     lastLessonHint: 'last lesson',
-    lastPaidPackageWarning:
-      'This is the student’s last paid lesson. A new package is required.',
+    lastPaidPackageWarning: 'This is the student’s last paid lesson. A new package is required.',
     billingTitle: 'Deduct from balance?',
     billingBodyBefore: 'This lesson is missed or canceled. Student',
     billingBodyMiddle: ' — deduct one lesson from the balance or keep it unchanged?',
@@ -1214,8 +1306,7 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
       'Dies ist die letzte bezahlte Stunde für diesen Schüler. Ein neues Paket ist erforderlich.',
     billingTitle: 'Vom Guthaben abziehen?',
     billingBodyBefore: 'Die Stunde ist verpasst oder abgesagt. Schüler',
-    billingBodyMiddle:
-      ' — eine Stunde vom Guthaben abziehen oder das Guthaben unverändert lassen?',
+    billingBodyMiddle: ' — eine Stunde vom Guthaben abziehen oder das Guthaben unverändert lassen?',
     billingBodyAfterDeduct: 'Nach dem Abzug verbleiben:',
     billingDeduct: 'Stunde abziehen',
     billingKeep: 'Guthaben behalten',
@@ -1325,12 +1416,10 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
     deleteLessonError: 'Сабақты өшіру сәтсіз',
     balanceLabel: 'Баланс',
     lastLessonHint: 'соңғы сабақ',
-    lastPaidPackageWarning:
-      'Бұл оқушының соңғы төленген сабағы. Абонементті жаңарту қажет.',
+    lastPaidPackageWarning: 'Бұл оқушының соңғы төленген сабағы. Абонементті жаңарту қажет.',
     billingTitle: 'Баланстан шегеру керек пе?',
     billingBodyBefore: 'Сабақ өткізілмеген немесе болдырылмаған. Оқушы',
-    billingBodyMiddle:
-      ' — баланстан бір сабақты шегеру немесе балансты өзгертпеу керек пе?',
+    billingBodyMiddle: ' — баланстан бір сабақты шегеру немесе балансты өзгертпеу керек пе?',
     billingBodyAfterDeduct: 'Шегергеннен кейін баланста қалады:',
     billingDeduct: 'Сабақты шегеру',
     billingKeep: 'Балансты сақтау',
@@ -1459,7 +1548,8 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     lessonHours: 'Часов (все уроки)',
     scheduledIncome: 'Плановый доход',
     expensesCount: 'Записей расходов',
-    lessonsEmptyHint: 'За выбранный период уроков нет. Попробуйте «Всё время» или добавьте уроки в расписании.',
+    lessonsEmptyHint:
+      'За выбранный период уроков нет. Попробуйте «Всё время» или добавьте уроки в расписании.',
     markCompletedHint: 'Фактический доход учитывается только для уроков со статусом «Проведён».',
     incomeByCurrency: 'Доход по валютам',
     taxSection: 'Оценка налогов (Австрия)',
@@ -1977,8 +2067,8 @@ const HOME: Record<Lang, HomeStrings> = {
     betaDismiss: 'Got it',
   },
   de: {
-    greetingAnonymous: 'Hallo!',
-    greetingNamed: 'Hallo, {name}!',
+    greetingAnonymous: 'Grüß dich!',
+    greetingNamed: 'Grüß dich, {name}!',
     todaySection: 'Überblick für heute',
     todayLessons: 'Stunden heute',
     todayIncome: 'Einnahmen heute',
@@ -2257,23 +2347,73 @@ const LANG_LABEL: Record<Lang, string> = {
 
 const ALL_LANGS: Lang[] = ['ru', 'en', 'de', 'kz', 'uk', 'by'];
 
-function readStoredLang(): Lang {
-  if (typeof localStorage === 'undefined') {
+const LOCALE_TO_LANG: Record<string, Lang> = {
+  ru: 'ru',
+  en: 'en',
+  de: 'de',
+  kk: 'kz',
+  kz: 'kz',
+  uk: 'uk',
+  be: 'by',
+};
+
+function mapLocaleToLang(tag: string): Lang | null {
+  const primary = tag.trim().toLowerCase().split(/[-_]/)[0];
+  return LOCALE_TO_LANG[primary] ?? null;
+}
+
+function detectDeviceLang(): Lang {
+  if (typeof navigator === 'undefined') {
     return 'en';
   }
-  const v = localStorage.getItem(STORAGE_KEY);
-  if (v && (ALL_LANGS as string[]).includes(v)) {
-    return v as Lang;
+  const candidates = [...(navigator.languages ?? []), navigator.language].filter(Boolean);
+  for (const tag of candidates) {
+    const lang = mapLocaleToLang(tag);
+    if (lang) {
+      return lang;
+    }
   }
   return 'en';
+}
+
+function syncDocumentLang(lang: Lang): void {
+  if (typeof document === 'undefined') {
+    return;
+  }
+  const map: Record<Lang, string> = {
+    ru: 'ru',
+    en: 'en',
+    de: 'de',
+    kz: 'kk',
+    uk: 'uk',
+    by: 'be',
+  };
+  document.documentElement.lang = map[lang];
+}
+
+function readStoredLang(): Lang {
+  if (typeof localStorage !== 'undefined') {
+    const v = localStorage.getItem(STORAGE_KEY);
+    if (v && (ALL_LANGS as string[]).includes(v)) {
+      return v as Lang;
+    }
+  }
+  return detectDeviceLang();
 }
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
   private readonly _lang = signal<Lang>(readStoredLang());
 
+  constructor() {
+    syncDocumentLang(this._lang());
+  }
+
   /** Текущий код языка. */
   readonly lang = this._lang.asReadonly();
+
+  /** Заголовки вкладки браузера (document.title). */
+  readonly pageTitles = computed(() => PAGE_TITLE[this._lang()]);
 
   /** Строки для навбара (и нижней панели) на текущем языке. */
   readonly nav = computed(() => NAV[this._lang()]);
@@ -2334,6 +2474,7 @@ export class I18nService {
 
   setLang(lang: Lang): void {
     this._lang.set(lang);
+    syncDocumentLang(lang);
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, lang);
     }

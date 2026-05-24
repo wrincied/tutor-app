@@ -25,6 +25,10 @@ export interface UpdateProfilePayload {
   workingHours?: UserWorkingHoursSettings;
 }
 
+export interface UpdateMarketingCookiesPayload {
+  accepted: boolean;
+}
+
 export interface CompleteOnboardingPayload {
   first_name: string;
   last_name: string;
@@ -56,6 +60,10 @@ export class UserService {
 
   updateProfile(payload: UpdateProfilePayload): Observable<UserProfile> {
     return this.http.put<UserProfile>(`${API}/auth/me`, payload);
+  }
+
+  updateMarketingCookies(accepted: boolean): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(`${API}/auth/me/marketing-cookies`, { accepted });
   }
 
   completeOnboarding(payload: CompleteOnboardingPayload): Observable<UserProfile> {

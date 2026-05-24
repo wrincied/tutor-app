@@ -1,5 +1,6 @@
 import type {
   NavStrings,
+  PageTitleStrings,
   AccountStrings,
   AuthStrings,
   SharedStrings,
@@ -60,11 +61,17 @@ export const ACCOUNT_BY: AccountStrings = {
   passwordsMismatch: 'Паролі не супадаюць',
   currentPasswordRequired: 'Пакажыце бягучы пароль',
   saveError: 'Памылка захавання',
-  subscriptionManagedByPayment:
-    'Тарыф змяняецца толькі пасля аплаты. Уручную змяніць яго нельга.',
+  subscriptionManagedByPayment: 'Тарыф змяняецца толькі пасля аплаты. Уручную змяніць яго нельга.',
   taxModeRequiredHint:
     'Пакажыце падатковы рэжым адзін раз — без гэтага купля падпіскі недаступная.',
-  taxModeLockedHint: 'Падатковы рэжым зафіксаваны і не можа быць зменены.',
+  taxModeLockedHintBefore: 'Каб змяніць падатковы рэжым, напішыце на ',
+  taxModeLockedHintAfter: '. Самастойная змена ў дадатку з’явіцца крыху пазней.',
+  taxSupportEmail: 'tutorassistent@gmail.com',
+  taxModeConfirmTitle: 'Пацверджанне падатковага рэжыму',
+  taxModeConfirmBody:
+    'Вы пацвярджаеце, што выбіраеце рэжым «{mode}»? Пасля захавання профілю змяніць яго можна толькі праз падтрымку.',
+  taxModeConfirmConfirm: 'Пацвердзіць',
+  taxModeConfirmCancel: 'Скасаваць',
   upgradePro: 'Аформіць Pro',
   upgradeTrial: 'Актываваць пробны перыяд (тэст)',
   checkoutLoading: 'Пераход да аплаты…',
@@ -116,8 +123,7 @@ export const AUTH_BY: AuthStrings = {
     'Гэты email ужо прывязаны да ўваходу праз Google. Націсніце «Увайсці праз Google».',
   invalidEmail: 'Няправільны адрас email',
   checkEmailTitle: 'Пацвердзіце email',
-  checkEmailSubtitle:
-    'Мы адправілі ліст са спасылкай. Перайдзіце па ёй, каб увайсці ў кабінет.',
+  checkEmailSubtitle: 'Мы адправілі ліст са спасылкай. Перайдзіце па ёй, каб увайсці ў кабінет.',
   checkEmailPurgeHint:
     'Калі email не пацвердзіць на працягу 3 дзён, акаўнт будзе аўтаматычна выдалены.',
   checkEmailResent: 'Ліст адправлены паўторна',
@@ -497,6 +503,26 @@ export const ACTIVITY_LOG_BY: ActivityLogStrings = {
   reasonLessonDeleted: 'урок выдалены',
   changeArrow: '→',
   lessonsUnit: 'ур.',
+};
+
+export const PAGE_TITLE_BY: PageTitleStrings = {
+  default: 'Simple4U — CRM для рэпетытараў',
+  landing: 'Simple4U — CRM для рэпетытараў',
+  login: 'Увайсці | Simple4U',
+  register: 'Стварыць акаўнт | Simple4U',
+  legalDataProcessing: 'Апрацоўка даных | Simple4U',
+  legalCookies: 'Cookies | Simple4U',
+  verifyEmail: 'Пацвердзіце email | Simple4U',
+  onboarding: 'Сардэчна запрашаем | Simple4U',
+  home: 'Галоўная | Simple4U',
+  students: 'Вучні | Simple4U',
+  calendar: 'Расклад | Simple4U',
+  finance: 'Фінансы | Simple4U',
+  pricing: 'Кошты | Simple4U',
+  account: 'Акаўнт | Simple4U',
+  accountCustomization: 'Налады | Simple4U',
+  accountProfile: 'Профіль | Simple4U',
+  admin: 'Адмін | Simple4U',
 };
 
 export const TAX_MODE_LABELS_BY: Record<TaxMode, string> = {

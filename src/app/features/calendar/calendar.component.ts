@@ -35,6 +35,7 @@ import {
   expandLessonOccurrencesForConflictCheck,
   expandLessonsForRange,
   formatRecurrenceSummary,
+  isRecurrenceConfigActive,
   jsDayToRruleWeekday,
   parseRruleToConfig,
   RRULE_WEEKDAY_CODES,
@@ -119,7 +120,14 @@ export class CalendarComponent implements OnInit {
   readonly minuteHeightPx = 1;
   readonly gridHours = computed(() => this.profileSettings.gridHours());
   readonly gridStartHour = computed(() => this.profileSettings.gridStartHour());
-  readonly gridHeightPx = computed(() => this.gridHours().length * this.hourHeightPx);
+  readonly gridEndHour = computed(() => this.profileSettings.gridEndHour());
+  /** Высота сетки: только интервал [start, end) из настроек, 60px = 1 ч. */
+  readonly gridHeightPx = computed(() => {
+    const span = this.gridEndHour() - this.gridStartHour();
+    return Math.max(1, span) * this.hourHeightPx;
+  });
+  /** Небольшой отступ под последней линией сетки (в scroll-контейнере). */
+  readonly gridBottomPaddingPx = 16;
   /** Плейсхолдеры скелета сетки (7 колонок). */
   readonly skeletonGridCols = [0, 1, 2, 3, 4, 5, 6];
   readonly skeletonHourRows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -312,8 +320,8 @@ export class CalendarComponent implements OnInit {
     }
     const now = new Date();
     const offsetMin = this.minutesFromGridStart(now);
-    const maxMin = this.gridHeightPx();
-    if (offsetMin < 0 || offsetMin > maxMin) {
+    const maxOffsetMin = (this.gridEndHour() - this.gridStartHour()) * 60;
+    if (offsetMin < 0 || offsetMin > maxOffsetMin) {
       return null;
     }
     return offsetMin * this.minuteHeightPx;
@@ -1120,8 +1128,11 @@ export class CalendarComponent implements OnInit {
 
   onRecurrencePresetChange(value: string): void {
     const preset = value as RecurrencePreset;
+    if (!['none', 'daily', 'weekly', 'monthly', 'custom'].includes(preset)) {
+      return;
+    }
     const anchor = this.scheduledAtAnchor();
-    this.recurrenceDraft.update((current) => configFromPreset(preset, anchor, current));
+    this.recurrenceDraft.set(configFromPreset(preset, anchor, this.recurrenceDraft()));
   }
 
   onRecurrenceCustomFreqChange(value: string): void {
@@ -1737,25 +1748,24 @@ export class CalendarComponent implements OnInit {
 
   private buildRecurrencePayload(
     scheduledAt: string | null,
-    editing: CalendarLesson | null = this.editLessonTarget(),
+    _editing: CalendarLesson | null = this.editLessonTarget(),
   ): {
     isRecurring: boolean;
     startDate: string | null;
     rrule: string | null;
   } {
+    const config = this.recurrenceConfig();
     const startDate = scheduledAt ? dayKey(new Date(scheduledAt)) : null;
-    const rrule = startDate ? buildRruleFromConfig(this.recurrenceConfig(), startDate) : null;
 
-    if (!rrule || !startDate) {
-      if (editing && (editing.isRecurring || editing.rrule)) {
-        return {
-          isRecurring: true,
-          startDate: editing.startDate ?? startDate,
-          rrule: editing.rrule ?? null,
-        };
-      }
+    if (!isRecurrenceConfigActive(config) || !startDate) {
       return { isRecurring: false, startDate: null, rrule: null };
     }
+
+    const rrule = buildRruleFromConfig(config, startDate);
+    if (!rrule) {
+      return { isRecurring: false, startDate: null, rrule: null };
+    }
+
     return {
       isRecurring: true,
       startDate,
@@ -1767,6 +1777,9 @@ export class CalendarComponent implements OnInit {
     lesson: CalendarLesson | null,
     payload?: Pick<LessonSavePayload, 'isRecurring' | 'rrule'>,
   ): boolean {
+    if (payload?.isRecurring === false && !payload.rrule) {
+      return false;
+    }
     return Boolean(lesson?.isRecurring || lesson?.rrule || payload?.isRecurring || payload?.rrule);
   }
 
@@ -1837,12 +1850,7 @@ export class CalendarComponent implements OnInit {
     this.lessonFormStep.set(1);
     this.resetLessonForm();
     this.form.scheduledAt = scheduledAt;
-    this.recurrenceConfig.set(
-      configFromPreset('weekly', new Date(scheduledAt), {
-        ...DEFAULT_RECURRENCE_CONFIG,
-        byDay: [jsDayToRruleWeekday(new Date(scheduledAt).getDay())],
-      }),
-    );
+    this.recurrenceConfig.set({ ...DEFAULT_RECURRENCE_CONFIG });
     const local = new Date(
       new Date(scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000,
     );

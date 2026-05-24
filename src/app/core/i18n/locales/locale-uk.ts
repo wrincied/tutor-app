@@ -1,5 +1,6 @@
 import type {
   NavStrings,
+  PageTitleStrings,
   AccountStrings,
   AuthStrings,
   SharedStrings,
@@ -60,11 +61,16 @@ export const ACCOUNT_UK: AccountStrings = {
   passwordsMismatch: 'Паролі не збігаються',
   currentPasswordRequired: 'Вкажіть поточний пароль',
   saveError: 'Помилка збереження',
-  subscriptionManagedByPayment:
-    'Тариф змінюється лише після оплати. Вручну змінити його не можна.',
-  taxModeRequiredHint:
-    'Вкажіть податковий режим один раз — без цього покупка підписки недоступна.',
-  taxModeLockedHint: 'Податковий режим зафіксовано і не можна змінити.',
+  subscriptionManagedByPayment: 'Тариф змінюється лише після оплати. Вручну змінити його не можна.',
+  taxModeRequiredHint: 'Вкажіть податковий режим один раз — без цього покупка підписки недоступна.',
+  taxModeLockedHintBefore: 'Щоб змінити податковий режим, напишіть на ',
+  taxModeLockedHintAfter: '. Самостійна зміна в застосунку з’явиться трохи пізніше.',
+  taxSupportEmail: 'tutorassistent@gmail.com',
+  taxModeConfirmTitle: 'Підтвердження податкового режиму',
+  taxModeConfirmBody:
+    'Ви підтверджуєте, що обираєте режим «{mode}»? Після збереження профілю змінити його можна лише через підтримку.',
+  taxModeConfirmConfirm: 'Підтвердити',
+  taxModeConfirmCancel: 'Скасувати',
   upgradePro: 'Оформити Pro',
   upgradeTrial: 'Активувати пробний період (тест)',
   checkoutLoading: 'Перехід до оплати…',
@@ -116,8 +122,7 @@ export const AUTH_UK: AuthStrings = {
     'Цей email уже прив’язано до входу через Google. Натисніть «Увійти через Google».',
   invalidEmail: 'Некоректна адреса email',
   checkEmailTitle: 'Підтвердіть email',
-  checkEmailSubtitle:
-    'Ми надіслали листа з посиланням. Перейдіть за ним, щоб увійти в кабінет.',
+  checkEmailSubtitle: 'Ми надіслали листа з посиланням. Перейдіть за ним, щоб увійти в кабінет.',
   checkEmailPurgeHint:
     'Якщо email не підтвердити протягом 3 днів, акаунт буде автоматично видалено.',
   checkEmailResent: 'Листа надіслано повторно',
@@ -165,8 +170,7 @@ export const AUTH_UK: AuthStrings = {
   onboardingDataItem1: 'Контактні дані (email, ім’я) для акаунта та сповіщень',
   onboardingDataItem2: 'Дані про учнів, уроки та фінанси — лише для вашого обліку',
   onboardingDataItem3: 'Технічні дані (сесія, мова інтерфейсу) для безпеки',
-  onboardingDataConsentLabel:
-    'Я погоджуюся на обробку персональних даних відповідно до політики',
+  onboardingDataConsentLabel: 'Я погоджуюся на обробку персональних даних відповідно до політики',
   onboardingDataPolicyLink: 'Повна політика обробки даних',
   onboardingCookiesTitle: 'Cookies',
   onboardingCookiesBody:
@@ -200,8 +204,7 @@ export const LEGAL_COMMON_UK: LegalCommonStrings = {
 export const LEGAL_DATA_UK: LegalDataProcessingStrings = {
   ...LEGAL_COMMON_UK,
   title: 'Політика обробки персональних даних',
-  intro:
-    'Ця політика описує, які дані Simple4U обробляє, навіщо це потрібно і які у вас є права.',
+  intro: 'Ця політика описує, які дані Simple4U обробляє, навіщо це потрібно і які у вас є права.',
   section1Title: 'Хто обробляє дані',
   section1Body:
     'Оператором є власник сервісу Simple4U. Контакт для питань щодо даних: email, вказаний у вашому акаунті.',
@@ -497,6 +500,26 @@ export const ACTIVITY_LOG_UK: ActivityLogStrings = {
   reasonLessonDeleted: 'урок видалено',
   changeArrow: '→',
   lessonsUnit: 'ур.',
+};
+
+export const PAGE_TITLE_UK: PageTitleStrings = {
+  default: 'Simple4U',
+  landing: 'Simple4U',
+  login: 'Увійти | Simple4U',
+  register: 'Створити акаунт | Simple4U',
+  legalDataProcessing: 'Обробка даних | Simple4U',
+  legalCookies: 'Cookies | Simple4U',
+  verifyEmail: 'Підтвердіть email | Simple4U',
+  onboarding: 'Ласкаво просимо | Simple4U',
+  home: 'Головна | Simple4U',
+  students: 'Учні | Simple4U',
+  calendar: 'Розклад | Simple4U',
+  finance: 'Фінанси | Simple4U',
+  pricing: 'Ціни | Simple4U',
+  account: 'Особистий кабінет | Simple4U',
+  accountCustomization: 'Налаштування | Simple4U',
+  accountProfile: 'Особистий кабінет | Simple4U',
+  admin: 'Адмін | Simple4U',
 };
 
 export const TAX_MODE_LABELS_UK: Record<TaxMode, string> = {

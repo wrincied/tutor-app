@@ -10,15 +10,17 @@ import { UserService } from '../../core/services/user.service';
 import {
   canPurchaseSubscription,
   isTaxModeConfigured,
+  normalizeTaxMode,
   SETUP_TAX_MODES,
   subscriptionStatusLabel,
 } from '../../core/utils/user-profile.utils';
+import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 
 @Component({
   selector: 'app-account-profile',
   standalone: true,
-  imports: [FormsModule, AppSelectComponent, RouterLink],
+  imports: [FormsModule, AppSelectComponent, RouterLink, AppDialogComponent],
   templateUrl: './account-profile.component.html',
   styleUrls: ['./account-page-host.scss', './account.component.scss'],
 })
@@ -36,6 +38,8 @@ export class AccountProfileComponent implements OnInit {
   saved = signal(false);
   error = signal<string | null>(null);
   profile = signal<UserProfile | null>(null);
+  taxConfirmOpen = signal(false);
+  pendingTaxMode = signal<TaxMode | null>(null);
 
   firstName = '';
   lastName = '';
@@ -44,6 +48,8 @@ export class AccountProfileComponent implements OnInit {
   newPassword = '';
   confirmPassword = '';
   tax_mode: TaxMode | string = 'none';
+  /** Значение селекта (синхронизируется после подтверждения в модалке). */
+  taxModeSelectValue = 'none';
   subscription_status: SubscriptionStatus | string = 'free';
 
   taxModeConfigured = computed(() => {
@@ -70,6 +76,19 @@ export class AccountProfileComponent implements OnInit {
     })),
   );
 
+  taxModeConfirmMessage = computed(() => {
+    const mode = this.pendingTaxMode();
+    if (!mode) {
+      return '';
+    }
+    const label = this.i18n.taxModeLabel(mode);
+    return this.i18n.accountUi().taxModeConfirmBody.replace('{mode}', label);
+  });
+
+  supportMailto = computed(
+    () => `mailto:${this.i18n.accountUi().taxSupportEmail}`,
+  );
+
   ngOnInit(): void {
     this.userSvc.getProfile().subscribe({
       next: (user) => {
@@ -83,6 +102,38 @@ export class AccountProfileComponent implements OnInit {
     });
   }
 
+  onTaxModePick(next: string): void {
+    const normalized = normalizeTaxMode(next);
+    if (!isTaxModeConfigured(normalized)) {
+      this.tax_mode = normalized;
+      this.taxModeSelectValue = normalized;
+      return;
+    }
+    if (normalized === normalizeTaxMode(this.tax_mode)) {
+      this.taxModeSelectValue = normalized;
+      return;
+    }
+    this.pendingTaxMode.set(normalized as TaxMode);
+    this.taxConfirmOpen.set(true);
+    this.taxModeSelectValue = String(this.tax_mode);
+  }
+
+  onTaxModeConfirm(): void {
+    const pending = this.pendingTaxMode();
+    if (pending) {
+      this.tax_mode = pending;
+      this.taxModeSelectValue = pending;
+    }
+    this.taxConfirmOpen.set(false);
+    this.pendingTaxMode.set(null);
+  }
+
+  onTaxModeConfirmCancel(): void {
+    this.taxConfirmOpen.set(false);
+    this.pendingTaxMode.set(null);
+    this.taxModeSelectValue = String(this.tax_mode);
+  }
+
   private applyProfile(user: UserProfile): void {
     this.profile.set(user);
     this.firstName = user.first_name ?? '';
@@ -94,6 +145,7 @@ export class AccountProfileComponent implements OnInit {
     }
     this.newEmail = user.email;
     this.tax_mode = (user.tax_mode as TaxMode) || 'none';
+    this.taxModeSelectValue = String(this.tax_mode);
     this.subscription_status = (user.subscription_status as SubscriptionStatus) || 'free';
     this.loading.set(false);
   }

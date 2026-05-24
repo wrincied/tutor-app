@@ -88,6 +88,8 @@
   @if (open() && !useOverlayPanel()) {
     <ul
       class="app-select__menu app-select__menu--floating"
+      [class.app-select__menu--placement-below]="effectiveMenuPlacement() === 'below'"
+      [class.app-select__menu--placement-above]="effectiveMenuPlacement() === 'above'"
       role="listbox"
       [ngStyle]="floatingMenuStyle()"
       animate.leave="app-select-menu-leave"

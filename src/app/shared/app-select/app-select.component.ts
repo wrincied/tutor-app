@@ -50,6 +50,9 @@ type MenuAnchor = {
   templateUrl: './app-select.component.html',
   styleUrl: './app-select.component.scss',
   encapsulation: ViewEncapsulation.None,
+  host: {
+    '[class.app-select--has-value]': 'hasDisplayValue()',
+  },
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -100,7 +103,7 @@ export class AppSelectComponent implements ControlValueAccessor, OnDestroy {
   protected readonly value = signal('');
   protected readonly mobileSheet = signal(this.readMobileViewport());
   private readonly menuAnchor = signal<MenuAnchor | null>(null);
-  private readonly effectiveMenuPlacement = signal<'above' | 'below'>('below');
+  protected readonly effectiveMenuPlacement = signal<'above' | 'below'>('below');
 
   protected readonly useOverlayPanel = computed(() => {
     if (this.panelMode() === 'overlay') {
@@ -173,6 +176,8 @@ export class AppSelectComponent implements ControlValueAccessor, OnDestroy {
   protected readonly displayDotColor = computed(
     () => this.selectedOption()?.dotColor ?? null,
   );
+
+  protected readonly hasDisplayValue = computed(() => this.value().trim().length > 0);
 
   constructor() {
     afterNextRender(() => {

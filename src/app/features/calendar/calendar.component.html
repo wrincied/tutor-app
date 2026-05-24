@@ -279,21 +279,18 @@
             </div>
 
             <div class="cal-grid-scroll" #gridScroll>
-              <div class="cal-grid-body" [style.--cal-grid-height.px]="gridHeightPx">
-                @if (nowLineTopPx(); as nowTop) {
-                  <div
-                    class="cal-now-line-week"
-                    [style.top.px]="nowTop"
-                    aria-hidden="true"
-                  ></div>
-                }
-
-                <div class="cal-time-axis">
+              <div
+                class="cal-grid-body"
+                [style.--cal-grid-height.px]="gridHeightPx()"
+                [style.--cal-grid-bottom-air.px]="gridBottomPaddingPx"
+              >
+                <div class="cal-time-axis" [style.height.px]="gridHeightPx()">
                   @for (hour of gridHours(); track hour) {
                     <div class="cal-time-slot" [style.height.px]="hourHeightPx">
                       {{ formatHourLabel(hour) }}
                     </div>
                   }
+                  <span class="cal-time-axis__end">{{ formatHourLabel(gridEndHour()) }}</span>
                   @if (nowLineTopPx(); as nowTop) {
                     <div class="cal-now-marker" [style.top.px]="nowTop">{{ nowTimeLabel() }}</div>
                   }
@@ -367,6 +364,13 @@
                           </div>
                         }
                       </div>
+                    }
+                    @if (nowLineTopPx(); as nowTop) {
+                      <div
+                        class="cal-now-line-week"
+                        [style.top.px]="nowTop"
+                        aria-hidden="true"
+                      ></div>
                     }
                   </div>
                 </div>
@@ -804,18 +808,28 @@
   <p>{{ scheduleConflictMessage() }}</p>
 </app-dialog>
 
-<app-dialog
-  [open]="recurrenceModalOpen()"
-  stackOnTop
-  layout="sheet"
-  [closeOnOverlay]="false"
-  [title]="i18n.calendarUi().recurrenceModalTitle"
-  [cancelLabel]="i18n.studentsUi().cancel"
-  [confirmLabel]="i18n.calendarUi().recurrenceApply"
-  (cancel)="closeRecurrenceModal()"
-  (confirm)="applyRecurrenceModal()"
->
-  <div class="cal-recurrence-modal">
+@if (recurrenceModalOpen()) {
+  <div class="modal-overlay modal-overlay--sheet modal-overlay--stack-top" role="presentation">
+    <div
+      class="modal modal-sheet modal--recurrence"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2>{{ i18n.calendarUi().recurrenceModalTitle }}</h2>
+        <button
+          type="button"
+          class="modal-close"
+          (click)="closeRecurrenceModal()"
+          [attr.aria-label]="i18n.studentsUi().close"
+        >
+          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
+        </button>
+      </div>
+
+      <div class="modal-sheet__scroll">
+        <div class="modal-body cal-recurrence-modal">
     <app-select
       name="recurrencePreset"
       [ngModel]="recurrenceDraft().preset"
@@ -935,8 +949,20 @@
         </div>
       }
     }
+        </div>
+      </div>
+
+      <div class="cal-recurrence-modal__actions">
+        <button type="button" class="btn-link" (click)="closeRecurrenceModal()">
+          {{ i18n.studentsUi().cancel }}
+        </button>
+        <button type="button" class="btn-primary" (click)="applyRecurrenceModal()">
+          {{ i18n.calendarUi().recurrenceApply }}
+        </button>
+      </div>
+    </div>
   </div>
-</app-dialog>
+}
 
 <app-dialog
   [open]="deleteRecurringModalOpen()"

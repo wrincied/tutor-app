@@ -140,7 +140,8 @@
         <div class="field field--select">
           <app-select
             name="tax_mode"
-            [(ngModel)]="tax_mode"
+            [ngModel]="taxModeSelectValue"
+            (ngModelChange)="onTaxModePick($event)"
             [options]="taxModeSelectOptions()"
             menuPlacement="below"
           />
@@ -151,7 +152,10 @@
           <span class="account-readonly__label">{{ i18n.accountUi().taxMode }}</span>
           <strong>{{ i18n.taxModeLabel(tax_mode) }}</strong>
         </p>
-        <p class="account-hint">{{ i18n.accountUi().taxModeLockedHint }}</p>
+        <p class="account-hint">
+          {{ i18n.accountUi().taxModeLockedHintBefore }}
+          <a [href]="supportMailto()">{{ i18n.accountUi().taxSupportEmail }}</a>{{ i18n.accountUi().taxModeLockedHintAfter }}
+        </p>
       }
     </section>
 
@@ -160,3 +164,15 @@
     </button>
   </form>
 }
+
+<app-dialog
+  [open]="taxConfirmOpen()"
+  [title]="i18n.accountUi().taxModeConfirmTitle"
+  [cancelLabel]="i18n.accountUi().taxModeConfirmCancel"
+  [confirmLabel]="i18n.accountUi().taxModeConfirmConfirm"
+  layout="center"
+  (cancel)="onTaxModeConfirmCancel()"
+  (confirm)="onTaxModeConfirm()"
+>
+  <p>{{ taxModeConfirmMessage() }}</p>
+</app-dialog>

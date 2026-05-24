@@ -42,6 +42,7 @@
 }
 
 .account-setting__label {
+  margin: 0;
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-secondary);
@@ -165,6 +166,13 @@
   font-size: 0.8125rem;
   line-height: 1.4;
   color: var(--text-secondary);
+
+  a {
+    color: var(--nav-accent);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 
   &--warn {
     color: rgb(180 83 9);
@@ -377,7 +385,7 @@
 
   @media (min-width: 640px) {
     grid-template-columns: 1.4fr 0.8fr 0.8fr;
-    align-items: end;
+    align-items: stretch;
   }
 }
 
@@ -387,7 +395,7 @@
 
 .account-workspace__hours-row {
   display: grid;
-  align-items: center;
+  align-items: stretch;
   gap: 0.75rem;
   grid-template-columns: 1fr 1fr;
 
@@ -396,7 +404,11 @@
   }
 }
 
-.account-workspace__hour {
+.account-workspace__hour,
+.account-workspace__duration {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
   min-width: 0;
 }
 
