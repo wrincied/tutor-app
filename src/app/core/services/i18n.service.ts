@@ -11,6 +11,7 @@ import type {
   LegalDataProcessingStrings,
   CalendarStrings,
   FinanceStrings,
+  HomeStrings,
   SharedStrings,
   PricingStrings,
   RateCurrency,
@@ -1610,6 +1611,99 @@ const STUDENTS: Record<Lang, StudentStrings> = {
   by: STUDENTS_BY,
 };
 
+const HOME: Record<Lang, HomeStrings> = {
+  ru: {
+    greetingAnonymous: 'Привет!',
+    greetingNamed: 'Привет, {name}!',
+    todaySection: 'Сводка на сегодня',
+    todayLessons: 'Занятий сегодня',
+    todayIncome: 'Доход за сегодня',
+    incomeApproxHint: 'Оценка: проведённые + запланированные',
+    lessonsEmpty: 'На сегодня уроков нет',
+    loading: 'Загрузка…',
+    loadError: 'Не удалось загрузить данные',
+    betaTitle: 'Бета-тестирование',
+    betaBody:
+      'Приложение Simple4U находится в стадии бета-тестирования. Если вы столкнётесь с ошибками или неожиданным поведением, учитывайте, что это бета-версия — мы активно её дорабатываем.',
+    betaDismiss: 'Понятно',
+  },
+  en: {
+    greetingAnonymous: 'Hello!',
+    greetingNamed: 'Hello, {name}!',
+    todaySection: 'Today at a glance',
+    todayLessons: 'Lessons today',
+    todayIncome: 'Income today',
+    incomeApproxHint: 'Estimate: completed + scheduled',
+    lessonsEmpty: 'No lessons scheduled for today',
+    loading: 'Loading…',
+    loadError: 'Could not load dashboard data',
+    betaTitle: 'Beta testing',
+    betaBody:
+      'Simple4U is in beta. If you run into errors or unexpected behavior, please keep in mind this is a beta release — we are actively improving the app.',
+    betaDismiss: 'Got it',
+  },
+  de: {
+    greetingAnonymous: 'Hallo!',
+    greetingNamed: 'Hallo, {name}!',
+    todaySection: 'Überblick für heute',
+    todayLessons: 'Stunden heute',
+    todayIncome: 'Einnahmen heute',
+    incomeApproxHint: 'Schätzung: durchgeführt + geplant',
+    lessonsEmpty: 'Heute keine Stunden geplant',
+    loading: 'Wird geladen…',
+    loadError: 'Dashboard-Daten konnten nicht geladen werden',
+    betaTitle: 'Beta-Test',
+    betaBody:
+      'Simple4U befindet sich in der Beta-Phase. Bei Fehlern oder unerwartetem Verhalten bitte beachten, dass es sich um eine Beta-Version handelt — wir verbessern die App laufend.',
+    betaDismiss: 'Verstanden',
+  },
+  kz: {
+    greetingAnonymous: 'Сәлем!',
+    greetingNamed: 'Сәлем, {name}!',
+    todaySection: 'Бүгінгі қысқаша',
+    todayLessons: 'Бүгінгі сабақтар',
+    todayIncome: 'Бүгінгі табыс',
+    incomeApproxHint: 'Бағалау: өткізілген + жоспарланған',
+    lessonsEmpty: 'Бүгін сабақ жоқ',
+    loading: 'Жүктелуде…',
+    loadError: 'Деректерді жүктеу сәтсіз',
+    betaTitle: 'Бета-тест',
+    betaBody:
+      'Simple4U бета-тестте. Қателер немесе күтілмеген әрекет болса, бұл бета-нұсқа екенін ескеріңіз — біз қолданбаны жақсартудамыз.',
+    betaDismiss: 'Түсінікті',
+  },
+  uk: {
+    greetingAnonymous: 'Привіт!',
+    greetingNamed: 'Привіт, {name}!',
+    todaySection: 'Зведення на сьогодні',
+    todayLessons: 'Занять сьогодні',
+    todayIncome: 'Дохід за сьогодні',
+    incomeApproxHint: 'Оцінка: проведені + заплановані',
+    lessonsEmpty: 'На сьогодні уроків немає',
+    loading: 'Завантаження…',
+    loadError: 'Не вдалося завантажити дані',
+    betaTitle: 'Бета-тестування',
+    betaBody:
+      'Simple4U перебуває на стадії бета-тестування. Якщо ви зіткнетеся з помилками або неочікуваною поведінкою, врахуйте, що це бета-версія — ми активно її вдосконалюємо.',
+    betaDismiss: 'Зрозуміло',
+  },
+  by: {
+    greetingAnonymous: 'Прывітанне!',
+    greetingNamed: 'Прывітанне, {name}!',
+    todaySection: 'Зводка на сёня',
+    todayLessons: 'Заняткаў сёня',
+    todayIncome: 'Даход за сёня',
+    incomeApproxHint: 'Ацэнка: праведзеныя + запланаваныя',
+    lessonsEmpty: 'На сёня урокаў няма',
+    loading: 'Загрузка…',
+    loadError: 'Не атрымалася загрузіць дадзеныя',
+    betaTitle: 'Бета-тэст',
+    betaBody:
+      'Simple4U знаходзіцца ў стадыі бета-тэсту. Калі ўзнікнуць памылкі або нечаканая паводзіны, улічвайце, што гэта бета-версія — мы актыўна яе дапрацоўваем.',
+    betaDismiss: 'Зразумела',
+  },
+};
+
 const ADMIN: Record<Lang, AdminStrings> = {
   ru: {
     title: 'Панель администратора',
@@ -1816,6 +1910,9 @@ export class I18nService {
 
   /** Финансы. */
   readonly financeUi = computed(() => FINANCE[this._lang()]);
+
+  /** Главная. */
+  readonly homeUi = computed(() => HOME[this._lang()]);
 
   /** Тарифы / подписка. */
   readonly pricingUi = computed(() => PRICING[this._lang()]);

@@ -1,11 +1,60 @@
-<!-- <div>
-  <h1></h1>
+<div class="page home-page">
+  <header class="home-page__header">
+    <p class="home-page__badge">Beta</p>
+    <h1 class="home-page__greeting">{{ greeting() }}</h1>
+    <p class="home-page__subtitle">{{ t.todaySection }}</p>
+  </header>
 
-  <section>
-    <h2>Расписание на сегодня</h2>
-  </section>
+  @if (loading()) {
+    <div class="home-stats home-stats--loading" role="status" aria-busy="true">
+      <span class="sr-only">{{ t.loading }}</span>
+      @for (slot of [0, 1]; track slot) {
+        <div class="home-stat home-stat--skeleton">
+          <span class="skeleton skeleton--line skeleton--line-sm" style="width: 55%"></span>
+          <span class="skeleton skeleton--line skeleton--line-lg" style="width: 40%"></span>
+        </div>
+      }
+    </div>
+  } @else if (error()) {
+    <p class="home-page__error">{{ error() }}</p>
+  } @else {
+    <div class="home-stats">
+      <a routerLink="/app/calendar" class="home-stat home-stat--lessons">
+        <span class="home-stat__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </span>
+        <span class="home-stat__value">{{ todayLessonCount() }}</span>
+        <span class="home-stat__label">{{ t.todayLessons }}</span>
+        @if (todayLessonCount() === 0) {
+          <span class="home-stat__hint">{{ t.lessonsEmpty }}</span>
+        }
+      </a>
 
-  <section>
-    <h2>Финансы</h2>
-  </section>
-</div> -->
+      <a routerLink="/app/finance" class="home-stat home-stat--income">
+        <span class="home-stat__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+        </span>
+        <span class="home-stat__value">{{ todayIncomeLabel() }}</span>
+        <span class="home-stat__label">{{ t.todayIncome }}</span>
+        <span class="home-stat__hint">{{ t.incomeApproxHint }}</span>
+      </a>
+    </div>
+  }
+</div>
+
+<app-dialog
+  [open]="betaOpen()"
+  [title]="t.betaTitle"
+  [dismissLabel]="t.betaDismiss"
+  (cancel)="dismissBetaNotice()"
+>
+  <p>{{ t.betaBody }}</p>
+</app-dialog>

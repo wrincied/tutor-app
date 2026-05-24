@@ -409,6 +409,21 @@ export interface CalendarStrings {
   weekdaySun: string;
 }
 
+export interface HomeStrings {
+  greetingAnonymous: string;
+  greetingNamed: string;
+  todaySection: string;
+  todayLessons: string;
+  todayIncome: string;
+  incomeApproxHint: string;
+  lessonsEmpty: string;
+  loading: string;
+  loadError: string;
+  betaTitle: string;
+  betaBody: string;
+  betaDismiss: string;
+}
+
 export interface FinanceStrings {
   loading: string;
   loadError: string;
