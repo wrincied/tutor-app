@@ -87,7 +87,24 @@ export const routes: Routes = [
           {
             path: 'account',
             loadComponent: () =>
-              import('./features/account/account.component').then((m) => m.AccountComponent),
+              import('./features/account/account-shell.component').then((m) => m.AccountShellComponent),
+            children: [
+              { path: '', redirectTo: 'customization', pathMatch: 'full' },
+              {
+                path: 'customization',
+                loadComponent: () =>
+                  import('./features/account/account-customization.component').then(
+                    (m) => m.AccountCustomizationComponent,
+                  ),
+              },
+              {
+                path: 'profile',
+                loadComponent: () =>
+                  import('./features/account/account-profile.component').then(
+                    (m) => m.AccountProfileComponent,
+                  ),
+              },
+            ],
           },
           {
             path: 'admin',

@@ -1,18 +1,21 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import type { AdminStats, AdminUserRow } from '@interfaces';
+import type { AdminStats, AdminUserRow, SubscriptionStatus } from '@interfaces';
 
 import { apiUrl } from '../config/api-url';
 
 const API = apiUrl('admin');
 
-export interface GrantTrialResponse {
+export interface UpdateSubscriptionPayload {
+  subscription_status: SubscriptionStatus;
+  trial_ends_at?: string;
+}
+
+export interface AdminSubscriptionResponse {
   ok: boolean;
-  days: number;
-  user: Pick<AdminUserRow, '_id' | 'email' | 'subscription_status'> & {
-    trial_ends_at?: string;
-  };
+  user: AdminUserRow;
+  days?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -27,7 +30,16 @@ export class AdminService {
     return this.http.get<AdminUserRow[]>(`${API}/users`);
   }
 
-  grantTrial(userId: string): Observable<GrantTrialResponse> {
-    return this.http.post<GrantTrialResponse>(`${API}/users/${userId}/grant-trial`, {});
+  updateSubscription(
+    userId: string,
+    payload: UpdateSubscriptionPayload,
+  ): Observable<AdminSubscriptionResponse> {
+    return this.http.put<AdminSubscriptionResponse>(`${API}/users/${userId}/subscription`, payload);
+  }
+
+  grantTrial(userId: string, trialEndsAt?: string): Observable<AdminSubscriptionResponse> {
+    return this.http.post<AdminSubscriptionResponse>(`${API}/users/${userId}/grant-trial`, {
+      trial_ends_at: trialEndsAt,
+    });
   }
 }

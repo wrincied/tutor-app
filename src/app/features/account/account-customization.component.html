@@ -1,0 +1,157 @@
+@if (loading()) {
+  <div
+    class="account-skeleton skeleton-page"
+    role="status"
+    aria-busy="true"
+    [attr.aria-label]="i18n.sharedUi().loadingContent"
+  >
+    <span class="sr-only">{{ i18n.sharedUi().loadingContent }}</span>
+    <div class="skeleton-form-card">
+      <span class="skeleton skeleton--line skeleton--line-lg" style="width: 40%"></span>
+      @for (i of [0, 1, 2]; track i) {
+        <span class="skeleton skeleton--line skeleton--block" style="height: 2.75rem"></span>
+      }
+    </div>
+  </div>
+} @else {
+  <section class="account-card">
+    <div class="account-setting">
+      <span class="account-setting__label">{{ i18n.accountUi().language }}</span>
+      <div class="account-langs" role="group" [attr.aria-label]="i18n.accountUi().language">
+        @for (code of i18n.allLangs; track code) {
+          <button
+            type="button"
+            class="account-lang-btn"
+            [class.account-lang-btn--active]="i18n.lang() === code"
+            (click)="pickLang(code)"
+            [attr.aria-label]="i18n.labelForLang(code)"
+            [attr.aria-pressed]="i18n.lang() === code"
+          >
+            @if (flagIcon(code); as icon) {
+              <img [src]="icon" width="28" height="19" alt="" />
+            } @else {
+              <span class="account-lang-btn__flag-wrap" aria-hidden="true">
+                <app-belarus-flag />
+              </span>
+            }
+            <span class="account-lang-btn__name">{{ i18n.labelForLang(code) }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="account-setting">
+      <span class="account-setting__label">
+        {{ theme.dark() ? i18n.accountUi().themeLight : i18n.accountUi().themeDark }}
+        BETA TEST
+      </span>
+      <button
+        type="button"
+        class="account-theme-btn"
+        (click)="theme.toggle()"
+        [attr.aria-label]="theme.dark() ? i18n.accountUi().themeLight : i18n.accountUi().themeDark"
+      >
+        @if (theme.dark()) {
+          <img src="/assets/icons/icon-sun.svg" width="22" height="22" alt="" />
+          <span>{{ i18n.accountUi().themeLight }}</span>
+        } @else {
+          <img src="/assets/icons/icon-moon.svg" width="22" height="22" alt="" />
+          <span>{{ i18n.accountUi().themeDark }}</span>
+        }
+      </button>
+    </div>
+
+    <div class="account-workspace account-workspace--page">
+      <div class="account-workspace__head">
+        <h2 class="account-workspace__title">{{ i18n.accountUi().workspaceSection }}</h2>
+        @if (workspaceAutosave() === 'saving') {
+          <span class="account-workspace__status">{{ i18n.accountUi().workspaceSaving }}</span>
+        } @else if (workspaceAutosave() === 'saved') {
+          <span class="account-workspace__status account-workspace__status--ok">
+            {{ i18n.accountUi().workspaceSaved }}
+          </span>
+        }
+      </div>
+
+      <div class="account-workspace__grid">
+        <div class="field field--float account-workspace__name">
+          <input
+            type="text"
+            [ngModel]="profileSettings.workspace().name"
+            (ngModelChange)="onWorkspaceNameChange($event)"
+            name="workspaceName"
+            placeholder=" "
+            maxlength="120"
+            autocomplete="organization"
+          />
+          <label>{{ i18n.accountUi().workspaceName }}</label>
+        </div>
+
+        <div class="field field--select">
+          <app-select
+            name="workspaceCurrency"
+            [ngModel]="profileSettings.workspace().currency"
+            (ngModelChange)="onWorkspaceCurrencyChange($event)"
+            [options]="workspaceCurrencyOptions()"
+            menuPlacement="below"
+          />
+          <label>{{ i18n.accountUi().workspaceCurrency }}</label>
+        </div>
+
+        <div class="field field--select">
+          <app-select
+            name="workspaceDuration"
+            [ngModel]="profileSettings.workspace().defaultLessonDuration + ''"
+            (ngModelChange)="onWorkspaceDurationChange($event)"
+            [options]="workspaceDurationOptions()"
+            menuPlacement="below"
+          />
+          <label>{{ i18n.accountUi().workspaceDefaultDuration }}</label>
+        </div>
+      </div>
+
+      <h3 class="account-workspace__title account-workspace__title--hours">
+        {{ i18n.accountUi().workingHoursSection }}
+      </h3>
+
+      <div class="account-workspace__hours-row">
+        <div class="field field--select account-workspace__hour">
+          <app-select
+            name="workingHoursStart"
+            [ngModel]="profileSettings.workingHours().start"
+            (ngModelChange)="onWorkingHoursStartChange($event)"
+            [options]="workingHourOptions()"
+            menuPlacement="below"
+          />
+          <label>{{ i18n.accountUi().workingHoursStart }}</label>
+        </div>
+
+        <div class="field field--select account-workspace__hour">
+          <app-select
+            name="workingHoursEnd"
+            [ngModel]="profileSettings.workingHours().end"
+            (ngModelChange)="onWorkingHoursEndChange($event)"
+            [options]="workingHourOptions()"
+            menuPlacement="below"
+          />
+          <label>{{ i18n.accountUi().workingHoursEnd }}</label>
+        </div>
+      </div>
+
+      <p class="account-workspace__days-label">{{ i18n.accountUi().workingDays }}</p>
+      <div class="account-workspace__days" role="group" [attr.aria-label]="i18n.accountUi().workingDays">
+        @for (day of isoWeekdays; track day) {
+          <button
+            type="button"
+            class="account-workspace__day"
+            [class.account-workspace__day--active]="isWorkingDaySelected(day)"
+            (click)="toggleWorkingDay(day)"
+            [attr.aria-pressed]="isWorkingDaySelected(day)"
+          >
+            {{ weekdayLabels()[day] }}
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+}

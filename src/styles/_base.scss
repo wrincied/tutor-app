@@ -17,15 +17,40 @@ body {
     color 0.2s;
 }
 
-.app-content {
-  margin-left: var(--sidebar-w);
-  transition: margin-left 0.25s ease;
-  min-height: 100vh;
-  padding: 24px;
+// ── App Shell: фрейм приложения (sidebar + контент) ─────────────────────────
 
-  @media (max-width: 768px) {
+.app-shell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+.app-content {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+  margin-left: var(--sidebar-w, 220px);
+  padding: 24px;
+  box-sizing: border-box;
+  transition: margin-left 0.25s ease;
+
+  @media (max-width: 768px), (max-height: 440px) {
     margin-left: 0;
-    padding-bottom: 72px;
+    height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
+    padding: 16px;
   }
 
   &:has(> app-calendar) {
@@ -38,7 +63,6 @@ body {
     min-height: 0;
     overflow: hidden;
     padding: 0;
-    box-sizing: border-box;
 
     > app-calendar {
       display: flex;
@@ -46,41 +70,80 @@ body {
       flex-direction: column;
       min-height: 0;
       width: 100%;
-      height: 100%;
       overflow: hidden;
-      box-sizing: border-box;
     }
 
-    @media (max-width: 768px) {
-      padding-bottom: 0;
-      height: calc(100dvh - 56px);
-      height: calc(100svh - 56px);
-      max-height: calc(100dvh - 56px);
-      max-height: calc(100svh - 56px);
+    @media (max-width: 768px), (max-height: 440px) {
+      padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+      height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
+      height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px));
+      max-height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
+      max-height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px));
     }
   }
 }
 
-@media (max-width: 1023px) {
-  html:has(.app-content > app-calendar),
-  html:has(.app-content > app-calendar) body {
-    overflow: hidden;
-    overscroll-behavior: none;
+// Navbar вне потока документа — не скроллится вместе со страницей
+app-navbar {
+  display: contents;
+}
+
+// Хост для router-outlet: страница заполняет область, без «пустого» flex-слота
+.app-page-host {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+
+  > router-outlet {
+    display: contents;
+  }
+
+  > :not(router-outlet) {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
     height: 100%;
-    height: 100dvh;
-    height: 100svh;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  > router-outlet > * {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  > router-outlet > app-calendar {
+    touch-action: pan-y;
   }
 }
 
-// Планшет / десктоп: календарь не должен растягивать body и обрезать sidebar
-@media (min-width: 769px) {
-  html:has(.app-content > app-calendar),
-  html:has(.app-content > app-calendar) body {
-    overflow: hidden;
-    height: 100%;
-    height: 100dvh;
-    height: 100svh;
-  }
+.app-page-host > :where(
+    app-home,
+    app-students,
+    app-finance,
+    app-pricing,
+    app-account-shell,
+    app-admin-dashboard
+  ) {
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.app-page-host > app-calendar {
+  height: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
 }
 
 // Календарь: модалка открыта — нижний navbar под оверлеем
@@ -88,7 +151,27 @@ html.app-calendar-modal-open {
   --z-app-navbar: 0;
 }
 
+// Календарь: перетаскивание урока — без скролла страницы
+html.cal-lesson-dragging {
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+html.cal-lesson-dragging .app-shell,
+html.cal-lesson-dragging .app-content,
+html.cal-lesson-dragging .app-page-host {
+  touch-action: none !important;
+}
+
 // Select открыт — меню поверх navbar и модалок
 html.app-select-dropdown-open {
   --z-app-dropdown: var(--z-app-dropdown-top);
+}
+
+@media (max-width: 1023px) {
+  html:has(.app-content > app-calendar),
+  html:has(.app-content > app-calendar) body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
 }

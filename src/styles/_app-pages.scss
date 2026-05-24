@@ -1,0 +1,45 @@
+// App Shell: students, finance, admin, account, pricing, home
+app-home,
+app-students,
+app-finance,
+app-admin-dashboard,
+app-account-shell,
+app-pricing {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+app-students,
+app-finance,
+app-admin-dashboard {
+  max-width: none;
+}
+
+app-account-shell .page {
+  width: 100%;
+  // max-width: 560px;
+}
+
+app-pricing .page {
+  width: 100%;
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+.pricing-page__header.page-header {
+  display: block;
+  margin-bottom: 0;
+}
+
+.pricing-page__header .pricing-hero {
+  margin-bottom: 0;
+}
+
+.account-page__header.page-header {
+  margin-bottom: 1rem;
+}

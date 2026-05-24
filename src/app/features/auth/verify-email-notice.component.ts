@@ -1,5 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
@@ -10,9 +9,9 @@ import { UserService } from '../../core/services/user.service';
   templateUrl: './verify-email-notice.component.html',
   styleUrl: './auth.scss',
 })
-export class VerifyEmailNoticeComponent {
+export class VerifyEmailNoticeComponent implements OnInit {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly userSvc = inject(UserService);
   readonly i18n = inject(I18nService);
 
   loading = signal(false);
@@ -20,6 +19,17 @@ export class VerifyEmailNoticeComponent {
   error = signal('');
 
   readonly email = this.auth.firebaseUser()?.email ?? '';
+
+  ngOnInit(): void {
+    if (!this.auth.isLoggedIn()) {
+      return;
+    }
+    this.userSvc.ensureProfile().subscribe({
+      error: () => {
+        this.error.set(this.i18n.authUi().profileSyncError);
+      },
+    });
+  }
 
   resend(): void {
     this.loading.set(true);
@@ -44,11 +54,14 @@ export class VerifyEmailNoticeComponent {
       next: (user) => {
         this.loading.set(false);
         if (user?.emailVerified) {
-          this.auth.bootstrapProfile().subscribe({
+          this.userSvc.ensureProfile().subscribe({
             next: (profile) => {
               if (user) {
                 this.auth.navigateAfterAuth(profile, user);
               }
+            },
+            error: () => {
+              this.error.set(this.i18n.authUi().profileSyncError);
             },
           });
         } else {

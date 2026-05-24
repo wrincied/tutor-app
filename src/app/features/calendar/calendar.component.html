@@ -200,6 +200,18 @@
           (touchstart)="onPeriodSwipeStart($event)"
           (touchend)="onPeriodSwipeEnd($event)"
         >
+          <div
+            class="cal-period-shell"
+            [class.cal-period-shell--exit-next]="periodExitMode() === 'next'"
+            [class.cal-period-shell--exit-prev]="periodExitMode() === 'prev'"
+            [class.cal-period-shell--exit-fade]="periodExitMode() === 'fade'"
+          >
+            @for (periodKey of [periodViewKey()]; track periodKey) {
+              <div
+                class="cal-period-view"
+                [class.cal-period-view--enter-next]="periodEnterFrom() === 'next'"
+                [class.cal-period-view--enter-prev]="periodEnterFrom() === 'prev'"
+              >
           @if (isMonthOverview()) {
             <div class="cal-month">
               <p class="cal-month__title">{{ formatMonthYearLabel() }}</p>
@@ -218,14 +230,24 @@
                         [class.cal-month__cell--outside]="!cell.inMonth"
                         [class.cal-month__cell--today]="isToday(cell.date)"
                         [class.cal-month__cell--has-lessons]="lessonCountForDay(cell.date) > 0"
-                        (click)="openDayFromMonth(cell.date)"
+                        (click)="openDayView(cell.date)"
                       >
                         <span class="cal-month__day-num">{{ cell.date.getDate() }}</span>
-                        @if (lessonCountForDay(cell.date) > 0) {
-                          <span class="cal-month__dots" aria-hidden="true">
-                            <span class="cal-month__dot"></span>
-                          </span>
-                        }
+                        <div class="cal-month__events" aria-hidden="true">
+                          @for (lesson of monthBadgeLessons(cell.date); track lesson.occurrenceKey ?? lesson._id) {
+                            <span
+                              class="cal-month__badge"
+                              [style.background]="monthLessonBadgeColor(lesson)"
+                            >{{ monthLessonBadgeLabel(lesson) }}</span>
+                          }
+                          @if (monthHiddenLessonCount(cell.date); as hidden) {
+                            @if (hidden > 0) {
+                              <span class="cal-month__badge cal-month__badge--more">{{
+                                monthMoreLessonsLabel(hidden)
+                              }}</span>
+                            }
+                          }
+                        </div>
                       </button>
                     }
                   </div>
@@ -241,9 +263,16 @@
                   [style.grid-template-columns]="gridTemplateColumns()"
                 >
                   @for (col of columns(); track dayKey(col)) {
-                    <div class="cal-day-header" [class.cal-day-header--today]="isToday(col)">
+                    <button
+                      type="button"
+                      class="cal-day-header"
+                      [class.cal-day-header--today]="isToday(col)"
+                      [class.cal-day-header--off]="isNonWorkingDay(col)"
+                      [attr.aria-label]="formatColumnHeader(col)"
+                      (click)="openDayView(col); $event.stopPropagation()"
+                    >
                       {{ formatColumnHeader(col) }}
-                    </div>
+                    </button>
                   }
                 </div>
               </div>
@@ -260,7 +289,7 @@
                 }
 
                 <div class="cal-time-axis">
-                  @for (hour of hours; track hour) {
+                  @for (hour of gridHours(); track hour) {
                     <div class="cal-time-slot" [style.height.px]="hourHeightPx">
                       {{ formatHourLabel(hour) }}
                     </div>
@@ -278,12 +307,15 @@
                     @for (col of columns(); track dayKey(col)) {
                       <div
                         class="cal-day-column"
+                        [attr.data-day-key]="dayKey(col)"
                         [class.cal-day-column--drag-target]="isDayDragTarget(col)"
-                        (dragover)="onDayDragOver($event, col)"
-                        (drop)="onDayDrop($event, col)"
+                        [class.cal-day-column--off]="isNonWorkingDay(col)"
                         (click)="onDayColumnClick(col, $event)"
                       >
-                        @for (hour of hours; track hour) {
+                        @if (isNonWorkingDay(col)) {
+                          <div class="cal-day-column__off-label">{{ i18n.calendarUi().dayOffLabel }}</div>
+                        }
+                        @for (hour of gridHours(); track hour) {
                           <div class="cal-hour-line" [style.height.px]="hourHeightPx"></div>
                         }
 
@@ -291,17 +323,15 @@
                           <div class="cal-drag-snap-line" [style.top.px]="snapTop"></div>
                         }
 
-                        @for (lesson of lessonsForColumn(col); track lesson._id) {
+                        @for (lesson of lessonsForColumn(col); track lesson.occurrenceKey ?? lesson._id) {
                           <div
                             [class]="lessonCardClass(lesson)"
                             [class.cal-lesson-card--last-paid]="lesson.isLastPaid"
                             [style.top.px]="calculateTop(displayScheduledAt(lesson))"
                             [style.height.px]="calculateHeight(lesson.lesson_duration)"
                             [style.border-left-color]="getStudentColor(lesson.student_id)"
-                            draggable="true"
-                            (dragstart)="onLessonDragStart($event, lesson)"
-                            (dragend)="onLessonDragEnd()"
-                            (click)="openEditLesson(lesson, $event)"
+                            (pointerdown)="onLessonPointerDown($event, lesson)"
+                            (click)="onLessonCardClick($event, lesson)"
                           >
                             <p class="cal-lesson-card__title">
                               {{ getStudentName(lesson.student_id) }}
@@ -343,6 +373,9 @@
               </div>
             </div>
           }
+              </div>
+            }
+          </div>
         </section>
 
         <aside
@@ -444,16 +477,11 @@
 </div>
 
 @if (showLessonForm()) {
-  <div
-    class="modal-overlay modal-overlay--sheet"
-    role="presentation"
-    animate.leave="modal-overlay-leave"
-  >
+  <div class="modal-overlay modal-overlay--sheet" role="presentation">
     <div
       class="modal modal-sheet modal--lesson"
       role="dialog"
       aria-modal="true"
-      animate.leave="modal-sheet-leave"
       (click)="$event.stopPropagation()"
     >
       <div class="modal-header">
@@ -542,6 +570,14 @@
                   {{ formatDurationPresetLabel(presetMinutes) }}
                 </button>
               }
+            </div>
+
+            <div class="cal-recurrence">
+              <p class="cal-recurrence__label">{{ i18n.calendarUi().recurrenceLabel }}</p>
+              <button type="button" class="cal-recurrence-trigger" (click)="openRecurrenceModal()">
+                <span class="cal-recurrence-trigger__text">{{ recurrenceSummary() }}</span>
+                <span class="cal-recurrence-trigger__chevron" aria-hidden="true">›</span>
+              </button>
             </div>
 
             <app-select
@@ -639,6 +675,14 @@
                   {{ formatDurationPresetLabel(presetMinutes) }}
                 </button>
               }
+            </div>
+
+            <div class="cal-recurrence">
+              <p class="cal-recurrence__label">{{ i18n.calendarUi().recurrenceLabel }}</p>
+              <button type="button" class="cal-recurrence-trigger" (click)="openRecurrenceModal()">
+                <span class="cal-recurrence-trigger__text">{{ recurrenceSummary() }}</span>
+                <span class="cal-recurrence-trigger__chevron" aria-hidden="true">›</span>
+              </button>
             </div>
 
             <app-select
@@ -753,4 +797,167 @@
   (confirm)="closeScheduleConflict()"
 >
   <p>{{ scheduleConflictMessage() }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="recurrenceModalOpen()"
+  stackOnTop
+  layout="sheet"
+  [closeOnOverlay]="false"
+  [title]="i18n.calendarUi().recurrenceModalTitle"
+  [cancelLabel]="i18n.studentsUi().cancel"
+  [confirmLabel]="i18n.calendarUi().recurrenceApply"
+  (cancel)="closeRecurrenceModal()"
+  (confirm)="applyRecurrenceModal()"
+>
+  <div class="cal-recurrence-modal">
+    <app-select
+      name="recurrencePreset"
+      [ngModel]="recurrenceDraft().preset"
+      (ngModelChange)="onRecurrencePresetChange($event)"
+      [options]="recurrencePresetSelectOptions()"
+      menuPlacement="below"
+      mobileBackdropSheet
+    />
+
+    @if (recurrenceDraft().preset === 'custom') {
+      <app-select
+        name="recurrenceCustomFreq"
+        [ngModel]="recurrenceDraft().customFreq"
+        (ngModelChange)="onRecurrenceCustomFreqChange($event)"
+        [options]="recurrenceCustomFreqSelectOptions()"
+        menuPlacement="below"
+        mobileBackdropSheet
+      />
+    }
+
+    @if (recurrenceDraft().preset !== 'none') {
+      @if (
+        recurrenceDraft().preset === 'monthly' ||
+        (recurrenceDraft().preset === 'custom' && recurrenceDraft().customFreq === 'monthly')
+      ) {
+        <p class="cal-recurrence__hint">{{ recurrenceDraftMonthlyHint() }}</p>
+      }
+
+      @if (recurrenceDraftShowsInterval()) {
+        <div class="cal-recurrence-interval">
+          <label class="cal-recurrence-interval__label" for="recurrenceInterval">
+            {{ i18n.calendarUi().recurrenceEveryLabel }}
+          </label>
+          <input
+            id="recurrenceInterval"
+            class="app-input cal-recurrence-interval__input"
+            type="number"
+            min="1"
+            max="99"
+            name="recurrenceInterval"
+            [ngModel]="recurrenceDraft().interval"
+            (ngModelChange)="onRecurrenceIntervalChange($event)"
+          />
+          <span class="cal-recurrence-interval__unit">
+            @if (recurrenceDraftIntervalUnit() === 'days') {
+              {{ i18n.calendarUi().recurrenceUnitDays }}
+            } @else if (recurrenceDraftIntervalUnit() === 'weeks') {
+              {{ i18n.calendarUi().recurrenceUnitWeeks }}
+            } @else {
+              {{ i18n.calendarUi().recurrenceUnitMonths }}
+            }
+          </span>
+        </div>
+      }
+
+      @if (recurrenceDraftShowsWeekdays()) {
+        <div
+          class="cal-recurrence__days"
+          role="group"
+          [attr.aria-label]="i18n.calendarUi().recurrenceWeekdaysLabel"
+        >
+          @for (day of recurrenceDayOptions(); track day.code) {
+            <button
+              type="button"
+              class="cal-recurrence-day"
+              [class.cal-recurrence-day--active]="isRecurrenceDraftDayActive(day.code)"
+              (click)="toggleRecurrenceDraftDay(day.code)"
+            >
+              {{ day.label }}
+            </button>
+          }
+        </div>
+      }
+
+      <p class="cal-recurrence__section">{{ i18n.calendarUi().recurrenceEndSection }}</p>
+      <app-select
+        name="recurrenceEndMode"
+        [ngModel]="recurrenceDraft().endMode"
+        (ngModelChange)="onRecurrenceEndModeChange($event)"
+        [options]="recurrenceEndModeSelectOptions()"
+        menuPlacement="below"
+        mobileBackdropSheet
+      />
+
+      @if (recurrenceDraft().endMode === 'until') {
+        <div class="field field--date">
+          <label for="recurrenceUntilModal">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
+          <input
+            id="recurrenceUntilModal"
+            class="app-input"
+            type="date"
+            name="recurrenceUntilModal"
+            [ngModel]="recurrenceDraft().untilDate"
+            (ngModelChange)="onRecurrenceUntilChange($event)"
+          />
+        </div>
+      }
+
+      @if (recurrenceDraft().endMode === 'count') {
+        <div class="cal-recurrence-interval">
+          <label class="cal-recurrence-interval__label" for="recurrenceCount">
+            {{ i18n.calendarUi().recurrenceCountLabel }}
+          </label>
+          <input
+            id="recurrenceCount"
+            class="app-input cal-recurrence-interval__input"
+            type="number"
+            min="1"
+            max="999"
+            name="recurrenceCount"
+            [ngModel]="recurrenceDraft().count"
+            (ngModelChange)="onRecurrenceCountChange($event)"
+          />
+          <span class="cal-recurrence-interval__unit">{{
+            i18n.calendarUi().recurrenceUnitOccurrences
+          }}</span>
+        </div>
+      }
+    }
+  </div>
+</app-dialog>
+
+<app-dialog
+  [open]="deleteRecurringModalOpen()"
+  stackOnTop
+  layout="sheet"
+  [closeOnOverlay]="false"
+  [title]="i18n.calendarUi().deleteRecurringTitle"
+  [cancelLabel]="i18n.studentsUi().cancel"
+  (cancel)="closeDeleteRecurringModal()"
+>
+  <div class="cal-recurrence-delete">
+    <button
+      type="button"
+      class="btn-secondary cal-recurrence-delete__btn"
+      [disabled]="deletingLesson()"
+      (click)="confirmDeleteRecurringOccurrence()"
+    >
+      {{ i18n.calendarUi().deleteRecurringOccurrence }}
+    </button>
+    <button
+      type="button"
+      class="cal-btn-delete cal-recurrence-delete__btn"
+      [disabled]="deletingLesson()"
+      (click)="confirmDeleteRecurringSeries()"
+    >
+      {{ i18n.calendarUi().deleteRecurringSeries }}
+    </button>
+  </div>
 </app-dialog>

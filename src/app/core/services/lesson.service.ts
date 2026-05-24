@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import type { Observable } from 'rxjs';
 import type { Lesson } from '@interfaces';
 
@@ -27,7 +27,13 @@ export class LessonService {
     status?: Lesson['status'];
     notes?: string;
     scheduledAt?: string | null;
+    isRecurring?: boolean;
+    startDate?: string | null;
+    rrule?: string | null;
+    occurrence_date?: string | null;
+    occurrence_status?: Lesson['status'];
     should_deduct_balance?: boolean;
+    manual_completion?: boolean;
   }) {
     return this.http.post<Lesson>(API, payload);
   }
@@ -41,7 +47,13 @@ export class LessonService {
       status?: Lesson['status'];
       notes?: string;
       scheduledAt?: string | null;
+      isRecurring?: boolean;
+      startDate?: string | null;
+      rrule?: string | null;
+      occurrence_date?: string | null;
+      occurrence_status?: Lesson['status'];
       should_deduct_balance?: boolean;
+      manual_completion?: boolean;
     },
   ) {
     return this.http.put<Lesson>(`${API}/${id}`, payload);
@@ -59,8 +71,15 @@ export class LessonService {
     return this.http.post<{ lesson: Lesson }>(`${API}/${id}/cancel-with-billing`, payload);
   }
 
-  /** DELETE /api/lessons/:id */
-  delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${API}/${id}`);
+  /** DELETE /api/lessons/:id — series (204) или одно вхождение (200 + обновлённый урок). */
+  delete(
+    id: string,
+    options?: { scope?: 'series' | 'occurrence'; occurrenceDate?: string },
+  ): Observable<void | Lesson> {
+    let params = new HttpParams();
+    if (options?.scope === 'occurrence' && options.occurrenceDate) {
+      params = params.set('scope', 'occurrence').set('occurrence_date', options.occurrenceDate);
+    }
+    return this.http.delete<void | Lesson>(`${API}/${id}`, { params });
   }
 }

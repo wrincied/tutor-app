@@ -1,12 +1,16 @@
-<div class="page pricing-page">
-  @if (loading()) {
-    <p class="pricing-page__status" role="status">{{ i18n.sharedUi().loadingContent }}</p>
-  } @else {
-    <header class="pricing-hero">
+<div class="page app-scroll-page pricing-page">
+  <header class="page-header pricing-page__header">
+    <div class="pricing-hero">
       <h1 class="pricing-hero__title">{{ t.title }}</h1>
       <p class="pricing-hero__subtitle">{{ t.subtitle }}</p>
-    </header>
+    </div>
+  </header>
 
+  @if (loading()) {
+    <div class="scrollable-content">
+      <p class="pricing-page__status" role="status">{{ i18n.sharedUi().loadingContent }}</p>
+    </div>
+  } @else {
     <div class="pricing-toggle" role="group" [attr.aria-label]="t.toggleMonthly">
       <button
         type="button"
@@ -27,6 +31,7 @@
       </button>
     </div>
 
+    <div class="scrollable-content">
     @if (error()) {
       <p class="pricing-page__error" role="alert">{{ error() }}</p>
     }
@@ -109,5 +114,6 @@
         }
       </div>
     </section>
+    </div>
   }
 </div>

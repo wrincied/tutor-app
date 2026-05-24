@@ -2,7 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
-import type { UserProfile } from '@interfaces';
+import type {
+  UserProfile,
+  UserWorkingHoursSettings,
+  UserWorkspaceSettings,
+} from '@interfaces';
 
 import { apiUrl } from '../config/api-url';
 import { AuthService } from './auth.service';
@@ -17,6 +21,8 @@ export interface UpdateProfilePayload {
   first_name?: string;
   last_name?: string;
   tax_mode?: string;
+  workspace?: UserWorkspaceSettings;
+  workingHours?: UserWorkingHoursSettings;
 }
 
 export interface CompleteOnboardingPayload {

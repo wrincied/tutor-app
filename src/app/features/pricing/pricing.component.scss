@@ -1,10 +1,11 @@
 :host {
-  display: block;
-}
-
-.pricing-page {
-  max-width: 56rem;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .pricing-page__status,
@@ -19,6 +20,7 @@
 }
 
 .pricing-hero {
+  flex-shrink: 0;
   text-align: center;
   margin-bottom: 1.75rem;
 }
@@ -41,11 +43,13 @@
 
 .pricing-toggle {
   display: inline-flex;
+  flex-shrink: 0;
+  align-self: center;
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.375rem;
   width: 100%;
-  margin-bottom: 1.75rem;
+  margin: 0 0 1rem;
   padding: 0.25rem;
   border: 1px solid var(--nav-border);
   border-radius: 999px;

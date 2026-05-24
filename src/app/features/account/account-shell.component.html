@@ -1,0 +1,32 @@
+<div class="page app-scroll-page account-page">
+  <div class="page-header account-page__header">
+    <h1>{{ i18n.accountUi().title }}</h1>
+  </div>
+
+  <nav class="account-tabs" [attr.aria-label]="i18n.accountUi().title">
+    <a
+      routerLink="/app/account/customization"
+      routerLinkActive="account-tabs__tab--active"
+      class="account-tabs__tab"
+    >
+      {{ i18n.accountUi().customizationTab }}
+    </a>
+    <a
+      routerLink="/app/account/profile"
+      routerLinkActive="account-tabs__tab--active"
+      class="account-tabs__tab"
+    >
+      {{ i18n.accountUi().accountTab }}
+    </a>
+  </nav>
+
+  <div class="scrollable-content account-page__content">
+    <router-outlet />
+
+    <div class="account-mobile-logout">
+      <button type="button" class="account-logout-btn" (click)="logout()">
+        {{ i18n.nav().logout }}
+      </button>
+    </div>
+  </div>
+</div>

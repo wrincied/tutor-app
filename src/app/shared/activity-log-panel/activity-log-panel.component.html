@@ -1,0 +1,33 @@
+<section class="activity-log" [attr.aria-label]="title()">
+  <h2 class="activity-log__title">{{ title() }}</h2>
+
+  @if (loading()) {
+    <p class="activity-log__hint">{{ strings().loading }}</p>
+  } @else if (error()) {
+    <p class="activity-log__error" role="alert">{{ error() }}</p>
+  } @else if (entries().length === 0) {
+    <p class="activity-log__hint">{{ emptyText() }}</p>
+  } @else {
+    <ul class="activity-log__list">
+      @for (entry of entries(); track entry._id) {
+        <li class="activity-log__item">
+          <div class="activity-log__row">
+            <span class="activity-log__text">{{ entryTitle(entry) }}</span>
+            @if (entry.createdAt) {
+              <time class="activity-log__time" [dateTime]="entry.createdAt">
+                {{ entry.createdAt | date: 'dd.MM.yyyy HH:mm' }}
+              </time>
+            }
+          </div>
+          @if (entryChanges(entry).length) {
+            <ul class="activity-log__changes">
+              @for (line of entryChanges(entry); track line) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

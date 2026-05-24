@@ -1,10 +1,11 @@
-<div class="page home-page">
+<div class="page app-scroll-page home-page">
   <header class="home-page__header">
     <p class="home-page__badge">Beta</p>
     <h1 class="home-page__greeting">{{ greeting() }}</h1>
     <p class="home-page__subtitle">{{ t.todaySection }}</p>
   </header>
 
+  <div class="scrollable-content">
   @if (loading()) {
     <div class="home-stats home-stats--loading" role="status" aria-busy="true">
       <span class="sr-only">{{ t.loading }}</span>
@@ -48,6 +49,7 @@
       </a>
     </div>
   }
+  </div>
 </div>
 
 <app-dialog

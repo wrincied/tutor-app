@@ -7,8 +7,10 @@ import {
   authState,
   createUserWithEmailAndPassword,
   EmailAuthProvider,
+  fetchSignInMethodsForEmail,
   GoogleAuthProvider,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -18,7 +20,12 @@ import {
   updatePassword,
 } from '@angular/fire/auth';
 import type { ActionCodeSettings, User } from 'firebase/auth';
-import { from, map, Observable, switchMap } from 'rxjs';
+import { catchError, from, map, Observable, switchMap, throwError } from 'rxjs';
+import {
+  EmailAlreadyRegisteredError,
+  getFirebaseAuthErrorCode,
+  GoogleSignInRequiredError,
+} from '../utils/auth-errors';
 
 import { environment } from '../../../environments/environment';
 import { apiUrl } from '../config/api-url';
@@ -37,6 +44,14 @@ export class AuthService {
   readonly firebaseUser = toSignal(authState(this.auth), { initialValue: null });
   readonly isLoggedIn = computed(() => this.firebaseUser() !== null);
   readonly emailVerified = computed(() => this.firebaseUser()?.emailVerified === true);
+  /** Вход по email/паролю — можно менять пароль в аккаунте. Только Google — нет. */
+  readonly canChangePassword = computed(() => this.hasPasswordProvider(this.firebaseUser()));
+
+  private hasPasswordProvider(user: User | null | undefined): boolean {
+    return Boolean(
+      user?.providerData.some((provider) => provider.providerId === EmailAuthProvider.PROVIDER_ID),
+    );
+  }
 
   private appBaseUrl(): string {
     return (
@@ -75,7 +90,13 @@ export class AuthService {
 
   register(email: string, password: string): Observable<User> {
     const normalized = email.trim().toLowerCase();
-    return this.fromAuth(() => createUserWithEmailAndPassword(this.auth, normalized, password)).pipe(
+    return this.fromAuth(() => fetchSignInMethodsForEmail(this.auth, normalized)).pipe(
+      switchMap((methods) => {
+        if (methods.length > 0) {
+          return throwError(() => new EmailAlreadyRegisteredError(methods));
+        }
+        return this.fromAuth(() => createUserWithEmailAndPassword(this.auth, normalized, password));
+      }),
       switchMap((cred) =>
         this.fromAuth(() =>
           sendEmailVerification(cred.user, this.verificationActionCodeSettings()),
@@ -89,6 +110,31 @@ export class AuthService {
     const normalized = email.trim().toLowerCase();
     return this.fromAuth(() => signInWithEmailAndPassword(this.auth, normalized, password)).pipe(
       switchMap((cred) => this.afterFirebaseSignIn(cred.user)),
+      catchError((err) => this.enrichLoginError(err, normalized)),
+    );
+  }
+
+  /** Если пароль не подходит, но email привязан только к Google — подсказка в UI. */
+  private enrichLoginError(err: unknown, email: string): Observable<never> {
+    const code = getFirebaseAuthErrorCode(err);
+    if (
+      code !== 'auth/invalid-credential' &&
+      code !== 'auth/wrong-password' &&
+      code !== 'auth/user-not-found' &&
+      code !== 'auth/invalid-login-credentials'
+    ) {
+      return throwError(() => err);
+    }
+    return this.fromAuth(() => fetchSignInMethodsForEmail(this.auth, email)).pipe(
+      switchMap((methods) => {
+        const hasGoogle = methods.includes(GoogleAuthProvider.PROVIDER_ID);
+        const hasPassword = methods.includes(EmailAuthProvider.PROVIDER_ID);
+        if (hasGoogle && !hasPassword) {
+          return throwError(() => new GoogleSignInRequiredError());
+        }
+        return throwError(() => err);
+      }),
+      catchError(() => throwError(() => err)),
     );
   }
 
@@ -143,6 +189,25 @@ export class AuthService {
       return null;
     }
     return user.getIdToken();
+  }
+
+  /** Смена email для входа через Google (без полей пароля в аккаунте). */
+  updateEmailWithGoogleReauth(newEmail: string): Observable<User | null> {
+    const user = this.auth.currentUser;
+    if (!user) {
+      throw new Error('Not signed in');
+    }
+    const normalized = newEmail.trim().toLowerCase();
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'none' });
+    return this.fromAuth(() => reauthenticateWithPopup(user, provider)).pipe(
+      switchMap(() => this.fromAuth(() => updateEmail(user, normalized))),
+      switchMap(() =>
+        this.fromAuth(() => sendEmailVerification(user, this.verificationActionCodeSettings())),
+      ),
+      switchMap(() => this.fromAuth(() => user.reload())),
+      map(() => this.auth.currentUser),
+    );
   }
 
   updateCredentials(options: {

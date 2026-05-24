@@ -1,7 +1,11 @@
 @if (showNavbar()) {
-  <app-navbar />
-  <div class="app-content">
-    <router-outlet />
+  <div class="app-shell">
+    <app-navbar />
+    <div class="app-content">
+      <div class="app-page-host">
+        <router-outlet />
+      </div>
+    </div>
   </div>
 } @else {
   <router-outlet />

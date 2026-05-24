@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
+import { resolveRegisterError } from '../../core/utils/auth-errors';
 
 @Component({
   selector: 'app-register',
@@ -62,8 +63,7 @@ export class RegisterComponent {
     this.auth.register(this.email, this.password).subscribe({
       next: () => void this.router.navigate(['/app/verify-email-notice']),
       error: (err) => {
-        console.error('[Register error]', err);
-        this.error.set(err?.message || this.i18n.authUi().registerError);
+        this.error.set(resolveRegisterError(err, this.i18n.authUi()));
         this.loading.set(false);
       },
     });

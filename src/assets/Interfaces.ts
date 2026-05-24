@@ -100,6 +100,24 @@ export interface SubscriptionPricing {
   yearly: number;
 }
 
+export type WorkspaceCurrency = 'EUR' | 'USD' | 'RUB' | 'BYN';
+
+export type WorkspaceLessonDuration = 45 | 60 | 90;
+
+export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export interface UserWorkspaceSettings {
+  name: string;
+  currency: WorkspaceCurrency;
+  defaultLessonDuration: WorkspaceLessonDuration;
+}
+
+export interface UserWorkingHoursSettings {
+  start: string;
+  end: string;
+  days: IsoWeekday[];
+}
+
 export interface UserProfile {
   _id: string;
   email: string;
@@ -118,6 +136,8 @@ export interface UserProfile {
   subscription_status: SubscriptionStatus | string;
   email_verified?: boolean;
   role?: UserRole | string;
+  workspace?: UserWorkspaceSettings;
+  workingHours?: UserWorkingHoursSettings;
 }
 
 export interface AdminStats {
@@ -132,6 +152,7 @@ export interface AdminUserRow {
   _id: string;
   email: string;
   subscription_status: SubscriptionStatus | string;
+  trial_ends_at?: string | null;
   createdAt: string | null;
   role?: UserRole | string;
 }
@@ -153,10 +174,20 @@ export interface AdminStrings {
   statusFree: string;
   statusPro: string;
   statusTrial: string;
+  trialEndsUntil: string;
   giftTrial: string;
   giftingTrial: string;
   giftTrialSuccess: string;
   giftTrialError: string;
+  editSubscription: string;
+  editSubscriptionTitle: string;
+  subscriptionField: string;
+  trialEndsLabel: string;
+  saveSubscription: string;
+  savingSubscription: string;
+  cancelEdit: string;
+  updateSubscriptionSuccess: string;
+  updateSubscriptionError: string;
   noUsers: string;
   accessDenied: string;
 }
@@ -208,10 +239,18 @@ export interface AccountStrings {
   subscriptionPriceMonthly: string;
   subscriptionPriceYearly: string;
   subscriptionModalClose: string;
-  /** Підпис вибору варіанту сцяга Беларусі в налаштуваннях мови. */
-  belarusFlagLabel: string;
-  belarusFlagBchb: string;
-  belarusFlagOfficial: string;
+  customizationTab: string;
+  accountTab: string;
+  workspaceSection: string;
+  workspaceName: string;
+  workspaceCurrency: string;
+  workspaceDefaultDuration: string;
+  workingHoursSection: string;
+  workingHoursStart: string;
+  workingHoursEnd: string;
+  workingDays: string;
+  workspaceSaving: string;
+  workspaceSaved: string;
 }
 
 export interface AuthStrings {
@@ -232,6 +271,9 @@ export interface AuthStrings {
   passwordsMismatch: string;
   passwordMinLength: string;
   registerError: string;
+  emailAlreadyInUse: string;
+  emailAlreadyInUseGoogle: string;
+  invalidEmail: string;
   checkEmailTitle: string;
   checkEmailSubtitle: string;
   checkEmailPurgeHint: string;
@@ -266,6 +308,7 @@ export interface AuthStrings {
   continueWithGoogle: string;
   orContinueWith: string;
   oauthError: string;
+  profileSyncError: string;
   onboardingTitle: string;
   onboardingSubtitle: string;
   onboardingFirstName: string;
@@ -400,6 +443,43 @@ export interface CalendarStrings {
   durationHourShort: string;
   durationMinShort: string;
   durationOneHour: string;
+  recurrenceLabel: string;
+  recurrenceHint: string;
+  recurrenceModalTitle: string;
+  recurrenceApply: string;
+  recurrencePresetNone: string;
+  recurrencePresetDaily: string;
+  recurrencePresetWeekly: string;
+  recurrencePresetMonthly: string;
+  recurrencePresetCustom: string;
+  recurrenceFreqWeekly: string;
+  recurrenceFreqMonthly: string;
+  recurrenceDaily: string;
+  recurrenceDailyInterval: string;
+  recurrenceWeekly: string;
+  recurrenceWeeklyInterval: string;
+  recurrenceMonthly: string;
+  recurrenceMonthlyInterval: string;
+  recurrenceMonthlyOnDay: string;
+  recurrenceEveryLabel: string;
+  recurrenceUnitDays: string;
+  recurrenceUnitWeeks: string;
+  recurrenceUnitMonths: string;
+  recurrenceUnitOccurrences: string;
+  recurrenceWeekdaysLabel: string;
+  recurrenceWeekdaysRequired: string;
+  recurrenceEndSection: string;
+  recurrenceEndNever: string;
+  recurrenceEndUntil: string;
+  recurrenceEndUntilShort: string;
+  recurrenceEndCount: string;
+  recurrenceEndCountShort: string;
+  recurrenceCountLabel: string;
+  recurrenceUntilLabel: string;
+  recurrenceUntilHint: string;
+  deleteRecurringTitle: string;
+  deleteRecurringOccurrence: string;
+  deleteRecurringSeries: string;
   weekdayMon: string;
   weekdayTue: string;
   weekdayWed: string;
@@ -407,6 +487,10 @@ export interface CalendarStrings {
   weekdayFri: string;
   weekdaySat: string;
   weekdaySun: string;
+  /** Месяц: «+ ещё {count}» под плашками уроков. */
+  monthMoreLessons: string;
+  /** Колонка вне рабочих дней. */
+  dayOffLabel: string;
 }
 
 export interface HomeStrings {
@@ -473,6 +557,8 @@ export interface FinanceStrings {
   reportCurrency: string;
   originalInCurrency: string;
   ratesAsOf: string;
+  activityLogSection: string;
+  activityLogEmpty: string;
 }
 
 export interface FinanceExchangeRates {
@@ -537,9 +623,11 @@ export interface StudentStrings {
   newStudent: string;
   editModalTitle: string;
   name: string;
+  ratePerLesson: string;
   ratePerHour: string;
   rateColumn: string;
   balanceLessons: string;
+  perLesson: string;
   perHour: string;
   timezone: string;
   edit: string;
@@ -577,6 +665,68 @@ export interface StudentStrings {
   billingTypePostpaid: string;
   balanceLessonsField: string;
   creditLimitField: string;
+  activityLogSection: string;
+  activityLogEmpty: string;
+}
+
+export interface ActivityLogChange {
+  field: string;
+  from: unknown;
+  to: unknown;
+}
+
+export interface ActivityLogEntry {
+  _id: string;
+  category: 'finance' | 'students';
+  action: string;
+  entity_type: string;
+  entity_id?: string;
+  summary?: string;
+  changes?: ActivityLogChange[];
+  metadata?: Record<string, unknown>;
+  student_name?: string | null;
+  createdAt?: string;
+}
+
+export interface ActivityLogStrings {
+  loading: string;
+  loadError: string;
+  actionExpenseCreated: string;
+  actionExpenseUpdated: string;
+  actionExpenseDeleted: string;
+  actionStudentCreated: string;
+  actionStudentUpdated: string;
+  actionStudentDeleted: string;
+  actionStudentTopup: string;
+  actionBalanceDebit: string;
+  actionBalanceCredit: string;
+  fieldName: string;
+  fieldRate: string;
+  fieldRateCurrency: string;
+  fieldTimezone: string;
+  fieldBotActive: string;
+  fieldBalanceLessons: string;
+  fieldBillingType: string;
+  fieldCreditLimit: string;
+  fieldAutoDebit: string;
+  fieldColor: string;
+  fieldExpenseTitle: string;
+  fieldExpenseAmount: string;
+  fieldExpenseDate: string;
+  fieldExpenseCategory: string;
+  valueOn: string;
+  valueOff: string;
+  valuePackage: string;
+  valuePostpaid: string;
+  reasonLessonCompleted: string;
+  reasonLessonPostpaid: string;
+  reasonLessonMissed: string;
+  reasonLessonCanceled: string;
+  reasonLessonRefund: string;
+  reasonLessonUncompleted: string;
+  reasonLessonDeleted: string;
+  changeArrow: string;
+  lessonsUnit: string;
 }
 
 export type LessonStatus = 'scheduled' | 'completed' | 'missed' | 'canceled';
@@ -616,11 +766,24 @@ export interface Lesson {
   title?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Повтор по дням недели (RFC 5545 RRULE). */
+  isRecurring?: boolean;
+  /** Дата первого урока серии (YYYY-MM-DD). */
+  startDate?: string | null;
+  /** Напр. FREQ=WEEKLY;BYDAY=MO,WE */
+  rrule?: string | null;
+  /** Исключённые даты вхождений (YYYY-MM-DD). */
+  exdates?: string[];
+  /** Даты проведённых вхождений (YYYY-MM-DD), баланс списан. */
+  completedDates?: string[];
 }
 
 /** Урок в сетке календаря с UI-флагами (не сохраняется в Firestore). */
 export interface CalendarLesson extends Lesson {
   isLastPaid?: boolean;
+  /** Ключ виртуального вхождения: `{lessonId}:{yyyy-MM-dd}`. */
+  occurrenceKey?: string;
+  isVirtualOccurrence?: boolean;
 }
 
 export interface Student {

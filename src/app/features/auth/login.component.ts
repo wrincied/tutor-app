@@ -1,9 +1,11 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
+import { resolveLoginError } from '../../core/utils/auth-errors';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 
 @Component({
@@ -53,14 +55,11 @@ export class LoginComponent implements OnInit {
         }
         this.userSvc.ensureProfile().subscribe({
           next: (profile) => this.auth.navigateAfterAuth(profile, user),
-          error: () => {
-            this.error.set(this.i18n.authUi().wrongCredentials);
-          },
+          error: (err) => this.error.set(this.profileLoadError(err)),
         });
       },
       error: (err) => {
-        console.error('[Login error]', err);
-        this.error.set(this.i18n.authUi().wrongCredentials);
+        this.error.set(resolveLoginError(err, this.i18n.authUi()));
         this.loading.set(false);
       },
     });
@@ -100,17 +99,20 @@ export class LoginComponent implements OnInit {
         }
         this.userSvc.ensureProfile().subscribe({
           next: (profile) => this.auth.navigateAfterAuth(profile, user),
-          error: () => {
-            this.error.set(this.i18n.authUi().oauthError);
-          },
+          error: (err) => this.error.set(this.profileLoadError(err)),
         });
       },
       error: (err) => {
-        console.error('[Google sign-in]', err);
-        this.error.set(this.i18n.authUi().oauthError);
+        this.error.set(
+          err instanceof HttpErrorResponse ? this.profileLoadError(err) : this.i18n.authUi().oauthError,
+        );
         this.loading.set(false);
       },
     });
+  }
+
+  private profileLoadError(_err: unknown): string {
+    return this.i18n.authUi().profileSyncError;
   }
 
   submitResetFromModal(): void {

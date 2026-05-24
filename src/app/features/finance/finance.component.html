@@ -1,4 +1,4 @@
-<div class="page finance-page">
+<div class="page app-scroll-page finance-page">
   <div class="page-header">
     <h1>{{ i18n.nav().finance }}</h1>
     <div class="finance-toolbar">
@@ -43,6 +43,7 @@
     </div>
   </div>
 
+  <div class="scrollable-content">
   @if (loading()) {
     <div class="skeleton-page finance-skeleton" role="status" aria-busy="true" [attr.aria-label]="t.loading">
       <span class="sr-only">{{ t.loading }}</span>
@@ -223,6 +224,15 @@
       }
     </section>
   }
+
+  <app-activity-log-panel
+    category="finance"
+    [title]="t.activityLogSection"
+    [emptyText]="t.activityLogEmpty"
+    [strings]="i18n.activityLogUi()"
+    [reloadTrigger]="logReloadTrigger()"
+  />
+  </div>
 </div>
 
 <app-dialog

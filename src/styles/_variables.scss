@@ -7,12 +7,12 @@
   --z-app-overlay: 1250;
   /** app-dialog поверх других модалок (списание с баланса и т.п.) */
   --z-app-dialog: 1280;
-  /** app-dialog поверх select-backdrop (1300) */
+  /** app-dialog поверх обычных оверлеев */
   --z-app-dialog-top: 1400;
-  /** Выпадающие списки внутри модалки */
+  /** Выпадающие списки (базовый слой) */
   --z-app-dropdown: 1300;
-  /** Select открыт — поверх модалок и navbar */
-  --z-app-dropdown-top: 1350;
+  /** Select открыт — поверх app-dialog (--z-app-dialog-top) */
+  --z-app-dropdown-top: 1500;
 
   // Google Sheets — light
   --nav-bg: #fff;

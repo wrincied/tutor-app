@@ -287,56 +287,6 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   box-shadow: 0 8px 24px rgb(15 23 42 / 0.12);
 }
 
-// Закрытие модалок (animate.leave в шаблонах)
-.modal-overlay-leave {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.22s ease-in;
-}
-
-.modal-sheet-leave {
-  transform: translateY(100%);
-  transition: transform 0.26s cubic-bezier(0.32, 0.72, 0, 1);
-
-  @media (min-width: $modal-desktop-min) {
-    opacity: 0;
-    transform: translateY(0.75rem) scale(0.97);
-    transition:
-      opacity 0.22s ease-in,
-      transform 0.22s ease-in;
-  }
-}
-
-.modal-dialog-leave {
-  @media (max-width: $modal-mobile-max) {
-    opacity: 1;
-    transform: translateY(100%);
-    transition: transform 0.26s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-
-  @media (min-width: $modal-desktop-min) {
-    opacity: 0;
-    transform: translateY(0.75rem) scale(0.97);
-    transition:
-      opacity 0.22s ease-in,
-      transform 0.22s ease-in;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .modal-overlay,
-  .modal-sheet,
-  .modal:not(.modal-sheet) {
-    transition: none !important;
-  }
-
-  .modal-overlay-leave,
-  .modal-sheet-leave,
-  .modal-dialog-leave {
-    transition: none !important;
-  }
-}
-
 // From src/app/features/auth/auth.scss
 .auth-page {
   min-height: 100vh;

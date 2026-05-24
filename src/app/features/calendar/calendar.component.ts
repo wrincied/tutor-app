@@ -17,6 +17,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CalendarLessonDisplayService } from '../../core/services/calendar-lesson-display.service';
 import { LessonService } from '../../core/services/lesson.service';
+import { UserProfileSettingsService } from '../../core/services/user-profile-settings.service';
 import { StudentService, type Student } from '../../core/services/student.service';
 import { isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
 import type { CalendarLesson, Lesson, LessonStatus } from '@interfaces';
@@ -26,16 +27,70 @@ import { AppSelectComponent, type AppSelectOption } from '../../shared/app-selec
 import { I18nService } from '../../core/services/i18n.service';
 import { APP_OVERLAY_LAYER_OPEN } from '../../core/constants/overlay-layer';
 import { purgeStaleOverlayLayers } from '../../core/utils/purge-stale-overlay-layers';
+import {
+  buildRruleFromConfig,
+  configFromPreset,
+  dayKey,
+  DEFAULT_RECURRENCE_CONFIG,
+  expandLessonOccurrencesForConflictCheck,
+  expandLessonsForRange,
+  formatRecurrenceSummary,
+  jsDayToRruleWeekday,
+  parseRruleToConfig,
+  RRULE_WEEKDAY_CODES,
+  type RecurrenceCustomFreq,
+  type RecurrenceEndMode,
+  type RecurrencePreset,
+  type RecurrenceRuleConfig,
+  type RruleWeekdayCode,
+} from '../../core/utils/lesson-recurrence';
 
 const CALENDAR_MODAL_OPEN_CLASS = 'app-calendar-modal-open';
+const CALENDAR_DRAGGING_CLASS = 'cal-lesson-dragging';
+const PERIOD_EXIT_MS = 200;
+const PERIOD_ENTER_MS = 300;
 
 export type CalendarViewMode = '1' | '3' | '7' | '30';
+
+interface LessonDragGhost {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface LessonPointerSession {
+  lessonId: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  grabOffsetX: number;
+  grabOffsetY: number;
+  originScheduledAt: string;
+  cardWidth: number;
+  cardHeight: number;
+  captureTarget: HTMLElement;
+}
 
 /** Ответ API до нормализации (legacy-поля и статусы). */
 type LessonApiRow = Omit<Lesson, 'status'> & {
   status?: string;
   createdAt?: string;
   updatedAt?: string;
+};
+
+type LessonSavePayload = {
+  student_id: string;
+  lesson_duration: number;
+  status: LessonStatus;
+  notes?: string;
+  scheduledAt: string | null;
+  isRecurring?: boolean;
+  startDate?: string | null;
+  rrule?: string | null;
+  occurrence_date?: string | null;
+  occurrence_status?: LessonStatus;
+  manual_completion?: boolean;
 };
 
 @Component({
@@ -49,17 +104,22 @@ export class CalendarComponent implements OnInit {
   private readonly lessonsSvc = inject(LessonService);
   private readonly studentSvc = inject(StudentService);
   private readonly lessonDisplay = inject(CalendarLessonDisplayService);
+  readonly profileSettings = inject(UserProfileSettingsService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
   readonly i18n = inject(I18nService);
 
+  /** Длительность нового урока по умолчанию (1 ч 30 мин). */
+  private static readonly DEFAULT_LESSON_DURATION_MIN = 90;
+
   /** 60px = 1 час; 1px = 1 минута */
   readonly hourHeightPx = 60;
   readonly minuteHeightPx = 1;
-  readonly gridHeightPx = 24 * 60;
-  readonly hours = Array.from({ length: 24 }, (_, i) => i);
+  readonly gridHours = computed(() => this.profileSettings.gridHours());
+  readonly gridStartHour = computed(() => this.profileSettings.gridStartHour());
+  readonly gridHeightPx = computed(() => this.gridHours().length * this.hourHeightPx);
   /** Плейсхолдеры скелета сетки (7 колонок). */
   readonly skeletonGridCols = [0, 1, 2, 3, 4, 5, 6];
   readonly skeletonHourRows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -67,12 +127,17 @@ export class CalendarComponent implements OnInit {
 
   currentDate = signal<Date>(new Date());
   viewMode = signal<CalendarViewMode>('7');
+  /** Пересоздание сетки для @starting-style при смене периода. */
+  readonly periodViewKey = signal(0);
+  readonly periodExitMode = signal<'prev' | 'next' | 'fade' | null>(null);
+  readonly periodEnterFrom = signal<'prev' | 'next' | null>(null);
+  private periodTransitionTimer: number | null = null;
   lessons = signal<Lesson[]>([]);
   students = signal<Student[]>([]);
 
   loadError: string | null = null;
   hasLoaded = signal(false);
-  /** Navbar снизу (как на телефоне), ≤768px */
+  /** Navbar снизу (телефон и планшет landscape). */
   isBottomNavLayout = signal(false);
   /** Планшет/телефон: без стрелок навигации, ≤1023px */
   isCompactHeader = signal(false);
@@ -83,11 +148,18 @@ export class CalendarComponent implements OnInit {
   focusedStudentId = signal<string | null>(null);
   lessonFormStep = signal<1 | 2>(1);
   scheduledAtLocal = signal('');
-  /** Id урока, перетаскиваемого через native drag-and-drop. */
-  private readonly dragLessonId = signal<string | null>(null);
-  /** Live-позиция карточки до drop (обновляется на dragover). */
+  /** Урок в активном перетаскивании (pointer events). */
+  readonly dragActiveLessonId = signal<string | null>(null);
+  /** Исходное время урока — для placeholder на старом месте. */
+  readonly dragOriginScheduledAt = signal<string | null>(null);
+  /** Целевое время (шаг 15 мин) во время drag. */
   private readonly dragPreview = signal<{ lessonId: string; scheduledAt: string } | null>(null);
-  private dragGhostEl: HTMLElement | null = null;
+  /** Фантом, следующий за пальцем (position: fixed). */
+  readonly dragGhost = signal<LessonDragGhost | null>(null);
+  private pointerSession: LessonPointerSession | null = null;
+  private pointerMoveHandler: ((event: PointerEvent) => void) | null = null;
+  private pointerUpHandler: ((event: PointerEvent) => void) | null = null;
+  private readonly dragStartThresholdPx = 6;
   private suppressLessonClickUntil = 0;
 
   showLessonForm = signal(false);
@@ -102,13 +174,7 @@ export class CalendarComponent implements OnInit {
   dragMoveConfirm = signal<{ lesson: Lesson; scheduledAt: string } | null>(null);
   /** Списание баланса при missed/canceled — ждёт выбора в модалке. */
   billingConfirm = signal<{
-    payload: {
-      student_id: string;
-      lesson_duration: number;
-      status: LessonStatus;
-      notes?: string;
-      scheduledAt: string | null;
-    };
+    payload: LessonSavePayload;
     editing: Lesson | null;
   } | null>(null);
 
@@ -119,8 +185,14 @@ export class CalendarComponent implements OnInit {
     scheduledAt: '',
   };
 
-  duration = signal(60);
+  duration = signal(CalendarComponent.DEFAULT_LESSON_DURATION_MIN);
   durationChipMode = signal<'preset' | 'custom'>('preset');
+  recurrenceConfig = signal<RecurrenceRuleConfig>({ ...DEFAULT_RECURRENCE_CONFIG });
+  recurrenceDraft = signal<RecurrenceRuleConfig>({ ...DEFAULT_RECURRENCE_CONFIG });
+  recurrenceModalOpen = signal(false);
+  /** Дата вхождения при редактировании виртуальной карточки (YYYY-MM-DD). */
+  editingOccurrenceDate = signal<string | null>(null);
+  deleteRecurringModalOpen = signal(false);
   readonly durationPresets: readonly number[] = [30, 45, 60, 90];
   /** Цвета точек статуса — как у карточек урока в сетке. */
   private static readonly STATUS_DOT_COLORS: Record<LessonStatus, string> = {
@@ -128,6 +200,13 @@ export class CalendarComponent implements OnInit {
     completed: '#065f46',
     missed: '#92400e',
     canceled: '#991b1b',
+  };
+
+  private static readonly STATUS_BADGE_COLORS: Record<LessonStatus, string> = {
+    scheduled: '#0369a1',
+    completed: '#047857',
+    missed: '#b45309',
+    canceled: '#b91c1c',
   };
 
   viewModeSelectOptions = computed((): AppSelectOption[] =>
@@ -232,7 +311,12 @@ export class CalendarComponent implements OnInit {
       return null;
     }
     const now = new Date();
-    return (now.getHours() * 60 + now.getMinutes()) * this.minuteHeightPx;
+    const offsetMin = this.minutesFromGridStart(now);
+    const maxMin = this.gridHeightPx();
+    if (offsetMin < 0 || offsetMin > maxMin) {
+      return null;
+    }
+    return offsetMin * this.minuteHeightPx;
   });
 
   /** Подпись времени на оси для маркера «сейчас». */
@@ -286,12 +370,148 @@ export class CalendarComponent implements OnInit {
     this.lessonDisplay.enrichForGrid(this.lessons(), this.students()),
   );
 
+  recurrenceSummaryLabels = computed(() => {
+    const t = this.i18n.calendarUi();
+    return {
+      none: t.recurrencePresetNone,
+      daily: t.recurrenceDaily,
+      dailyInterval: t.recurrenceDailyInterval,
+      weekly: t.recurrenceWeekly,
+      weeklyInterval: t.recurrenceWeeklyInterval,
+      monthly: t.recurrenceMonthly,
+      monthlyInterval: t.recurrenceMonthlyInterval,
+      custom: t.recurrencePresetCustom,
+      endNever: t.recurrenceEndNever,
+      endUntil: t.recurrenceEndUntil,
+      endCount: t.recurrenceEndCount,
+      weekdays: {
+        MO: t.weekdayMon,
+        TU: t.weekdayTue,
+        WE: t.weekdayWed,
+        TH: t.weekdayThu,
+        FR: t.weekdayFri,
+        SA: t.weekdaySat,
+        SU: t.weekdaySun,
+      },
+    };
+  });
+
+  recurrenceSummary = computed(() => {
+    const scheduledAt = this.form.scheduledAt?.trim();
+    const startDate = scheduledAt ? dayKey(new Date(scheduledAt)) : null;
+    return formatRecurrenceSummary(
+      this.recurrenceConfig(),
+      this.recurrenceSummaryLabels(),
+      startDate,
+    );
+  });
+
+  recurrencePresetSelectOptions = computed((): AppSelectOption[] => {
+    const t = this.i18n.calendarUi();
+    return [
+      { value: 'none', label: t.recurrencePresetNone },
+      { value: 'daily', label: t.recurrencePresetDaily },
+      { value: 'weekly', label: t.recurrencePresetWeekly },
+      { value: 'monthly', label: t.recurrencePresetMonthly },
+      { value: 'custom', label: t.recurrencePresetCustom },
+    ];
+  });
+
+  recurrenceCustomFreqSelectOptions = computed((): AppSelectOption[] => {
+    const t = this.i18n.calendarUi();
+    return [
+      { value: 'daily', label: t.recurrencePresetDaily },
+      { value: 'weekly', label: t.recurrencePresetWeekly },
+      { value: 'monthly', label: t.recurrencePresetMonthly },
+    ];
+  });
+
+  recurrenceEndModeSelectOptions = computed((): AppSelectOption[] => {
+    const t = this.i18n.calendarUi();
+    return [
+      { value: 'never', label: t.recurrenceEndNever },
+      { value: 'until', label: t.recurrenceEndUntilShort },
+      { value: 'count', label: t.recurrenceEndCountShort },
+    ];
+  });
+
+  recurrenceDayOptions = computed(() => {
+    const t = this.i18n.calendarUi();
+    return RRULE_WEEKDAY_CODES.map((code) => ({
+      code,
+      label: {
+        MO: t.weekdayMon,
+        TU: t.weekdayTue,
+        WE: t.weekdayWed,
+        TH: t.weekdayThu,
+        FR: t.weekdayFri,
+        SA: t.weekdaySat,
+        SU: t.weekdaySun,
+      }[code],
+    }));
+  });
+
+  /** Диапазон дат текущего вида (неделя / день / месяц). */
+  visibleRange = computed((): { start: Date; end: Date } | null => {
+    if (this.isMonthOverview()) {
+      const cells = this.monthOverviewCells();
+      if (cells.length === 0) {
+        return null;
+      }
+      const start = this.startOfLocalDay(cells[0].date);
+      const end = this.startOfLocalDay(cells[cells.length - 1].date);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    const cols = this.columns();
+    if (cols.length === 0) {
+      return null;
+    }
+    const start = this.startOfLocalDay(cols[0]);
+    const end = this.startOfLocalDay(cols[cols.length - 1]);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  });
+
+  /** Уроки для сетки: развёрнутые RRULE-вхождения в видимом диапазоне. */
+  gridLessons = computed(() => {
+    const base = this.displayLessons();
+    const range = this.visibleRange();
+    if (!range) {
+      return base;
+    }
+    return expandLessonsForRange(base, range.start, range.end);
+  });
+
+  dragActiveLesson = computed(() => {
+    const id = this.dragActiveLessonId();
+    if (!id) {
+      return null;
+    }
+    return this.displayLessons().find((lesson) => lesson._id === id) ?? null;
+  });
+
+  /** Время на бейдже фантома во время перетаскивания (шаг 15 мин). */
+  dragPreviewTimeLabel = computed(() => {
+    const preview = this.dragPreview();
+    if (!preview?.scheduledAt) {
+      return '';
+    }
+    const date = new Date(preview.scheduledAt);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return new Intl.DateTimeFormat(this.i18n.localeId(), {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+  });
+
   lessonsByDay = computed(() => {
     const map = new Map<string, CalendarLesson[]>();
-    const preview = this.dragPreview();
-    for (const lesson of this.displayLessons()) {
-      const scheduledAt =
-        preview?.lessonId === lesson._id ? preview.scheduledAt : lesson.scheduledAt;
+    for (const lesson of this.gridLessons()) {
+      const scheduledAt = lesson.scheduledAt;
       if (!scheduledAt) {
         continue;
       }
@@ -345,14 +565,26 @@ export class CalendarComponent implements OnInit {
         this.calendarModalOpen(),
       );
     });
+    effect(() => {
+      this.gridHours();
+      if (!this.isMonthOverview() && isPlatformBrowser(this.platformId)) {
+        afterNextRender(() => this.scrollGridToNow(), { injector: this.injector });
+      }
+    });
     this.destroyRef.onDestroy(() => {
+      if (this.periodTransitionTimer !== null) {
+        clearTimeout(this.periodTransitionTimer);
+      }
       this.document.documentElement.classList.remove(CALENDAR_MODAL_OPEN_CLASS);
+      this.clearPointerListeners();
+      this.clearDragUi();
     });
   }
 
   ngOnInit(): void {
     this.initViewportMediaQueries();
     this.initNowLineClock();
+    this.profileSettings.loadProfile().subscribe();
     this.loadLessons();
     this.studentSvc.getAll().subscribe({
       next: (list) => this.students.set(list),
@@ -362,22 +594,34 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  /** Прокрутка к текущему часу после отрисовки сетки. */
+  /** Прокрутка к текущему часу (если день на экране) или к утру. */
   private scrollGridToNow(): void {
     if (!isPlatformBrowser(this.platformId) || this.isMonthOverview()) {
       return;
     }
-    if (this.nowLineTopPx() === null) {
-      this.currentDate.set(new Date());
-      afterNextRender(
-        () => {
-          afterNextRender(() => this.applyScrollToNow(), { injector: this.injector });
-        },
-        { injector: this.injector },
-      );
+    const top = this.nowLineTopPx();
+    if (top === null) {
+      this.scrollGridToOffset(this.gridStartHour() * 60 * this.minuteHeightPx);
       return;
     }
     afterNextRender(() => this.applyScrollToNow(), { injector: this.injector });
+  }
+
+  private scrollGridToOffset(offsetPx: number, attempt = 0): void {
+    if (!isPlatformBrowser(this.platformId) || this.isMonthOverview()) {
+      return;
+    }
+    const el = this.gridScrollRef()?.nativeElement;
+    if (!el) {
+      if (attempt < 8) {
+        afterNextRender(() => this.scrollGridToOffset(offsetPx, attempt + 1), {
+          injector: this.injector,
+        });
+      }
+      return;
+    }
+    const top = Math.max(0, offsetPx - el.clientHeight * 0.25);
+    el.scrollTo({ top, behavior: this.scrollBehavior() });
   }
 
   private applyScrollToNow(attempt = 0): void {
@@ -396,7 +640,63 @@ export class CalendarComponent implements OnInit {
       return;
     }
     const target = Math.max(0, top - el.clientHeight * 0.25);
-    el.scrollTop = target;
+    el.scrollTo({ top: target, behavior: this.scrollBehavior() });
+  }
+
+  private scrollBehavior(): ScrollBehavior {
+    return this.prefersReducedMotion() ? 'auto' : 'smooth';
+  }
+
+  private prefersReducedMotion(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return true;
+    }
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  /** Плавная смена недели/дня/месяца: fade-out → обновление → fade-in. */
+  private runPeriodTransition(
+    direction: 'prev' | 'next' | null,
+    apply: () => void,
+  ): void {
+    if (this.prefersReducedMotion()) {
+      apply();
+      afterNextRender(() => this.scrollGridToNow(), { injector: this.injector });
+      return;
+    }
+
+    if (this.periodTransitionTimer !== null) {
+      clearTimeout(this.periodTransitionTimer);
+      this.periodTransitionTimer = null;
+    }
+
+    this.periodExitMode.set(direction ?? 'fade');
+
+    this.periodTransitionTimer = window.setTimeout(() => {
+      apply();
+      this.periodExitMode.set(null);
+      this.periodEnterFrom.set(direction);
+      this.periodViewKey.update((k) => k + 1);
+
+      this.periodTransitionTimer = window.setTimeout(() => {
+        this.periodEnterFrom.set(null);
+        this.periodTransitionTimer = null;
+        afterNextRender(() => this.scrollGridToNow(), { injector: this.injector });
+      }, PERIOD_ENTER_MS);
+    }, direction ? PERIOD_EXIT_MS : 160);
+  }
+
+  private shiftCurrentDate(delta: -1 | 1): void {
+    const next = new Date(this.currentDate());
+    const mode = this.viewMode();
+    if (mode === '30') {
+      next.setMonth(next.getMonth() + delta);
+    } else if (mode === '7') {
+      next.setDate(next.getDate() + delta * 7);
+    } else {
+      next.setDate(next.getDate() + delta * Number(mode));
+    }
+    this.currentDate.set(next);
   }
 
   private initNowLineClock(): void {
@@ -417,7 +717,7 @@ export class CalendarComponent implements OnInit {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    const bottomNavMq = window.matchMedia('(max-width: 768px)');
+    const bottomNavMq = window.matchMedia('(max-width: 768px), (max-height: 440px)');
     const compactMq = window.matchMedia('(max-width: 1023px)');
     const applyViewport = () => {
       const bottomNav = bottomNavMq.matches;
@@ -479,10 +779,6 @@ export class CalendarComponent implements OnInit {
   }
 
   displayScheduledAt(lesson: Lesson): string {
-    const preview = this.dragPreview();
-    if (preview?.lessonId === lesson._id) {
-      return preview.scheduledAt;
-    }
     return lesson.scheduledAt;
   }
 
@@ -491,7 +787,55 @@ export class CalendarComponent implements OnInit {
     if (Number.isNaN(d.getTime())) {
       return 0;
     }
-    return (d.getHours() * 60 + d.getMinutes()) * this.minuteHeightPx;
+    return Math.max(0, this.minutesFromGridStart(d) * this.minuteHeightPx);
+  }
+
+  isNonWorkingDay(col: Date): boolean {
+    return !this.profileSettings.isWorkingDay(col);
+  }
+
+  monthLessonsForDay(day: Date): CalendarLesson[] {
+    return this.lessonsByDay().get(this.dayKey(day)) ?? [];
+  }
+
+  monthBadgeLessons(day: Date): CalendarLesson[] {
+    return this.monthLessonsForDay(day).slice(0, 3);
+  }
+
+  monthHiddenLessonCount(day: Date): number {
+    const total = this.monthLessonsForDay(day).length;
+    return total > 3 ? total - 3 : 0;
+  }
+
+  monthLessonBadgeLabel(lesson: CalendarLesson): string {
+    const student = this.students().find((s) => s._id === lesson.student_id);
+    const name = student?.name?.trim() || '—';
+    const scheduledAt = lesson.scheduledAt;
+    if (!scheduledAt) {
+      return name;
+    }
+    const date = new Date(scheduledAt);
+    if (Number.isNaN(date.getTime())) {
+      return name;
+    }
+    const time = new Intl.DateTimeFormat(this.i18n.localeId(), {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+    return `${time} ${name}`;
+  }
+
+  monthLessonBadgeColor(lesson: CalendarLesson): string {
+    return CalendarComponent.STATUS_BADGE_COLORS[lesson.status] ?? '#0369a1';
+  }
+
+  monthMoreLessonsLabel(count: number): string {
+    return this.i18n.calendarUi().monthMoreLessons.replace('{count}', String(count));
+  }
+
+  private minutesFromGridStart(date: Date): number {
+    return date.getHours() * 60 + date.getMinutes() - this.gridStartHour() * 60;
   }
 
   calculateHeight(duration: number): number {
@@ -516,7 +860,11 @@ export class CalendarComponent implements OnInit {
       return;
     }
     const target = event.target as HTMLElement;
-    if (target.closest('.cal-lesson-card') || this.dragLessonId()) {
+    if (
+      target.closest('.cal-lesson-card') ||
+      target.closest('.cal-day-header') ||
+      this.dragActiveLessonId()
+    ) {
       return;
     }
     this.periodSwipeStart = {
@@ -559,47 +907,38 @@ export class CalendarComponent implements OnInit {
     return this.lessonsByDay().get(this.dayKey(day))?.length ?? 0;
   }
 
-  /** Клик по клетке месяца → дневное расписание выбранной даты. */
-  openDayFromMonth(day: Date): void {
-    this.currentDate.set(this.startOfLocalDay(day));
-    this.viewMode.set('1');
+  /** Клик по заголовку дня или клетке месяца → режим «1 день» для выбранной даты. */
+  openDayView(day: Date): void {
+    const target = this.startOfLocalDay(day);
+    const anchor = this.startOfLocalDay(this.currentDate());
+    const direction = target.getTime() >= anchor.getTime() ? 'next' : 'prev';
+    this.runPeriodTransition(direction, () => {
+      this.currentDate.set(target);
+      this.viewMode.set('1');
+      this.modesMenuOpen.set(false);
+    });
   }
 
   navPrev(): void {
-    const next = new Date(this.currentDate());
-    const mode = this.viewMode();
-    if (mode === '30') {
-      next.setMonth(next.getMonth() - 1);
-    } else if (mode === '7') {
-      next.setDate(next.getDate() - 7);
-    } else {
-      next.setDate(next.getDate() - Number(mode));
-    }
-    this.currentDate.set(next);
+    this.runPeriodTransition('prev', () => this.shiftCurrentDate(-1));
   }
 
   navNext(): void {
-    const next = new Date(this.currentDate());
-    const mode = this.viewMode();
-    if (mode === '30') {
-      next.setMonth(next.getMonth() + 1);
-    } else if (mode === '7') {
-      next.setDate(next.getDate() + 7);
-    } else {
-      next.setDate(next.getDate() + Number(mode));
-    }
-    this.currentDate.set(next);
+    this.runPeriodTransition('next', () => this.shiftCurrentDate(1));
   }
 
   goToToday(): void {
-    this.currentDate.set(new Date());
-    this.scrollGridToNow();
+    this.runPeriodTransition(null, () => this.currentDate.set(new Date()));
   }
 
   setViewMode(mode: CalendarViewMode): void {
-    this.viewMode.set(mode);
-    this.modesMenuOpen.set(false);
-    this.scrollGridToNow();
+    if (mode === this.viewMode()) {
+      return;
+    }
+    this.runPeriodTransition(null, () => {
+      this.viewMode.set(mode);
+      this.modesMenuOpen.set(false);
+    });
   }
 
   onViewModeSelect(value: string): void {
@@ -716,9 +1055,137 @@ export class CalendarComponent implements OnInit {
     this.durationChipMode.set('custom');
   }
 
+  recurrenceDraftShowsWeekdays = computed(() => {
+    const draft = this.recurrenceDraft();
+    if (draft.preset === 'weekly') {
+      return true;
+    }
+    if (draft.preset === 'custom' && draft.customFreq === 'weekly') {
+      return true;
+    }
+    return false;
+  });
+
+  recurrenceDraftShowsInterval = computed(() => this.recurrenceDraft().preset !== 'none');
+
+  recurrenceDraftMonthlyHint = computed(() =>
+    this.i18n
+      .calendarUi()
+      .recurrenceMonthlyOnDay.replace('{day}', this.recurrenceDraftMonthDay()),
+  );
+
+  recurrenceDraftIntervalUnit = computed(() => {
+    const draft = this.recurrenceDraft();
+    if (draft.preset === 'daily' || (draft.preset === 'custom' && draft.customFreq === 'daily')) {
+      return 'days' as const;
+    }
+    if (draft.preset === 'weekly' || (draft.preset === 'custom' && draft.customFreq === 'weekly')) {
+      return 'weeks' as const;
+    }
+    if (draft.preset === 'monthly' || (draft.preset === 'custom' && draft.customFreq === 'monthly')) {
+      return 'months' as const;
+    }
+    return 'weeks' as const;
+  });
+
+  recurrenceDraftMonthDay = computed(() => {
+    const scheduledAt = this.form.scheduledAt?.trim();
+    if (!scheduledAt) {
+      return '—';
+    }
+    return String(new Date(scheduledAt).getDate());
+  });
+
+  openRecurrenceModal(): void {
+    this.recurrenceDraft.set(structuredClone(this.recurrenceConfig()));
+    this.recurrenceModalOpen.set(true);
+  }
+
+  closeRecurrenceModal(): void {
+    this.recurrenceModalOpen.set(false);
+  }
+
+  applyRecurrenceModal(): void {
+    const draft = this.recurrenceDraft();
+    if (draft.preset === 'weekly' || (draft.preset === 'custom' && draft.customFreq === 'weekly')) {
+      if (draft.byDay.length === 0) {
+        this.saveLessonError = this.i18n.calendarUi().recurrenceWeekdaysRequired;
+        return;
+      }
+    }
+    this.recurrenceConfig.set(structuredClone(draft));
+    this.recurrenceModalOpen.set(false);
+    this.saveLessonError = null;
+  }
+
+  onRecurrencePresetChange(value: string): void {
+    const preset = value as RecurrencePreset;
+    const anchor = this.scheduledAtAnchor();
+    this.recurrenceDraft.update((current) => configFromPreset(preset, anchor, current));
+  }
+
+  onRecurrenceCustomFreqChange(value: string): void {
+    const customFreq = value as RecurrenceCustomFreq;
+    this.recurrenceDraft.update((current) => ({ ...current, customFreq }));
+  }
+
+  onRecurrenceEndModeChange(value: string): void {
+    const endMode = value as RecurrenceEndMode;
+    this.recurrenceDraft.update((current) => ({ ...current, endMode }));
+  }
+
+  onRecurrenceIntervalChange(raw: string | number): void {
+    const interval = Math.min(99, Math.max(1, Math.round(Number(raw) || 1)));
+    this.recurrenceDraft.update((current) => ({ ...current, interval }));
+  }
+
+  onRecurrenceCountChange(raw: string | number): void {
+    const count = Math.min(999, Math.max(1, Math.round(Number(raw) || 1)));
+    this.recurrenceDraft.update((current) => ({ ...current, count }));
+  }
+
+  onRecurrenceUntilChange(value: string): void {
+    this.recurrenceDraft.update((current) => ({
+      ...current,
+      untilDate: value?.trim() ? value.trim() : null,
+    }));
+  }
+
+  isRecurrenceDraftDayActive(code: RruleWeekdayCode): boolean {
+    return this.recurrenceDraft().byDay.includes(code);
+  }
+
+  toggleRecurrenceDraftDay(code: RruleWeekdayCode): void {
+    this.recurrenceDraft.update((current) => {
+      const set = new Set(current.byDay);
+      if (set.has(code)) {
+        set.delete(code);
+      } else {
+        set.add(code);
+      }
+      return { ...current, byDay: RRULE_WEEKDAY_CODES.filter((day) => set.has(day)) };
+    });
+  }
+
+  private scheduledAtAnchor(): Date {
+    const raw = this.form.scheduledAt?.trim();
+    if (raw) {
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return new Date();
+  }
+
   onCustomDurationInput(value: string | number): void {
     const n = Math.round(Number(value));
-    this.duration.set(Math.min(480, Math.max(5, Number.isNaN(n) ? 60 : n)));
+    this.duration.set(
+      Math.min(
+        480,
+        Math.max(5, Number.isNaN(n) ? CalendarComponent.DEFAULT_LESSON_DURATION_MIN : n),
+      ),
+    );
   }
 
   private static readonly CURRENCY_REGION: Record<string, string> = {
@@ -770,7 +1237,7 @@ export class CalendarComponent implements OnInit {
       currency: lesson.lesson_currency || 'EUR',
       maximumFractionDigits: 0,
     }).format(Number(lesson.lesson_price));
-    return `${formatted}${this.i18n.studentsUi().perHour}`;
+    return `${formatted}${this.i18n.studentsUi().perLesson}`;
   }
 
   formatLessonDuration(minutes: number): string {
@@ -824,7 +1291,7 @@ export class CalendarComponent implements OnInit {
 
   lessonCardClass(lesson: CalendarLesson): Record<string, boolean> {
     const focused = this.focusedStudentId();
-    const dragging = this.dragLessonId() === lesson._id;
+    const dragging = this.dragActiveLessonId() === lesson._id;
     return {
       'cal-lesson-card': true,
       'cal-lesson-card--scheduled': lesson.status === 'scheduled',
@@ -847,7 +1314,7 @@ export class CalendarComponent implements OnInit {
 
   dragSnapLineTop(col: Date): number | null {
     const preview = this.dragPreview();
-    if (!preview?.scheduledAt || this.dragLessonId() === null) {
+    if (!preview?.scheduledAt || this.dragActiveLessonId() === null) {
       return null;
     }
     if (this.dayKey(col) !== this.dayKey(new Date(preview.scheduledAt))) {
@@ -866,70 +1333,170 @@ export class CalendarComponent implements OnInit {
     this.openNewLessonAt(scheduledAt);
   }
 
-  onLessonDragStart(event: DragEvent, lesson: Lesson): void {
-    if (!lesson.scheduledAt) {
+  onLessonPointerDown(event: PointerEvent, lesson: CalendarLesson): void {
+    if (
+      lesson.isVirtualOccurrence ||
+      !lesson.scheduledAt ||
+      event.button !== 0 ||
+      this.dragActiveLessonId()
+    ) {
+      return;
+    }
+    event.stopPropagation();
+
+    const card = event.currentTarget as HTMLElement;
+    const rect = card.getBoundingClientRect();
+    try {
+      card.setPointerCapture(event.pointerId);
+    } catch {
+      /* unsupported */
+    }
+    this.pointerSession = {
+      lessonId: lesson._id,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      grabOffsetX: event.clientX - rect.left,
+      grabOffsetY: event.clientY - rect.top,
+      originScheduledAt: lesson.scheduledAt,
+      cardWidth: rect.width,
+      cardHeight: rect.height,
+      captureTarget: card,
+    };
+    this.installPointerListeners();
+  }
+
+  onLessonCardClick(event: Event, lesson: CalendarLesson): void {
+    if (Date.now() < this.suppressLessonClickUntil || this.dragActiveLessonId()) {
       event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    this.openEditLesson(lesson, event);
+  }
+
+  private installPointerListeners(): void {
+    if (!isPlatformBrowser(this.platformId) || this.pointerMoveHandler) {
+      return;
+    }
+    this.pointerMoveHandler = (event) => this.onDocumentPointerMove(event);
+    this.pointerUpHandler = (event) => this.onDocumentPointerUp(event);
+    this.document.addEventListener('pointermove', this.pointerMoveHandler, { passive: false });
+    this.document.addEventListener('pointerup', this.pointerUpHandler);
+    this.document.addEventListener('pointercancel', this.pointerUpHandler);
+  }
+
+  private clearPointerListeners(): void {
+    if (!this.pointerMoveHandler) {
+      return;
+    }
+    this.document.removeEventListener('pointermove', this.pointerMoveHandler);
+    this.document.removeEventListener('pointerup', this.pointerUpHandler!);
+    this.document.removeEventListener('pointercancel', this.pointerUpHandler!);
+    this.pointerMoveHandler = null;
+    this.pointerUpHandler = null;
+  }
+
+  private onDocumentPointerMove(event: PointerEvent): void {
+    const session = this.pointerSession;
+    if (!session || event.pointerId !== session.pointerId) {
       return;
     }
 
-    event.stopPropagation();
-    this.suppressLessonClickUntil = Date.now() + 400;
-    this.dragLessonId.set(lesson._id);
-    this.dragPreview.set({ lessonId: lesson._id, scheduledAt: lesson.scheduledAt });
+    const dx = event.clientX - session.startX;
+    const dy = event.clientY - session.startY;
 
-    const card = (event.currentTarget as HTMLElement) ?? null;
-
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', lesson._id);
-      if (card) {
-        this.setDragImageFromCard(event, card);
+    if (!this.dragActiveLessonId()) {
+      if (Math.hypot(dx, dy) < this.dragStartThresholdPx) {
+        return;
       }
+      this.beginLessonDrag(session);
     }
-  }
 
-  onLessonDragEnd(): void {
-    this.removeDragGhost();
-    this.dragLessonId.set(null);
-    this.dragPreview.set(null);
-  }
-
-  onDayDragOver(event: DragEvent, col: Date): void {
     event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-    this.updateDragPreviewFromEvent(event, col);
+    this.updateDragAt(event.clientX, event.clientY, session);
   }
 
-  onDayDrop(event: DragEvent, col: Date): void {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const lessonId = this.dragLessonId() ?? event.dataTransfer?.getData('text/plain') ?? null;
-    const lesson = this.lessons().find((item) => item._id === lessonId);
-    if (!lesson) {
-      this.clearDragState();
+  private onDocumentPointerUp(event: PointerEvent): void {
+    const session = this.pointerSession;
+    if (!session || event.pointerId !== session.pointerId) {
       return;
     }
 
+    const wasDragging = Boolean(this.dragActiveLessonId());
+    const lesson = this.lessons().find((item) => item._id === session.lessonId);
+
+    try {
+      session.captureTarget.releasePointerCapture(session.pointerId);
+    } catch {
+      /* already released */
+    }
+    this.clearPointerListeners();
+    this.pointerSession = null;
+
+    if (!wasDragging) {
+      return;
+    }
+
+    event.preventDefault();
     const preview = this.dragPreview();
-    const scheduledAt =
-      preview?.lessonId === lesson._id
-        ? preview.scheduledAt
-        : this.isoFromDayAndOffset(
-            this.dayKey(col),
-            this.offsetYInColumn(event, event.currentTarget as HTMLElement),
-          );
+    this.clearDragUi();
+    this.suppressLessonClickUntil = Date.now() + 450;
 
-    this.clearDragState();
-
-    if (this.shouldConfirmBotNotifyBeforeMove(lesson, scheduledAt)) {
-      this.dragMoveConfirm.set({ lesson, scheduledAt });
+    if (!lesson?.scheduledAt || !preview || preview.lessonId !== lesson._id) {
       return;
     }
 
-    this.persistLessonMove(lesson, scheduledAt);
+    if (this.scheduleTimesEqual(lesson.scheduledAt, preview.scheduledAt)) {
+      return;
+    }
+
+    if (this.shouldConfirmBotNotifyBeforeMove(lesson, preview.scheduledAt)) {
+      this.dragMoveConfirm.set({ lesson, scheduledAt: preview.scheduledAt });
+      return;
+    }
+
+    this.persistLessonMove(lesson, preview.scheduledAt);
+  }
+
+  private beginLessonDrag(session: LessonPointerSession): void {
+    const lesson = this.lessons().find((item) => item._id === session.lessonId);
+    if (!lesson?.scheduledAt) {
+      return;
+    }
+
+    this.dragActiveLessonId.set(session.lessonId);
+    this.dragOriginScheduledAt.set(session.originScheduledAt);
+    this.dragPreview.set({ lessonId: session.lessonId, scheduledAt: session.originScheduledAt });
+    this.dragGhost.set({
+      x: session.startX - session.grabOffsetX,
+      y: session.startY - session.grabOffsetY,
+      width: session.cardWidth,
+      height: session.cardHeight,
+    });
+    this.document.documentElement.classList.add(CALENDAR_DRAGGING_CLASS);
+
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(12);
+    }
+  }
+
+  private updateDragAt(clientX: number, clientY: number, session: LessonPointerSession): void {
+    this.dragGhost.set({
+      x: clientX - session.grabOffsetX,
+      y: clientY - session.grabOffsetY,
+      width: session.cardWidth,
+      height: session.cardHeight,
+    });
+    this.updateDragPreviewFromPointer(session.lessonId, clientX, clientY);
+  }
+
+  private clearDragUi(): void {
+    this.dragActiveLessonId.set(null);
+    this.dragOriginScheduledAt.set(null);
+    this.dragPreview.set(null);
+    this.dragGhost.set(null);
+    this.document.documentElement.classList.remove(CALENDAR_DRAGGING_CLASS);
   }
 
   dragMoveConfirmStudentName(): string {
@@ -1025,51 +1592,30 @@ export class CalendarComponent implements OnInit {
     }).format(date);
   }
 
-  private updateDragPreviewFromEvent(event: DragEvent, col: Date): void {
-    const lessonId = this.dragLessonId();
-    if (!lessonId) {
+  private offsetYInColumn(event: MouseEvent, columnEl: HTMLElement): number {
+    const rect = columnEl.getBoundingClientRect();
+    const y = event.clientY - rect.top;
+    return Math.max(0, Math.min(this.gridHeightPx(), y));
+  }
+
+  private updateDragPreviewFromPointer(lessonId: string, clientX: number, clientY: number): void {
+    const columnEl = this.dayColumnAt(clientX, clientY);
+    if (!columnEl) {
       return;
     }
-    const columnEl = event.currentTarget as HTMLElement;
-    const offsetY = this.offsetYInColumn(event, columnEl);
-    const scheduledAt = this.isoFromDayAndOffset(this.dayKey(col), offsetY);
+    const day = columnEl.dataset['dayKey'];
+    if (!day) {
+      return;
+    }
+    const rect = columnEl.getBoundingClientRect();
+    const offsetY = Math.max(0, Math.min(this.gridHeightPx(), clientY - rect.top));
+    const scheduledAt = this.isoFromDayAndOffset(day, offsetY);
     this.dragPreview.set({ lessonId, scheduledAt });
   }
 
-  private offsetYInColumn(event: MouseEvent | DragEvent, columnEl: HTMLElement): number {
-    const rect = columnEl.getBoundingClientRect();
-    const y = event.clientY - rect.top;
-    return Math.max(0, Math.min(this.gridHeightPx, y));
-  }
-
-  private setDragImageFromCard(event: DragEvent, card: HTMLElement): void {
-    this.removeDragGhost();
-
-    const rect = card.getBoundingClientRect();
-    const ghost = card.cloneNode(true) as HTMLElement;
-    ghost.classList.add('cal-lesson-card--drag-ghost');
-    ghost.style.position = 'absolute';
-    ghost.style.top = '-1000px';
-    ghost.style.left = '0';
-    ghost.style.width = `${rect.width}px`;
-    ghost.style.pointerEvents = 'none';
-    document.body.appendChild(ghost);
-    this.dragGhostEl = ghost;
-
-    const offsetX = event.clientX - rect.left;
-    const offsetY = event.clientY - rect.top;
-    event.dataTransfer?.setDragImage(ghost, offsetX, offsetY);
-  }
-
-  private removeDragGhost(): void {
-    this.dragGhostEl?.remove();
-    this.dragGhostEl = null;
-  }
-
-  private clearDragState(): void {
-    this.removeDragGhost();
-    this.dragLessonId.set(null);
-    this.dragPreview.set(null);
+  private dayColumnAt(clientX: number, clientY: number): HTMLElement | null {
+    const hit = this.document.elementFromPoint(clientX, clientY);
+    return hit?.closest('.cal-day-column') as HTMLElement | null;
   }
 
   private persistLessonMove(lesson: Lesson, scheduledAt: string): void {
@@ -1110,6 +1656,9 @@ export class CalendarComponent implements OnInit {
   }
 
   openScheduleConflict(message?: string): void {
+    this.clearDragUi();
+    purgeStaleOverlayLayers(this.document);
+    this.document.dispatchEvent(new CustomEvent(APP_OVERLAY_LAYER_OPEN));
     this.scheduleConflictMessage.set(message ?? this.i18n.calendarUi().scheduleConflict);
   }
 
@@ -1123,32 +1672,131 @@ export class CalendarComponent implements OnInit {
     excludeLessonId: string | null,
     status: LessonStatus = 'scheduled',
   ): boolean {
-    if (status !== 'scheduled') {
+    if (status !== 'scheduled' || !scheduledAt) {
       return false;
     }
 
-    const candidate = this.lessonInterval(scheduledAt, durationMinutes);
-    if (!candidate) {
-      return false;
-    }
+    const recurrence = this.buildRecurrencePayload(scheduledAt);
+    const probe: CalendarLesson = {
+      _id: excludeLessonId ?? '__probe__',
+      student_id: null,
+      status: 'scheduled',
+      scheduledAt,
+      lesson_duration: durationMinutes,
+      lesson_price: 0,
+      lesson_currency: 'EUR',
+      reminder_sent: false,
+      isRecurring: recurrence.isRecurring,
+      startDate: recurrence.startDate,
+      rrule: recurrence.rrule,
+    };
 
-    for (const lesson of this.lessons()) {
-      if (excludeLessonId && lesson._id === excludeLessonId) {
+    const anchor = new Date(scheduledAt);
+    const rangeStart = this.startOfLocalDay(anchor);
+    rangeStart.setDate(rangeStart.getDate() - 7);
+    const rangeEnd = this.startOfLocalDay(anchor);
+    rangeEnd.setDate(rangeEnd.getDate() + 7 * 26);
+    rangeEnd.setHours(23, 59, 59, 999);
+
+    const candidateStarts = recurrence.isRecurring
+      ? expandLessonOccurrencesForConflictCheck(probe).map((d) => d.toISOString())
+      : [scheduledAt];
+
+    for (const candidateAt of candidateStarts) {
+      const candidate = this.lessonInterval(candidateAt, durationMinutes);
+      if (!candidate) {
         continue;
       }
-      if (lesson.status !== 'scheduled' || !lesson.scheduledAt) {
-        continue;
-      }
-      const other = this.lessonInterval(lesson.scheduledAt, lesson.lesson_duration);
-      if (!other) {
-        continue;
-      }
-      if (this.intervalsOverlap(candidate, other)) {
-        return true;
+
+      for (const lesson of this.lessons()) {
+        if (excludeLessonId && lesson._id === excludeLessonId) {
+          continue;
+        }
+        if (lesson.status !== 'scheduled' || !lesson.scheduledAt) {
+          continue;
+        }
+
+        const otherStarts = lesson.isRecurring
+          ? expandLessonOccurrencesForConflictCheck(lesson, 26).map((d) => d.toISOString())
+          : [lesson.scheduledAt];
+
+        for (const otherAt of otherStarts) {
+          const other = this.lessonInterval(otherAt, lesson.lesson_duration);
+          if (!other) {
+            continue;
+          }
+          if (this.intervalsOverlap(candidate, other)) {
+            return true;
+          }
+        }
       }
     }
 
     return false;
+  }
+
+  private buildRecurrencePayload(
+    scheduledAt: string | null,
+    editing: CalendarLesson | null = this.editLessonTarget(),
+  ): {
+    isRecurring: boolean;
+    startDate: string | null;
+    rrule: string | null;
+  } {
+    const startDate = scheduledAt ? dayKey(new Date(scheduledAt)) : null;
+    const rrule = startDate ? buildRruleFromConfig(this.recurrenceConfig(), startDate) : null;
+
+    if (!rrule || !startDate) {
+      if (editing && (editing.isRecurring || editing.rrule)) {
+        return {
+          isRecurring: true,
+          startDate: editing.startDate ?? startDate,
+          rrule: editing.rrule ?? null,
+        };
+      }
+      return { isRecurring: false, startDate: null, rrule: null };
+    }
+    return {
+      isRecurring: true,
+      startDate,
+      rrule,
+    };
+  }
+
+  private isRecurringSeries(
+    lesson: CalendarLesson | null,
+    payload?: Pick<LessonSavePayload, 'isRecurring' | 'rrule'>,
+  ): boolean {
+    return Boolean(lesson?.isRecurring || lesson?.rrule || payload?.isRecurring || payload?.rrule);
+  }
+
+  private resolveOccurrenceDate(scheduledAt: string | null | undefined): string | null {
+    const fromSignal = this.editingOccurrenceDate();
+    if (fromSignal) {
+      return fromSignal;
+    }
+    if (!scheduledAt) {
+      return null;
+    }
+    const parsed = new Date(scheduledAt);
+    return Number.isNaN(parsed.getTime()) ? null : dayKey(parsed);
+  }
+
+  private attachOccurrencePayload(
+    payload: LessonSavePayload,
+    editing: CalendarLesson | null,
+  ): LessonSavePayload {
+    const isSeries = this.isRecurringSeries(editing, payload);
+    const occurrenceDate = this.resolveOccurrenceDate(payload.scheduledAt);
+    if (!editing || !isSeries || !occurrenceDate) {
+      return payload;
+    }
+    return {
+      ...payload,
+      occurrence_date: occurrenceDate,
+      occurrence_status: payload.status,
+      status: 'scheduled',
+    };
   }
 
   private lessonInterval(
@@ -1175,11 +1823,12 @@ export class CalendarComponent implements OnInit {
 
   private isoFromDayAndOffset(dayKey: string, offsetYPx: number): string {
     const [y, m, d] = dayKey.split('-').map(Number);
-    const maxMinutes = 24 * 60 - 5;
+    const maxMinutes = this.gridHeightPx() - 5;
     const rawMinutes = Math.max(0, Math.min(maxMinutes, offsetYPx / this.minuteHeightPx));
     const rounded = Math.round(rawMinutes / 15) * 15;
-    const hours = Math.floor(rounded / 60);
-    const minutes = rounded % 60;
+    const totalMinutes = this.gridStartHour() * 60 + rounded;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
     return new Date(y, m - 1, d, hours, minutes, 0, 0).toISOString();
   }
 
@@ -1188,6 +1837,12 @@ export class CalendarComponent implements OnInit {
     this.lessonFormStep.set(1);
     this.resetLessonForm();
     this.form.scheduledAt = scheduledAt;
+    this.recurrenceConfig.set(
+      configFromPreset('weekly', new Date(scheduledAt), {
+        ...DEFAULT_RECURRENCE_CONFIG,
+        byDay: [jsDayToRruleWeekday(new Date(scheduledAt).getDay())],
+      }),
+    );
     const local = new Date(
       new Date(scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000,
     );
@@ -1206,6 +1861,11 @@ export class CalendarComponent implements OnInit {
     }
     clickEvent?.stopPropagation();
     this.editLessonTarget.set(lesson);
+    this.editingOccurrenceDate.set(
+      lesson.scheduledAt && (lesson.isRecurring || lesson.rrule)
+        ? dayKey(new Date(lesson.scheduledAt))
+        : null,
+    );
     this.lessonFormStep.set(1);
     this.saveLessonError = null;
     this.studentsLoadError = null;
@@ -1213,6 +1873,13 @@ export class CalendarComponent implements OnInit {
     const mins = lesson.lesson_duration;
     this.duration.set(mins);
     this.durationChipMode.set(this.durationPresets.includes(mins) ? 'preset' : 'custom');
+    if (lesson.isRecurring && lesson.rrule) {
+      this.recurrenceConfig.set(
+        parseRruleToConfig(lesson.rrule, lesson.scheduledAt ? new Date(lesson.scheduledAt) : null),
+      );
+    } else {
+      this.recurrenceConfig.set({ ...DEFAULT_RECURRENCE_CONFIG });
+    }
     this.form = {
       student_id: lesson.student_id || '',
       status: lesson.status,
@@ -1242,7 +1909,9 @@ export class CalendarComponent implements OnInit {
   closeLessonForm(): void {
     this.showLessonForm.set(false);
     this.editLessonTarget.set(null);
+    this.editingOccurrenceDate.set(null);
     this.deletingLesson.set(false);
+    this.deleteRecurringModalOpen.set(false);
     this.lessonFormStep.set(1);
   }
 
@@ -1255,8 +1924,10 @@ export class CalendarComponent implements OnInit {
   }
 
   private resetLessonForm(): void {
-    this.duration.set(60);
+    this.duration.set(this.profileSettings.workspace().defaultLessonDuration);
     this.durationChipMode.set('preset');
+    this.recurrenceConfig.set({ ...DEFAULT_RECURRENCE_CONFIG });
+    this.editingOccurrenceDate.set(null);
     this.scheduledAtLocal.set('');
     this.form = {
       student_id: '',
@@ -1269,7 +1940,7 @@ export class CalendarComponent implements OnInit {
   private clampedDurationMinutes(raw?: number): number {
     const minutes = raw !== undefined ? Number(raw) : Math.round(Number(this.duration()));
     if (Number.isNaN(minutes) || minutes < 5) {
-      return 60;
+      return CalendarComponent.DEFAULT_LESSON_DURATION_MIN;
     }
     return Math.min(480, Math.max(5, Math.round(minutes)));
   }
@@ -1326,6 +1997,14 @@ export class CalendarComponent implements OnInit {
       tutor: raw.tutor,
       student_name: raw.student_name,
       title: raw.title,
+      isRecurring:
+        Boolean((raw as LessonApiRow & { isRecurring?: boolean }).isRecurring) ||
+        Boolean((raw as LessonApiRow & { rrule?: string | null }).rrule),
+      startDate: (raw as LessonApiRow & { startDate?: string | null }).startDate ?? null,
+      rrule: (raw as LessonApiRow & { rrule?: string | null }).rrule ?? null,
+      exdates: (raw as LessonApiRow & { exdates?: string[] }).exdates ?? [],
+      completedDates:
+        (raw as LessonApiRow & { completedDates?: string[] }).completedDates ?? [],
     };
   }
 
@@ -1346,15 +2025,23 @@ export class CalendarComponent implements OnInit {
       return;
     }
 
-    const basePayload = {
+    let basePayload: LessonSavePayload = {
       student_id: this.form.student_id,
       lesson_duration: duration,
       status: this.form.status,
       notes: this.form.notes?.trim() || undefined,
       scheduledAt,
+      manual_completion: true,
+      ...this.buildRecurrencePayload(scheduledAt, editing),
     };
+    basePayload = this.attachOccurrencePayload(basePayload, editing);
 
-    if (this.needsBillingDecision(this.form.status, editing?.status)) {
+    const billingPreviousStatus =
+      editing && this.isRecurringSeries(editing, basePayload)
+        ? editing.status
+        : editing?.status;
+
+    if (this.needsBillingDecision(this.form.status, billingPreviousStatus)) {
       purgeStaleOverlayLayers(this.document);
       this.document.dispatchEvent(new CustomEvent(APP_OVERLAY_LAYER_OPEN));
       this.showLessonForm.set(false);
@@ -1362,7 +2049,7 @@ export class CalendarComponent implements OnInit {
       return;
     }
 
-    this.persistLesson(basePayload, editing, false);
+    this.persistLesson(basePayload, editing, false, null, billingPreviousStatus);
   }
 
   cancelBillingConfirm(): void {
@@ -1414,28 +2101,18 @@ export class CalendarComponent implements OnInit {
   }
 
   private persistLesson(
-    payload: {
-      student_id: string;
-      lesson_duration: number;
-      status: LessonStatus;
-      notes?: string;
-      scheduledAt: string | null;
-    },
+    payload: LessonSavePayload,
     editing: Lesson | null,
     shouldDeduct: boolean,
     billingRestore: {
-      payload: {
-        student_id: string;
-        lesson_duration: number;
-        status: LessonStatus;
-        notes?: string;
-        scheduledAt: string | null;
-      };
+      payload: LessonSavePayload;
       editing: Lesson | null;
     } | null = null,
+    previousStatusForBilling?: LessonStatus,
   ): void {
     this.savingLesson.set(true);
-    const body = this.withBillingFlag(payload, editing?.status, shouldDeduct);
+    const previousStatus = previousStatusForBilling ?? editing?.status;
+    const body = this.withBillingFlag(payload, previousStatus, shouldDeduct);
 
     if (editing) {
       this.lessonsSvc.update(editing._id, body).subscribe({
@@ -1473,13 +2150,7 @@ export class CalendarComponent implements OnInit {
 
   private restoreBillingOnSaveError(
     billingRestore: {
-      payload: {
-        student_id: string;
-        lesson_duration: number;
-        status: LessonStatus;
-        notes?: string;
-        scheduledAt: string | null;
-      };
+      payload: LessonSavePayload;
       editing: Lesson | null;
     } | null,
   ): void {
@@ -1508,15 +2179,70 @@ export class CalendarComponent implements OnInit {
   }
 
   deleteLesson(): void {
-    const id = this.editLessonTarget()?._id;
-    if (!id) {
+    const target = this.editLessonTarget();
+    if (!target?._id) {
+      return;
+    }
+    if (target.isRecurring) {
+      this.deleteRecurringModalOpen.set(true);
       return;
     }
     if (!window.confirm(this.i18n.calendarUi().deleteLessonConfirm)) {
       return;
     }
-    this.saveLessonError = null;
+    this.executeDeleteSeries(target._id);
+  }
+
+  closeDeleteRecurringModal(): void {
+    this.deleteRecurringModalOpen.set(false);
+  }
+
+  confirmDeleteRecurringOccurrence(): void {
+    const target = this.editLessonTarget();
+    const occurrenceDate =
+      this.editingOccurrenceDate() ??
+      (target?.scheduledAt ? dayKey(new Date(target.scheduledAt)) : null);
+    if (!target?._id || !occurrenceDate) {
+      return;
+    }
     this.deletingLesson.set(true);
+    this.saveLessonError = null;
+    this.lessonsSvc.delete(target._id, { scope: 'occurrence', occurrenceDate }).subscribe({
+      next: (result) => {
+        if (result && typeof result === 'object' && '_id' in result) {
+          this.lessons.update((list) =>
+            list.map((l) =>
+              l._id === (result as Lesson)._id ? this.normalizeLesson(result as Lesson) : l,
+            ),
+          );
+        }
+        this.deletingLesson.set(false);
+        this.closeDeleteRecurringModal();
+        this.closeLessonForm();
+      },
+      error: (err) => {
+        this.deletingLesson.set(false);
+        this.saveLessonError =
+          err?.error?.message ?? err?.message ?? this.i18n.calendarUi().deleteLessonError;
+      },
+    });
+  }
+
+  confirmDeleteRecurringSeries(): void {
+    const id = this.editLessonTarget()?._id;
+    if (!id) {
+      return;
+    }
+    this.closeDeleteRecurringModal();
+    if (!window.confirm(this.i18n.calendarUi().deleteLessonConfirm)) {
+      return;
+    }
+    this.executeDeleteSeries(id);
+  }
+
+  private executeDeleteSeries(id: string): void {
+    this.deletingLesson.set(true);
+    this.saveLessonError = null;
     this.lessonsSvc.delete(id).subscribe({
       next: () => {
         this.lessons.update((list) => list.filter((l) => l._id !== id));

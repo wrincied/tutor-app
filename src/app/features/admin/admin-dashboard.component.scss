@@ -1,5 +1,11 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .admin-page__error {
@@ -106,8 +112,45 @@
   color: var(--text-secondary);
 }
 
+.admin-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .admin-table__gift {
   white-space: nowrap;
+}
+
+.admin-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.admin-trial-ends {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.admin-sub-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-sub-form__email {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.admin-sub-form__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .admin-status {
