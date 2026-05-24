@@ -1,3 +1,5 @@
+import { formatMoneyWithCode } from './format-currency';
+
 export interface SubscriptionPricing {
   country: string;
   currency: string;
@@ -7,13 +9,30 @@ export interface SubscriptionPricing {
 
 /** Цены Pro по стране (можно вынести на бэкенд позже). */
 const PRICING_BY_COUNTRY: Record<string, SubscriptionPricing> = {
-  AT: { country: 'AT', currency: 'EUR', monthly: 9.99, yearly: 89.99 },
-  DE: { country: 'DE', currency: 'EUR', monthly: 9.99, yearly: 89.99 },
-  PL: { country: 'PL', currency: 'PLN', monthly: 79, yearly: 790 },
-  RU: { country: 'RU', currency: 'RUB', monthly: 1490, yearly: 14900 },
-  BY: { country: 'BY', currency: 'BYN', monthly: 39, yearly: 390 },
-  KZ: { country: 'KZ', currency: 'KZT', monthly: 8900, yearly: 89000 },
-  US: { country: 'US', currency: 'USD', monthly: 22, yearly: 220 },
+  // Еврозона (Австрия, Германия) — базовый платежеспособный рынок.
+  // Оставляем стандартную психологическую цену для подписок начального уровня.
+  AT: { country: 'AT', currency: 'EUR', monthly: 9.99, yearly: 99.99 },
+  DE: { country: 'DE', currency: 'EUR', monthly: 9.99, yearly: 99.99 },
+
+  // Польша — должна быть эквивалентна или чуть дешевле еврозоны.
+  // 39 PLN — это около €9. Отличный порог входа для польского рынка.
+  PL: { country: 'PL', currency: 'PLN', monthly: 39, yearly: 390 },
+
+  // США — цена приведена к европейскому стандарту.
+  // $11.99 — психологически комфортная цена для подписки в США.
+  US: { country: 'US', currency: 'USD', monthly: 11.99, yearly: 119.99 },
+
+  // Казахстан — 8900 KZT было слишком дорого.
+  // 3900 KZT (около €8) — адекватная стоимость, сопоставимая с подпиской на местный софт.
+  KZ: { country: 'KZ', currency: 'KZT', monthly: 3900, yearly: 39000 },
+
+  // Беларусь — 39 BYN за B2B утилиту для физлиц многовато.
+  // 19.99 BYN (около €5.5) — идеальный баланс, чтобы платили массово.
+  BY: { country: 'BY', currency: 'BYN', monthly: 19.99, yearly: 199.99 },
+
+  // Россия — 1490 RUB за узкую CRM блокирует конверсию.
+  // 590 RUB (около €6) — стандартная цена для локальных сервисов учета/записи.
+  RU: { country: 'RU', currency: 'RUB', monthly: 590, yearly: 5900 },
 };
 
 const DEFAULT_PRICING = PRICING_BY_COUNTRY['AT'];
@@ -26,17 +45,6 @@ export function getSubscriptionPricing(country: string | null | undefined): Subs
 }
 
 export function formatSubscriptionPrice(amount: number, currency: string, locale: string): string {
-  const code = String(currency || 'USD')
-    .trim()
-    .toUpperCase();
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: code,
-      currencyDisplay: 'code',
-      maximumFractionDigits: 0,
-    }).format(amount);
-  } catch {
-    return `${amount} ${code}`;
-  }
+  const fractionDigits = Number.isFinite(amount) && !Number.isInteger(amount) ? 2 : 0;
+  return formatMoneyWithCode(amount, currency, locale, fractionDigits);
 }

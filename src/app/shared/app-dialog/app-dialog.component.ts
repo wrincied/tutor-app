@@ -59,9 +59,9 @@ export class AppDialogComponent implements OnDestroy {
   /** Поверх select-backdrop (z-index 1300). */
   stackOnTop = input(false, { transform: booleanAttribute });
 
-  readonly cancel = output<void>();
-  readonly secondary = output<void>();
-  readonly confirm = output<void>();
+  readonly cancelled = output<void>({ alias: 'cancel' });
+  readonly secondaryAction = output<void>({ alias: 'secondary' });
+  readonly confirmed = output<void>({ alias: 'confirm' });
 
   constructor() {
     effect(() => {
@@ -83,24 +83,24 @@ export class AppDialogComponent implements OnDestroy {
 
   onOverlayClick(): void {
     if (this.closeOnOverlay()) {
-      this.cancel.emit();
+      this.cancelled.emit();
     }
   }
 
   onCancelClick(): void {
-    this.cancel.emit();
+    this.cancelled.emit();
   }
 
   onSecondaryClick(): void {
-    this.secondary.emit();
+    this.secondaryAction.emit();
   }
 
   onConfirmClick(): void {
-    this.confirm.emit();
+    this.confirmed.emit();
   }
 
   onDismiss(): void {
-    this.cancel.emit();
+    this.cancelled.emit();
   }
 
   private syncPortal(): void {

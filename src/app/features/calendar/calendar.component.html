@@ -251,6 +251,14 @@
 
             <div class="cal-grid-scroll" #gridScroll>
               <div class="cal-grid-body" [style.--cal-grid-height.px]="gridHeightPx">
+                @if (nowLineTopPx(); as nowTop) {
+                  <div
+                    class="cal-now-line-week"
+                    [style.top.px]="nowTop"
+                    aria-hidden="true"
+                  ></div>
+                }
+
                 <div class="cal-time-axis">
                   @for (hour of hours; track hour) {
                     <div class="cal-time-slot" [style.height.px]="hourHeightPx">
@@ -263,7 +271,10 @@
                 </div>
 
                 <div class="cal-days-scroll">
-                  <div class="cal-days-grid" [style.grid-template-columns]="gridTemplateColumns()">
+                  <div
+                    class="cal-days-grid"
+                    [style.grid-template-columns]="gridTemplateColumns()"
+                  >
                     @for (col of columns(); track dayKey(col)) {
                       <div
                         class="cal-day-column"
@@ -278,14 +289,6 @@
 
                         @if (dragSnapLineTop(col); as snapTop) {
                           <div class="cal-drag-snap-line" [style.top.px]="snapTop"></div>
-                        }
-
-                        @if (isToday(col) && nowLineTopPx(); as nowTop) {
-                          <div
-                            class="cal-now-line"
-                            [style.top.px]="nowTop"
-                            aria-hidden="true"
-                          ></div>
                         }
 
                         @for (lesson of lessonsForColumn(col); track lesson._id) {

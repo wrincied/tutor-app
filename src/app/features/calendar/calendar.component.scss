@@ -1,13 +1,16 @@
 :host {
   --cal-time-axis-w: 4rem;
   --cal-grid-height: 1440px;
+  --cal-grid-bottom-air: 2.5rem;
 
   display: flex;
   flex-direction: column;
   min-height: 0;
   flex: 1;
   width: 100%;
+  height: 100%;
   overflow: hidden;
+  box-sizing: border-box;
 
   @media (max-width: 1023px) {
     --cal-time-axis-w: 2.375rem;
@@ -22,20 +25,22 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
   background: var(--page-bg);
+  box-sizing: border-box;
 }
 
 .cal-page__inner {
-  // margin-left: auto;
-  // margin-right: auto;
   display: flex;
   width: 100%;
   max-width: 1600px;
   min-height: 0;
   flex: 1;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
+  box-sizing: border-box;
   padding: 0.5rem 0.5rem 0;
 
   @media (min-width: 640px) {
@@ -284,6 +289,7 @@
   justify-content: space-between;
   gap: 0.5rem;
   color: var(--text-primary);
+  box-sizing: border-box;
 }
 
 .cal-header__start {
@@ -505,7 +511,6 @@
   @media (max-width: 768px) {
     right: 0.875rem;
     bottom: calc(56px + 0.875rem);
-    z-index: 0;
   }
 }
 
@@ -514,13 +519,12 @@
 .cal-layout {
   display: flex;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 0.5rem;
   overflow: hidden;
+  box-sizing: border-box;
 }
-
-// ── Schedule grid ───────────────────────────────────────────
 
 .cal-grid-section {
   display: flex;
@@ -533,6 +537,11 @@
   border: 1px solid var(--nav-border);
   background: var(--nav-bg);
   touch-action: pan-y;
+  box-sizing: border-box;
+
+  &:not(.cal-grid-section--month) {
+    max-height: 100%;
+  }
 }
 
 // ── Month overview (режим 30, как Google Calendar) ───────────
@@ -578,6 +587,8 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  padding-bottom: max(var(--cal-grid-bottom-air), env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .cal-month__weekdays {
@@ -761,12 +772,16 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  box-sizing: border-box;
 }
 
 .cal-grid-body {
+  position: relative;
   display: flex;
   align-items: flex-start;
   min-height: var(--cal-grid-height);
+  padding-bottom: max(var(--cal-grid-bottom-air), env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .cal-time-axis {
@@ -840,29 +855,16 @@
   }
 }
 
-.cal-now-line {
+.cal-now-line-week {
   position: absolute;
-  left: 0;
+  left: var(--cal-time-axis-w);
   right: 0;
-  z-index: 20;
+  z-index: 15;
   height: 2px;
   margin-top: -1px;
   background: #e53935;
   pointer-events: none;
   box-shadow: 0 0 0 1px rgb(229 57 53 / 0.25);
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: -4px;
-    top: 50%;
-    width: 8px;
-    height: 8px;
-    margin-top: -4px;
-    border-radius: 50%;
-    background: #e53935;
-    box-shadow: 0 0 0 2px var(--nav-bg);
-  }
 }
 
 .cal-day-column {
@@ -870,7 +872,8 @@
   min-width: 0;
   height: var(--cal-grid-height);
   flex-shrink: 0;
-  border-right: 1px solid var(--calender-border);
+  overflow: hidden;
+  border-right: 1px solid var(--nav-border);
 
   &--drag-target {
     background: rgb(14 165 233 / 0.04);
