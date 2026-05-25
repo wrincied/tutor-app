@@ -48,3 +48,5 @@ backend/.env
 backend/.env.*
 backend/serviceAccountKey.json
 .firebase/
+
+src/environments/environment.ts

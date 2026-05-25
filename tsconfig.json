@@ -14,9 +14,8 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "preserve",
-    "baseUrl": ".",
     "paths": {
-      "@interfaces": ["src/assets/Interfaces.ts"]
+      "@interfaces": ["./src/assets/Interfaces.ts"]
     }
   },
   "angularCompilerOptions": {

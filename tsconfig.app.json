@@ -4,14 +4,16 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
+    "rootDir":"src",
     "types": [
       "node"
     ],
-    "baseUrl": ".",
     "paths": {
-      "@interfaces": ["src/assets/Interfaces.ts"]
+      "@interfaces": [
+        "./src/assets/Interfaces.ts"
+      ]
     }
-  },
+  },  
   "include": [
     "src/**/*.ts"
   ],
