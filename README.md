@@ -2,7 +2,7 @@
 
 **Simple4U** is a web application (CRM and scheduler) for private tutors: manage students, plan lessons, track finances, and subscribe to Pro. The client is an **Angular 21** SPA with a multilingual UI, deployed on **Firebase Hosting** and **Firebase App Hosting**.
 
-**Link:https://simple4u-64822.web.app/** 
+**Link: https://simple4u-64822.web.app/** 
 
 Companion API documentation: [backend/README.md](./backend/README.md).
 
