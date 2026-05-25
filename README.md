@@ -225,7 +225,7 @@ Suggested screens for a live demo:
 
 ## Related documentation
 
-- [Backend API — README]([./backend/README.md](https://github.com/wrincied/tutor-app-backend/blob/master/README.md))
+- [Backend API — README](https://github.com/wrincied/tutor-app-backend/blob/master/README.md))
 
 
 ---
