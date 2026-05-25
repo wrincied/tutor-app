@@ -223,8 +223,8 @@ Suggested screens for a live demo:
 
 ## Related documentation
 
-- [Backend API — README](./backend/README.md)
-- [Firebase Console](https://console.firebase.google.com/) — project `tutorassis`
+- [Backend API — README]([./backend/README.md](https://github.com/wrincied/tutor-app-backend/blob/master/README.md))
+
 
 ---
 
