@@ -1,59 +1,231 @@
-# Simple4U
+# Simple4U — Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.1.
+**Simple4U** is a web application (CRM and scheduler) for private tutors: manage students, plan lessons, track finances, and subscribe to Pro. The client is an **Angular 21** SPA with a multilingual UI, deployed on **Firebase Hosting** and **Firebase App Hosting**.
 
-## Development server
+Companion API documentation: [backend/README.md](./backend/README.md).
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
+## Product overview
+
+| Audience | Goal |
+|----------|------|
+| Tutor | Maintain a student base, schedule and reschedule lessons, view income and expenses |
+| Super admin | Manage subscriptions and user statistics |
+
+### Key UI capabilities
+
+- **Authentication** — sign up and sign in with **Firebase Authentication** (email/password)
+- **Onboarding** — country, timezone, data-processing consent, tax mode
+- **Students** — hourly rates, currencies, lesson package balance, balance change history
+- **Calendar** — 1 / 3 / 7 / 30 day views, drag-and-drop lessons, recurring events (RRULE), student focus filter, working hours from profile
+- **Finance** — period summary, expenses, report currency conversion, tax estimates (including Austria)
+- **Home** — welcome screen and today’s KPIs
+- **Pricing** — Pro subscription via Stripe Checkout
+- **Account** — profile, workspace customization, subscription, tax settings
+- **Legal** — data processing and cookie policies
+- **Theming** — light / dark mode; **6 languages**: Russian, English, German, Kazakh, Ukrainian, Belarusian
+
+---
+
+## Tech stack
+
+| Category | Technologies |
+|----------|--------------|
+| Framework | Angular 21 (standalone components, signals, lazy-loaded routes) |
+| Styling | SCSS, Tailwind CSS 4, CSS variables for theming |
+| Auth & SDK | `@angular/fire`, Firebase Auth / Analytics / Firestore (client SDK) |
+| HTTP | `HttpClient` + interceptors → REST API |
+| Recurrence | `rrule` (aligned with backend recurrence logic) |
+| Tests | Vitest + jsdom |
+| Build | `@angular/build`, production output → `dist/tutor/browser` |
+
+Application data (students, lessons, finance) is loaded through the **REST API**, not directly from Firestore security rules on the client. Firebase on the frontend is used for authentication and analytics.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Browser[Angular SPA :4200]
+  FirebaseAuth[Firebase Auth]
+  API[Express API :3001]
+  Firestore[(Firestore)]
+
+  Browser --> FirebaseAuth
+  Browser -->|Bearer Firebase ID token| API
+  API --> Firestore
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## Project structure
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```
+tutor/                              # frontend root
+├── src/
+│   ├── app/
+│   │   ├── app.routes.ts           # routes and guards
+│   │   ├── core/
+│   │   │   ├── services/           # auth, lesson, student, finance, billing, i18n…
+│   │   │   ├── guards/             # auth, email verified, onboarding, admin
+│   │   │   ├── interceptors/       # Bearer token, email verification
+│   │   │   ├── i18n/locales/       # uk, by (+ built-in ru/en/de/kz)
+│   │   │   └── utils/              # calendar, finance, recurrence…
+│   │   ├── features/
+│   │   │   ├── landing/            # marketing landing
+│   │   │   ├── auth/               # login, register, onboarding, verify-email
+│   │   │   ├── home/               # dashboard
+│   │   │   ├── students/           # student CRUD
+│   │   │   ├── calendar/           # schedule
+│   │   │   ├── finance/            # reports and expenses
+│   │   │   ├── pricing/            # plans
+│   │   │   ├── account/            # profile and settings
+│   │   │   ├── admin/              # super-admin panel
+│   │   │   └── legal/              # GDPR / cookies
+│   │   └── shared/                 # navbar, dialog, select, activity-log…
+│   ├── assets/
+│   │   └── Interfaces.ts           # shared TypeScript types (@interfaces)
+│   ├── environments/               # apiUrl, firebase config
+│   └── styles/                     # global SCSS + Tailwind
+├── public/                         # static assets
+├── angular.json
+├── package.json
+└── firebase.json                   # Hosting + App Hosting (backendId: tutor-app)
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
+
+## Application routes
+
+| URL | Screen | Access |
+|-----|--------|--------|
+| `/` | Landing | public |
+| `/login`, `/register` | Sign in / sign up | public |
+| `/legal/*` | Legal documents | public |
+| `/app/verify-email-notice` | Email verification reminder | authenticated |
+| `/app/onboarding` | Initial setup | email verified |
+| `/app/home` | Home | full access |
+| `/app/students` | Students | full access |
+| `/app/calendar` | Calendar | full access |
+| `/app/finance` | Finance | full access |
+| `/app/pricing` | Pricing | full access |
+| `/app/account/*` | Account | full access |
+| `/app/admin` | Admin panel | super-admin |
+
+**Guard chain:** `authGuard` → `emailVerifiedGuard` → `dataConsentGuard` → `onboardingGuard`.
+
+---
+
+## Quick start (local)
+
+### Prerequisites
+
+- Node.js **20+**
+- npm **11+** (see `packageManager` in `package.json`)
+- [Backend API](./backend/README.md) running on port **3001**
+- Firebase project with **Email/Password** authentication enabled
+
+### 1. Install dependencies
 
 ```bash
-ng generate --help
+cd tutor
+npm install
 ```
 
-## Building
+### 2. Environment
 
-To build the project run:
+Copy the template and fill in Firebase client config and API URL:
 
 ```bash
-ng build
+cp src/environments/environment.template.ts src/environments/environment.development.ts
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Minimum fields in `environment.development.ts`:
 
-## Running unit tests
+```ts
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3001',
+  appUrl: 'http://localhost:4200',
+  firebase: { /* Firebase Console → Project settings */ },
+};
+```
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+`src/environments/environment.ts` is used for production builds. Do not commit secrets; Firebase client keys are public by design but should be restricted in the Firebase Console.
+
+### 3. Run
 
 ```bash
-ng test
+# Terminal 1 — API (see backend/README.md)
+cd backend && npm run dev
+
+# Terminal 2 — frontend
+npm start
+# → http://localhost:4200
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+### 4. Build and test
 
 ```bash
-ng e2e
+npm run build          # production → dist/tutor/browser
+npm run build:dev      # development build
+npm test               # Vitest
+npm run test:backend   # API tests from frontend root
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+---
 
-## Additional Resources
+## API integration
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Base URL: `environment.apiUrl` (default `http://localhost:3001`)
+- Paths: `/api/auth`, `/api/students`, `/api/lessons`, `/api/finance`, `/api/billing`, `/api/admin`
+- `authInterceptor` adds `Authorization: Bearer <Firebase ID token>` only for requests to `/api/`
+
+Shared domain types: `src/assets/Interfaces.ts` (path alias `@interfaces` in `tsconfig`).
+
+---
+
+## Deployment
+
+| Environment | Method |
+|-------------|--------|
+| Static hosting | `firebase deploy --only hosting` (site: `simple4u-64822`, `predeploy`: `npm run build`) |
+| App Hosting | `firebase.json` → `apphosting.backendId: tutor-app`, root `.` |
+
+Production API URL and CORS are configured on the backend (`FRONTEND_URL`). Example production frontend URL: `https://simple4u-64822.web.app`.
+
+---
+
+## Demo flow (presentation)
+
+Suggested screens for a live demo:
+
+1. **Calendar** — week view, drag a lesson, open recurrence modal
+2. **Students** — card with hourly rate and package balance
+3. **Finance** — KPIs and period filter (month / quarter / year)
+4. **Account** — workspace, working hours, Pro subscription status
+5. **Navbar** — language and theme switcher
+
+---
+
+## Useful commands
+
+| Command | Description |
+|---------|-------------|
+| `npm start` | `ng serve` — dev server on :4200 |
+| `npm run build` | Production build |
+| `npm test` | Vitest unit tests |
+| `ng generate component …` | Angular CLI scaffolding |
+
+---
+
+## Related documentation
+
+- [Backend API — README](./backend/README.md)
+- [Firebase Console](https://console.firebase.google.com/) — project `tutorassis`
+
+---
+
+*Simple4U — CRM and scheduler for tutors. Frontend: Angular 21 + Firebase Auth + REST.*
