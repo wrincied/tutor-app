@@ -4,7 +4,7 @@
 
 **Link: https://simple4u-64822.web.app/** 
 
-Companion API documentation: [backend/README.md](./backend/README.md).
+Companion API documentation: [backend/README.md](https://github.com/wrincied/tutor-app-backend/blob/master/README.md).
 
 ---
 
