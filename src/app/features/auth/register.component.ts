@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,7 +12,7 @@ import { resolveRegisterError } from '../../core/utils/auth-errors';
   templateUrl: './register.component.html',
   styleUrl: './auth.scss',
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   private auth = inject(AuthService);
   private userSvc = inject(UserService);
   private router = inject(Router);
@@ -24,29 +24,57 @@ export class RegisterComponent {
   error = signal('');
   loading = signal(false);
 
-  signInWithGoogle(): void {
-    this.error.set('');
+  ngOnInit(): void {
+    // Перехватываем результат, если пользователь вернулся после OAuth-редиректа от Google
+    this.checkGoogleRedirectResult();
+  }
+
+  private checkGoogleRedirectResult(): void {
     this.loading.set(true);
-    this.auth.loginWithGoogle().subscribe({
+
+    this.auth.handleRedirectResult().subscribe({
       next: (user) => {
-        this.loading.set(false);
-        if (!user.emailVerified) {
-          void this.router.navigate(['/app/verify-email-notice']);
+        if (!user) {
+          // Редиректа не было, пользователь просто открыл страницу регистрации
+          this.loading.set(false);
           return;
         }
+
+        // Пользователь успешно авторизован через Google
+        if (!user.emailVerified) {
+          void this.router.navigate(['/app/verify-email-notice']);
+          this.loading.set(false);
+          return;
+        }
+
+        // Синхронизируем профиль на бэкенде Node.js
         this.userSvc.ensureProfile().subscribe({
-          next: (profile) => this.auth.navigateAfterAuth(profile, user),
+          next: (profile) => {
+            this.loading.set(false);
+            this.auth.navigateAfterAuth(profile, user);
+          },
           error: () => {
             this.error.set(this.i18n.authUi().oauthError);
+            this.loading.set(false);
           },
         });
       },
       error: (err) => {
-        console.error('[Google sign-in]', err);
+        console.error('[Google sign-in redirect error]', err);
         this.error.set(this.i18n.authUi().oauthError);
         this.loading.set(false);
       },
     });
+  }
+
+  /**
+   * Вызывается по клику на кнопку регистрации через Google.
+   * Перенаправляет на страницу авторизации Google OAuth.
+   */
+  signInWithGoogle(): void {
+    this.error.set('');
+    this.loading.set(true);
+    this.auth.loginWithGoogle();
   }
 
   submit() {

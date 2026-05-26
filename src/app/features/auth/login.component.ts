@@ -36,9 +36,53 @@ export class LoginComponent implements OnInit {
   consentDeclined = signal(false);
 
   ngOnInit(): void {
+    // 1. Чтение query-параметров из URL
     this.route.queryParamMap.subscribe((params) => {
       this.verifySuccess.set(params.get('verify') === 'success');
       this.consentDeclined.set(params.get('consent') === 'declined');
+    });
+
+    // 2. Перехват результата редиректа от Google
+    this.checkGoogleRedirectResult();
+  }
+
+  private checkGoogleRedirectResult(): void {
+    // Включаем индикатор загрузки на время проверки токенов в sessionStorage
+    this.loading.set(true);
+
+    this.auth.handleRedirectResult().subscribe({
+      next: (user) => {
+        if (!user) {
+          // Пользователь зашел на страницу вручную, редиректа от Google не было
+          this.loading.set(false);
+          return;
+        }
+
+        // Пользователь только что успешно вернулся от Google
+        if (!user.emailVerified) {
+          void this.router.navigate(['/app/verify-email-notice']);
+          this.loading.set(false);
+          return;
+        }
+
+        // Синхронизируем/проверяем профиль на бэкенде Node.js
+        this.userSvc.ensureProfile().subscribe({
+          next: (profile) => {
+            this.loading.set(false);
+            this.auth.navigateAfterAuth(profile, user);
+          },
+          error: (err) => {
+            this.error.set(this.profileLoadError(err));
+            this.loading.set(false);
+          },
+        });
+      },
+      error: (err) => {
+        this.error.set(
+          err instanceof HttpErrorResponse ? this.profileLoadError(err) : this.i18n.authUi().oauthError,
+        );
+        this.loading.set(false);
+      },
     });
   }
 
@@ -87,28 +131,14 @@ export class LoginComponent implements OnInit {
     this.submitResetFromModal();
   }
 
+  /**
+   * Вызывается по клику на кнопку входа через Google.
+   * Просто инициирует редирект, прерывая сессию на текущей странице.
+   */
   signInWithGoogle(): void {
     this.error.set('');
     this.loading.set(true);
-    this.auth.loginWithGoogle().subscribe({
-      next: (user) => {
-        this.loading.set(false);
-        if (!user.emailVerified) {
-          void this.router.navigate(['/app/verify-email-notice']);
-          return;
-        }
-        this.userSvc.ensureProfile().subscribe({
-          next: (profile) => this.auth.navigateAfterAuth(profile, user),
-          error: (err) => this.error.set(this.profileLoadError(err)),
-        });
-      },
-      error: (err) => {
-        this.error.set(
-          err instanceof HttpErrorResponse ? this.profileLoadError(err) : this.i18n.authUi().oauthError,
-        );
-        this.loading.set(false);
-      },
-    });
+    this.auth.loginWithGoogle();
   }
 
   private profileLoadError(_err: unknown): string {

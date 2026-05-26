@@ -92,6 +92,32 @@
       background: #fce8e6;
     }
   }
+  &.cancel {
+    background: none;
+    border: 1px solid var(--nav-border);
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 4px;
+    &:only-child,
+    &:first-child:nth-last-child(2) {
+      margin-left: auto;
+    }
+  }
+  &.secondary {
+    background: none;
+    color: #7fc7ff;
+  }
+}
+.btn-link.cancel {
+  background: none;
+  border: 1px solid var(--nav-border);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 4px;
 }
 
 // ─── Таблица ───────────────────────────────────────────────────────────────────
@@ -146,7 +172,7 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   justify-content: flex-end;
   align-items: stretch;
   padding: 0;
-  overflow:auto;
+  overflow: auto;
 }
 
 @mixin modal-panel-mobile-sheet {
@@ -300,11 +326,12 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   }
 }
 
-.modal-actions {
+.stud-form-actions .cal-form-actions--wrap {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 // Закрытие модалок (animate.leave) — keyframes для надёжного animationend
@@ -338,30 +365,54 @@ $modal-mobile-max: $modal-desktop-min - 1px;
 }
 
 .modal-overlay-leave {
-  animation: modal-overlay-out 0.22s ease-in forwards;
+  // opacity: 0;
+  // animation: modal-overlay-out 0.22s ease-in forwards;
+  animation: modal-overlay-out 0.22s ease-in forwards !important;
   pointer-events: none;
+  &.modal-overlay--stack-top {
+    animation: modal-overlay-out 0.2s ease-in forwards !important;
+    z-index: var(--z-app-dialog-top) !important;
+  }
+  @media (min-width: $modal-desktop-min) {
+    animation: modal-sheet-out-desktop 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+
+    &:host-context(.modal-overlay--stack-top) &,
+    .modal-overlay--stack-top & {
+      animation: modal-sheet-out-desktop 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    }
+  }
 }
 
 .modal-sheet-leave {
-  animation: modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  opacity: 0 !important;
+  transform: translateY(100%) !important;
+  transition:
+    transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.25s ease-in !important;
+  animation: modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
   pointer-events: none;
 
   @media (min-width: $modal-desktop-min) {
+    transform: translateY(0.75rem) scale(0.97) !important;
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.25s ease-in !important;
     animation-name: modal-sheet-out-desktop;
     animation-duration: 0.28s;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 
 .modal-dialog-leave {
+  // opacity: 0 !important;
+  // transition: opacity 0.25s ease-in, transform 0.28s ease-in !important;
   pointer-events: none;
-
+  z-index: var(--z-app-dialog-top) !important;
   @media (max-width: $modal-mobile-max) {
-    animation: modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    animation: modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
   }
 
   @media (min-width: $modal-desktop-min) {
-    animation: modal-sheet-out-desktop 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: modal-sheet-out-desktop 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
   }
 }
 

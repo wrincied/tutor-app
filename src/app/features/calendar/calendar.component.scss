@@ -13,7 +13,7 @@
   box-sizing: border-box;
 
   @media (max-width: 1023px) {
-    --cal-time-axis-w: 2.375rem;
+    --cal-time-axis-w: 2.65rem;
   }
 }
 
@@ -826,6 +826,7 @@
   min-width: 0;
   flex: 1;
   overflow: hidden;
+  scrollbar-gutter: stable;
 }
 
 .cal-grid-headers__row {
@@ -1631,7 +1632,8 @@
     color 0.15s ease;
 
   &:hover {
-    background: rgb(226 232 240);
+    background: rgb(5 150 105);
+    transition: all 0.15s ease;
   }
 
   &--active {
@@ -1698,6 +1700,9 @@
   padding: 0.75rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--nav-border);
   background: var(--nav-bg);
+  .btn-link.cancel {
+    color: var(--text-secondary);
+  }
 }
 
 .cal-recurrence-modal {
@@ -1814,7 +1819,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.5rem;
 
   &--wrap {
@@ -1828,9 +1833,11 @@
   background: transparent;
   font-size: 0.875rem;
   font-weight: 500;
-  color: rgb(220 38 38);
+  color: rgb(168, 51, 51);
   cursor: pointer;
-
+  &:active {
+    color: rgb(168, 51, 51);
+  }
   &:hover {
     background: rgb(254 242 242);
   }

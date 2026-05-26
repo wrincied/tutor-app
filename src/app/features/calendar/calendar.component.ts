@@ -12,6 +12,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { CurrencyPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -93,14 +94,13 @@ type LessonSavePayload = {
   occurrence_status?: LessonStatus;
   manual_completion?: boolean;
 };
-
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, AppDialogComponent, AppSelectComponent],
+  imports: [FormsModule, CurrencyPipe, AppDialogComponent, AppSelectComponent, NgTemplateOutlet],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
-})
+ })
 export class CalendarComponent implements OnInit {
   private readonly lessonsSvc = inject(LessonService);
   private readonly studentSvc = inject(StudentService);

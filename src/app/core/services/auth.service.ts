@@ -1,4 +1,10 @@
-import { EnvironmentInjector, Injectable, computed, inject, runInInjectionContext } from '@angular/core';
+import {
+  EnvironmentInjector,
+  Injectable,
+  computed,
+  inject,
+  runInInjectionContext,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -14,13 +20,14 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect, // Используем вместо signInWithPopup
+  getRedirectResult, // Добавляем для перехвата токенов
   signOut,
   updateEmail,
   updatePassword,
 } from '@angular/fire/auth';
 import type { ActionCodeSettings, User } from 'firebase/auth';
-import { catchError, from, map, Observable, switchMap, throwError } from 'rxjs';
+import { catchError, from, map, Observable, switchMap, throwError, defer, of } from 'rxjs';
 import {
   EmailAlreadyRegisteredError,
   getFirebaseAuthErrorCode,
@@ -114,7 +121,6 @@ export class AuthService {
     );
   }
 
-  /** Если пароль не подходит, но email привязан только к Google — подсказка в UI. */
   private enrichLoginError(err: unknown, email: string): Observable<never> {
     const code = getFirebaseAuthErrorCode(err);
     if (
@@ -138,15 +144,34 @@ export class AuthService {
     );
   }
 
-  loginWithGoogle(): Observable<User> {
+  /**
+   * Инициализирует редирект на сторону Google OAuth.
+   * Код на этой странице завершает свое выполнение, так как вкладка обновляется.
+   */
+  loginWithGoogle(): void {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    return this.fromAuth(() => signInWithPopup(this.auth, provider)).pipe(
-      switchMap((cred) => this.afterFirebaseSignIn(cred.user)),
+    void signInWithRedirect(this.auth, provider);
+  }
+
+  /**
+   * Метод-перехватчик. Вызывается при повторной инициализации приложения.
+   * Проверяет, вернулся ли пользователь из OAuth-сессии.
+   */
+  handleRedirectResult(): Observable<User | null> {
+    return defer(() => from(getRedirectResult(this.auth))).pipe(
+      switchMap((cred) => {
+        if (cred && cred.user) {
+          return this.afterFirebaseSignIn(cred.user);
+        }
+        return of(null);
+      }),
+      catchError((err) => {
+        return throwError(() => err);
+      }),
     );
   }
 
-  /** Bootstrap + переход после входа (email / Google). */
   navigateAfterAuth(profile: UserProfile, user: User): void {
     const path = postAuthPath(profile, user.emailVerified === true);
     const queryParams =
@@ -154,10 +179,8 @@ export class AuthService {
     void this.router.navigate([path], { queryParams });
   }
 
+  /** Вызываем bootstrap для создания/синхронизации профиля на бэкенде Node.js */
   private afterFirebaseSignIn(user: User): Observable<User> {
-    if (!user.emailVerified) {
-      return this.bootstrapProfile().pipe(map(() => user));
-    }
     return this.bootstrapProfile().pipe(map(() => user));
   }
 
@@ -166,9 +189,7 @@ export class AuthService {
     if (!user) {
       throw new Error('Not signed in');
     }
-    return this.fromAuth(() =>
-      sendEmailVerification(user, this.verificationActionCodeSettings()),
-    );
+    return this.fromAuth(() => sendEmailVerification(user, this.verificationActionCodeSettings()));
   }
 
   reloadUser(): Observable<User | null> {
@@ -191,7 +212,6 @@ export class AuthService {
     return user.getIdToken();
   }
 
-  /** Смена email для входа через Google (без полей пароля в аккаунте). */
   updateEmailWithGoogleReauth(newEmail: string): Observable<User | null> {
     const user = this.auth.currentUser;
     if (!user) {
@@ -229,9 +249,7 @@ export class AuthService {
         if (options.newEmail) {
           tasks.push(updateEmail(user, options.newEmail.trim().toLowerCase()));
         }
-        return tasks.length
-          ? this.fromAuth(() => Promise.all(tasks))
-          : from(Promise.resolve());
+        return tasks.length ? this.fromAuth(() => Promise.all(tasks)) : from(Promise.resolve());
       }),
       switchMap(() => {
         if (options.newEmail) {

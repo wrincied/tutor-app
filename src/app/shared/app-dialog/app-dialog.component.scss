@@ -83,10 +83,10 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
   }
 
   &--error {
-    max-width: 22rem;
+    max-width: 100%;
     border-color: rgb(254 202 202);
     background: rgb(254 242 242);
-    color: rgb(127 29 29);
+    color: white;
 
     .app-dialog__title {
       color: rgb(153 27 27);
@@ -101,11 +101,13 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     }
 
     .app-dialog__btn--primary {
-      border-color: rgb(248 113 113);
-      background: rgb(220 38 38);
+      color: white;
+      background: var(--nav-accent);
 
       &:hover {
-        background: rgb(185 28 28);
+        background: var(--nav-accent);
+        opacity: 0.8;
+        transition: all 0.15s ease;
       }
     }
   }
@@ -163,8 +165,9 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
 
   &__btn {
     min-height: 2.75rem;
+    min-width: 2.75rem;
     border-radius: 0.5rem;
-    padding: 0.1rem 0.5rem;
+    padding: 8px 18px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
@@ -199,8 +202,8 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     }
 
     &--primary {
-      border: 1px solid rgb(148 163 184);
-      color: #374151;
+      background: var(--nav-accent);
+      color: var(--text-main);
 
       &:hover {
         background: rgb(185 28 28);
