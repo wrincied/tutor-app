@@ -17,17 +17,28 @@ import {
   GoogleAuthProvider,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
+  signInWithPopup,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signInWithRedirect, // Используем вместо signInWithPopup
-  getRedirectResult, // Добавляем для перехвата токенов
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   updateEmail,
   updatePassword,
 } from '@angular/fire/auth';
 import type { ActionCodeSettings, User } from 'firebase/auth';
-import { catchError, from, map, Observable, switchMap, throwError, defer, of } from 'rxjs';
+import {
+  catchError,
+  from,
+  map,
+  Observable,
+  switchMap,
+  throwError,
+  defer,
+  of,
+  shareReplay,
+} from 'rxjs';
 import {
   EmailAlreadyRegisteredError,
   getFirebaseAuthErrorCode,
@@ -47,6 +58,12 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly injector = inject(EnvironmentInjector);
+
+  /**
+   * getRedirectResult() можно вызвать только один раз за OAuth-цикл.
+   * Общий Observable гарантирует это при подписке из App, /login и /register.
+   */
+  private redirectResult$?: Observable<User | null>;
 
   readonly firebaseUser = toSignal(authState(this.auth), { initialValue: null });
   readonly isLoggedIn = computed(() => this.firebaseUser() !== null);
@@ -144,32 +161,38 @@ export class AuthService {
     );
   }
 
-  /**
-   * Инициализирует редирект на сторону Google OAuth.
-   * Код на этой странице завершает свое выполнение, так как вкладка обновляется.
-   */
-  loginWithGoogle(): void {
+  /** Google OAuth через redirect (prod flow). */
+  loginWithGoogleRedirect(): void {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     void signInWithRedirect(this.auth, provider);
   }
 
+  /** Google OAuth через popup (dev fallback). */
+  loginWithGooglePopup(): Observable<User> {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    return this.fromAuth(() => signInWithPopup(this.auth, provider)).pipe(
+      switchMap((cred) => this.afterFirebaseSignIn(cred.user)),
+    );
+  }
+
   /**
-   * Метод-перехватчик. Вызывается при повторной инициализации приложения.
-   * Проверяет, вернулся ли пользователь из OAuth-сессии.
+   * Завершает signInWithRedirect (один вызов getRedirectResult на приложение).
+   * Bootstrap профиля — в UserService.ensureProfile() на странице login/register.
    */
   handleRedirectResult(): Observable<User | null> {
-    return defer(() => from(getRedirectResult(this.auth))).pipe(
-      switchMap((cred) => {
-        if (cred && cred.user) {
-          return this.afterFirebaseSignIn(cred.user);
-        }
-        return of(null);
-      }),
-      catchError((err) => {
-        return throwError(() => err);
-      }),
-    );
+    if (!this.redirectResult$) {
+      this.redirectResult$ = defer(() => from(getRedirectResult(this.auth))).pipe(
+        switchMap((cred) => (cred?.user ? of(cred.user) : of(null))),
+        catchError((err) => {
+          this.redirectResult$ = undefined;
+          return throwError(() => err);
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+    }
+    return this.redirectResult$;
   }
 
   navigateAfterAuth(profile: UserProfile, user: User): void {

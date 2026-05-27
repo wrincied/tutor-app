@@ -1681,7 +1681,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     mixedCurrencyNote:
       'Summen in die gewählte Währung umgerechnet. Unten: Originalbeträge der Stunden.',
     conversionNote: 'Alle Summen oben umgerechnet in',
-    reportCurrency: 'Berichtswährung',
+    reportCurrency: 'Währung',
     originalInCurrency: 'Original',
     ratesAsOf: 'Kurs vom',
     activityLogSection: 'Aktivitätsprotokoll',

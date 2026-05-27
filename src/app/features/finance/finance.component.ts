@@ -82,6 +82,42 @@ export class FinanceComponent implements OnInit {
 
   hasLessonsInPeriod = computed(() => (this.summary()?.totals.lessonCount ?? 0) > 0);
 
+  periodPresetLabel = computed(() => {
+    const preset = this.periodPreset();
+    if (preset === 'month') {
+      return this.t.periodMonth;
+    }
+    if (preset === 'year') {
+      return this.t.periodYear;
+    }
+    return this.t.periodAll;
+  });
+
+  periodRangeLabel = computed(() => {
+    this.i18n.lang();
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return '';
+    }
+    const range = financePeriodRange(preset);
+    if (!range.from || !range.to) {
+      return '';
+    }
+    if (preset === 'year') {
+      return String(new Date(`${range.from}T12:00:00`).getFullYear());
+    }
+    const locale = this.i18n.localeId();
+    const fmt = (iso: string) =>
+      new Date(`${iso}T12:00:00`).toLocaleDateString(locale, {
+        day: 'numeric',
+        month: 'short',
+      });
+    if (range.from === range.to) {
+      return fmt(range.from);
+    }
+    return `${fmt(range.from)} – ${fmt(range.to)}`;
+  });
+
   filteredExpenses = computed(() => {
     const range = financePeriodRange(this.periodPreset());
     const items = this.expenses();

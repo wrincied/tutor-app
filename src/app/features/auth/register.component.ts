@@ -5,6 +5,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { resolveRegisterError } from '../../core/utils/auth-errors';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-register',
@@ -67,14 +68,39 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  /**
-   * Вызывается по клику на кнопку регистрации через Google.
-   * Перенаправляет на страницу авторизации Google OAuth.
-   */
+  /** В dev используем popup (обход проблем redirect на localhost), в prod — redirect. */
   signInWithGoogle(): void {
     this.error.set('');
     this.loading.set(true);
-    this.auth.loginWithGoogle();
+    if (environment.production) {
+      this.auth.loginWithGoogleRedirect();
+      return;
+    }
+
+    this.auth.loginWithGooglePopup().subscribe({
+      next: (user) => {
+        if (!user.emailVerified) {
+          void this.router.navigate(['/app/verify-email-notice']);
+          this.loading.set(false);
+          return;
+        }
+        this.userSvc.ensureProfile().subscribe({
+          next: (profile) => {
+            this.loading.set(false);
+            this.auth.navigateAfterAuth(profile, user);
+          },
+          error: () => {
+            this.error.set(this.i18n.authUi().oauthError);
+            this.loading.set(false);
+          },
+        });
+      },
+      error: (err) => {
+        console.error('[Google sign-in popup error]', err);
+        this.error.set(this.i18n.authUi().oauthError);
+        this.loading.set(false);
+      },
+    });
   }
 
   submit() {

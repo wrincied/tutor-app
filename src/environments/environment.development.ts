@@ -2,7 +2,7 @@ export const environment = {
   production: false,
   apiUrl: 'http://localhost:3001',
   appUrl: 'http://localhost:4200',
-  firebase: {
+  firebaseConfig: {
     apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
     authDomain: 'simple4u-64822.web.app',
     projectId: 'tutorassis',

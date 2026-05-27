@@ -57,9 +57,10 @@ export class AnalyticsService {
 
   private isEnabled(): boolean {
     return (
+      environment.production &&
       isPlatformBrowser(this.platformId) &&
       Boolean(this.analytics) &&
-      Boolean(environment.firebase.measurementId)
+      Boolean(environment.firebaseConfig.measurementId)
     );
   }
 

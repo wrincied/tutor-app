@@ -1,12 +1,14 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Auth } from '@angular/fire/auth';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { resolveLoginError } from '../../core/utils/auth-errors';
+import { resolveFirebaseUser } from '../../core/utils/resolve-firebase-user';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -15,6 +17,7 @@ import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component
   styleUrl: './auth.scss',
 })
 export class LoginComponent implements OnInit {
+  private firebaseAuth = inject(Auth);
   private auth = inject(AuthService);
   private userSvc = inject(UserService);
   private router = inject(Router);
@@ -53,8 +56,7 @@ export class LoginComponent implements OnInit {
     this.auth.handleRedirectResult().subscribe({
       next: (user) => {
         if (!user) {
-          // Пользователь зашел на страницу вручную, редиректа от Google не было
-          this.loading.set(false);
+          this.resumeExistingSession();
           return;
         }
 
@@ -78,11 +80,38 @@ export class LoginComponent implements OnInit {
         });
       },
       error: (err) => {
-        this.error.set(
-          err instanceof HttpErrorResponse ? this.profileLoadError(err) : this.i18n.authUi().oauthError,
-        );
+        console.error('[Google sign-in redirect error]', err);
+        this.error.set(this.i18n.authUi().oauthError);
         this.loading.set(false);
       },
+    });
+  }
+
+  /** Уже залогинен (email/Google) — уводим в app, если открыли /login напрямую. */
+  private resumeExistingSession(): void {
+    resolveFirebaseUser(this.firebaseAuth).subscribe({
+      next: (user) => {
+        if (!user) {
+          this.loading.set(false);
+          return;
+        }
+        if (!user.emailVerified) {
+          void this.router.navigate(['/app/verify-email-notice']);
+          this.loading.set(false);
+          return;
+        }
+        this.userSvc.ensureProfile().subscribe({
+          next: (profile) => {
+            this.loading.set(false);
+            this.auth.navigateAfterAuth(profile, user);
+          },
+          error: (err) => {
+            this.error.set(this.profileLoadError(err));
+            this.loading.set(false);
+          },
+        });
+      },
+      error: () => this.loading.set(false),
     });
   }
 
@@ -131,14 +160,39 @@ export class LoginComponent implements OnInit {
     this.submitResetFromModal();
   }
 
-  /**
-   * Вызывается по клику на кнопку входа через Google.
-   * Просто инициирует редирект, прерывая сессию на текущей странице.
-   */
+  /** В dev используем popup (обход проблем redirect на localhost), в prod — redirect. */
   signInWithGoogle(): void {
     this.error.set('');
     this.loading.set(true);
-    this.auth.loginWithGoogle();
+    if (environment.production) {
+      this.auth.loginWithGoogleRedirect();
+      return;
+    }
+
+    this.auth.loginWithGooglePopup().subscribe({
+      next: (user) => {
+        if (!user.emailVerified) {
+          void this.router.navigate(['/app/verify-email-notice']);
+          this.loading.set(false);
+          return;
+        }
+        this.userSvc.ensureProfile().subscribe({
+          next: (profile) => {
+            this.loading.set(false);
+            this.auth.navigateAfterAuth(profile, user);
+          },
+          error: (err) => {
+            this.error.set(this.profileLoadError(err));
+            this.loading.set(false);
+          },
+        });
+      },
+      error: (err) => {
+        console.error('[Google sign-in popup error]', err);
+        this.error.set(this.i18n.authUi().oauthError);
+        this.loading.set(false);
+      },
+    });
   }
 
   private profileLoadError(_err: unknown): string {

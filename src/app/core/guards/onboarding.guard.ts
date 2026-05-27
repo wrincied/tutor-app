@@ -1,9 +1,17 @@
 import { inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
-import { map, switchMap, take } from 'rxjs/operators';
+import { catchError, map, switchMap, take } from 'rxjs/operators';
 import { of } from 'rxjs';
+
+function redirectOnProfileError(err: unknown, router: Router, fallback: string) {
+  if (err instanceof HttpErrorResponse && err.status === 401) {
+    return of(router.createUrlTree(['/login']));
+  }
+  return of(router.createUrlTree([fallback]));
+}
 
 /** Профиль заполнен — иначе на онбординг. */
 export const onboardingGuard: CanActivateFn = () => {
@@ -15,6 +23,7 @@ export const onboardingGuard: CanActivateFn = () => {
     map((profile) =>
       profile.onboarding_completed ? true : router.createUrlTree(['/app/onboarding']),
     ),
+    catchError((err) => redirectOnProfileError(err, router, '/app/onboarding')),
   );
 };
 
@@ -28,6 +37,7 @@ export const onboardingPageGuard: CanActivateFn = () => {
     map((profile) =>
       profile.onboarding_completed ? router.createUrlTree(['/app/home']) : true,
     ),
+    catchError((err) => redirectOnProfileError(err, router, '/app/onboarding')),
   );
 };
 
@@ -50,6 +60,13 @@ export const dataConsentGuard: CanActivateFn = () => {
           }),
         ),
       );
+    }),
+    catchError((err) => {
+      if (err instanceof HttpErrorResponse && err.status === 401) {
+        return of(router.createUrlTree(['/login']));
+      }
+      // Профиль не загрузился (сеть, 500) — не выкидываем на login
+      return of(true);
     }),
   );
 };

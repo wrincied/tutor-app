@@ -74,6 +74,10 @@ interface LessonPointerSession {
   captureTarget: HTMLElement;
 }
 
+interface NativeDragState {
+  lesson: CalendarLesson;
+}
+
 /** Ответ API до нормализации (legacy-поля и статусы). */
 type LessonApiRow = Omit<Lesson, 'status'> & {
   status?: string;
@@ -169,6 +173,13 @@ export class CalendarComponent implements OnInit {
   private pointerUpHandler: ((event: PointerEvent) => void) | null = null;
   private readonly dragStartThresholdPx = 6;
   private suppressLessonClickUntil = 0;
+  /** Native DnD state for desktop drag/drop UX. */
+  readonly draggedLesson = signal<CalendarLesson | null>(null);
+  readonly currentDropTime = signal<string | null>(null);
+  private nativeDragState: NativeDragState | null = null;
+  private readonly dragImagePixel = this.createTransparentDragImage();
+  private readonly autoScrollEdgePx = 64;
+  private readonly autoScrollMaxStepPx = 10;
 
   showLessonForm = signal(false);
   editLessonTarget = signal<CalendarLesson | null>(null);
@@ -516,6 +527,34 @@ export class CalendarComponent implements OnInit {
     }).format(date);
   });
 
+  /** Dynamic destination label for custom phantom slot preview. */
+  phantomDropTimeLabel = computed(() => {
+    const iso = this.currentDropTime();
+    if (!iso) {
+      return '';
+    }
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    const startLabel = new Intl.DateTimeFormat(this.i18n.localeId(), {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+
+    const lesson = this.draggedLesson();
+    const durationMinutes = this.clampedDurationMinutes(lesson?.lesson_duration ?? this.duration());
+    const end = new Date(date.getTime() + durationMinutes * 60_000);
+    const endLabel = new Intl.DateTimeFormat(this.i18n.localeId(), {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(end);
+
+    return `${startLabel} - ${endLabel}`;
+  });
+
   lessonsByDay = computed(() => {
     const map = new Map<string, CalendarLesson[]>();
     for (const lesson of this.gridLessons()) {
@@ -556,6 +595,7 @@ export class CalendarComponent implements OnInit {
   });
 
   private readonly gridScrollRef = viewChild<ElementRef<HTMLElement>>('gridScroll');
+  private readonly scrollContainerRef = viewChild<ElementRef<HTMLElement>>('scrollContainer');
 
   /** Любая модалка календаря — navbar снизу уходит под оверлей. */
   private readonly calendarModalOpen = computed(
@@ -1345,6 +1385,12 @@ export class CalendarComponent implements OnInit {
   }
 
   onLessonPointerDown(event: PointerEvent, lesson: CalendarLesson): void {
+    // Desktop mouse uses native HTML5 DnD (dragstart/dragover/drop).
+    // Keep pointer-driven drag only for touch/pen to avoid conflicts on PC.
+    if (event.pointerType === 'mouse') {
+      return;
+    }
+
     if (
       lesson.isVirtualOccurrence ||
       !lesson.scheduledAt ||
@@ -1479,6 +1525,8 @@ export class CalendarComponent implements OnInit {
     this.dragActiveLessonId.set(session.lessonId);
     this.dragOriginScheduledAt.set(session.originScheduledAt);
     this.dragPreview.set({ lessonId: session.lessonId, scheduledAt: session.originScheduledAt });
+    this.draggedLesson.set(lesson);
+    this.currentDropTime.set(session.originScheduledAt);
     this.dragGhost.set({
       x: session.startX - session.grabOffsetX,
       y: session.startY - session.grabOffsetY,
@@ -1500,6 +1548,7 @@ export class CalendarComponent implements OnInit {
       height: session.cardHeight,
     });
     this.updateDragPreviewFromPointer(session.lessonId, clientX, clientY);
+    this.applyEdgeAutoScroll(clientY);
   }
 
   private clearDragUi(): void {
@@ -1507,7 +1556,97 @@ export class CalendarComponent implements OnInit {
     this.dragOriginScheduledAt.set(null);
     this.dragPreview.set(null);
     this.dragGhost.set(null);
+    this.draggedLesson.set(null);
+    this.currentDropTime.set(null);
     this.document.documentElement.classList.remove(CALENDAR_DRAGGING_CLASS);
+  }
+
+  private clearNativeDragUi(): void {
+    this.draggedLesson.set(null);
+    this.currentDropTime.set(null);
+    this.nativeDragState = null;
+    this.dragActiveLessonId.set(null);
+    this.dragOriginScheduledAt.set(null);
+  }
+
+  onLessonDragStart(event: DragEvent, lesson: CalendarLesson): void {
+    if (lesson.isVirtualOccurrence || !lesson.scheduledAt || !event.dataTransfer) {
+      event.preventDefault();
+      return;
+    }
+    this.nativeDragState = { lesson };
+    this.draggedLesson.set(lesson);
+    this.currentDropTime.set(lesson.scheduledAt);
+    this.dragActiveLessonId.set(lesson._id);
+    this.dragOriginScheduledAt.set(lesson.scheduledAt);
+    this.document.documentElement.classList.add(CALENDAR_DRAGGING_CLASS);
+
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', lesson._id);
+    // Hide the browser default semi-transparent drag image.
+    event.dataTransfer.setDragImage(this.dragImagePixel, 0, 0);
+  }
+
+  onLessonDragEnd(): void {
+    this.document.documentElement.classList.remove(CALENDAR_DRAGGING_CLASS);
+    this.clearNativeDragUi();
+  }
+
+  onDayColumnDragOver(event: DragEvent, col: Date): void {
+    if (!this.draggedLesson()) {
+      return;
+    }
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    const columnEl = event.currentTarget as HTMLElement;
+    const rect = columnEl.getBoundingClientRect();
+    const offsetY = Math.max(0, Math.min(this.gridHeightPx(), event.clientY - rect.top));
+    this.currentDropTime.set(this.isoFromDayAndOffset(this.dayKey(col), offsetY));
+  }
+
+  onDayColumnDrop(event: DragEvent): void {
+    if (!this.nativeDragState) {
+      return;
+    }
+    event.preventDefault();
+    const lesson = this.nativeDragState.lesson;
+    const dropTime = this.currentDropTime();
+    this.onLessonDragEnd();
+
+    if (!dropTime || !lesson.scheduledAt || this.scheduleTimesEqual(lesson.scheduledAt, dropTime)) {
+      return;
+    }
+    if (this.shouldConfirmBotNotifyBeforeMove(lesson, dropTime)) {
+      this.dragMoveConfirm.set({ lesson, scheduledAt: dropTime });
+      return;
+    }
+    this.persistLessonMove(lesson, dropTime);
+  }
+
+  onScrollContainerDragOver(event: DragEvent): void {
+    if (!this.draggedLesson()) {
+      return;
+    }
+    event.preventDefault();
+    this.applyEdgeAutoScroll(event.clientY);
+  }
+
+  showPhantomInColumn(col: Date): boolean {
+    const drop = this.currentDropTime();
+    return Boolean(this.draggedLesson() && drop && this.dayKey(col) === this.dayKey(new Date(drop)));
+  }
+
+  phantomTopForColumn(col: Date): number | null {
+    if (!this.showPhantomInColumn(col)) {
+      return null;
+    }
+    const drop = this.currentDropTime();
+    if (!drop) {
+      return null;
+    }
+    return this.calculateTop(drop);
   }
 
   dragMoveConfirmStudentName(): string {
@@ -1622,11 +1761,42 @@ export class CalendarComponent implements OnInit {
     const offsetY = Math.max(0, Math.min(this.gridHeightPx(), clientY - rect.top));
     const scheduledAt = this.isoFromDayAndOffset(day, offsetY);
     this.dragPreview.set({ lessonId, scheduledAt });
+    this.currentDropTime.set(scheduledAt);
   }
 
   private dayColumnAt(clientX: number, clientY: number): HTMLElement | null {
     const hit = this.document.elementFromPoint(clientX, clientY);
     return hit?.closest('.cal-day-column') as HTMLElement | null;
+  }
+
+  private createTransparentDragImage(): HTMLImageElement {
+    const pixel =
+      'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+    const img = new Image();
+    img.src = pixel;
+    return img;
+  }
+
+  private applyEdgeAutoScroll(clientY: number): void {
+    const container = this.scrollContainerRef()?.nativeElement;
+    if (!container) {
+      return;
+    }
+    const rect = container.getBoundingClientRect();
+    const topZone = rect.top + this.autoScrollEdgePx;
+    const bottomZone = rect.bottom - this.autoScrollEdgePx;
+
+    if (clientY < topZone) {
+      const rawIntensity = (topZone - clientY) / this.autoScrollEdgePx;
+      const easedIntensity = Math.pow(Math.min(1, Math.max(0, rawIntensity)), 1.6);
+      const delta = Math.max(1, Math.round(this.autoScrollMaxStepPx * easedIntensity));
+      container.scrollTop -= delta;
+    } else if (clientY > bottomZone) {
+      const rawIntensity = (clientY - bottomZone) / this.autoScrollEdgePx;
+      const easedIntensity = Math.pow(Math.min(1, Math.max(0, rawIntensity)), 1.6);
+      const delta = Math.max(1, Math.round(this.autoScrollMaxStepPx * easedIntensity));
+      container.scrollTop += delta;
+    }
   }
 
   private persistLessonMove(lesson: Lesson, scheduledAt: string): void {

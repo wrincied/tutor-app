@@ -58,8 +58,8 @@
           } @else {
             @for (user of users(); track user._id) {
               <tr>
-                <td>{{ user.email }}</td>
-                <td>
+                <td [attr.data-label]="t().tableEmail">{{ user.email }}</td>
+                <td [attr.data-label]="t().tableStatus">
                   <div class="admin-status-cell">
                     <span [class]="statusClass(user.subscription_status)">
                       {{ statusLabel(user.subscription_status) }}
@@ -72,14 +72,14 @@
                     }
                   </div>
                 </td>
-                <td>
+                <td [attr.data-label]="t().tableRegistered">
                   @if (user.createdAt) {
                     {{ user.createdAt | date: 'dd.MM.yyyy HH:mm' }}
                   } @else {
                     —
                   }
                 </td>
-                <td>
+                <td class="admin-table__actions-cell" [attr.data-label]="t().tableActions">
                   <div class="admin-table__actions">
                     <button type="button" class="btn-secondary" (click)="openEdit(user)">
                       {{ t().editSubscription }}

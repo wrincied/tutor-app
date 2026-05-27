@@ -125,25 +125,6 @@
         </div>
 
         <div class="cal-header__actions">
-          <button
-            type="button"
-            class="cal-btn cal-btn--students"
-            [class.cal-btn--active]="studentsSidebarOpen()"
-            (click)="toggleStudentsSidebar()"
-            [attr.aria-expanded]="studentsSidebarOpen()"
-            [attr.aria-label]="i18n.calendarUi().students"
-            [attr.title]="i18n.calendarUi().students"
-          >
-            <img
-              class="cal-btn__icon"
-              src="/assets/icons/icon-students.svg"
-              width="22"
-              height="22"
-              alt=""
-            />
-            <span class="cal-btn__label">{{ i18n.calendarUi().students }}</span>
-          </button>
-
           <div class="cal-toolbar">
             @if (!isCompactHeader()) {
               <button
@@ -190,6 +171,24 @@
               />
             }
           </div>
+          <button
+            type="button"
+            class="cal-btn cal-btn--students"
+            [class.cal-btn--active]="studentsSidebarOpen()"
+            (click)="toggleStudentsSidebar()"
+            [attr.aria-expanded]="studentsSidebarOpen()"
+            [attr.aria-label]="i18n.calendarUi().students"
+            [attr.title]="i18n.calendarUi().students"
+          >
+            <img
+              class="cal-btn__icon"
+              src="/assets/icons/icon-students.svg"
+              width="22"
+              height="22"
+              alt=""
+            />
+            <span class="cal-btn__label">{{ i18n.calendarUi().students }}</span>
+          </button>
         </div>
       </header>
 
@@ -284,7 +283,12 @@
                     </div>
                   </div>
 
-                  <div class="cal-grid-scroll" #gridScroll>
+                  <div
+                    class="cal-grid-scroll"
+                    #gridScroll
+                    #scrollContainer
+                    (dragover)="onScrollContainerDragOver($event)"
+                  >
                     <div
                       class="cal-grid-body"
                       [style.--cal-grid-height.px]="gridHeightPx()"
@@ -316,6 +320,8 @@
                               [class.cal-day-column--drag-target]="isDayDragTarget(col)"
                               [class.cal-day-column--off]="isNonWorkingDay(col)"
                               (click)="onDayColumnClick(col, $event)"
+                              (dragover)="onDayColumnDragOver($event, col)"
+                              (drop)="onDayColumnDrop($event)"
                             >
                               @if (isNonWorkingDay(col)) {
                                 <div class="cal-day-column__off-label">
@@ -326,8 +332,68 @@
                                 <div class="cal-hour-line" [style.height.px]="hourHeightPx"></div>
                               }
 
-                              @if (dragSnapLineTop(col); as snapTop) {
-                                <div class="cal-drag-snap-line" [style.top.px]="snapTop"></div>
+                              @if (showPhantomInColumn(col)) {
+                                <div
+                                  class="lesson-phantom cal-lesson-card"
+                                  [class.cal-lesson-card--scheduled]="
+                                    draggedLesson()?.status === 'scheduled'
+                                  "
+                                  [class.cal-lesson-card--completed]="
+                                    draggedLesson()?.status === 'completed'
+                                  "
+                                  [class.cal-lesson-card--missed]="
+                                    draggedLesson()?.status === 'missed'
+                                  "
+                                  [class.cal-lesson-card--canceled]="
+                                    draggedLesson()?.status === 'canceled'
+                                  "
+                                  [style.border-left-color]="
+                                    getStudentColor(draggedLesson()?.student_id)
+                                  "
+                                  [style.top.px]="phantomTopForColumn(col) ?? 0"
+                                >
+                                  @if (draggedLesson(); as phantomLesson) {
+                                    <p class="cal-lesson-card__title">
+                                      {{
+                                        phantomLesson.student_name ||
+                                          getStudentName(phantomLesson.student_id)
+                                      }}
+                                    </p>
+                                    @if (lessonCardUseCompactMeta(phantomLesson)) {
+                                      <p class="cal-lesson-card__meta">
+                                        {{ formatLessonRegion(phantomLesson) }}
+                                        · {{ formatLessonSnapshotRate(phantomLesson) }} ·
+                                        {{ formatLessonDuration(phantomLesson.lesson_duration) }}
+                                      </p>
+                                    } @else {
+                                      <div class="cal-lesson-card__details">
+                                        <p class="cal-lesson-card__detail">
+                                          <span class="cal-lesson-card__lbl">{{
+                                            i18n.calendarUi().regionLabel
+                                          }}</span>
+                                          <span>{{ formatLessonRegion(phantomLesson) }}</span>
+                                        </p>
+                                        <p class="cal-lesson-card__detail">
+                                          <span class="cal-lesson-card__lbl">{{
+                                            i18n.calendarUi().rateLabel
+                                          }}</span>
+                                          <span>{{ formatLessonSnapshotRate(phantomLesson) }}</span>
+                                        </p>
+                                        <p class="cal-lesson-card__detail">
+                                          <span class="cal-lesson-card__lbl">{{
+                                            i18n.calendarUi().durationLabel
+                                          }}</span>
+                                          <span>{{
+                                            formatLessonDuration(phantomLesson.lesson_duration)
+                                          }}</span>
+                                        </p>
+                                      </div>
+                                    }
+                                  }
+                                  <p class="cal-lesson-card__meta lesson-phantom__time">
+                                    {{ phantomDropTimeLabel() }}
+                                  </p>
+                                </div>
                               }
 
                               @for (
@@ -340,6 +406,9 @@
                                   [style.top.px]="calculateTop(displayScheduledAt(lesson))"
                                   [style.height.px]="calculateHeight(lesson.lesson_duration)"
                                   [style.border-left-color]="getStudentColor(lesson.student_id)"
+                                  draggable="true"
+                                  (dragstart)="onLessonDragStart($event, lesson)"
+                                  (dragend)="onLessonDragEnd()"
                                   (pointerdown)="onLessonPointerDown($event, lesson)"
                                   (click)="onLessonCardClick($event, lesson)"
                                 >

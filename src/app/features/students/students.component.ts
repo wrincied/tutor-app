@@ -336,6 +336,7 @@ export class StudentsComponent implements OnInit {
     this.svc.update(pending.student._id, { bot_active: pending.nextActive }).subscribe({
       next: (updated) => {
         this.patchStudent(updated);
+        this.logReloadTrigger.update((n) => n + 1);
         if (!pending.nextActive) {
           this.closeQuickActions();
         }

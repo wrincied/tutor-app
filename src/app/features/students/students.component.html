@@ -1,4 +1,4 @@
-<div class="page">
+<div class="page students-page">
   <div class="page-header">
     <h1>{{ i18n.nav().students }}</h1>
     <button type="button" class="btn-primary" (click)="openCreate()">{{ t.addButton }}</button>
@@ -114,6 +114,14 @@
       </div>
     </div>
   }
+
+  <app-activity-log-panel
+    category="students"
+    [title]="t.activityLogSection"
+    [emptyText]="t.activityLogEmpty"
+    [strings]="i18n.activityLogUi()"
+    [reloadTrigger]="logReloadTrigger()"
+  />
 </div>
 
 <app-dialog
@@ -225,7 +233,7 @@
               (input)="onFormColorPickerChange($any($event.target).value)"
               name="color_hex"
             />
-            <span class="color-picker-row__value">{{ form.color_hex }}</span>
+            <!-- <span class="color-picker-row__value">{{ form.color_hex }}</span> -->
             <button type="button" class="btn-secondary color-picker-row__random" (click)="randomizeFormColor()">
               {{ t.randomColor }}
             </button>
