@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/account/account-page-host.scss", "src/app/features/account/account-page-host.scss"],
+  "sourcesContent": ["// Вложенные страницы внутри .scrollable-content — растут по контенту, скролл у родителя.\r\n:host {\r\n  display: block;\r\n  width: 100%;\r\n}\r\n", ":host {\n  display: block;\n  width: 100%;\n}\n/*# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJmaWxlOi8vL2hvbWUvcnVubmVyL3dvcmsvdHV0b3ItYXBwL3R1dG9yLWFwcC9zcmMvYXBwL2ZlYXR1cmVzL2FjY291bnQvYWNjb3VudC1wYWdlLWhvc3Quc2NzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFDQTtFQUNFO0VBQ0EiLCJzb3VyY2VzQ29udGVudCI6WyIvLyDQktC70L7QttC10L3QvdGL0LUg0YHRgtGA0LDQvdC40YbRiyDQstC90YPRgtGA0LggLnNjcm9sbGFibGUtY29udGVudCDigJQg0YDQsNGB0YLRg9GCINC/0L4g0LrQvtC90YLQtdC90YLRgywg0YHQutGA0L7Qu9C7INGDINGA0L7QtNC40YLQtdC70Y8uXHJcbjpob3N0IHtcclxuICBkaXNwbGF5OiBibG9jaztcclxuICB3aWR0aDogMTAwJTtcclxufVxyXG4iXX0= */"],
+  "mappings": ";AACA;AACE,WAAA;AACA,SAAA;ACAF;",
+  "names": []
+}

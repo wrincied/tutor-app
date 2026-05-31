@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/core/utils/purge-stale-overlay-layers.ts"],
+  "sourcesContent": ["import {\n  APP_SELECT_DROPDOWN_OPEN_CLASS,\n  APP_SELECT_PORTAL_ROOT,\n} from '../constants/overlay-layer';\n\n/** Удаляет «зависшие» select-порталы — после HMR или destroy они перехватывают клики по UI. */\nexport function purgeStaleOverlayLayers(doc: Document): void {\n  const root = doc.querySelector(APP_SELECT_PORTAL_ROOT) ?? doc.body;\n  root.querySelectorAll('.app-select-portal-host, .app-dialog-portal-host').forEach((node) =>\n    node.remove(),\n  );\n  doc.documentElement.classList.remove(APP_SELECT_DROPDOWN_OPEN_CLASS);\n}\n"],
+  "mappings": ";;;;;;AAMM,SAAU,wBAAwB,KAAa;AACnD,QAAM,OAAO,IAAI,cAAc,sBAAsB,KAAK,IAAI;AAC9D,OAAK,iBAAiB,kDAAkD,EAAE,QAAQ,CAAC,SACjF,KAAK,OAAM,CAAE;AAEf,MAAI,gBAAgB,UAAU,OAAO,8BAA8B;AACrE;",
+  "names": []
+}

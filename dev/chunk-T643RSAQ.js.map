@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/landing/landing.component.ts", "src/app/features/landing/landing.component.html"],
+  "sourcesContent": ["import { Component, inject } from '@angular/core';\nimport { RouterLink } from '@angular/router';\nimport { I18nService } from '../../core/services/i18n.service';\n\n@Component({\n  selector: 'app-landing',\n  imports: [RouterLink],\n  templateUrl: './landing.component.html',\n})\nexport class LandingComponent {\n  readonly i18n = inject(I18nService);\n}\n", "<div class=\"landing\">\n  <a routerLink=\"/login\">{{ i18n.authUi().login }}</a>\n  <a routerLink=\"/register\">{{ i18n.authUi().createAccount }}</a>\n</div>\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;AASM,IAAO,mBAAP,MAAO,kBAAgB;EAClB,OAAO,OAAO,WAAW;;qCADvB,mBAAgB;EAAA;yEAAhB,mBAAgB,WAAA,CAAA,CAAA,aAAA,CAAA,GAAA,OAAA,GAAA,MAAA,GAAA,QAAA,CAAA,CAAA,GAAA,SAAA,GAAA,CAAA,cAAA,QAAA,GAAA,CAAA,cAAA,WAAA,CAAA,GAAA,UAAA,SAAA,0BAAA,IAAA,KAAA;AAAA,QAAA,KAAA,GAAA;ACT7B,MAAA,yBAAA,GAAA,OAAA,CAAA,EAAqB,GAAA,KAAA,CAAA;AACI,MAAA,iBAAA,CAAA;AAAyB,MAAA,uBAAA;AAChD,MAAA,yBAAA,GAAA,KAAA,CAAA;AAA0B,MAAA,iBAAA,CAAA;AAAiC,MAAA,uBAAA,EAAI;;;AADxC,MAAA,oBAAA,CAAA;AAAA,MAAA,4BAAA,IAAA,KAAA,OAAA,EAAA,KAAA;AACG,MAAA,oBAAA,CAAA;AAAA,MAAA,4BAAA,IAAA,KAAA,OAAA,EAAA,aAAA;;oBDIhB,UAAU,GAAA,eAAA,EAAA,CAAA;;;sEAGT,kBAAgB,CAAA;UAL5B;uBACW,eAAa,SACd,CAAC,UAAU,GAAC,UAAA,6JAAA,CAAA;;;;6EAGV,kBAAgB,EAAA,WAAA,oBAAA,UAAA,6CAAA,YAAA,GAAA,CAAA;AAAA,GAAA;",
+  "names": []
+}

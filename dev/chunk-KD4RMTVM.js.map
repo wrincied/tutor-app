@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/core/utils/format-currency.ts"],
+  "sourcesContent": ["/** Формат суммы с ISO-кодом валюты (USD, EUR, BYN …), без локализованных названий. */\nexport function formatMoneyWithCode(\n  amount: number,\n  currencyCode: string,\n  locale: string,\n  fractionDigits = 2,\n): string {\n  const code = String(currencyCode || 'USD').trim().toUpperCase();\n  try {\n    return new Intl.NumberFormat(locale, {\n      style: 'currency',\n      currency: code,\n      currencyDisplay: 'code',\n      minimumFractionDigits: fractionDigits,\n      maximumFractionDigits: fractionDigits,\n    }).format(amount);\n  } catch {\n    return `${amount.toFixed(fractionDigits)} ${code}`;\n  }\n}\n"],
+  "mappings": ";AACM,SAAU,oBACd,QACA,cACA,QACA,iBAAiB,GAAC;AAElB,QAAM,OAAO,OAAO,gBAAgB,KAAK,EAAE,KAAI,EAAG,YAAW;AAC7D,MAAI;AACF,WAAO,IAAI,KAAK,aAAa,QAAQ;MACnC,OAAO;MACP,UAAU;MACV,iBAAiB;MACjB,uBAAuB;MACvB,uBAAuB;KACxB,EAAE,OAAO,MAAM;EAClB,QAAQ;AACN,WAAO,GAAG,OAAO,QAAQ,cAAc,CAAC,IAAI,IAAI;EAClD;AACF;",
+  "names": []
+}
