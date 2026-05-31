@@ -14,8 +14,8 @@ jobs:
     env:
       # Вариант A (лучше): GitHub → Settings → Secrets and variables → Actions → DEV_API_URL
       DEV_API_URL: ${{ secrets.DEV_API_URL }}
-      # Вариант B: если секрет не задан — впиши URL бэкенда сюда (без /api и без слэша в конце)
-      DEV_API_URL_FALLBACK: ''
+      # Вариант B: если секрет не задан — URL Firebase App Hosting backend (backend/apphosting.yaml)
+      DEV_API_URL_FALLBACK: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app'
       DEV_APP_URL: https://wrincied.github.io/tutor-app/dev
     steps:
       - name: Checkout code
