@@ -1,0 +1,57 @@
+name: Deploy Dev to GitHub Pages
+
+on:
+  push:
+    branches: ["dev"] # Срабатывает, когда ты пушишь в ветку dev (как на твоем скрине)
+  workflow_dispatch: # Оставляет кнопку ручного запуска в панели Actions
+
+# Явно задаем права для выполнения деплоя через GitHub Actions
+permissions:
+  contents: write # Нужно write, чтобы экшен мог записать файлы сборки
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm' # Кеширование ускорит последующие сборки
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Angular Dev
+        run: npx ng build --configuration=development --base-href=/tutor-app/dev/
+
+      # Создаем авто-редирект из корня проекта в подпапку /dev, чтобы не открывался пустой md
+      - name: Create Root Redirect Fallback
+        run: |
+          mkdir -p dist/root_fallback
+          echo '<meta http-equiv="refresh" content="0;URL='\''/tutor-app/dev/'\''" />' > dist/root_fallback/index.html
+
+      # Деплоим собранный Angular в папку /dev
+      - name: Deploy Angular App
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist/tutor-app/browser # Проверь это имя папки в твоем dist после локального билда
+          target-folder: dev
+          branch: gh-pages # Файлы будут лежать в изолированной ветке gh-pages
+
+      # Деплоим редирект в корень сайта
+      - name: Deploy Root Redirect
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist/root_fallback
+          target-folder: .
+          branch: gh-pages
