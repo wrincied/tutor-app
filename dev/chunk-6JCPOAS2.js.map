@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/core/utils/resolve-firebase-user.ts"],
-  "sourcesContent": ["import { Auth } from '@angular/fire/auth';\r\nimport type { User } from 'firebase/auth';\r\nimport { Observable, from } from 'rxjs';\r\nimport { map } from 'rxjs/operators';\r\n\r\n/**\r\n * Дожидается окончания восстановления сессии Firebase (после F5 / прямого URL).\r\n * Без этого authState.pipe(take(1)) часто даёт null и вечный редирект на /login.\r\n */\r\nexport function resolveFirebaseUser(auth: Auth): Observable<User | null> {\r\n  return from(auth.authStateReady()).pipe(map(() => auth.currentUser));\r\n}\r\n"],
-  "mappings": ";;;;;;AASM,SAAU,oBAAoB,MAAU;AAC5C,SAAO,KAAK,KAAK,eAAc,CAAE,EAAE,KAAK,IAAI,MAAM,KAAK,WAAW,CAAC;AACrE;",
-  "names": []
-}

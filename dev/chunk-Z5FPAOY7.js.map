@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/core/constants/overlay-layer.ts"],
-  "sourcesContent": ["/** Событие: открылся другой оверлей (dialog/modal) — закрыть открытые select. */\nexport const APP_OVERLAY_LAYER_OPEN = 'app-overlay-layer-open';\n\n/** На html: выпадающий select открыт — максимальный z-index для меню */\nexport const APP_SELECT_DROPDOWN_OPEN_CLASS = 'app-select-dropdown-open';\n\n/** Корень для portal select — body, чтобы fixed не резался transform модалки */\nexport const APP_SELECT_PORTAL_ROOT = 'body';\n"],
-  "mappings": ";AACO,IAAM,yBAAyB;AAG/B,IAAM,iCAAiC;AAGvC,IAAM,yBAAyB;",
-  "names": []
-}
