@@ -23,25 +23,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate environment.ts
+      - name: Generate environment files for GitHub Pages dev
         run: |
           mkdir -p src/environments
           cat > src/environments/environment.ts << 'EOF'
           export const environment = {
             production: false,
-            apiUrl: 'https://PLACEHOLDER-api.example.com',
-            appUrl: 'https://PLACEHOLDER.example.com',
+            // TODO: URL Node-бэкенда (App Hosting / Cloud Run / ngrok), без слэша в конце
+            // Пример ngrok: https://abc123.ngrok-free.app
+            apiUrl: 'https://YOUR-BACKEND-URL-HERE',
+            // TODO: публичный URL dev-стенда на GitHub Pages
+            appUrl: 'https://YOUR-GITHUB-USERNAME.github.io/tutor-app/dev',
             firebaseConfig: {
-              apiKey: 'PLACEHOLDER',
-              authDomain: 'PLACEHOLDER',
-              projectId: 'PLACEHOLDER',
-              storageBucket: 'PLACEHOLDER',
-              messagingSenderId: 'PLACEHOLDER',
-              appId: 'PLACEHOLDER',
-              measurementId: 'PLACEHOLDER',
+              apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
+              authDomain: 'simple4u-64822.web.app',
+              projectId: 'tutorassis',
+              storageBucket: 'tutorassis.firebasestorage.app',
+              messagingSenderId: '965411338053',
+              appId: '1:965411338053:web:d98317afdb5602a53c702c',
+              measurementId: 'G-TXM74NGN6R',
             },
           };
           EOF
+          # development-сборка подменяет environment.ts → environment.development.ts
+          cp src/environments/environment.ts src/environments/environment.development.ts
 
       - name: Build Angular Dev
         run: npx ng build --configuration=development --base-href=/tutor-app/dev/
