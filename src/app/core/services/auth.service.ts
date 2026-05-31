@@ -35,7 +35,6 @@ import {
   Observable,
   switchMap,
   throwError,
-  defer,
   of,
   shareReplay,
 } from 'rxjs';
@@ -183,10 +182,8 @@ export class AuthService {
    */
   handleRedirectResult(): Observable<User | null> {
     if (!this.redirectResult$) {
-      this.redirectResult$ = defer(() =>
-        from(runInInjectionContext(this.injector, () => getRedirectResult(this.auth))),
-      ).pipe(
-        switchMap((cred) => (cred?.user ? of(cred.user) : of(null))),
+      this.redirectResult$ = this.fromAuth(() => getRedirectResult(this.auth)).pipe(
+        map((cred) => cred?.user ?? null),
         catchError((err) => {
           this.redirectResult$ = undefined;
           return throwError(() => err);

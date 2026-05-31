@@ -11,6 +11,10 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      # GitHub → Settings → Secrets → Actions → DEV_API_URL
+      DEV_API_URL: ${{ secrets.DEV_API_URL }}
+      DEV_APP_URL: https://wrincied.github.io/tutor-app/dev
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,17 +27,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate environment files for GitHub Pages dev
+      - name: Generate environment.ts for GitHub Pages dev
         run: |
+          if [ -z "$DEV_API_URL" ]; then
+            echo "::error::Set repository secret DEV_API_URL (backend base URL, e.g. ngrok or Cloud Run)"
+            exit 1
+          fi
           mkdir -p src/environments
-          cat > src/environments/environment.ts << 'EOF'
+          cat > src/environments/environment.ts << EOF
           export const environment = {
             production: false,
-            // TODO: URL Node-бэкенда (App Hosting / Cloud Run / ngrok), без слэша в конце
-            // Пример ngrok: https://abc123.ngrok-free.app
-            apiUrl: 'https://YOUR-BACKEND-URL-HERE',
-            // TODO: публичный URL dev-стенда на GitHub Pages
-            appUrl: 'https://YOUR-GITHUB-USERNAME.github.io/tutor-app/dev',
+            apiUrl: '${DEV_API_URL}',
+            appUrl: '${DEV_APP_URL}',
             firebaseConfig: {
               apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
               authDomain: 'simple4u-64822.web.app',
@@ -45,11 +50,9 @@ jobs:
             },
           };
           EOF
-          # development-сборка подменяет environment.ts → environment.development.ts
-          cp src/environments/environment.ts src/environments/environment.development.ts
 
       - name: Build Angular Dev
-        run: npx ng build --configuration=development --base-href=/tutor-app/dev/
+        run: npx ng build --configuration=production --base-href=/tutor-app/dev/
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
