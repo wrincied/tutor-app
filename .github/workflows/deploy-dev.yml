@@ -5,7 +5,6 @@ on:
     branches:
       - dev
 
-# Права на уровне всего воркфлоу
 permissions:
   contents: write
 
@@ -24,12 +23,32 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate environment.ts
+        run: |
+          mkdir -p src/environments
+          cat > src/environments/environment.ts << 'EOF'
+          export const environment = {
+            production: false,
+            apiUrl: 'https://PLACEHOLDER-api.example.com',
+            appUrl: 'https://PLACEHOLDER.example.com',
+            firebaseConfig: {
+              apiKey: 'PLACEHOLDER',
+              authDomain: 'PLACEHOLDER',
+              projectId: 'PLACEHOLDER',
+              storageBucket: 'PLACEHOLDER',
+              messagingSenderId: 'PLACEHOLDER',
+              appId: 'PLACEHOLDER',
+              measurementId: 'PLACEHOLDER',
+            },
+          };
+          EOF
+
       - name: Build Angular Dev
         run: npx ng build --configuration=development --base-href=/tutor-app/dev/
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist/tutor-app/browser # Проверь локально: если в dist папка без /browser, оставь dist/tutor-app
+          folder: dist/tutor/browser
           target-folder: dev
           branch: gh-pages

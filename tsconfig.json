@@ -15,7 +15,8 @@
     "target": "ES2022",
     "module": "preserve",
     "paths": {
-      "@interfaces": ["./src/assets/Interfaces.ts"]
+      "@interfaces": ["./src/assets/Interfaces.ts"],
+      "@environment": ["./src/environments/environment.ts"]
     }
   },
   "angularCompilerOptions": {

@@ -5,7 +5,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { resolveRegisterError } from '../../core/utils/auth-errors';
-import { environment } from '../../../environments/environment';
+import { environment } from '@environment';
 
 @Component({
   selector: 'app-register',

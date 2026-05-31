@@ -45,7 +45,7 @@ import {
   GoogleSignInRequiredError,
 } from '../utils/auth-errors';
 
-import { environment } from '../../../environments/environment';
+import { environment } from '@environment';
 import { apiUrl } from '../config/api-url';
 import type { UserProfile } from '@interfaces';
 import { postAuthPath } from '../utils/post-auth-navigation';
