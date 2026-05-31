@@ -1,7 +1,7 @@
 import {
   apiUrl,
   environment
-} from "./chunk-EWPFDTJG.js";
+} from "./chunk-ZSKR65RV.js";
 import {
   Router
 } from "./chunk-HPUTEZXI.js";
@@ -13190,7 +13190,7 @@ var AuthService = class _AuthService {
   loginWithGoogleRedirect() {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
-    void signInWithRedirect2(this.auth, provider);
+    void runInInjectionContext(this.injector, () => signInWithRedirect2(this.auth, provider));
   }
   /** Google OAuth через popup (dev fallback). */
   loginWithGooglePopup() {
@@ -13204,7 +13204,7 @@ var AuthService = class _AuthService {
    */
   handleRedirectResult() {
     if (!this.redirectResult$) {
-      this.redirectResult$ = defer(() => from(getRedirectResult2(this.auth))).pipe(switchMap((cred) => cred?.user ? of(cred.user) : of(null)), catchError((err) => {
+      this.redirectResult$ = defer(() => from(runInInjectionContext(this.injector, () => getRedirectResult2(this.auth)))).pipe(switchMap((cred) => cred?.user ? of(cred.user) : of(null)), catchError((err) => {
         this.redirectResult$ = void 0;
         return throwError(() => err);
       }), shareReplay({ bufferSize: 1, refCount: false }));
@@ -13342,4 +13342,4 @@ export {
   resolveLoginError,
   AuthService
 };
-//# sourceMappingURL=chunk-LS4RMPGH.js.map
+//# sourceMappingURL=chunk-VVVNTCL2.js.map

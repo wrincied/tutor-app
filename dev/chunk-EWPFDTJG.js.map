@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/environments/environment.development.ts", "src/app/core/config/api-url.ts"],
-  "sourcesContent": ["export const environment = {\n  production: false,\n  apiUrl: 'http://localhost:3001',\n  appUrl: 'http://localhost:4200',\n  firebaseConfig: {\n    apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',\n    authDomain: 'simple4u-64822.web.app',\n    projectId: 'tutorassis',\n    storageBucket: 'tutorassis.firebasestorage.app',\n    messagingSenderId: '965411338053',\n    appId: '1:965411338053:web:d98317afdb5602a53c702c',\n    measurementId: 'G-TXM74NGN6R',\n  },\n};\n", "import { environment } from '@environment';\n\nconst base = environment.apiUrl.replace(/\\/$/, '');\n\n/** Базовый URL API без завершающего слэша. path — сегмент после /api (без ведущего /). */\nexport function apiUrl(path = ''): string {\n  const segment = path.replace(/^\\/+|\\/+$/g, '');\n  return segment ? `${base}/api/${segment}` : `${base}/api`;\n}\n"],
-  "mappings": ";AAAO,IAAM,cAAc;EACzB,YAAY;EACZ,QAAQ;EACR,QAAQ;EACR,gBAAgB;IACd,QAAQ;IACR,YAAY;IACZ,WAAW;IACX,eAAe;IACf,mBAAmB;IACnB,OAAO;IACP,eAAe;;;;;ACTnB,IAAM,OAAO,YAAY,OAAO,QAAQ,OAAO,EAAE;AAG3C,SAAU,OAAO,OAAO,IAAE;AAC9B,QAAM,UAAU,KAAK,QAAQ,cAAc,EAAE;AAC7C,SAAO,UAAU,GAAG,IAAI,QAAQ,OAAO,KAAK,GAAG,IAAI;AACrD;",
-  "names": []
-}

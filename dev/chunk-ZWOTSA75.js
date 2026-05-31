@@ -1,7 +1,7 @@
 import {
   ActivityLogPanelComponent,
   FINANCE_REPORT_CURRENCIES
-} from "./chunk-EGMZHRVQ.js";
+} from "./chunk-FXASAEVX.js";
 import {
   AppSelectComponent
 } from "./chunk-VZTTL7NS.js";
@@ -20,7 +20,7 @@ import {
 import {
   FinanceService,
   financePeriodRange
-} from "./chunk-OWDSG4YD.js";
+} from "./chunk-NZVDDRVQ.js";
 import {
   formatMoneyWithCode
 } from "./chunk-KD4RMTVM.js";
@@ -30,7 +30,7 @@ import {
 import "./chunk-JKSU2LPC.js";
 import "./chunk-MFN2ATQX.js";
 import "./chunk-Z5FPAOY7.js";
-import "./chunk-EWPFDTJG.js";
+import "./chunk-ZSKR65RV.js";
 import {
   RouterLink
 } from "./chunk-HPUTEZXI.js";
@@ -1514,4 +1514,4 @@ var FinanceComponent = class _FinanceComponent {
 export {
   FinanceComponent
 };
-//# sourceMappingURL=chunk-U5LGIYT3.js.map
+//# sourceMappingURL=chunk-ZWOTSA75.js.map

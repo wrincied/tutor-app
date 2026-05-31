@@ -1,6 +1,6 @@
 import {
   UserService
-} from "./chunk-KBYR5346.js";
+} from "./chunk-ODVTALVQ.js";
 import {
   Injectable,
   Subject,
@@ -185,4 +185,4 @@ export {
   WORKSPACE_LESSON_DURATIONS,
   UserProfileSettingsService
 };
-//# sourceMappingURL=chunk-N5ZNR6LJ.js.map
+//# sourceMappingURL=chunk-Z5SJQJWJ.js.map

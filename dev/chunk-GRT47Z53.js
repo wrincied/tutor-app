@@ -1,10 +1,10 @@
 import {
   DEFAULT_STUDENT_BORDER_COLOR,
   StudentService
-} from "./chunk-YOWLJKDE.js";
+} from "./chunk-3SKD4CQG.js";
 import {
   UserProfileSettingsService
-} from "./chunk-N5ZNR6LJ.js";
+} from "./chunk-Z5SJQJWJ.js";
 import {
   AppSelectComponent
 } from "./chunk-VZTTL7NS.js";
@@ -30,11 +30,11 @@ import {
 import {
   APP_OVERLAY_LAYER_OPEN
 } from "./chunk-Z5FPAOY7.js";
-import "./chunk-KBYR5346.js";
-import "./chunk-LS4RMPGH.js";
+import "./chunk-ODVTALVQ.js";
+import "./chunk-VVVNTCL2.js";
 import {
   apiUrl
-} from "./chunk-EWPFDTJG.js";
+} from "./chunk-ZSKR65RV.js";
 import "./chunk-HPUTEZXI.js";
 import {
   Component,
@@ -8697,4 +8697,4 @@ var CalendarComponent = class _CalendarComponent {
 export {
   CalendarComponent
 };
-//# sourceMappingURL=chunk-3LAQOQBO.js.map
+//# sourceMappingURL=chunk-GRT47Z53.js.map

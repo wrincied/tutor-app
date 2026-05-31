@@ -13,7 +13,7 @@ import {
 import "./chunk-Z5FPAOY7.js";
 import {
   UserService
-} from "./chunk-KBYR5346.js";
+} from "./chunk-ODVTALVQ.js";
 import {
   AppCheckInstances,
   Auth,
@@ -60,10 +60,10 @@ import {
   ɵgetAllInstancesOf,
   ɵgetDefaultInstanceOf,
   ɵzoneWrap
-} from "./chunk-LS4RMPGH.js";
+} from "./chunk-VVVNTCL2.js";
 import {
   environment
-} from "./chunk-EWPFDTJG.js";
+} from "./chunk-ZSKR65RV.js";
 import {
   ActivationEnd,
   NavigationEnd,
@@ -23468,12 +23468,12 @@ var routes = [
   },
   {
     path: "login",
-    loadComponent: () => import("./chunk-6KNYYUN7.js").then((m) => m.LoginComponent),
+    loadComponent: () => import("./chunk-NM4IGKKK.js").then((m) => m.LoginComponent),
     data: { title: "login" }
   },
   {
     path: "register",
-    loadComponent: () => import("./chunk-VAGGB5N6.js").then((m) => m.RegisterComponent),
+    loadComponent: () => import("./chunk-GDXDASFY.js").then((m) => m.RegisterComponent),
     data: { title: "register" }
   },
   {
@@ -23492,14 +23492,14 @@ var routes = [
     children: [
       {
         path: "verify-email-notice",
-        loadComponent: () => import("./chunk-BW5VRZV2.js").then((m) => m.VerifyEmailNoticeComponent),
+        loadComponent: () => import("./chunk-AVRUKFN3.js").then((m) => m.VerifyEmailNoticeComponent),
         data: { title: "verifyEmail" }
       },
       {
         path: "onboarding",
         canActivate: [emailVerifiedGuard, onboardingPageGuard],
         resolve: { profile: onboardingProfileResolver },
-        loadComponent: () => import("./chunk-QRAH373Y.js").then((m) => m.OnboardingComponent),
+        loadComponent: () => import("./chunk-R75LYNSG.js").then((m) => m.OnboardingComponent),
         data: { title: "onboarding" }
       },
       {
@@ -23509,43 +23509,43 @@ var routes = [
           { path: "", redirectTo: "home", pathMatch: "full" },
           {
             path: "home",
-            loadComponent: () => import("./chunk-3ELTCGEZ.js").then((m) => m.HomeComponent),
+            loadComponent: () => import("./chunk-ITFOBTAO.js").then((m) => m.HomeComponent),
             data: { title: "home" }
           },
           {
             path: "students",
-            loadComponent: () => import("./chunk-M24O3ASD.js").then((m) => m.StudentsComponent),
+            loadComponent: () => import("./chunk-NK2FUSSF.js").then((m) => m.StudentsComponent),
             data: { title: "students" }
           },
           {
             path: "calendar",
-            loadComponent: () => import("./chunk-3LAQOQBO.js").then((m) => m.CalendarComponent),
+            loadComponent: () => import("./chunk-GRT47Z53.js").then((m) => m.CalendarComponent),
             data: { title: "calendar" }
           },
           {
             path: "finance",
-            loadComponent: () => import("./chunk-U5LGIYT3.js").then((m) => m.FinanceComponent),
+            loadComponent: () => import("./chunk-ZWOTSA75.js").then((m) => m.FinanceComponent),
             data: { title: "finance" }
           },
           {
             path: "pricing",
-            loadComponent: () => import("./chunk-6TLI2M6A.js").then((m) => m.PricingComponent),
+            loadComponent: () => import("./chunk-UQNMAIA5.js").then((m) => m.PricingComponent),
             data: { title: "pricing" }
           },
           {
             path: "account",
-            loadComponent: () => import("./chunk-ZZ67CAIW.js").then((m) => m.AccountShellComponent),
+            loadComponent: () => import("./chunk-ZUR634SO.js").then((m) => m.AccountShellComponent),
             data: { title: "account" },
             children: [
               { path: "", redirectTo: "customization", pathMatch: "full" },
               {
                 path: "customization",
-                loadComponent: () => import("./chunk-ICFX3MHW.js").then((m) => m.AccountCustomizationComponent),
+                loadComponent: () => import("./chunk-VSWLPUSQ.js").then((m) => m.AccountCustomizationComponent),
                 data: { title: "accountCustomization" }
               },
               {
                 path: "profile",
-                loadComponent: () => import("./chunk-LQII554P.js").then((m) => m.AccountProfileComponent),
+                loadComponent: () => import("./chunk-Q5MIFB2P.js").then((m) => m.AccountProfileComponent),
                 data: { title: "accountProfile" }
               }
             ]
@@ -23553,7 +23553,7 @@ var routes = [
           {
             path: "admin",
             canActivate: [adminGuard],
-            loadComponent: () => import("./chunk-UB3J77AT.js").then((m) => m.AdminDashboardComponent),
+            loadComponent: () => import("./chunk-I6FUK52R.js").then((m) => m.AdminDashboardComponent),
             data: { title: "admin" }
           }
         ]

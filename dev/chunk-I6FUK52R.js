@@ -15,7 +15,7 @@ import "./chunk-MFN2ATQX.js";
 import "./chunk-Z5FPAOY7.js";
 import {
   apiUrl
-} from "./chunk-EWPFDTJG.js";
+} from "./chunk-ZSKR65RV.js";
 import {
   Component,
   DatePipe,
@@ -779,4 +779,4 @@ var AdminDashboardComponent = class _AdminDashboardComponent {
 export {
   AdminDashboardComponent
 };
-//# sourceMappingURL=chunk-UB3J77AT.js.map
+//# sourceMappingURL=chunk-I6FUK52R.js.map

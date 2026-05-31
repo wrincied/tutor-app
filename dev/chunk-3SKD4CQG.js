@@ -1,6 +1,6 @@
 import {
   apiUrl
-} from "./chunk-EWPFDTJG.js";
+} from "./chunk-ZSKR65RV.js";
 import {
   HttpClient,
   Injectable,
@@ -137,4 +137,4 @@ export {
   colorToHexForPicker,
   hexToStoredColor
 };
-//# sourceMappingURL=chunk-YOWLJKDE.js.map
+//# sourceMappingURL=chunk-3SKD4CQG.js.map

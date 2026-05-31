@@ -4,11 +4,11 @@ import {
   colorToHexForPicker,
   generatePastelColor,
   hexToStoredColor
-} from "./chunk-YOWLJKDE.js";
+} from "./chunk-3SKD4CQG.js";
 import {
   ActivityLogPanelComponent,
   RATE_CURRENCIES
-} from "./chunk-EGMZHRVQ.js";
+} from "./chunk-FXASAEVX.js";
 import {
   AppSelectComponent
 } from "./chunk-VZTTL7NS.js";
@@ -31,7 +31,7 @@ import {
 import "./chunk-JKSU2LPC.js";
 import "./chunk-MFN2ATQX.js";
 import "./chunk-Z5FPAOY7.js";
-import "./chunk-EWPFDTJG.js";
+import "./chunk-ZSKR65RV.js";
 import {
   Component,
   I18nService,
@@ -1584,4 +1584,4 @@ var StudentsComponent = class _StudentsComponent {
 export {
   StudentsComponent
 };
-//# sourceMappingURL=chunk-M24O3ASD.js.map
+//# sourceMappingURL=chunk-NK2FUSSF.js.map

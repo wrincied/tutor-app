@@ -1,8 +1,11 @@
 // src/environments/environment.ts
 var environment = {
   production: false,
-  apiUrl: "http://localhost:3001",
-  appUrl: "http://localhost:4200",
+  // TODO: URL Node-бэкенда (App Hosting / Cloud Run / ngrok), без слэша в конце
+  // Пример ngrok: https://abc123.ngrok-free.app
+  apiUrl: "https://YOUR-BACKEND-URL-HERE",
+  // TODO: публичный URL dev-стенда на GitHub Pages
+  appUrl: "https://YOUR-GITHUB-USERNAME.github.io/tutor-app/dev",
   firebaseConfig: {
     apiKey: "AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw",
     authDomain: "simple4u-64822.web.app",
@@ -25,4 +28,4 @@ export {
   environment,
   apiUrl
 };
-//# sourceMappingURL=chunk-EWPFDTJG.js.map
+//# sourceMappingURL=chunk-ZSKR65RV.js.map
