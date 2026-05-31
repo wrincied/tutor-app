@@ -3,10 +3,11 @@ name: Deploy Dev to GitHub Pages
 on:
   push:
     branches:
-      - dev # Скрипт срабатывает при пуше в ветку dev
+      - dev
 
+# Права на уровне всего воркфлоу
 permissions:
-  contents: write # КРИТИЧЕСКИ ВАЖНО: Без этого экшен не сможет записать файлы в ветку gh-pages
+  contents: write
 
 jobs:
   deploy:
@@ -23,14 +24,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # ИСПРАВЛЕНО: Изменено название репозитория в --base-href на /tutor-app/dev/
       - name: Build Angular Dev
         run: npx ng build --configuration=development --base-href=/tutor-app/dev/
 
-      # ИСПРАВЛЕНО: Изменено имя папки в dist на dist/tutor-app/browser
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist/tutor-app/browser # Проверь локально: если в dist нет подпапки browser, оставь просто dist/tutor-app
-          target-folder: dev 
+          folder: dist/tutor-app/browser # Проверь локально: если в dist папка без /browser, оставь dist/tutor-app
+          target-folder: dev
           branch: gh-pages
