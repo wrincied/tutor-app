@@ -188,15 +188,12 @@ html.app-calendar-modal-open {
   --z-app-navbar: 0;
 }
 
-// Календарь: перетаскивание урока — без скролла страницы
+// Календарь: перетаскивание урока — без скролла страницы (только сетка, не весь экран)
 html.cal-lesson-dragging {
-  touch-action: none !important;
   overscroll-behavior: none !important;
 }
 
-html.cal-lesson-dragging .app-shell,
-html.cal-lesson-dragging .app-content,
-html.cal-lesson-dragging .app-page-host {
+html.cal-lesson-dragging .cal-grid-scroll {
   touch-action: none !important;
 }
 

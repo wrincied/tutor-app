@@ -406,7 +406,7 @@
                                   [style.top.px]="calculateTop(displayScheduledAt(lesson))"
                                   [style.height.px]="calculateHeight(lesson.lesson_duration)"
                                   [style.border-left-color]="getStudentColor(lesson.student_id)"
-                                  draggable="true"
+                                  [attr.draggable]="useNativeLessonDrag() ? true : null"
                                   (dragstart)="onLessonDragStart($event, lesson)"
                                   (dragend)="onLessonDragEnd()"
                                   (pointerdown)="onLessonPointerDown($event, lesson)"

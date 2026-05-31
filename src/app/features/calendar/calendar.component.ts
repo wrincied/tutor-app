@@ -154,6 +154,8 @@ export class CalendarComponent implements OnInit {
   /** Планшет/телефон: без стрелок навигации, ≤1023px */
   isCompactHeader = signal(false);
   isNarrowViewport = signal(true);
+  /** HTML5 dragstart/dragover — только на десктопе с точным указателем. */
+  useNativeLessonDrag = signal(false);
   modesMenuOpen = signal(false);
   studentsSidebarOpen = signal(false);
   studentsSidebarQuery = signal('');
@@ -171,6 +173,7 @@ export class CalendarComponent implements OnInit {
   private pointerSession: LessonPointerSession | null = null;
   private pointerMoveHandler: ((event: PointerEvent) => void) | null = null;
   private pointerUpHandler: ((event: PointerEvent) => void) | null = null;
+  private pointerSafetyHandler: (() => void) | null = null;
   private readonly dragStartThresholdPx = 6;
   private suppressLessonClickUntil = 0;
   /** Native DnD state for desktop drag/drop UX. */
@@ -767,12 +770,14 @@ export class CalendarComponent implements OnInit {
     }
     const bottomNavMq = window.matchMedia('(max-width: 768px), (max-height: 440px)');
     const compactMq = window.matchMedia('(max-width: 1023px)');
+    const finePointerMq = window.matchMedia('(hover: hover) and (pointer: fine)');
     const applyViewport = () => {
       const bottomNav = bottomNavMq.matches;
       const compact = compactMq.matches;
       this.isBottomNavLayout.set(bottomNav);
       this.isCompactHeader.set(compact);
       this.isNarrowViewport.set(compact);
+      this.useNativeLessonDrag.set(finePointerMq.matches);
       if (!bottomNav) {
         this.modesMenuOpen.set(false);
       }
@@ -780,9 +785,11 @@ export class CalendarComponent implements OnInit {
     applyViewport();
     bottomNavMq.addEventListener('change', applyViewport);
     compactMq.addEventListener('change', applyViewport);
+    finePointerMq.addEventListener('change', applyViewport);
     this.destroyRef.onDestroy(() => {
       bottomNavMq.removeEventListener('change', applyViewport);
       compactMq.removeEventListener('change', applyViewport);
+      finePointerMq.removeEventListener('change', applyViewport);
     });
   }
 
@@ -1399,6 +1406,9 @@ export class CalendarComponent implements OnInit {
     ) {
       return;
     }
+    // Блокируем нативный drag на touch — иначе iOS/Android могут «зависнуть»
+    // с html.cal-lesson-dragging и touch-action: none на всём экране.
+    event.preventDefault();
     event.stopPropagation();
 
     const card = event.currentTarget as HTMLElement;
@@ -1438,9 +1448,18 @@ export class CalendarComponent implements OnInit {
     }
     this.pointerMoveHandler = (event) => this.onDocumentPointerMove(event);
     this.pointerUpHandler = (event) => this.onDocumentPointerUp(event);
+    this.pointerSafetyHandler = () => {
+      if (this.document.visibilityState === 'visible') {
+        return;
+      }
+      this.abortPointerDrag();
+    };
     this.document.addEventListener('pointermove', this.pointerMoveHandler, { passive: false });
     this.document.addEventListener('pointerup', this.pointerUpHandler);
     this.document.addEventListener('pointercancel', this.pointerUpHandler);
+    this.document.addEventListener('touchcancel', this.pointerSafetyHandler, { passive: true });
+    window.addEventListener('blur', this.pointerSafetyHandler);
+    this.document.addEventListener('visibilitychange', this.pointerSafetyHandler);
   }
 
   private clearPointerListeners(): void {
@@ -1450,8 +1469,36 @@ export class CalendarComponent implements OnInit {
     this.document.removeEventListener('pointermove', this.pointerMoveHandler);
     this.document.removeEventListener('pointerup', this.pointerUpHandler!);
     this.document.removeEventListener('pointercancel', this.pointerUpHandler!);
+    if (this.pointerSafetyHandler) {
+      this.document.removeEventListener('touchcancel', this.pointerSafetyHandler);
+      window.removeEventListener('blur', this.pointerSafetyHandler);
+      this.document.removeEventListener('visibilitychange', this.pointerSafetyHandler);
+      this.pointerSafetyHandler = null;
+    }
     this.pointerMoveHandler = null;
     this.pointerUpHandler = null;
+  }
+
+  /** Сброс зависшего touch-drag без сохранения переноса. */
+  private abortPointerDrag(): void {
+    if (!this.pointerSession && !this.dragActiveLessonId()) {
+      return;
+    }
+    const session = this.pointerSession;
+    if (session) {
+      try {
+        session.captureTarget.releasePointerCapture(session.pointerId);
+      } catch {
+        /* already released */
+      }
+    }
+    const wasDragging = Boolean(this.dragActiveLessonId());
+    this.clearPointerListeners();
+    this.pointerSession = null;
+    if (wasDragging) {
+      this.clearDragUi();
+      this.suppressLessonClickUntil = Date.now() + 450;
+    }
   }
 
   private onDocumentPointerMove(event: PointerEvent): void {
@@ -1570,6 +1617,10 @@ export class CalendarComponent implements OnInit {
   }
 
   onLessonDragStart(event: DragEvent, lesson: CalendarLesson): void {
+    if (!this.useNativeLessonDrag()) {
+      event.preventDefault();
+      return;
+    }
     if (lesson.isVirtualOccurrence || !lesson.scheduledAt || !event.dataTransfer) {
       event.preventDefault();
       return;
