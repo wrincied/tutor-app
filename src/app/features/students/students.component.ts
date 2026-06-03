@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { StudentService, Student } from '../../core/services/student.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType } from '@interfaces';
+import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType, type StudentRateUnit } from '@interfaces';
 import {
   colorToHexForPicker,
   DEFAULT_STUDENT_BORDER_COLOR,
@@ -33,6 +33,10 @@ function resolveBillingType(raw?: string): StudentBillingType {
     return 'postpaid';
   }
   return 'package';
+}
+
+function resolveRateUnit(raw?: string): StudentRateUnit {
+  return raw === 'lesson' ? 'lesson' : 'hour';
 }
 
 function resolvedBrowserTimezone(): string {
@@ -67,10 +71,14 @@ export class StudentsComponent implements OnInit {
   };
 
   billingType = signal<StudentBillingType>('package');
+  rateUnit = signal<StudentRateUnit>('hour');
   balanceLessons = signal(0);
   creditLimit = signal(0);
   readonly isPackageBilling = computed(() => this.billingType() === 'package');
   readonly isPostpaidBilling = computed(() => this.billingType() === 'postpaid');
+  readonly rateFieldLabel = computed(() =>
+    this.rateUnit() === 'lesson' ? this.t.ratePerLesson : this.t.ratePerHour,
+  );
 
   readonly rateCurrencies = RATE_CURRENCIES;
   readonly skeletonCardSlots = [0, 1, 2, 3, 4, 5];
@@ -149,6 +157,10 @@ export class StudentsComponent implements OnInit {
     this.billingType.set(type);
   }
 
+  setRateUnit(unit: StudentRateUnit): void {
+    this.rateUnit.set(unit);
+  }
+
   openCreate() {
     this.autoTimezone = true;
     this.form = {
@@ -160,6 +172,7 @@ export class StudentsComponent implements OnInit {
       bot_active: false,
     };
     this.billingType.set('package');
+    this.rateUnit.set('hour');
     this.balanceLessons.set(0);
     this.creditLimit.set(0);
     this.editTarget.set(null);
@@ -178,6 +191,7 @@ export class StudentsComponent implements OnInit {
       bot_active: Boolean(s.bot_active),
     };
     this.billingType.set(resolveBillingType(s.billing_type));
+    this.rateUnit.set(resolveRateUnit(s.rate_unit));
     this.balanceLessons.set(Number(s.balance_lessons) || 0);
     this.creditLimit.set(Number(s.credit_limit) || 0);
     this.editTarget.set(s);
@@ -222,6 +236,7 @@ export class StudentsComponent implements OnInit {
       color_hex: this.form.color_hex,
       bot_active: this.form.bot_active,
       billing_type,
+      rate_unit: this.rateUnit(),
       ...(billing_type === 'package'
         ? { balance_lessons: this.balanceLessons() }
         : { credit_limit: this.creditLimit() }),

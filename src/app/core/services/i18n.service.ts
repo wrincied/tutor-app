@@ -1912,6 +1912,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     name: 'Имя',
     ratePerLesson: 'Ставка за урок',
     ratePerHour: 'Ставка в час',
+    rateUnitTitle: 'Расчёт суммы',
     rateColumn: 'Ставка',
     balanceLessons: 'Баланс уроков',
     perLesson: '/ урок',
@@ -1947,6 +1948,11 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     billingSectionTitle: 'Параметры оплаты',
     billingTypePackage: 'Абонемент (предоплата)',
     billingTypePostpaid: 'Постоплата / разовая оплата',
+    billingInfoAria: 'Что такое абонемент и постоплата',
+    billingInfoPackage:
+      'Ученик заранее оплачивает пакет уроков. После каждого проведённого занятия один урок списывается с баланса.',
+    billingInfoPostpaid:
+      'Уроки учитываются в долг. Оплата — после занятия или в конце периода, в пределах лимита долга.',
     balanceLessonsField: 'Осталось уроков на балансе',
     creditLimitField: 'Лимит долга (уроков)',
     activityLogSection: 'История изменений',
@@ -1961,6 +1967,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     name: 'Name',
     ratePerLesson: 'Rate per lesson',
     ratePerHour: 'Hourly rate',
+    rateUnitTitle: 'Amount basis',
     rateColumn: 'Rate',
     balanceLessons: 'Lesson balance',
     perLesson: '/ lesson',
@@ -1996,6 +2003,11 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     billingSectionTitle: 'Payment settings',
     billingTypePackage: 'Package (prepaid)',
     billingTypePostpaid: 'Postpaid / pay per lesson',
+    billingInfoAria: 'What package and postpaid mean',
+    billingInfoPackage:
+      'The student pays for a block of lessons upfront. One lesson is deducted from the balance after each completed session.',
+    billingInfoPostpaid:
+      'Lessons are tracked as debt. Payment happens after the lesson or at the end of a period, within the credit limit.',
     balanceLessonsField: 'Lessons remaining on balance',
     creditLimitField: 'Debt limit (lessons)',
     activityLogSection: 'Change log',
@@ -2010,6 +2022,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     name: 'Name',
     ratePerLesson: 'Preis pro Unterricht',
     ratePerHour: 'Stundensatz',
+    rateUnitTitle: 'Berechnungsart',
     rateColumn: 'Satz',
     balanceLessons: 'Stunden-Guthaben',
     perLesson: '/ Unterricht',
@@ -2045,6 +2058,11 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     billingSectionTitle: 'Zahlungseinstellungen',
     billingTypePackage: 'Abo (Vorauszahlung)',
     billingTypePostpaid: 'Nachzahlung / Einzelstunde',
+    billingInfoAria: 'Erklärung Abo und Nachzahlung',
+    billingInfoPackage:
+      'Der Schüler zahlt im Voraus ein Paket Stunden. Nach jeder abgeschlossenen Stunde wird eine Stunde vom Guthaben abgezogen.',
+    billingInfoPostpaid:
+      'Stunden werden als Schulden erfasst. Die Zahlung erfolgt nach der Stunde oder am Periodenende, innerhalb des Kreditlimits.',
     balanceLessonsField: 'Verbleibende Stunden im Guthaben',
     creditLimitField: 'Schuldenlimit (Stunden)',
     activityLogSection: 'Änderungsprotokoll',
@@ -2059,6 +2077,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     name: 'Аты',
     ratePerLesson: 'Сабақ бағасы',
     ratePerHour: 'Сағаттық баға',
+    rateUnitTitle: 'Сома есебі',
     rateColumn: 'Баға',
     balanceLessons: 'Сабақ балансы',
     perLesson: '/ сабақ',
@@ -2093,6 +2112,11 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     billingSectionTitle: 'Төлем параметрлері',
     billingTypePackage: 'Абонемент (алдын ала)',
     billingTypePostpaid: 'Кейін төлеу / бір реттік',
+    billingInfoAria: 'Абонемент пен кейін төлеу деген не',
+    billingInfoPackage:
+      'Оқушы сабақтар пакетін алдын ала төлейді. Әр өткізілген сабақтан кейін баланстан бір сабақ шегеріледі.',
+    billingInfoPostpaid:
+      'Сабақтар қарыз ретінде есептеледі. Төлем сабақтан кейін немесе кезең соңында, қарыз лимиті шегінде.',
     balanceLessonsField: 'Баланста қалған сабақтар',
     creditLimitField: 'Қарыз лимиті (сабақ)',
     activityLogSection: 'Өзгерістер журналы',

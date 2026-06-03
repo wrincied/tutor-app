@@ -439,6 +439,7 @@ export const STUDENTS_BY: StudentStrings = {
   name: 'Імя',
   ratePerLesson: 'Стаўка за ўрок',
   ratePerHour: 'Стаўка за гадзіну',
+  rateUnitTitle: 'Разлік сумы',
   rateColumn: 'Стаўка',
   balanceLessons: 'Баланс урокаў',
   perLesson: '/ урок',
@@ -474,6 +475,11 @@ export const STUDENTS_BY: StudentStrings = {
   billingSectionTitle: 'Параметры аплаты',
   billingTypePackage: 'Абанемент (перадплата)',
   billingTypePostpaid: 'Пасляплата / разавая аплата',
+  billingInfoAria: 'Што такое абанемент і пасляплата',
+  billingInfoPackage:
+    'Вучань загадзя аплачвае пакет урокаў. Пасля кожнага праведзенага занятка адзін урок спісваецца з балансу.',
+  billingInfoPostpaid:
+    'Урокі ўлічваюцца як доўг. Аплата — пасля занятка або ў канцы перыяду, у межах ліміту доўгу.',
   balanceLessonsField: 'Засталося урокаў на балансе',
   creditLimitField: 'Ліміт доўгу (урокаў)',
   activityLogSection: 'Гісторыя змен',
