@@ -66,6 +66,7 @@ function balanceReasonLabel(reason: string | undefined, strings: ActivityLogStri
       return strings.reasonLessonCanceled;
     case 'lesson_balance_refund':
     case 'lesson_uncompleted_refund':
+    case 'lesson_restored_refund':
       return strings.reasonLessonRefund;
     case 'lesson_uncompleted_postpaid_reversal':
       return strings.reasonLessonUncompleted;

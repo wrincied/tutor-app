@@ -685,6 +685,20 @@
                 mobileBackdropSheet
               />
 
+              @if (canRefundLessonBalance()) {
+                <p class="cal-form-preview cal-form-preview--hint" role="status">
+                  {{ i18n.calendarUi().billingDebitedHint }}
+                </p>
+                <button
+                  type="button"
+                  class="btn-link secondary cal-refund-balance-btn"
+                  [disabled]="savingLesson() || deletingLesson()"
+                  (click)="openRefundOnlyConfirm()"
+                >
+                  {{ i18n.calendarUi().billingRefundOnlyAction }}
+                </button>
+              }
+
               <div class="field">
                 <label for="lesson-notes-edit">{{ i18n.calendarUi().notesPlaceholder }}</label>
                 <textarea
@@ -877,24 +891,37 @@
   [open]="!!billingConfirm()"
   stackOnTop
   [closeOnOverlay]="false"
-  [title]="i18n.calendarUi().billingTitle"
+  [title]="billingDialogTitle()"
   [cancelLabel]="i18n.studentsUi().cancel"
-  [secondaryLabel]="i18n.calendarUi().billingKeep"
-  [confirmLabel]="i18n.calendarUi().billingDeduct"
+  [secondaryLabel]="billingDialogSecondaryLabel()"
+  [confirmLabel]="billingDialogConfirmLabel()"
   (cancel)="cancelBillingConfirm()"
-  (secondary)="confirmBillingKeep()"
-  (confirm)="confirmBillingDeduct()"
+  (secondary)="onBillingSecondary()"
+  (confirm)="onBillingConfirm()"
 >
-  <p>
-    {{ i18n.calendarUi().billingBodyBefore }}
-    <strong>{{ billingConfirmStudentName() }}</strong
-    >{{ i18n.calendarUi().billingBodyMiddle }}
-  </p>
-  <p class="cal-billing-balance-hint">
-    {{ i18n.calendarUi().billingBodyAfterDeduct }}
-    <strong>{{ billingConfirmBalanceAfterDeduct() }}</strong>
-    {{ i18n.studentsUi().lessonsShort }}
-  </p>
+  @if (billingConfirm()?.mode === 'refund' || billingConfirm()?.mode === 'refund-only') {
+    <p>
+      {{ i18n.calendarUi().billingRefundBodyBefore }}
+      <strong>{{ billingConfirmStudentName() }}</strong
+      >{{ i18n.calendarUi().billingRefundBodyMiddle }}
+    </p>
+    <p class="cal-billing-balance-hint">
+      {{ i18n.calendarUi().billingRefundBodyAfter }}
+      <strong>{{ billingConfirmBalanceAfterRefund() }}</strong>
+      {{ i18n.studentsUi().lessonsShort }}
+    </p>
+  } @else {
+    <p>
+      {{ i18n.calendarUi().billingBodyBefore }}
+      <strong>{{ billingConfirmStudentName() }}</strong
+      >{{ i18n.calendarUi().billingBodyMiddle }}
+    </p>
+    <p class="cal-billing-balance-hint">
+      {{ i18n.calendarUi().billingBodyAfterDeduct }}
+      <strong>{{ billingConfirmBalanceAfterDeduct() }}</strong>
+      {{ i18n.studentsUi().lessonsShort }}
+    </p>
+  }
 </app-dialog>
 
 <app-dialog

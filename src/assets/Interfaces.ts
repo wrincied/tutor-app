@@ -464,6 +464,16 @@ export interface CalendarStrings {
   billingBodyAfterDeduct: string;
   billingDeduct: string;
   billingKeep: string;
+  billingMissedTitle: string;
+  billingCanceledTitle: string;
+  billingRefundTitle: string;
+  billingRefundBodyBefore: string;
+  billingRefundBodyMiddle: string;
+  billingRefundBodyAfter: string;
+  billingRefundConfirm: string;
+  billingRefundKeep: string;
+  billingRefundOnlyAction: string;
+  billingDebitedHint: string;
   statusScheduled: string;
   statusCompleted: string;
   statusMissed: string;

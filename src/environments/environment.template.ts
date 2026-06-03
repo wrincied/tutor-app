@@ -1,3 +1,4 @@
+/** Copy to `environment.ts` for local work (file is gitignored). */
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:3001',

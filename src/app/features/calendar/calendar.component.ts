@@ -97,6 +97,15 @@ type LessonSavePayload = {
   occurrence_date?: string | null;
   occurrence_status?: LessonStatus;
   manual_completion?: boolean;
+  should_deduct_balance?: boolean;
+  should_refund_balance?: boolean;
+};
+
+type BillingConfirmState = {
+  mode: 'charge' | 'refund' | 'refund-only';
+  payload: LessonSavePayload;
+  editing: Lesson | null;
+  chargeStatus?: LessonStatus;
 };
 @Component({
   selector: 'app-calendar',
@@ -194,11 +203,8 @@ export class CalendarComponent implements OnInit {
   scheduleConflictMessage = signal<string | null>(null);
   /** Подтверждение переноса перед уведомлением ученика через бота. */
   dragMoveConfirm = signal<{ lesson: Lesson; scheduledAt: string } | null>(null);
-  /** Списание баланса при missed/canceled — ждёт выбора в модалке. */
-  billingConfirm = signal<{
-    payload: LessonSavePayload;
-    editing: Lesson | null;
-  } | null>(null);
+  /** Списание / возврат баланса — ждёт выбора в модалке. */
+  billingConfirm = signal<BillingConfirmState | null>(null);
 
   form = {
     student_id: '',
@@ -1716,6 +1722,45 @@ export class CalendarComponent implements OnInit {
     return this.getStudentName(pending.payload.student_id);
   }
 
+  billingDialogTitle(): string {
+    const pending = this.billingConfirm();
+    const t = this.i18n.calendarUi();
+    if (!pending) {
+      return t.billingTitle;
+    }
+    if (pending.mode === 'refund' || pending.mode === 'refund-only') {
+      return t.billingRefundTitle;
+    }
+    return pending.chargeStatus === 'canceled' ? t.billingCanceledTitle : t.billingMissedTitle;
+  }
+
+  billingDialogConfirmLabel(): string {
+    const pending = this.billingConfirm();
+    const t = this.i18n.calendarUi();
+    if (!pending) {
+      return t.billingDeduct;
+    }
+    if (pending.mode === 'refund' || pending.mode === 'refund-only') {
+      return t.billingRefundConfirm;
+    }
+    return pending.chargeStatus === 'canceled' ? t.billingKeep : t.billingDeduct;
+  }
+
+  billingDialogSecondaryLabel(): string | null {
+    const pending = this.billingConfirm();
+    const t = this.i18n.calendarUi();
+    if (!pending) {
+      return t.billingKeep;
+    }
+    if (pending.mode === 'refund-only') {
+      return null;
+    }
+    if (pending.mode === 'refund') {
+      return t.billingRefundKeep;
+    }
+    return pending.chargeStatus === 'canceled' ? t.billingDeduct : t.billingKeep;
+  }
+
   billingConfirmBalanceAfterDeduct(): number {
     const pending = this.billingConfirm();
     if (!pending) {
@@ -1724,6 +1769,41 @@ export class CalendarComponent implements OnInit {
     const student = this.students().find((s) => s._id === pending.payload.student_id);
     const balance = Number(student?.balance_lessons ?? 0);
     return Math.max(0, balance - 1);
+  }
+
+  billingConfirmBalanceAfterRefund(): number {
+    const pending = this.billingConfirm();
+    if (!pending) {
+      return 0;
+    }
+    const student = this.students().find((s) => s._id === pending.payload.student_id);
+    return Number(student?.balance_lessons ?? 0) + 1;
+  }
+
+  canRefundLessonBalance(): boolean {
+    const editing = this.editLessonTarget();
+    return Boolean(
+      editing?.balance_debited && this.isMissedOrCanceledStatus(editing.status),
+    );
+  }
+
+  openRefundOnlyConfirm(): void {
+    const editing = this.editLessonTarget();
+    if (!editing?.balance_debited || !this.isMissedOrCanceledStatus(editing.status)) {
+      return;
+    }
+    const payload: LessonSavePayload = {
+      student_id: this.form.student_id,
+      lesson_duration: this.clampedDurationMinutes(),
+      status: editing.status,
+      notes: this.form.notes?.trim() || undefined,
+      scheduledAt: this.form.scheduledAt?.trim() || null,
+      manual_completion: true,
+    };
+    purgeStaleOverlayLayers(this.document);
+    this.document.dispatchEvent(new CustomEvent(APP_OVERLAY_LAYER_OPEN));
+    this.showLessonForm.set(false);
+    this.billingConfirm.set({ mode: 'refund-only', payload, editing });
   }
 
   private dateWeekdayFmt(): Intl.DateTimeFormat {
@@ -2270,15 +2350,32 @@ export class CalendarComponent implements OnInit {
         ? editing.status
         : editing?.status;
 
-    if (this.needsBillingDecision(this.form.status, billingPreviousStatus)) {
+    if (this.needsBillingChargeDecision(this.form.status, billingPreviousStatus)) {
       purgeStaleOverlayLayers(this.document);
       this.document.dispatchEvent(new CustomEvent(APP_OVERLAY_LAYER_OPEN));
       this.showLessonForm.set(false);
-      this.billingConfirm.set({ payload: basePayload, editing: editing ?? null });
+      this.billingConfirm.set({
+        mode: 'charge',
+        payload: basePayload,
+        editing: editing ?? null,
+        chargeStatus: this.form.status,
+      });
       return;
     }
 
-    this.persistLesson(basePayload, editing, false, null, billingPreviousStatus);
+    if (this.needsBillingRefundDecision(this.form.status, billingPreviousStatus, editing)) {
+      purgeStaleOverlayLayers(this.document);
+      this.document.dispatchEvent(new CustomEvent(APP_OVERLAY_LAYER_OPEN));
+      this.showLessonForm.set(false);
+      this.billingConfirm.set({
+        mode: 'refund',
+        payload: basePayload,
+        editing: editing ?? null,
+      });
+      return;
+    }
+
+    this.persistLesson(basePayload, editing, false, null, billingPreviousStatus, false);
   }
 
   cancelBillingConfirm(): void {
@@ -2286,29 +2383,51 @@ export class CalendarComponent implements OnInit {
     this.closeLessonForm();
   }
 
-  confirmBillingKeep(): void {
+  onBillingConfirm(): void {
     const pending = this.billingConfirm();
     if (!pending) {
       return;
     }
     this.billingConfirm.set(null);
-    this.persistLesson(pending.payload, pending.editing, false, pending);
+    const previousStatus = pending.editing?.status;
+    if (pending.mode === 'refund' || pending.mode === 'refund-only') {
+      this.persistLesson(pending.payload, pending.editing, false, pending, previousStatus, true);
+      return;
+    }
+    const shouldDeduct = pending.chargeStatus !== 'canceled';
+    this.persistLesson(pending.payload, pending.editing, shouldDeduct, pending, previousStatus, false);
+  }
+
+  onBillingSecondary(): void {
+    const pending = this.billingConfirm();
+    if (!pending) {
+      return;
+    }
+    this.billingConfirm.set(null);
+    const previousStatus = pending.editing?.status;
+    if (pending.mode === 'refund') {
+      this.persistLesson(pending.payload, pending.editing, false, pending, previousStatus, false);
+      return;
+    }
+    if (pending.mode === 'charge') {
+      const shouldDeduct = pending.chargeStatus === 'canceled';
+      this.persistLesson(pending.payload, pending.editing, shouldDeduct, pending, previousStatus, false);
+    }
+  }
+
+  confirmBillingKeep(): void {
+    this.onBillingSecondary();
   }
 
   confirmBillingDeduct(): void {
-    const pending = this.billingConfirm();
-    if (!pending) {
-      return;
-    }
-    this.billingConfirm.set(null);
-    this.persistLesson(pending.payload, pending.editing, true, pending);
+    this.onBillingConfirm();
   }
 
   private isMissedOrCanceledStatus(status: LessonStatus): boolean {
     return status === 'missed' || status === 'canceled';
   }
 
-  private needsBillingDecision(nextStatus: LessonStatus, previousStatus?: LessonStatus): boolean {
+  private needsBillingChargeDecision(nextStatus: LessonStatus, previousStatus?: LessonStatus): boolean {
     if (!this.isMissedOrCanceledStatus(nextStatus)) {
       return false;
     }
@@ -2318,30 +2437,55 @@ export class CalendarComponent implements OnInit {
     return !this.isMissedOrCanceledStatus(previousStatus);
   }
 
-  private withBillingFlag<T extends { status: LessonStatus }>(
-    payload: T,
+  private needsBillingRefundDecision(
+    nextStatus: LessonStatus,
     previousStatus: LessonStatus | undefined,
-    shouldDeduct: boolean,
-  ): T & { should_deduct_balance?: boolean } {
-    if (!this.needsBillingDecision(payload.status, previousStatus)) {
-      return payload;
+    editing: CalendarLesson | null,
+  ): boolean {
+    if (!editing?.balance_debited || previousStatus === undefined) {
+      return false;
     }
-    return { ...payload, should_deduct_balance: shouldDeduct };
+    return (
+      this.isMissedOrCanceledStatus(previousStatus) &&
+      !this.isMissedOrCanceledStatus(nextStatus) &&
+      nextStatus !== 'completed'
+    );
+  }
+
+  private buildLessonSaveBody(
+    payload: LessonSavePayload,
+    previousStatus: LessonStatus | undefined,
+    editing: CalendarLesson | null,
+    shouldDeduct: boolean,
+    shouldRefund: boolean,
+  ): LessonSavePayload {
+    let body: LessonSavePayload = { ...payload };
+    if (this.needsBillingChargeDecision(payload.status, previousStatus)) {
+      body = { ...body, should_deduct_balance: shouldDeduct };
+    }
+    if (shouldRefund || this.needsBillingRefundDecision(payload.status, previousStatus, editing)) {
+      body = { ...body, should_refund_balance: shouldRefund };
+    }
+    return body;
   }
 
   private persistLesson(
     payload: LessonSavePayload,
     editing: Lesson | null,
     shouldDeduct: boolean,
-    billingRestore: {
-      payload: LessonSavePayload;
-      editing: Lesson | null;
-    } | null = null,
+    billingRestore: BillingConfirmState | null = null,
     previousStatusForBilling?: LessonStatus,
+    shouldRefund = false,
   ): void {
     this.savingLesson.set(true);
     const previousStatus = previousStatusForBilling ?? editing?.status;
-    const body = this.withBillingFlag(payload, previousStatus, shouldDeduct);
+    const body = this.buildLessonSaveBody(
+      payload,
+      previousStatus,
+      editing,
+      shouldDeduct,
+      shouldRefund,
+    );
 
     if (editing) {
       this.lessonsSvc.update(editing._id, body).subscribe({
@@ -2377,12 +2521,7 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  private restoreBillingOnSaveError(
-    billingRestore: {
-      payload: LessonSavePayload;
-      editing: Lesson | null;
-    } | null,
-  ): void {
+  private restoreBillingOnSaveError(billingRestore: BillingConfirmState | null): void {
     if (!billingRestore) {
       return;
     }

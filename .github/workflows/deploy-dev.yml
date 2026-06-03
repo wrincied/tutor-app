@@ -12,9 +12,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      # Вариант A (лучше): GitHub → Settings → Secrets and variables → Actions → DEV_API_URL
       DEV_API_URL: ${{ secrets.DEV_API_URL }}
-      # Вариант B: если секрет не задан — URL Firebase App Hosting backend (backend/apphosting.yaml)
       DEV_API_URL_FALLBACK: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app'
       DEV_APP_URL: https://wrincied.github.io/tutor-app/dev
     steps:
@@ -29,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate environment.ts for GitHub Pages dev
+      - name: Generate environment.production.ts for GitHub Pages dev
         run: |
           API_URL="${DEV_API_URL:-$DEV_API_URL_FALLBACK}"
           if [ -z "$API_URL" ]; then
@@ -39,10 +37,9 @@ jobs:
           if [ -z "$DEV_API_URL" ]; then
             echo "::warning::Using DEV_API_URL_FALLBACK from workflow file (secret DEV_API_URL is not set)"
           fi
-          mkdir -p src/environments
-          cat > src/environments/environment.ts << EOF
+          cat > src/environments/environment.production.ts << EOF
           export const environment = {
-            production: false,
+            production: true,
             apiUrl: '${API_URL}',
             appUrl: '${DEV_APP_URL}',
             firebaseConfig: {
