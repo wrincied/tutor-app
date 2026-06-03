@@ -87,6 +87,12 @@ export const ACCOUNT_UK: AccountStrings = {
   subscriptionModalClose: 'Зрозуміло',
   customizationTab: 'Кастомізація',
   accountTab: 'Акаунт',
+  administrationTab: 'Адміністрування',
+  activityLogSection: 'Журнал змін',
+  activityLogEmpty:
+    'Поки немає записів. Тут з’являться списання, зміни ставок, типу оплати та витрати.',
+  administrationIntro:
+    'Історія важливих дій у workspace: баланс учнів, уроки, ставки та витрати.',
   workspaceSection: 'Робочий простір',
   workspaceName: 'Назва школи / простору',
   workspaceCurrency: 'Валюта за замовчуванням',
@@ -529,6 +535,7 @@ export const PAGE_TITLE_UK: PageTitleStrings = {
   account: 'Особистий кабінет | Simple4U',
   accountCustomization: 'Налаштування | Simple4U',
   accountProfile: 'Особистий кабінет | Simple4U',
+  accountAdministration: 'Адміністрування | Simple4U',
   admin: 'Адмін | Simple4U',
 };
 

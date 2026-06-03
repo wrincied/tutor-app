@@ -11,7 +11,6 @@ import {
 } from '../../core/utils/pastel-color';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
-import { ActivityLogPanelComponent } from '../../shared/activity-log-panel/activity-log-panel.component';
 
 /** IANA: репетитор в AT, ученики в KZ/BY/RU и др. */
 const TIMEZONE_PRESETS: string[] = [
@@ -46,7 +45,7 @@ function resolvedBrowserTimezone(): string {
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, AppDialogComponent, AppSelectComponent, ActivityLogPanelComponent],
+  imports: [FormsModule, AppDialogComponent, AppSelectComponent],
   templateUrl: './students.component.html',
   styleUrl: './students.component.scss',
 })
@@ -82,8 +81,6 @@ export class StudentsComponent implements OnInit {
   topupLessonsInput = 1;
   quickActionsStudent = signal<Student | null>(null);
   botToggleConfirm = signal<{ student: Student; nextActive: boolean } | null>(null);
-  logReloadTrigger = signal(0);
-
   readonly colorToHexForPicker = colorToHexForPicker;
 
   ngOnInit() {
@@ -121,7 +118,6 @@ export class StudentsComponent implements OnInit {
     this.svc.update(student._id, { color_hex }).subscribe({
       next: (updated) => {
         this.patchStudent(updated);
-        this.logReloadTrigger.update((n) => n + 1);
       },
     });
   }
@@ -132,7 +128,6 @@ export class StudentsComponent implements OnInit {
       next: (data) => {
         this.students.set(data);
         this.loading.set(false);
-        this.logReloadTrigger.update((n) => n + 1);
       },
       error: () => {
         this.loading.set(false);
@@ -336,7 +331,6 @@ export class StudentsComponent implements OnInit {
     this.svc.update(pending.student._id, { bot_active: pending.nextActive }).subscribe({
       next: (updated) => {
         this.patchStudent(updated);
-        this.logReloadTrigger.update((n) => n + 1);
         if (!pending.nextActive) {
           this.closeQuickActions();
         }

@@ -139,6 +139,7 @@ const PAGE_TITLE: Record<Lang, PageTitleStrings> = {
     account: 'Личный кабинет | Simple4U',
     accountCustomization: 'Настройки | Simple4U',
     accountProfile: 'Профиль | Simple4U',
+    accountAdministration: 'Администрирование | Simple4U',
     admin: 'Админ | Simple4U',
   },
   en: {
@@ -158,6 +159,7 @@ const PAGE_TITLE: Record<Lang, PageTitleStrings> = {
     account: 'Account | Simple4U',
     accountCustomization: 'Settings | Simple4U',
     accountProfile: 'My Account | Simple4U',
+    accountAdministration: 'Administration | Simple4U',
     admin: 'Admin | Simple4U',
   },
   de: {
@@ -177,6 +179,7 @@ const PAGE_TITLE: Record<Lang, PageTitleStrings> = {
     account: 'Mein Konto | Simple4U',
     accountCustomization: 'Kontoeinstellungen | Simple4U',
     accountProfile: 'Profil | Simple4U',
+    accountAdministration: 'Verwaltung | Simple4U',
     admin: 'Admin | Simple4U',
   },
   kz: {
@@ -196,6 +199,7 @@ const PAGE_TITLE: Record<Lang, PageTitleStrings> = {
     account: 'Аккаунт | Simple4U',
     accountCustomization: 'Параметрлер | Simple4U',
     accountProfile: 'Профиль | Simple4U',
+    accountAdministration: 'Әкімшілік | Simple4U',
     admin: 'Админ | Simple4U',
   },
   uk: PAGE_TITLE_UK,
@@ -263,6 +267,11 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     subscriptionModalClose: 'Понятно',
     customizationTab: 'Кастомизация',
     accountTab: 'Аккаунт',
+    administrationTab: 'Администрирование',
+    activityLogSection: 'Журнал изменений',
+    activityLogEmpty: 'Пока нет записей. Здесь появятся списания, изменения ставок, типа оплаты и расходы.',
+    administrationIntro:
+      'История важных действий в вашем workspace: баланс учеников, уроки, ставки, расходы.',
     workspaceSection: 'Рабочее пространство',
     workspaceName: 'Название школы / пространства',
     workspaceCurrency: 'Валюта по умолчанию',
@@ -333,6 +342,12 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     subscriptionModalClose: 'Got it',
     customizationTab: 'Customization',
     accountTab: 'Account',
+    administrationTab: 'Administration',
+    activityLogSection: 'Activity log',
+    activityLogEmpty:
+      'No entries yet. Deductions, rate changes, billing type updates, and expenses will appear here.',
+    administrationIntro:
+      'History of important workspace actions: student balance, lessons, rates, and expenses.',
     workspaceSection: 'Workspace',
     workspaceName: 'School / workspace name',
     workspaceCurrency: 'Default currency',
@@ -403,6 +418,12 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     subscriptionModalClose: 'Verstanden',
     customizationTab: 'Anpassung',
     accountTab: 'Konto',
+    administrationTab: 'Verwaltung',
+    activityLogSection: 'Änderungsprotokoll',
+    activityLogEmpty:
+      'Noch keine Einträge. Abbuchungen, Satzänderungen, Abrechnungsart und Ausgaben erscheinen hier.',
+    administrationIntro:
+      'Verlauf wichtiger Aktionen: Schülerguthaben, Stunden, Sätze und Ausgaben.',
     workspaceSection: 'Arbeitsbereich',
     workspaceName: 'Name der Schule / des Bereichs',
     workspaceCurrency: 'Standardwährung',
@@ -470,6 +491,12 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     subscriptionModalClose: 'Түсінікті',
     customizationTab: 'Баптау',
     accountTab: 'Аккаунт',
+    administrationTab: 'Әкімшілік',
+    activityLogSection: 'Өзгерістер журналы',
+    activityLogEmpty:
+      'Әзірге жазбалар жоқ. Шегерулер, баға өзгерістері, төлем түрі және шығындар осында көрінеді.',
+    administrationIntro:
+      'Workspace-тегі маңызды әрекеттер: оқушы балансы, сабақтар, бағалар және шығындар.',
     workspaceSection: 'Жұмыс кеңістігі',
     workspaceName: 'Мектеп / кеңістік атауы',
     workspaceCurrency: 'Негізгі валюта',

@@ -81,6 +81,7 @@ export type PageTitleKey =
   | 'account'
   | 'accountCustomization'
   | 'accountProfile'
+  | 'accountAdministration'
   | 'admin';
 
 export type PageTitleStrings = Record<PageTitleKey, string>;
@@ -269,6 +270,10 @@ export interface AccountStrings {
   subscriptionModalClose: string;
   customizationTab: string;
   accountTab: string;
+  administrationTab: string;
+  activityLogSection: string;
+  activityLogEmpty: string;
+  administrationIntro: string;
   workspaceSection: string;
   workspaceName: string;
   workspaceCurrency: string;

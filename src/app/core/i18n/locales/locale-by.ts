@@ -88,6 +88,12 @@ export const ACCOUNT_BY: AccountStrings = {
   subscriptionModalClose: 'Зразумела',
   customizationTab: 'Кастамізацыя',
   accountTab: 'Акаўнт',
+  administrationTab: 'Адміністраванне',
+  activityLogSection: 'Журнал змен',
+  activityLogEmpty:
+    'Пакуль няма запісаў. Тут з’явяцца спісанні, змены стаўкі, тыпу аплаты і выдаткі.',
+  administrationIntro:
+    'Гісторыя важных дзеянняў у workspace: баланс вучняў, урокі, стаўкі і выдаткі.',
   workspaceSection: 'Рабочая прастора',
   workspaceName: 'Назва школы / прасторы',
   workspaceCurrency: 'Валюта па змаўчанні',
@@ -532,6 +538,7 @@ export const PAGE_TITLE_BY: PageTitleStrings = {
   account: 'Акаўнт | Simple4U',
   accountCustomization: 'Налады | Simple4U',
   accountProfile: 'Профіль | Simple4U',
+  accountAdministration: 'Адміністраванне | Simple4U',
   admin: 'Адмін | Simple4U',
 };
 
