@@ -2460,10 +2460,11 @@ export class CalendarComponent implements OnInit {
     shouldRefund: boolean,
   ): LessonSavePayload {
     let body: LessonSavePayload = { ...payload };
-    if (this.needsBillingChargeDecision(payload.status, previousStatus)) {
+    const billingStatus = payload.occurrence_status ?? payload.status;
+    if (this.needsBillingChargeDecision(billingStatus, previousStatus)) {
       body = { ...body, should_deduct_balance: shouldDeduct };
     }
-    if (shouldRefund || this.needsBillingRefundDecision(payload.status, previousStatus, editing)) {
+    if (shouldRefund || this.needsBillingRefundDecision(billingStatus, previousStatus, editing)) {
       body = { ...body, should_refund_balance: shouldRefund };
     }
     return body;
