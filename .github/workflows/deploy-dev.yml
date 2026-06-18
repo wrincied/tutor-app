@@ -53,6 +53,7 @@ jobs:
             },
           };
           EOF
+          cp src/environments/environment.production.ts src/environments/environment.ts
 
       - name: Build Angular Dev
         run: npx ng build --configuration=production --base-href=/tutor-app/dev/
