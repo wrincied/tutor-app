@@ -81,6 +81,7 @@ export type PageTitleKey =
   | 'account'
   | 'accountCustomization'
   | 'accountProfile'
+  | 'accountAdministration'
   | 'admin';
 
 export type PageTitleStrings = Record<PageTitleKey, string>;
@@ -269,6 +270,10 @@ export interface AccountStrings {
   subscriptionModalClose: string;
   customizationTab: string;
   accountTab: string;
+  administrationTab: string;
+  activityLogSection: string;
+  activityLogEmpty: string;
+  administrationIntro: string;
   workspaceSection: string;
   workspaceName: string;
   workspaceCurrency: string;
@@ -464,6 +469,16 @@ export interface CalendarStrings {
   billingBodyAfterDeduct: string;
   billingDeduct: string;
   billingKeep: string;
+  billingMissedTitle: string;
+  billingCanceledTitle: string;
+  billingRefundTitle: string;
+  billingRefundBodyBefore: string;
+  billingRefundBodyMiddle: string;
+  billingRefundBodyAfter: string;
+  billingRefundConfirm: string;
+  billingRefundKeep: string;
+  billingRefundOnlyAction: string;
+  billingDebitedHint: string;
   statusScheduled: string;
   statusCompleted: string;
   statusMissed: string;
@@ -653,6 +668,7 @@ export interface StudentStrings {
   name: string;
   ratePerLesson: string;
   ratePerHour: string;
+  rateUnitTitle: string;
   rateColumn: string;
   balanceLessons: string;
   perLesson: string;
@@ -691,6 +707,9 @@ export interface StudentStrings {
   billingSectionTitle: string;
   billingTypePackage: string;
   billingTypePostpaid: string;
+  billingInfoAria: string;
+  billingInfoPackage: string;
+  billingInfoPostpaid: string;
   balanceLessonsField: string;
   creditLimitField: string;
   activityLogSection: string;
@@ -761,6 +780,8 @@ export type LessonStatus = 'scheduled' | 'completed' | 'missed' | 'canceled';
 
 export type StudentBillingType = 'package' | 'postpaid';
 
+export type StudentRateUnit = 'hour' | 'lesson';
+
 /**
  * Урок в коллекции `lessons`.
  * `scheduledAt` + `lesson_duration` — интервал в БД (без миграции на start_at/end_at).
@@ -825,6 +846,8 @@ export interface Student {
   balance_lessons: number;
   /** package — предоплата (balance_lessons); postpaid — постоплата / разовая. */
   billing_type?: StudentBillingType;
+  /** hour — ставка за час; lesson — фиксированная сумма за урок. */
+  rate_unit?: StudentRateUnit;
   /** Лимит долга в уроках (postpaid). */
   credit_limit?: number;
   /** Неоплаченные уроки (postpaid, увеличивает воркер). */

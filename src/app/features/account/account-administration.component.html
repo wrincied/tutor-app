@@ -1,0 +1,11 @@
+<section class="account-card account-administration">
+  <p class="account-administration__intro">{{ i18n.accountUi().administrationIntro }}</p>
+
+  <app-activity-log-panel
+    category="all"
+    [limit]="100"
+    [title]="i18n.accountUi().activityLogSection"
+    [emptyText]="i18n.accountUi().activityLogEmpty"
+    [strings]="i18n.activityLogUi()"
+  />
+</section>

@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { StudentService, Student } from '../../core/services/student.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType } from '@interfaces';
+import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType, type StudentRateUnit } from '@interfaces';
 import {
   colorToHexForPicker,
   DEFAULT_STUDENT_BORDER_COLOR,
@@ -11,7 +11,6 @@ import {
 } from '../../core/utils/pastel-color';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
-import { ActivityLogPanelComponent } from '../../shared/activity-log-panel/activity-log-panel.component';
 
 /** IANA: репетитор в AT, ученики в KZ/BY/RU и др. */
 const TIMEZONE_PRESETS: string[] = [
@@ -36,6 +35,10 @@ function resolveBillingType(raw?: string): StudentBillingType {
   return 'package';
 }
 
+function resolveRateUnit(raw?: string): StudentRateUnit {
+  return raw === 'lesson' ? 'lesson' : 'hour';
+}
+
 function resolvedBrowserTimezone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -46,7 +49,7 @@ function resolvedBrowserTimezone(): string {
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, AppDialogComponent, AppSelectComponent, ActivityLogPanelComponent],
+  imports: [FormsModule, AppDialogComponent, AppSelectComponent],
   templateUrl: './students.component.html',
   styleUrl: './students.component.scss',
 })
@@ -68,10 +71,14 @@ export class StudentsComponent implements OnInit {
   };
 
   billingType = signal<StudentBillingType>('package');
+  rateUnit = signal<StudentRateUnit>('hour');
   balanceLessons = signal(0);
   creditLimit = signal(0);
   readonly isPackageBilling = computed(() => this.billingType() === 'package');
   readonly isPostpaidBilling = computed(() => this.billingType() === 'postpaid');
+  readonly rateFieldLabel = computed(() =>
+    this.rateUnit() === 'lesson' ? this.t.ratePerLesson : this.t.ratePerHour,
+  );
 
   readonly rateCurrencies = RATE_CURRENCIES;
   readonly skeletonCardSlots = [0, 1, 2, 3, 4, 5];
@@ -82,8 +89,6 @@ export class StudentsComponent implements OnInit {
   topupLessonsInput = 1;
   quickActionsStudent = signal<Student | null>(null);
   botToggleConfirm = signal<{ student: Student; nextActive: boolean } | null>(null);
-  logReloadTrigger = signal(0);
-
   readonly colorToHexForPicker = colorToHexForPicker;
 
   ngOnInit() {
@@ -121,7 +126,6 @@ export class StudentsComponent implements OnInit {
     this.svc.update(student._id, { color_hex }).subscribe({
       next: (updated) => {
         this.patchStudent(updated);
-        this.logReloadTrigger.update((n) => n + 1);
       },
     });
   }
@@ -132,7 +136,6 @@ export class StudentsComponent implements OnInit {
       next: (data) => {
         this.students.set(data);
         this.loading.set(false);
-        this.logReloadTrigger.update((n) => n + 1);
       },
       error: () => {
         this.loading.set(false);
@@ -154,6 +157,10 @@ export class StudentsComponent implements OnInit {
     this.billingType.set(type);
   }
 
+  setRateUnit(unit: StudentRateUnit): void {
+    this.rateUnit.set(unit);
+  }
+
   openCreate() {
     this.autoTimezone = true;
     this.form = {
@@ -165,6 +172,7 @@ export class StudentsComponent implements OnInit {
       bot_active: false,
     };
     this.billingType.set('package');
+    this.rateUnit.set('hour');
     this.balanceLessons.set(0);
     this.creditLimit.set(0);
     this.editTarget.set(null);
@@ -183,6 +191,7 @@ export class StudentsComponent implements OnInit {
       bot_active: Boolean(s.bot_active),
     };
     this.billingType.set(resolveBillingType(s.billing_type));
+    this.rateUnit.set(resolveRateUnit(s.rate_unit));
     this.balanceLessons.set(Number(s.balance_lessons) || 0);
     this.creditLimit.set(Number(s.credit_limit) || 0);
     this.editTarget.set(s);
@@ -227,6 +236,7 @@ export class StudentsComponent implements OnInit {
       color_hex: this.form.color_hex,
       bot_active: this.form.bot_active,
       billing_type,
+      rate_unit: this.rateUnit(),
       ...(billing_type === 'package'
         ? { balance_lessons: this.balanceLessons() }
         : { credit_limit: this.creditLimit() }),
@@ -336,7 +346,6 @@ export class StudentsComponent implements OnInit {
     this.svc.update(pending.student._id, { bot_active: pending.nextActive }).subscribe({
       next: (updated) => {
         this.patchStudent(updated);
-        this.logReloadTrigger.update((n) => n + 1);
         if (!pending.nextActive) {
           this.closeQuickActions();
         }

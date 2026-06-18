@@ -115,13 +115,6 @@
     </div>
   }
 
-  <app-activity-log-panel
-    category="students"
-    [title]="t.activityLogSection"
-    [emptyText]="t.activityLogEmpty"
-    [strings]="i18n.activityLogUi()"
-    [reloadTrigger]="logReloadTrigger()"
-  />
 </div>
 
 <app-dialog
@@ -186,7 +179,7 @@
       <div class="modal-header">
         <h2 id="student-form-title">{{ editTarget() ? t.editModalTitle : t.newStudent }}</h2>
         <button type="button" class="modal-close" (click)="closeForm()" [attr.aria-label]="t.close">
-          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
+          <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
 
@@ -195,8 +188,34 @@
           <label for="st-name">{{ t.name }}</label>
           <input id="st-name" type="text" [(ngModel)]="form.name" name="name" required autocomplete="name" />
         </div>
+        <fieldset class="field rate-unit-section">
+          <legend>{{ t.rateUnitTitle }}</legend>
+          <div class="rate-unit-options" role="radiogroup" [attr.aria-label]="t.rateUnitTitle">
+            <label class="rate-unit-option">
+              <input
+                type="radio"
+                name="rate_unit"
+                value="hour"
+                [checked]="rateUnit() === 'hour'"
+                (change)="setRateUnit('hour')"
+              />
+              <span>{{ t.ratePerHour }}</span>
+            </label>
+            <label class="rate-unit-option">
+              <input
+                type="radio"
+                name="rate_unit"
+                value="lesson"
+                [checked]="rateUnit() === 'lesson'"
+                (change)="setRateUnit('lesson')"
+              />
+              <span>{{ t.ratePerLesson }}</span>
+            </label>
+          </div>
+        </fieldset>
+
         <div class="field field--rate-row">
-          <label for="st-rate">{{ t.ratePerHour }}</label>
+          <label for="st-rate">{{ rateFieldLabel() }}</label>
           <div class="rate-row">
             <input
               id="st-rate"
@@ -361,7 +380,7 @@
       <div class="modal-header">
         <h2 id="del-title">{{ t.delete }}</h2>
         <button type="button" class="modal-close" (click)="cancelDelete()" [attr.aria-label]="t.close">
-          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
+          <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
       <div class="modal-body">
@@ -391,7 +410,7 @@
       <div class="modal-header">
         <h2>{{ t.topupTitle }}</h2>
         <button type="button" class="modal-close" (click)="closeTopup()" [attr.aria-label]="t.close">
-          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
+          <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
       <div class="modal-body">

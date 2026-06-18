@@ -35,7 +35,6 @@ import {
   Observable,
   switchMap,
   throwError,
-  defer,
   of,
   shareReplay,
 } from 'rxjs';
@@ -45,7 +44,7 @@ import {
   GoogleSignInRequiredError,
 } from '../utils/auth-errors';
 
-import { environment } from '../../../environments/environment';
+import { environment } from '@environment';
 import { apiUrl } from '../config/api-url';
 import type { UserProfile } from '@interfaces';
 import { postAuthPath } from '../utils/post-auth-navigation';
@@ -165,7 +164,7 @@ export class AuthService {
   loginWithGoogleRedirect(): void {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    void signInWithRedirect(this.auth, provider);
+    void runInInjectionContext(this.injector, () => signInWithRedirect(this.auth, provider));
   }
 
   /** Google OAuth через popup (dev fallback). */
@@ -183,8 +182,8 @@ export class AuthService {
    */
   handleRedirectResult(): Observable<User | null> {
     if (!this.redirectResult$) {
-      this.redirectResult$ = defer(() => from(getRedirectResult(this.auth))).pipe(
-        switchMap((cred) => (cred?.user ? of(cred.user) : of(null))),
+      this.redirectResult$ = this.fromAuth(() => getRedirectResult(this.auth)).pipe(
+        map((cred) => cred?.user ?? null),
         catchError((err) => {
           this.redirectResult$ = undefined;
           return throwError(() => err);

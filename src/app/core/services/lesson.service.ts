@@ -53,6 +53,7 @@ export class LessonService {
       occurrence_date?: string | null;
       occurrence_status?: Lesson['status'];
       should_deduct_balance?: boolean;
+      should_refund_balance?: boolean;
       manual_completion?: boolean;
     },
   ) {

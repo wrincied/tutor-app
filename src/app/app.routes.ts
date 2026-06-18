@@ -118,6 +118,14 @@ export const routes: Routes = [
                   ),
                 data: { title: 'accountProfile' satisfies PageTitleKey },
               },
+              {
+                path: 'administration',
+                loadComponent: () =>
+                  import('./features/account/account-administration.component').then(
+                    (m) => m.AccountAdministrationComponent,
+                  ),
+                data: { title: 'accountAdministration' satisfies PageTitleKey },
+              },
             ],
           },
           {

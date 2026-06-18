@@ -20,14 +20,13 @@ import {
 import { formatMoneyWithCode } from '../../core/utils/format-currency';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
-import { ActivityLogPanelComponent } from '../../shared/activity-log-panel/activity-log-panel.component';
 
 const FINANCE_CURRENCY_STORAGE_KEY = 'finance_report_currency';
 
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [FormsModule, RouterLink, AppDialogComponent, AppSelectComponent, ActivityLogPanelComponent],
+  imports: [FormsModule, RouterLink, AppDialogComponent, AppSelectComponent],
   templateUrl: './finance.component.html',
   styleUrl: './finance.component.scss',
 })
@@ -50,7 +49,6 @@ export class FinanceComponent implements OnInit {
   expenseEditTarget = signal<Expense | null>(null);
   expenseDeleteId = signal<string | null>(null);
   expenseSaving = signal(false);
-  logReloadTrigger = signal(0);
 
   expenseForm = {
     title: '',
@@ -193,7 +191,6 @@ export class FinanceComponent implements OnInit {
       pending -= 1;
       if (pending === 0) {
         this.loading.set(false);
-        this.logReloadTrigger.update((n) => n + 1);
       }
     };
 

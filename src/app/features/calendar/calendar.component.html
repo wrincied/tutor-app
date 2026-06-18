@@ -67,7 +67,7 @@
               (click)="modesMenuOpen.set(false)"
               [attr.aria-label]="i18n.studentsUi().close"
             >
-              <img src="/assets/icons/icon-close.svg" width="20" height="20" alt="" />
+              <img src="assets/icons/icon-close.svg" width="20" height="20" alt="" />
             </button>
           </div>
           <nav class="cal-modes-drawer__nav">
@@ -182,7 +182,7 @@
           >
             <img
               class="cal-btn__icon"
-              src="/assets/icons/icon-students.svg"
+              src="assets/icons/icon-students.svg"
               width="22"
               height="22"
               alt=""
@@ -593,7 +593,7 @@
           (click)="closeLessonForm()"
           [attr.aria-label]="i18n.studentsUi().close"
         >
-          <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
+          <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
 
@@ -684,6 +684,20 @@
                 menuPlacement="below"
                 mobileBackdropSheet
               />
+
+              @if (canRefundLessonBalance()) {
+                <p class="cal-form-preview cal-form-preview--hint" role="status">
+                  {{ i18n.calendarUi().billingDebitedHint }}
+                </p>
+                <button
+                  type="button"
+                  class="btn-link secondary cal-refund-balance-btn"
+                  [disabled]="savingLesson() || deletingLesson()"
+                  (click)="openRefundOnlyConfirm()"
+                >
+                  {{ i18n.calendarUi().billingRefundOnlyAction }}
+                </button>
+              }
 
               <div class="field">
                 <label for="lesson-notes-edit">{{ i18n.calendarUi().notesPlaceholder }}</label>
@@ -877,30 +891,43 @@
   [open]="!!billingConfirm()"
   stackOnTop
   [closeOnOverlay]="false"
-  [title]="i18n.calendarUi().billingTitle"
+  [title]="billingDialogTitle()"
   [cancelLabel]="i18n.studentsUi().cancel"
-  [secondaryLabel]="i18n.calendarUi().billingKeep"
-  [confirmLabel]="i18n.calendarUi().billingDeduct"
+  [secondaryLabel]="billingDialogSecondaryLabel()"
+  [confirmLabel]="billingDialogConfirmLabel()"
   (cancel)="cancelBillingConfirm()"
-  (secondary)="confirmBillingKeep()"
-  (confirm)="confirmBillingDeduct()"
+  (secondary)="onBillingSecondary()"
+  (confirm)="onBillingConfirm()"
 >
-  <p>
-    {{ i18n.calendarUi().billingBodyBefore }}
-    <strong>{{ billingConfirmStudentName() }}</strong
-    >{{ i18n.calendarUi().billingBodyMiddle }}
-  </p>
-  <p class="cal-billing-balance-hint">
-    {{ i18n.calendarUi().billingBodyAfterDeduct }}
-    <strong>{{ billingConfirmBalanceAfterDeduct() }}</strong>
-    {{ i18n.studentsUi().lessonsShort }}
-  </p>
+  @if (billingConfirm()?.mode === 'refund' || billingConfirm()?.mode === 'refund-only') {
+    <p>
+      {{ i18n.calendarUi().billingRefundBodyBefore }}
+      <strong>{{ billingConfirmStudentName() }}</strong
+      >{{ i18n.calendarUi().billingRefundBodyMiddle }}
+    </p>
+    <p class="cal-billing-balance-hint">
+      {{ i18n.calendarUi().billingRefundBodyAfter }}
+      <strong>{{ billingConfirmBalanceAfterRefund() }}</strong>
+      {{ i18n.studentsUi().lessonsShort }}
+    </p>
+  } @else {
+    <p>
+      {{ i18n.calendarUi().billingBodyBefore }}
+      <strong>{{ billingConfirmStudentName() }}</strong
+      >{{ i18n.calendarUi().billingBodyMiddle }}
+    </p>
+    <p class="cal-billing-balance-hint">
+      {{ i18n.calendarUi().billingBodyAfterDeduct }}
+      <strong>{{ billingConfirmBalanceAfterDeduct() }}</strong>
+      {{ i18n.studentsUi().lessonsShort }}
+    </p>
+  }
 </app-dialog>
 
 <app-dialog
   [open]="!!scheduleConflictMessage()"
   variant="error"
-  iconSrc="/assets/icons/icon-warning.svg"
+  iconSrc="assets/icons/icon-warning.svg"
   [title]="i18n.calendarUi().timeBusyTitle"
   [dismissLabel]="i18n.calendarUi().ok"
   (cancel)="closeScheduleConflict()"
@@ -951,7 +978,7 @@
       (click)="closeRecurrenceModal()"
       [attr.aria-label]="i18n.studentsUi().close"
     >
-      <img src="/assets/icons/icon-close.svg" width="24" height="24" alt="" />
+      <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
     </button>
   </div>
 

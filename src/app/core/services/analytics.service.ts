@@ -10,7 +10,7 @@ import {
 } from '@angular/fire/analytics';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { environment } from '@environment';
 import { AuthService } from './auth.service';
 import { MarketingConsentService } from './marketing-consent.service';
 

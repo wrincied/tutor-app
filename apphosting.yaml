@@ -7,4 +7,4 @@ runConfig:
   cpu: 1
   memoryMiB: 512
 
-# Секреты не нужны для статической сборки; Firebase config в environment.prod.ts.
+# Секреты не нужны для статической сборки; prod-конфиг в environment.production.ts.

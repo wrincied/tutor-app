@@ -11,6 +11,9 @@
     "paths": {
       "@interfaces": [
         "./src/assets/Interfaces.ts"
+      ],
+      "@environment": [
+        "./src/environments/environment.ts"
       ]
     }
   },  

@@ -8,7 +8,7 @@ import { UserService } from '../../core/services/user.service';
 import { resolveLoginError } from '../../core/utils/auth-errors';
 import { resolveFirebaseUser } from '../../core/utils/resolve-firebase-user';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
-import { environment } from '../../../environments/environment';
+import { environment } from '@environment';
 
 @Component({
   selector: 'app-login',

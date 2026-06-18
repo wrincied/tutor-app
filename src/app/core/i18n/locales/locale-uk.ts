@@ -87,6 +87,12 @@ export const ACCOUNT_UK: AccountStrings = {
   subscriptionModalClose: 'Зрозуміло',
   customizationTab: 'Кастомізація',
   accountTab: 'Акаунт',
+  administrationTab: 'Адміністрування',
+  activityLogSection: 'Журнал змін',
+  activityLogEmpty:
+    'Поки немає записів. Тут з’являться списання, зміни ставок, типу оплати та витрати.',
+  administrationIntro:
+    'Історія важливих дій у workspace: баланс учнів, уроки, ставки та витрати.',
   workspaceSection: 'Робочий простір',
   workspaceName: 'Назва школи / простору',
   workspaceCurrency: 'Валюта за замовчуванням',
@@ -301,6 +307,16 @@ export const CALENDAR_UK: CalendarStrings = {
   billingBodyAfterDeduct: 'Після списання на балансі залишиться:',
   billingDeduct: 'Списати урок',
   billingKeep: 'Залишити баланс',
+  billingMissedTitle: 'Учень не прийшов — списати урок?',
+  billingCanceledTitle: 'Урок скасовано — списати з балансу?',
+  billingRefundTitle: 'Повернути урок на баланс?',
+  billingRefundBodyBefore: 'З цього уроку було списано 1 урок. Учень',
+  billingRefundBodyMiddle: ' — повернути урок на баланс чи залишити списання?',
+  billingRefundBodyAfter: 'Після повернення на балансі буде:',
+  billingRefundConfirm: 'Повернути на баланс',
+  billingRefundKeep: 'Залишити списаним',
+  billingRefundOnlyAction: 'Повернути урок на баланс',
+  billingDebitedHint: 'З балансу списано 1 урок',
   statusScheduled: 'Заплановано',
   statusCompleted: 'Проведено',
   statusMissed: 'Пропущено',
@@ -420,6 +436,7 @@ export const STUDENTS_UK: StudentStrings = {
   name: "Ім'я",
   ratePerLesson: 'Ставка за урок',
   ratePerHour: 'Ставка за годину',
+  rateUnitTitle: 'Розрахунок суми',
   rateColumn: 'Ставка',
   balanceLessons: 'Баланс уроків',
   perLesson: '/ урок',
@@ -455,6 +472,11 @@ export const STUDENTS_UK: StudentStrings = {
   billingSectionTitle: 'Параметри оплати',
   billingTypePackage: 'Абонемент (передоплата)',
   billingTypePostpaid: 'Післяоплата / разова оплата',
+  billingInfoAria: 'Що таке абонемент і післяоплата',
+  billingInfoPackage:
+    'Учень заздалегідь оплачує пакет уроків. Після кожного проведеного заняття один урок списується з балансу.',
+  billingInfoPostpaid:
+    'Уроки враховуються як борг. Оплата — після заняття або наприкінці періоду, у межах ліміту боргу.',
   balanceLessonsField: 'Залишилось уроків на балансі',
   creditLimitField: 'Ліміт боргу (уроків)',
   activityLogSection: 'Історія змін',
@@ -519,6 +541,7 @@ export const PAGE_TITLE_UK: PageTitleStrings = {
   account: 'Особистий кабінет | Simple4U',
   accountCustomization: 'Налаштування | Simple4U',
   accountProfile: 'Особистий кабінет | Simple4U',
+  accountAdministration: 'Адміністрування | Simple4U',
   admin: 'Адмін | Simple4U',
 };
 

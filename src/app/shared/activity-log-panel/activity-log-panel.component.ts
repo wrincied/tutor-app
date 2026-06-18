@@ -25,6 +25,7 @@ export class ActivityLogPanelComponent {
   emptyText = input.required<string>();
   strings = input.required<ActivityLogStrings>();
   reloadTrigger = input(0);
+  limit = input(50);
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -34,6 +35,7 @@ export class ActivityLogPanelComponent {
     effect(() => {
       this.category();
       this.reloadTrigger();
+      this.limit();
       this.load();
     });
   }
@@ -49,7 +51,7 @@ export class ActivityLogPanelComponent {
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.logSvc.getLogs(this.category()).subscribe({
+    this.logSvc.getLogs(this.category(), this.limit()).subscribe({
       next: (rows) => {
         this.entries.set(rows);
         this.loading.set(false);

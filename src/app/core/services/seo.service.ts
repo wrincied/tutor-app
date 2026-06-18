@@ -23,6 +23,7 @@ const PAGE_TITLE_KEYS = new Set<PageTitleKey>([
   'account',
   'accountCustomization',
   'accountProfile',
+  'accountAdministration',
   'admin',
 ]);
 

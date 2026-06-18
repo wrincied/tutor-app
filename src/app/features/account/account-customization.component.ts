@@ -77,11 +77,11 @@ export class AccountCustomizationComponent implements OnInit {
       return null;
     }
     const icons: Record<Exclude<Lang, 'by'>, string> = {
-      ru: '/assets/icons/flag-ru.svg',
-      en: '/assets/icons/flag-en.svg',
-      de: '/assets/icons/flag-at.svg',
-      kz: '/assets/icons/flag-kz.svg',
-      uk: '/assets/icons/flag-uk.svg',
+      ru: 'assets/icons/flag-ru.svg',
+      en: 'assets/icons/flag-en.svg',
+      de: 'assets/icons/flag-at.svg',
+      kz: 'assets/icons/flag-kz.svg',
+      uk: 'assets/icons/flag-uk.svg',
     };
     return icons[code];
   }
