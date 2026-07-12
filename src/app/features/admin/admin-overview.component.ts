@@ -1,9 +1,20 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import type { ActivityLogEntry, AdminRecentActivityItem, AdminStats, AdminUserRow } from '@interfaces';
+import { RouterLink } from '@angular/router';
+import type {
+  ActivityLogEntry,
+  AdminDashboardAlert,
+  AdminDashboardPayload,
+  AdminRecentActivityItem,
+  AdminUserRow,
+  AdminUserSummary,
+} from '@interfaces';
+import { AdminDashboardLayoutService } from '../../core/services/admin-dashboard-layout.service';
 import { AdminService } from '../../core/services/admin.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { formatActivityLogTitle } from '../../core/utils/activity-log-format';
+import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
 import {
   adminStatusClass,
   adminStatusLabel,
@@ -13,22 +24,28 @@ import {
 @Component({
   selector: 'app-admin-overview',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink, AppDialogComponent, RelativeTimePipe],
   templateUrl: './admin-overview.component.html',
   styleUrls: ['./admin-dashboard.component.scss', './admin-overview.component.scss'],
 })
 export class AdminOverviewComponent implements OnInit {
   private readonly adminSvc = inject(AdminService);
+  readonly layout = inject(AdminDashboardLayoutService);
   readonly i18n = inject(I18nService);
 
-  readonly stats = signal<AdminStats | null>(null);
+  readonly dashboard = signal<AdminDashboardPayload | null>(null);
   readonly users = signal<AdminUserRow[]>([]);
   readonly activity = signal<AdminRecentActivityItem[]>([]);
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
 
+  readonly detailOpen = signal(false);
+  readonly detailLoading = signal(false);
+  readonly detailError = signal<string | null>(null);
+  readonly detail = signal<AdminUserSummary | null>(null);
+
   readonly revenueLabel = computed(() => {
-    const mrr = this.stats()?.estimatedMrr;
+    const mrr = this.dashboard()?.stats.estimatedMrr;
     if (!mrr || Object.keys(mrr).length === 0) {
       return '—';
     }
@@ -44,14 +61,17 @@ export class AdminOverviewComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    this.reload();
+    this.layout.load().subscribe({
+      next: () => this.reload(),
+      error: () => this.reload(),
+    });
   }
 
   reload(): void {
     this.loading.set(true);
     this.loadError.set(null);
 
-    let pending = 3;
+    let pending = 2;
     const done = () => {
       pending -= 1;
       if (pending === 0) {
@@ -63,14 +83,8 @@ export class AdminOverviewComponent implements OnInit {
       done();
     };
 
-    this.adminSvc.getStats().subscribe({
-      next: (stats) => this.stats.set(stats),
-      error: fail,
-      complete: done,
-    });
-
-    this.adminSvc.getUsers().subscribe({
-      next: (users) => this.users.set(users),
+    this.adminSvc.getDashboard().subscribe({
+      next: (payload) => this.dashboard.set(payload),
       error: fail,
       complete: done,
     });
@@ -80,10 +94,27 @@ export class AdminOverviewComponent implements OnInit {
       error: fail,
       complete: done,
     });
+
+    this.adminSvc.getUsers().subscribe({
+      next: (users) => this.users.set(users),
+      error: () => undefined,
+    });
   }
 
   t() {
     return this.i18n.adminUi();
+  }
+
+  isEnabled(id: Parameters<AdminDashboardLayoutService['isEnabled']>[0]): boolean {
+    return this.layout.isEnabled(id);
+  }
+
+  funnelPercent(value: number): string {
+    const total = this.dashboard()?.funnel.registered ?? 0;
+    if (!total) {
+      return '0%';
+    }
+    return `${Math.round((value / total) * 100)}%`;
   }
 
   statusLabel(status: AdminUserRow['subscription_status']): string {
@@ -94,16 +125,49 @@ export class AdminOverviewComponent implements OnInit {
     return adminStatusClass(status);
   }
 
-  activityTitle(item: AdminRecentActivityItem): string {
+  alertLabel(alert: AdminDashboardAlert): string {
+    switch (alert.type) {
+      case 'trial_expiring_soon':
+        return this.t().alertTrialExpiringSoon;
+      case 'trial_expired':
+        return this.t().alertTrialExpired;
+      default:
+        return this.t().alertProInactive;
+    }
+  }
+
+  activityTitle(item: AdminRecentActivityItem | ActivityLogEntry): string {
     const entry: ActivityLogEntry = {
       _id: item._id,
       category: item.category,
       action: item.action,
       entity_type: item.category === 'students' ? 'student' : 'expense',
-      summary: item.summary,
+      summary: 'summary' in item ? item.summary : undefined,
       student_name: item.student_name,
       createdAt: item.createdAt ?? undefined,
     };
     return formatActivityLogTitle(entry, this.i18n.activityLogUi());
+  }
+
+  openUserDetail(userId: string): void {
+    this.detailOpen.set(true);
+    this.detailLoading.set(true);
+    this.detailError.set(null);
+    this.detail.set(null);
+    this.adminSvc.getUserSummary(userId).subscribe({
+      next: (summary) => {
+        this.detail.set(summary);
+        this.detailLoading.set(false);
+      },
+      error: () => {
+        this.detailError.set(this.t().userDetailError);
+        this.detailLoading.set(false);
+      },
+    });
+  }
+
+  closeUserDetail(): void {
+    this.detailOpen.set(false);
+    this.detail.set(null);
   }
 }

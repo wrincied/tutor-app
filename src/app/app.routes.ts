@@ -149,6 +149,12 @@ export const routes: Routes = [
                   import('./features/admin/admin-users.component').then((m) => m.AdminUsersComponent),
                 data: { title: 'adminUsers' satisfies PageTitleKey },
               },
+              {
+                path: 'settings',
+                loadComponent: () =>
+                  import('./features/admin/admin-settings.component').then((m) => m.AdminSettingsComponent),
+                data: { title: 'adminSettings' satisfies PageTitleKey },
+              },
             ],
           },
         ],

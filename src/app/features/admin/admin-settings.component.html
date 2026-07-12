@@ -1,0 +1,42 @@
+<section class="admin-settings">
+  <header class="admin-settings__header">
+    <h2 class="admin-settings__title">{{ t().settingsTitle }}</h2>
+    <p class="admin-settings__intro">{{ t().settingsIntro }}</p>
+  </header>
+
+  @if (loadError()) {
+    <p class="admin-page__error" role="alert">{{ loadError() }}</p>
+  }
+  @if (saved()) {
+    <p class="admin-page__success" role="status">{{ t().settingsSaved }}</p>
+  }
+
+  @for (group of widgetGroups; track group) {
+    <section class="admin-settings__group" [attr.aria-label]="groupLabel(group)">
+      <h3 class="admin-settings__group-title">{{ groupLabel(group) }}</h3>
+      <ul class="admin-settings__list">
+        @for (widget of widgetsForGroup(group); track widget.id) {
+          <li class="admin-settings__item">
+            <label class="admin-settings__label">
+              <input
+                type="checkbox"
+                [checked]="isChecked(widget.id)"
+                (change)="onToggle(widget.id, $any($event.target).checked)"
+              />
+              <span>{{ widgetLabel(widget) }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <div class="admin-settings__actions">
+    <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">
+      {{ saving() ? t().settingsSaving : t().settingsSave }}
+    </button>
+    <button type="button" class="btn-secondary" [disabled]="saving()" (click)="reset()">
+      {{ t().settingsReset }}
+    </button>
+  </div>
+</section>

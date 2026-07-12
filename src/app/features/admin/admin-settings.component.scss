@@ -1,0 +1,65 @@
+.admin-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 40rem;
+}
+
+.admin-settings__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-settings__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.admin-settings__intro {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.admin-settings__group-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin-settings__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.admin-settings__item {
+  border: 1px solid var(--nav-border);
+  border-radius: 0.625rem;
+  background: var(--nav-bg);
+}
+
+.admin-settings__label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+
+  input {
+    flex-shrink: 0;
+  }
+}
+
+.admin-settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
