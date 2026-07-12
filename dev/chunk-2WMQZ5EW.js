@@ -1,0 +1,1 @@
+function i(t,n,c,r=2){let e=String(n||"USD").trim().toUpperCase();try{return new Intl.NumberFormat(c,{style:"currency",currency:e,currencyDisplay:"code",minimumFractionDigits:r,maximumFractionDigits:r}).format(t)}catch{return`${t.toFixed(r)} ${e}`}}export{i as a};
