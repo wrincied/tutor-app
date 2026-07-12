@@ -100,3 +100,30 @@ jobs:
           folder: dist/tutor/browser
           target-folder: dev
           branch: gh-pages
+
+      - name: Redirect root gh-pages URL to /dev
+        run: |
+          mkdir -p gh-pages-root
+          cat > gh-pages-root/index.html << 'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <title>Simple4U</title>
+              <meta http-equiv="refresh" content="0; url=/tutor-app/dev/">
+              <link rel="canonical" href="/tutor-app/dev/">
+              <script>location.replace('/tutor-app/dev/' + (location.hash || ''));</script>
+            </head>
+            <body>
+              <p>Redirecting to <a href="/tutor-app/dev/">Simple4U dev</a>…</p>
+            </body>
+          </html>
+          EOF
+
+      - name: Publish root redirect
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: gh-pages-root
+          target-folder: .
+          branch: gh-pages
+          clean: false
