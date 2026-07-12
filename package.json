@@ -4,8 +4,11 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "prestart": "node scripts/prepare-environment.mjs development",
     "build": "ng build --configuration production",
+    "prebuild": "node scripts/prepare-environment.mjs production",
     "build:dev": "ng build --configuration development",
+    "prebuild:dev": "node scripts/prepare-environment.mjs development",
     "watch": "ng build --watch --configuration development",
     "test": "vitest run",
     "test:watch": "vitest",
