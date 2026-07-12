@@ -82,7 +82,8 @@ export type PageTitleKey =
   | 'accountCustomization'
   | 'accountProfile'
   | 'accountAdministration'
-  | 'admin';
+  | 'admin'
+  | 'adminUsers';
 
 export type PageTitleStrings = Record<PageTitleKey, string>;
 
@@ -177,12 +178,27 @@ export interface AdminUserRow {
   subscription_status: SubscriptionStatus | string;
   trial_ends_at?: string | null;
   createdAt: string | null;
+  last_login_at?: string | null;
+  last_activity_at?: string | null;
   role?: UserRole | string;
+}
+
+export interface AdminRecentActivityItem {
+  _id: string;
+  tutor_id: string;
+  user_email: string;
+  category: 'finance' | 'students';
+  action: string;
+  summary?: string;
+  student_name?: string | null;
+  createdAt: string | null;
 }
 
 export interface AdminStrings {
   title: string;
   navLink: string;
+  dashboardTab: string;
+  usersTab: string;
   loading: string;
   loadError: string;
   metricTotalUsers: string;
@@ -190,10 +206,21 @@ export interface AdminStrings {
   metricConversion: string;
   metricRevenue: string;
   revenueHint: string;
+  lastVisitsTitle: string;
+  lastVisitsHint: string;
+  recentChangesTitle: string;
+  recentChangesHint: string;
   tableEmail: string;
   tableStatus: string;
   tableRegistered: string;
+  tableLastVisit: string;
+  tableLastChange: string;
+  tableWhen: string;
+  tableAction: string;
   tableActions: string;
+  noActivity: string;
+  noVisits: string;
+  never: string;
   statusFree: string;
   statusPro: string;
   statusTrial: string;

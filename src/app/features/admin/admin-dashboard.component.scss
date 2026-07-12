@@ -1,11 +1,6 @@
 :host {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 0;
+  display: block;
   min-height: 0;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
 }
 
 .admin-page__error {

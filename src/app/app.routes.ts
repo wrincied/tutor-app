@@ -132,10 +132,24 @@ export const routes: Routes = [
             path: 'admin',
             canActivate: [adminGuard],
             loadComponent: () =>
-              import('./features/admin/admin-dashboard.component').then(
-                (m) => m.AdminDashboardComponent,
-              ),
+              import('./features/admin/admin-shell.component').then((m) => m.AdminShellComponent),
             data: { title: 'admin' satisfies PageTitleKey },
+            children: [
+              {
+                path: '',
+                loadComponent: () =>
+                  import('./features/admin/admin-overview.component').then(
+                    (m) => m.AdminOverviewComponent,
+                  ),
+                data: { title: 'admin' satisfies PageTitleKey },
+              },
+              {
+                path: 'users',
+                loadComponent: () =>
+                  import('./features/admin/admin-users.component').then((m) => m.AdminUsersComponent),
+                data: { title: 'adminUsers' satisfies PageTitleKey },
+              },
+            ],
           },
         ],
       },

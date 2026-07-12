@@ -543,6 +543,7 @@ export const PAGE_TITLE_UK: PageTitleStrings = {
   accountProfile: 'Особистий кабінет | Simple4U',
   accountAdministration: 'Адміністрування | Simple4U',
   admin: 'Адмін | Simple4U',
+  adminUsers: 'Користувачі | Simple4U',
 };
 
 export const TAX_MODE_LABELS_UK: Record<TaxMode, string> = {
