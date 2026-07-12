@@ -10,66 +10,79 @@
 
 | Ветка | Роль | Кто пишет в неё |
 |-------|------|-----------------|
-| `dev` | Исходный код для разработки и тестирования | Разработчики |
-| `master` | Исходный код production | Только через мерж из `dev` |
+| `dev` | Исходный код, тестирование и **единственный источник сборки для gh-pages** | Через PR |
+| `master` | Стабильный production-код (зеркало проверенного `dev`) | **Только через PR** из `dev` |
 | `gh-pages` | Собранный статический сайт (артефакты деплоя) | Только GitHub Actions, **не коммить вручную** |
 
-**Все изменения сначала идут в `dev`. Сборка из `dev` деплоится на GitHub Pages. Если всё ок — `dev` мержится в `master`.**
+**Все изменения идут через PR → `dev`. Сборка на GitHub Pages — только из `dev`. После проверки — PR `dev` → `master`.**
 
 ### Порядок работы
 
-1. **Разработка** — feature-ветка от `dev` или коммиты напрямую в `dev`.
-2. **Push в `dev`** — CI (тесты + build) и деплой dev-сборки в ветку `gh-pages` (папка `/dev`).
-3. **Проверка** — открой https://wrincied.github.io/tutor-app/dev и убедись, что всё работает.
-4. **Мерж `dev` → `master`** — только после успешной проверки на gh-pages dev.
-5. **Push в `master`** — CI и production-деплой в `gh-pages` (корень сайта).
+1. **Feature-ветка** от `dev` → PR в `dev` → CI (тесты + build).
+2. **Мерж PR в `dev`** → CI снова (тесты + build) → деплой в `gh-pages` (папка `/dev`).
+3. **Проверка** — https://wrincied.github.io/tutor-app/dev
+4. **PR `dev` → `master`** → CI (тесты + build), без деплоя.
+5. **Мерж PR в `master`** — фиксация стабильной версии исходников. **Деплой не запускается.**
 
 ```mermaid
 flowchart LR
-  Dev[dev — исходники]
-  Master[master — исходники prod]
-  GhPages[gh-pages — собранный сайт]
+  Feature[feature-branch]
+  Dev[dev]
+  Master[master]
+  GhPages[gh-pages]
 
-  Dev -->|CI + deploy-dev.yml| GhPagesDev["/dev на gh-pages"]
-  Dev -->|мерж, если ок| Master
-  Master -->|CI + deploy-prod.yml| GhPagesProd["/ на gh-pages"]
+  Feature -->|PR + CI| Dev
+  Dev -->|push: CI + deploy| GhPagesDev["/dev на gh-pages"]
+  Dev -->|PR + CI| Master
 ```
 
 ### CI/CD (GitHub Actions)
 
-| Исходная ветка | Workflow | Триггер | Куда деплоится |
-|----------------|----------|---------|----------------|
-| `dev`, `master` | `.github/workflows/ci.yml` | pull request и push | — (только проверки) |
-| `dev` | `.github/workflows/deploy-dev.yml` | push в `dev` | `gh-pages` → `/dev` |
-| `master` | `.github/workflows/deploy-prod.yml` | push в `master` | `gh-pages` → `/` (prod) |
+Один workflow: `.github/workflows/ci.yml`
 
-**URL после деплоя:**
+| Событие | Jobs | Деплой |
+|---------|------|--------|
+| PR → `dev` | Test & Build | нет |
+| PR → `master` | Test & Build | нет |
+| push → `dev` | Test & Build → Deploy to GitHub Pages | `gh-pages` → `/dev` |
+| push → `master` | — | **запрещён** (нет workflow-триггера) |
 
-- Dev (из `dev`): https://wrincied.github.io/tutor-app/dev
-- Prod (из `master`): https://wrincied.github.io/tutor-app
+**URL после деплоя (только из `dev`):**
 
-### Обязательные проверки перед мержем PR
+- https://wrincied.github.io/tutor-app/dev
 
-В GitHub: **Settings → Branches → Branch protection rules** для `dev` и `master`:
+### Обязательные настройки в GitHub
 
-1. Включи **Require a pull request before merging**
-2. Включи **Require status checks to pass before merging**
-3. Выбери check **`Test & Build`** (job из `ci.yml`)
-4. (Рекомендуется) **Require branches to be up to date before merging**
+**Settings → Branches → Branch protection rules**
 
-Без этих настроек workflow запустится, но мерж PR не будет заблокирован при падении тестов.
+#### Для `dev`
+
+1. **Require a pull request before merging**
+2. **Require status checks to pass before merging** → **`Test & Build`**
+3. **Require branches to be up to date before merging**
+
+#### Для `master`
+
+1. **Require a pull request before merging**
+2. **Require status checks to pass before merging** → **`Test & Build`**
+3. **Require branches to be up to date before merging**
+4. **Do not allow bypassing the above settings**
+
+> Без branch protection workflow запустится, но прямой push и мерж без тестов останутся возможны.
 
 ### Запрещено
 
-- Пушить непроверенные изменения напрямую в `master`, минуя `dev`.
-- Мержить `dev` → `master` без проверки dev-сборки на `gh-pages`.
-- Коммитить вручную в `gh-pages` — эта ветка управляется только CI/CD.
+- Пушить напрямую в `master` — только PR из `dev`.
+- Пушить напрямую в `dev` без PR (после включения branch protection).
+- Деплоить на `gh-pages` из `master` — деплой **только** из `dev`.
+- Коммитить вручную в `gh-pages`.
 
 ### Репозиторий
 
 - GitHub: https://github.com/wrincied/tutor-app
-- Ветки исходного кода: `dev` (разработка), `master` (production)
-- Ветка деплоя: `gh-pages` (автоматически)
+- Разработка и деплой: `dev`
+- Стабильные исходники: `master` (без деплоя)
+- Артефакты сайта: `gh-pages` (автоматически из `dev`)
 
 ---
 
