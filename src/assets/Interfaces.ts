@@ -83,7 +83,8 @@ export type PageTitleKey =
   | 'accountProfile'
   | 'accountAdministration'
   | 'admin'
-  | 'adminUsers';
+  | 'adminUsers'
+  | 'adminSettings';
 
 export type PageTitleStrings = Record<PageTitleKey, string>;
 
@@ -172,6 +173,80 @@ export interface AdminStats {
   estimatedMrr: Record<string, number>;
 }
 
+export type AdminDashboardWidgetId =
+  | 'kpi-total-users'
+  | 'kpi-paid-users'
+  | 'kpi-trial-users'
+  | 'kpi-conversion'
+  | 'kpi-mrr'
+  | 'segments'
+  | 'activation-funnel'
+  | 'alerts'
+  | 'last-visits'
+  | 'recent-activity'
+  | 'geography'
+  | 'product-usage';
+
+export interface AdminDashboardSegments {
+  active7d: number;
+  inactive14d: number;
+  trialExpiring7d: number;
+  onboardingIncomplete: number;
+  emailUnverified: number;
+}
+
+export interface AdminDashboardFunnel {
+  registered: number;
+  emailVerified: number;
+  onboardingDone: number;
+  hasStudent: number;
+  hasLesson: number;
+  activeWeek2: number;
+}
+
+export type AdminDashboardAlertType = 'trial_expiring_soon' | 'trial_expired' | 'pro_inactive';
+
+export interface AdminDashboardAlert {
+  type: AdminDashboardAlertType;
+  user_id: string;
+  email: string;
+  trial_ends_at?: string | null;
+  last_login_at?: string | null;
+}
+
+export interface AdminGeographyRow {
+  country: string;
+  count: number;
+}
+
+export interface AdminProductUsage {
+  lessonsLast7d: number;
+  totalStudents: number;
+  avgStudentsPerTutor: number;
+  tutorsWithFinance: number;
+  financeUsersPercent: number;
+}
+
+export interface AdminDashboardPayload {
+  stats: AdminStats;
+  segments: AdminDashboardSegments;
+  funnel: AdminDashboardFunnel;
+  alerts: AdminDashboardAlert[];
+  geography: AdminGeographyRow[];
+  productUsage: AdminProductUsage;
+}
+
+export interface AdminPreferences {
+  dashboard_widgets: AdminDashboardWidgetId[];
+}
+
+export interface AdminUserSummary {
+  user: AdminUserRow;
+  studentsCount: number;
+  lessonsCount: number;
+  recentActivity: ActivityLogEntry[];
+}
+
 export interface AdminUserRow {
   _id: string;
   email: string;
@@ -180,6 +255,9 @@ export interface AdminUserRow {
   createdAt: string | null;
   last_login_at?: string | null;
   last_activity_at?: string | null;
+  email_verified?: boolean;
+  onboarding_completed?: boolean;
+  country_settings?: string;
   role?: UserRole | string;
 }
 
@@ -199,13 +277,65 @@ export interface AdminStrings {
   navLink: string;
   dashboardTab: string;
   usersTab: string;
+  settingsTab: string;
   loading: string;
   loadError: string;
+  refresh: string;
+  customizeDashboard: string;
+  settingsTitle: string;
+  settingsIntro: string;
+  settingsGroupKpi: string;
+  settingsGroupAnalytics: string;
+  settingsGroupTables: string;
+  settingsSave: string;
+  settingsSaving: string;
+  settingsSaved: string;
+  settingsReset: string;
+  settingsResetConfirm: string;
+  widgetKpiTotalUsers: string;
+  widgetKpiPaidUsers: string;
+  widgetKpiTrialUsers: string;
+  widgetKpiConversion: string;
+  widgetKpiMrr: string;
+  widgetSegments: string;
+  widgetActivationFunnel: string;
+  widgetAlerts: string;
+  widgetLastVisits: string;
+  widgetRecentActivity: string;
+  widgetGeography: string;
+  widgetProductUsage: string;
   metricTotalUsers: string;
   metricPaidUsers: string;
+  metricTrialUsers: string;
   metricConversion: string;
   metricRevenue: string;
   revenueHint: string;
+  segmentActive7d: string;
+  segmentInactive14d: string;
+  segmentTrialExpiring: string;
+  segmentOnboardingIncomplete: string;
+  segmentEmailUnverified: string;
+  funnelTitle: string;
+  funnelRegistered: string;
+  funnelEmailVerified: string;
+  funnelOnboardingDone: string;
+  funnelHasStudent: string;
+  funnelHasLesson: string;
+  funnelActiveWeek2: string;
+  alertsTitle: string;
+  alertsEmpty: string;
+  alertTrialExpiringSoon: string;
+  alertTrialExpired: string;
+  alertProInactive: string;
+  geographyTitle: string;
+  geographyCountry: string;
+  geographyUsers: string;
+  geographyEmpty: string;
+  productUsageTitle: string;
+  productLessons7d: string;
+  productTotalStudents: string;
+  productAvgStudents: string;
+  productFinanceUsers: string;
   lastVisitsTitle: string;
   lastVisitsHint: string;
   recentChangesTitle: string;
@@ -218,9 +348,22 @@ export interface AdminStrings {
   tableWhen: string;
   tableAction: string;
   tableActions: string;
+  tableCountry: string;
   noActivity: string;
   noVisits: string;
+  noAlerts: string;
   never: string;
+  searchUsers: string;
+  exportCsv: string;
+  sortByRegistered: string;
+  sortByLastVisit: string;
+  sortByEmail: string;
+  userDetailTitle: string;
+  userDetailStudents: string;
+  userDetailLessons: string;
+  userDetailRecentActivity: string;
+  userDetailLoading: string;
+  userDetailError: string;
   statusFree: string;
   statusPro: string;
   statusTrial: string;

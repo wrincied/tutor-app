@@ -9,6 +9,26 @@
   <p class="admin-page__error" role="alert">{{ actionError() }}</p>
 }
 
+<div class="admin-users-toolbar">
+  <input
+    type="search"
+    class="app-input admin-users-toolbar__search"
+    [placeholder]="t().searchUsers"
+    [ngModel]="search()"
+    (ngModelChange)="search.set($event)"
+  />
+  <app-select
+    class="admin-users-toolbar__sort"
+    size="compact"
+    [ngModel]="sortKey()"
+    (ngModelChange)="sortKey.set($event)"
+    [options]="sortOptions()"
+  />
+  <button type="button" class="btn-secondary" (click)="exportCsv()" [disabled]="filteredUsers().length === 0">
+    {{ t().exportCsv }}
+  </button>
+</div>
+
 @if (loading()) {
   <p class="hint">{{ t().loading }}</p>
 } @else {
@@ -18,6 +38,7 @@
         <tr>
           <th scope="col">{{ t().tableEmail }}</th>
           <th scope="col">{{ t().tableStatus }}</th>
+          <th scope="col">{{ t().tableCountry }}</th>
           <th scope="col">{{ t().tableRegistered }}</th>
           <th scope="col">{{ t().tableLastVisit }}</th>
           <th scope="col">{{ t().tableLastChange }}</th>
@@ -25,12 +46,14 @@
         </tr>
       </thead>
       <tbody>
-        @if (users().length === 0) {
+        @if (filteredUsers().length === 0) {
           <tr>
-            <td colspan="6" class="admin-table__empty">{{ t().noUsers }}</td>
+            <td colspan="7" class="admin-table__empty">
+              {{ users().length === 0 ? t().noUsers : t().searchUsers }}
+            </td>
           </tr>
         } @else {
-          @for (user of users(); track user._id) {
+          @for (user of filteredUsers(); track user._id) {
             <tr>
               <td [attr.data-label]="t().tableEmail">{{ user.email }}</td>
               <td [attr.data-label]="t().tableStatus">
@@ -46,23 +69,32 @@
                   }
                 </div>
               </td>
+              <td [attr.data-label]="t().tableCountry">
+                {{ user.country_settings || '—' }}
+              </td>
               <td [attr.data-label]="t().tableRegistered">
                 @if (user.createdAt) {
-                  {{ user.createdAt | date: 'dd.MM.yyyy HH:mm' }}
+                  <span [title]="user.createdAt | date: 'dd.MM.yyyy HH:mm'">
+                    {{ user.createdAt | relativeTime }}
+                  </span>
                 } @else {
                   —
                 }
               </td>
               <td [attr.data-label]="t().tableLastVisit">
                 @if (user.last_login_at) {
-                  {{ user.last_login_at | date: 'dd.MM.yyyy HH:mm' }}
+                  <span [title]="user.last_login_at | date: 'dd.MM.yyyy HH:mm'">
+                    {{ user.last_login_at | relativeTime }}
+                  </span>
                 } @else {
                   {{ t().never }}
                 }
               </td>
               <td [attr.data-label]="t().tableLastChange">
                 @if (user.last_activity_at) {
-                  {{ user.last_activity_at | date: 'dd.MM.yyyy HH:mm' }}
+                  <span [title]="user.last_activity_at | date: 'dd.MM.yyyy HH:mm'">
+                    {{ user.last_activity_at | relativeTime }}
+                  </span>
                 } @else {
                   {{ t().never }}
                 }

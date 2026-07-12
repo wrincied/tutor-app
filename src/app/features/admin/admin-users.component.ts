@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { AdminUserRow, SubscriptionStatus } from '@interfaces';
@@ -6,17 +6,21 @@ import { AdminService } from '../../core/services/admin.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
 import {
   adminStatusClass,
   adminStatusLabel,
+  parseTimestamp,
 } from './admin-subscription.helpers';
 
 const TRIAL_GIFT_DAYS = 14;
 
+type UsersSortKey = 'email' | 'registered' | 'lastVisit';
+
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [DatePipe, FormsModule, AppDialogComponent, AppSelectComponent],
+  imports: [DatePipe, FormsModule, AppDialogComponent, AppSelectComponent, RelativeTimePipe],
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-dashboard.component.scss',
 })
@@ -32,10 +36,42 @@ export class AdminUsersComponent implements OnInit {
   readonly actionMessage = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
 
+  readonly search = signal('');
+  readonly sortKey = signal<UsersSortKey>('registered');
+
   readonly editOpen = signal(false);
   readonly editingUser = signal<AdminUserRow | null>(null);
   readonly editStatus = signal<SubscriptionStatus>('free');
   readonly editTrialEnds = signal('');
+
+  readonly filteredUsers = computed(() => {
+    const query = this.search().trim().toLowerCase();
+    let rows = [...this.users()];
+    if (query) {
+      rows = rows.filter((user) => user.email.toLowerCase().includes(query));
+    }
+    const key = this.sortKey();
+    rows.sort((left, right) => {
+      switch (key) {
+        case 'email':
+          return left.email.localeCompare(right.email);
+        case 'lastVisit':
+          return parseTimestamp(right.last_login_at) - parseTimestamp(left.last_login_at);
+        default:
+          return parseTimestamp(right.createdAt) - parseTimestamp(left.createdAt);
+      }
+    });
+    return rows;
+  });
+
+  readonly sortOptions = computed((): AppSelectOption[] => {
+    const labels = this.t();
+    return [
+      { value: 'registered', label: labels.sortByRegistered },
+      { value: 'lastVisit', label: labels.sortByLastVisit },
+      { value: 'email', label: labels.sortByEmail },
+    ];
+  });
 
   ngOnInit(): void {
     this.reload();
@@ -76,6 +112,38 @@ export class AdminUsersComponent implements OnInit {
 
   statusClass(status: SubscriptionStatus | string): string {
     return adminStatusClass(status);
+  }
+
+  exportCsv(): void {
+    const rows = this.filteredUsers();
+    const header = [
+      'email',
+      'status',
+      'country',
+      'registered',
+      'last_visit',
+      'last_change',
+    ];
+    const lines = rows.map((user) =>
+      [
+        user.email,
+        user.subscription_status,
+        user.country_settings ?? '',
+        user.createdAt ?? '',
+        user.last_login_at ?? '',
+        user.last_activity_at ?? '',
+      ]
+        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(','),
+    );
+    const csv = [header.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `simple4u-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   openEdit(user: AdminUserRow): void {

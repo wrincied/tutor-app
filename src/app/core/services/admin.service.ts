@@ -1,7 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import type { AdminRecentActivityItem, AdminStats, AdminUserRow, SubscriptionStatus } from '@interfaces';
+import type {
+  AdminDashboardPayload,
+  AdminPreferences,
+  AdminRecentActivityItem,
+  AdminStats,
+  AdminUserRow,
+  AdminUserSummary,
+  SubscriptionStatus,
+} from '@interfaces';
 
 import { apiUrl } from '../config/api-url';
 
@@ -24,6 +32,25 @@ export class AdminService {
 
   getStats(): Observable<AdminStats> {
     return this.http.get<AdminStats>(`${API}/stats`);
+  }
+
+  getDashboard(): Observable<AdminDashboardPayload> {
+    return this.http.get<AdminDashboardPayload>(`${API}/dashboard`);
+  }
+
+  getPreferences(): Observable<AdminPreferences> {
+    return this.http.get<AdminPreferences>(`${API}/preferences`);
+  }
+
+  savePreferences(payload: AdminPreferences): Observable<{ ok: boolean; dashboard_widgets: AdminPreferences['dashboard_widgets'] }> {
+    return this.http.put<{ ok: boolean; dashboard_widgets: AdminPreferences['dashboard_widgets'] }>(
+      `${API}/preferences`,
+      payload,
+    );
+  }
+
+  getUserSummary(userId: string): Observable<AdminUserSummary> {
+    return this.http.get<AdminUserSummary>(`${API}/users/${userId}/summary`);
   }
 
   getUsers(): Observable<AdminUserRow[]> {

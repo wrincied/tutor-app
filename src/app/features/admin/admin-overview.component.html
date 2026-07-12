@@ -1,123 +1,319 @@
-@if (loadError()) {
-  <p class="admin-page__error" role="alert">{{ loadError() }}</p>
-}
+<div class="admin-overview">
+  <div class="admin-overview__toolbar">
+    <button type="button" class="btn-secondary" [disabled]="loading()" (click)="reload()">
+      {{ t().refresh }}
+    </button>
+    <a routerLink="/app/admin/settings" class="btn-secondary admin-overview__settings-link">
+      {{ t().customizeDashboard }}
+    </a>
+  </div>
 
-@if (loading()) {
-  <p class="hint">{{ t().loading }}</p>
-} @else {
-  @if (stats(); as s) {
-    <section class="admin-kpi" aria-label="Metrics">
-      <article class="admin-kpi__card">
-        <span class="admin-kpi__label">{{ t().metricTotalUsers }}</span>
-        <strong class="admin-kpi__value">{{ s.totalUsers }}</strong>
-      </article>
-      <article class="admin-kpi__card">
-        <span class="admin-kpi__label">{{ t().metricPaidUsers }}</span>
-        <strong class="admin-kpi__value">{{ s.paidUsers }}</strong>
-      </article>
-      <article class="admin-kpi__card">
-        <span class="admin-kpi__label">{{ t().metricConversion }}</span>
-        <strong class="admin-kpi__value">{{ s.conversionPercent }}%</strong>
-      </article>
-      <article class="admin-kpi__card admin-kpi__card--wide">
-        <span class="admin-kpi__label">{{ t().metricRevenue }}</span>
-        <strong class="admin-kpi__value admin-kpi__value--sm">{{ revenueLabel() }}</strong>
-        <span class="admin-kpi__hint">{{ t().revenueHint }}</span>
-      </article>
-    </section>
+  @if (loadError()) {
+    <p class="admin-page__error" role="alert">{{ loadError() }}</p>
   }
 
-  <div class="admin-dashboard-grid">
-    <section class="admin-panel" aria-labelledby="admin-last-visits-title">
-      <header class="admin-panel__header">
-        <h2 id="admin-last-visits-title" class="admin-panel__title">{{ t().lastVisitsTitle }}</h2>
-        <p class="admin-panel__hint">{{ t().lastVisitsHint }}</p>
-      </header>
+  @if (loading()) {
+    <p class="hint">{{ t().loading }}</p>
+  } @else if (dashboard(); as d) {
+    @if (
+      isEnabled('kpi-total-users') ||
+      isEnabled('kpi-paid-users') ||
+      isEnabled('kpi-trial-users') ||
+      isEnabled('kpi-conversion') ||
+      isEnabled('kpi-mrr')
+    ) {
+      <section class="admin-kpi" aria-label="Metrics">
+        @if (isEnabled('kpi-total-users')) {
+          <article class="admin-kpi__card">
+            <span class="admin-kpi__label">{{ t().metricTotalUsers }}</span>
+            <strong class="admin-kpi__value">{{ d.stats.totalUsers }}</strong>
+          </article>
+        }
+        @if (isEnabled('kpi-paid-users')) {
+          <article class="admin-kpi__card">
+            <span class="admin-kpi__label">{{ t().metricPaidUsers }}</span>
+            <strong class="admin-kpi__value">{{ d.stats.paidUsers }}</strong>
+          </article>
+        }
+        @if (isEnabled('kpi-trial-users')) {
+          <article class="admin-kpi__card">
+            <span class="admin-kpi__label">{{ t().metricTrialUsers }}</span>
+            <strong class="admin-kpi__value">{{ d.stats.trialUsers }}</strong>
+          </article>
+        }
+        @if (isEnabled('kpi-conversion')) {
+          <article class="admin-kpi__card">
+            <span class="admin-kpi__label">{{ t().metricConversion }}</span>
+            <strong class="admin-kpi__value">{{ d.stats.conversionPercent }}%</strong>
+          </article>
+        }
+        @if (isEnabled('kpi-mrr')) {
+          <article class="admin-kpi__card admin-kpi__card--wide">
+            <span class="admin-kpi__label">{{ t().metricRevenue }}</span>
+            <strong class="admin-kpi__value admin-kpi__value--sm">{{ revenueLabel() }}</strong>
+            <span class="admin-kpi__hint">{{ t().revenueHint }}</span>
+          </article>
+        }
+      </section>
+    }
 
-      <div class="admin-table-wrap">
-        <table class="admin-table admin-table--dashboard">
-          <thead>
-            <tr>
-              <th scope="col">{{ t().tableEmail }}</th>
-              <th scope="col">{{ t().tableStatus }}</th>
-              <th scope="col">{{ t().tableLastVisit }}</th>
-              <th scope="col">{{ t().tableLastChange }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (recentVisits().length === 0) {
-              <tr>
-                <td colspan="4" class="admin-table__empty">{{ t().noVisits }}</td>
-              </tr>
-            } @else {
-              @for (user of recentVisits(); track user._id) {
+    @if (isEnabled('segments')) {
+      <section class="admin-panel" aria-labelledby="admin-segments-title">
+        <h2 id="admin-segments-title" class="admin-panel__title">{{ t().widgetSegments }}</h2>
+        <div class="admin-segments">
+          <article class="admin-segment">
+            <span class="admin-segment__label">{{ t().segmentActive7d }}</span>
+            <strong class="admin-segment__value">{{ d.segments.active7d }}</strong>
+          </article>
+          <article class="admin-segment">
+            <span class="admin-segment__label">{{ t().segmentInactive14d }}</span>
+            <strong class="admin-segment__value">{{ d.segments.inactive14d }}</strong>
+          </article>
+          <article class="admin-segment">
+            <span class="admin-segment__label">{{ t().segmentTrialExpiring }}</span>
+            <strong class="admin-segment__value">{{ d.segments.trialExpiring7d }}</strong>
+          </article>
+          <article class="admin-segment">
+            <span class="admin-segment__label">{{ t().segmentOnboardingIncomplete }}</span>
+            <strong class="admin-segment__value">{{ d.segments.onboardingIncomplete }}</strong>
+          </article>
+          <article class="admin-segment">
+            <span class="admin-segment__label">{{ t().segmentEmailUnverified }}</span>
+            <strong class="admin-segment__value">{{ d.segments.emailUnverified }}</strong>
+          </article>
+        </div>
+      </section>
+    }
+
+    <div class="admin-dashboard-grid">
+      @if (isEnabled('activation-funnel')) {
+        <section class="admin-panel" aria-labelledby="admin-funnel-title">
+          <h2 id="admin-funnel-title" class="admin-panel__title">{{ t().funnelTitle }}</h2>
+          <ul class="admin-funnel">
+            <li><span>{{ t().funnelRegistered }}</span><strong>{{ d.funnel.registered }}</strong><em>100%</em></li>
+            <li><span>{{ t().funnelEmailVerified }}</span><strong>{{ d.funnel.emailVerified }}</strong><em>{{ funnelPercent(d.funnel.emailVerified) }}</em></li>
+            <li><span>{{ t().funnelOnboardingDone }}</span><strong>{{ d.funnel.onboardingDone }}</strong><em>{{ funnelPercent(d.funnel.onboardingDone) }}</em></li>
+            <li><span>{{ t().funnelHasStudent }}</span><strong>{{ d.funnel.hasStudent }}</strong><em>{{ funnelPercent(d.funnel.hasStudent) }}</em></li>
+            <li><span>{{ t().funnelHasLesson }}</span><strong>{{ d.funnel.hasLesson }}</strong><em>{{ funnelPercent(d.funnel.hasLesson) }}</em></li>
+            <li><span>{{ t().funnelActiveWeek2 }}</span><strong>{{ d.funnel.activeWeek2 }}</strong><em>{{ funnelPercent(d.funnel.activeWeek2) }}</em></li>
+          </ul>
+        </section>
+      }
+
+      @if (isEnabled('alerts')) {
+        <section class="admin-panel" aria-labelledby="admin-alerts-title">
+          <h2 id="admin-alerts-title" class="admin-panel__title">{{ t().alertsTitle }}</h2>
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-table--dashboard">
+              <thead>
                 <tr>
-                  <td [attr.data-label]="t().tableEmail">{{ user.email }}</td>
-                  <td [attr.data-label]="t().tableStatus">
-                    <span [class]="statusClass(user.subscription_status)">
-                      {{ statusLabel(user.subscription_status) }}
-                    </span>
-                  </td>
-                  <td [attr.data-label]="t().tableLastVisit">
-                    @if (user.last_login_at) {
-                      {{ user.last_login_at | date: 'dd.MM.yyyy HH:mm' }}
-                    } @else {
-                      {{ t().never }}
-                    }
-                  </td>
-                  <td [attr.data-label]="t().tableLastChange">
-                    @if (user.last_activity_at) {
-                      {{ user.last_activity_at | date: 'dd.MM.yyyy HH:mm' }}
-                    } @else {
-                      {{ t().never }}
-                    }
-                  </td>
+                  <th scope="col">{{ t().tableEmail }}</th>
+                  <th scope="col">{{ t().tableAction }}</th>
+                  <th scope="col">{{ t().tableWhen }}</th>
                 </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
+              </thead>
+              <tbody>
+                @if (d.alerts.length === 0) {
+                  <tr><td colspan="3" class="admin-table__empty">{{ t().alertsEmpty }}</td></tr>
+                } @else {
+                  @for (alert of d.alerts; track alert.user_id + alert.type) {
+                    <tr>
+                      <td>
+                        <button type="button" class="admin-link-btn" (click)="openUserDetail(alert.user_id)">
+                          {{ alert.email }}
+                        </button>
+                      </td>
+                      <td>{{ alertLabel(alert) }}</td>
+                      <td>
+                        @if (alert.trial_ends_at) {
+                          <span [title]="alert.trial_ends_at | date: 'dd.MM.yyyy HH:mm'">{{ alert.trial_ends_at | relativeTime }}</span>
+                        } @else if (alert.last_login_at) {
+                          <span [title]="alert.last_login_at | date: 'dd.MM.yyyy HH:mm'">{{ alert.last_login_at | relativeTime }}</span>
+                        } @else {
+                          {{ t().never }}
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
 
-    <section class="admin-panel" aria-labelledby="admin-recent-changes-title">
-      <header class="admin-panel__header">
-        <h2 id="admin-recent-changes-title" class="admin-panel__title">{{ t().recentChangesTitle }}</h2>
-        <p class="admin-panel__hint">{{ t().recentChangesHint }}</p>
-      </header>
-
-      <div class="admin-table-wrap">
-        <table class="admin-table admin-table--dashboard">
-          <thead>
-            <tr>
-              <th scope="col">{{ t().tableEmail }}</th>
-              <th scope="col">{{ t().tableAction }}</th>
-              <th scope="col">{{ t().tableWhen }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (activity().length === 0) {
-              <tr>
-                <td colspan="3" class="admin-table__empty">{{ t().noActivity }}</td>
-              </tr>
-            } @else {
-              @for (item of activity(); track item._id) {
+      @if (isEnabled('geography')) {
+        <section class="admin-panel" aria-labelledby="admin-geo-title">
+          <h2 id="admin-geo-title" class="admin-panel__title">{{ t().geographyTitle }}</h2>
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-table--dashboard">
+              <thead>
                 <tr>
-                  <td [attr.data-label]="t().tableEmail">{{ item.user_email || '—' }}</td>
-                  <td [attr.data-label]="t().tableAction">{{ activityTitle(item) }}</td>
-                  <td [attr.data-label]="t().tableWhen">
-                    @if (item.createdAt) {
-                      {{ item.createdAt | date: 'dd.MM.yyyy HH:mm' }}
-                    } @else {
-                      {{ t().never }}
-                    }
-                  </td>
+                  <th scope="col">{{ t().geographyCountry }}</th>
+                  <th scope="col">{{ t().geographyUsers }}</th>
                 </tr>
+              </thead>
+              <tbody>
+                @if (d.geography.length === 0) {
+                  <tr><td colspan="2" class="admin-table__empty">{{ t().geographyEmpty }}</td></tr>
+                } @else {
+                  @for (row of d.geography; track row.country) {
+                    <tr>
+                      <td>{{ row.country }}</td>
+                      <td>{{ row.count }}</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (isEnabled('product-usage')) {
+        <section class="admin-panel" aria-labelledby="admin-product-title">
+          <h2 id="admin-product-title" class="admin-panel__title">{{ t().productUsageTitle }}</h2>
+          <div class="admin-segments">
+            <article class="admin-segment">
+              <span class="admin-segment__label">{{ t().productLessons7d }}</span>
+              <strong class="admin-segment__value">{{ d.productUsage.lessonsLast7d }}</strong>
+            </article>
+            <article class="admin-segment">
+              <span class="admin-segment__label">{{ t().productTotalStudents }}</span>
+              <strong class="admin-segment__value">{{ d.productUsage.totalStudents }}</strong>
+            </article>
+            <article class="admin-segment">
+              <span class="admin-segment__label">{{ t().productAvgStudents }}</span>
+              <strong class="admin-segment__value">{{ d.productUsage.avgStudentsPerTutor }}</strong>
+            </article>
+            <article class="admin-segment">
+              <span class="admin-segment__label">{{ t().productFinanceUsers }}</span>
+              <strong class="admin-segment__value">{{ d.productUsage.financeUsersPercent }}%</strong>
+            </article>
+          </div>
+        </section>
+      }
+
+      @if (isEnabled('last-visits')) {
+        <section class="admin-panel" aria-labelledby="admin-last-visits-title">
+          <header class="admin-panel__header">
+            <h2 id="admin-last-visits-title" class="admin-panel__title">{{ t().lastVisitsTitle }}</h2>
+            <p class="admin-panel__hint">{{ t().lastVisitsHint }}</p>
+          </header>
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-table--dashboard">
+              <thead>
+                <tr>
+                  <th scope="col">{{ t().tableEmail }}</th>
+                  <th scope="col">{{ t().tableStatus }}</th>
+                  <th scope="col">{{ t().tableLastVisit }}</th>
+                  <th scope="col">{{ t().tableLastChange }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (recentVisits().length === 0) {
+                  <tr><td colspan="4" class="admin-table__empty">{{ t().noVisits }}</td></tr>
+                } @else {
+                  @for (user of recentVisits(); track user._id) {
+                    <tr>
+                      <td>
+                        <button type="button" class="admin-link-btn" (click)="openUserDetail(user._id)">{{ user.email }}</button>
+                      </td>
+                      <td><span [class]="statusClass(user.subscription_status)">{{ statusLabel(user.subscription_status) }}</span></td>
+                      <td>
+                        @if (user.last_login_at) {
+                          <span [title]="user.last_login_at | date: 'dd.MM.yyyy HH:mm'">{{ user.last_login_at | relativeTime }}</span>
+                        } @else { {{ t().never }} }
+                      </td>
+                      <td>
+                        @if (user.last_activity_at) {
+                          <span [title]="user.last_activity_at | date: 'dd.MM.yyyy HH:mm'">{{ user.last_activity_at | relativeTime }}</span>
+                        } @else { {{ t().never }} }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (isEnabled('recent-activity')) {
+        <section class="admin-panel" aria-labelledby="admin-recent-changes-title">
+          <header class="admin-panel__header">
+            <h2 id="admin-recent-changes-title" class="admin-panel__title">{{ t().recentChangesTitle }}</h2>
+            <p class="admin-panel__hint">{{ t().recentChangesHint }}</p>
+          </header>
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-table--dashboard">
+              <thead>
+                <tr>
+                  <th scope="col">{{ t().tableEmail }}</th>
+                  <th scope="col">{{ t().tableAction }}</th>
+                  <th scope="col">{{ t().tableWhen }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (activity().length === 0) {
+                  <tr><td colspan="3" class="admin-table__empty">{{ t().noActivity }}</td></tr>
+                } @else {
+                  @for (item of activity(); track item._id) {
+                    <tr>
+                      <td>
+                        <button type="button" class="admin-link-btn" (click)="openUserDetail(item.tutor_id)">{{ item.user_email || '—' }}</button>
+                      </td>
+                      <td>{{ activityTitle(item) }}</td>
+                      <td>
+                        @if (item.createdAt) {
+                          <span [title]="item.createdAt | date: 'dd.MM.yyyy HH:mm'">{{ item.createdAt | relativeTime }}</span>
+                        } @else { {{ t().never }} }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>
+
+<app-dialog
+  [open]="detailOpen()"
+  [title]="t().userDetailTitle"
+  [dismissLabel]="t().cancelEdit"
+  (cancel)="closeUserDetail()"
+>
+  @if (detailLoading()) {
+    <p class="hint">{{ t().userDetailLoading }}</p>
+  } @else if (detailError()) {
+    <p class="admin-page__error" role="alert">{{ detailError() }}</p>
+  } @else if (detail(); as s) {
+    <div class="admin-user-detail">
+      <p class="admin-user-detail__email">{{ s.user.email }}</p>
+      <p><span [class]="statusClass(s.user.subscription_status)">{{ statusLabel(s.user.subscription_status) }}</span></p>
+      <dl class="admin-user-detail__stats">
+        <div><dt>{{ t().userDetailStudents }}</dt><dd>{{ s.studentsCount }}</dd></div>
+        <div><dt>{{ t().userDetailLessons }}</dt><dd>{{ s.lessonsCount }}</dd></div>
+        <div><dt>{{ t().tableCountry }}</dt><dd>{{ s.user.country_settings || '—' }}</dd></div>
+        <div><dt>{{ t().tableLastVisit }}</dt><dd>{{ s.user.last_login_at ? (s.user.last_login_at | relativeTime) : t().never }}</dd></div>
+      </dl>
+      @if (s.recentActivity.length) {
+        <h3 class="admin-user-detail__subtitle">{{ t().userDetailRecentActivity }}</h3>
+        <ul class="admin-user-detail__activity">
+          @for (entry of s.recentActivity; track entry._id) {
+            <li>
+              <span>{{ activityTitle(entry) }}</span>
+              @if (entry.createdAt) {
+                <time [dateTime]="entry.createdAt">{{ entry.createdAt | relativeTime }}</time>
               }
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-}
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</app-dialog>
