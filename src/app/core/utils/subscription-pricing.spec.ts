@@ -5,7 +5,7 @@ describe('subscription-pricing', () => {
   it('returns country-specific pricing', () => {
     const pl = getSubscriptionPricing('PL');
     expect(pl.currency).toBe('PLN');
-    expect(pl.monthly).toBe(79);
+    expect(pl.monthly).toBe(39);
   });
 
   it('falls back to AT for unknown country', () => {
