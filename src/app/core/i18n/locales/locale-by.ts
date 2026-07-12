@@ -546,6 +546,7 @@ export const PAGE_TITLE_BY: PageTitleStrings = {
   accountProfile: 'Профіль | Simple4U',
   accountAdministration: 'Адміністраванне | Simple4U',
   admin: 'Адмін | Simple4U',
+  adminUsers: 'Карыстальнікі | Simple4U',
 };
 
 export const TAX_MODE_LABELS_BY: Record<TaxMode, string> = {

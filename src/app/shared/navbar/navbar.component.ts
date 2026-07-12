@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
+import { PresenceService } from '../../core/services/presence.service';
 import { MarketingConsentService } from '../../core/services/marketing-consent.service';
 const SIDEBAR_COLLAPSE_BTN_MAX = 890;
 
@@ -17,6 +18,7 @@ export class NavbarComponent implements OnInit {
   auth = inject(AuthService);
   i18n = inject(I18nService);
   private readonly userSvc = inject(UserService);
+  private readonly presence = inject(PresenceService);
   private readonly consent = inject(MarketingConsentService);
   private platformId = inject(PLATFORM_ID);
   private destroyRef = inject(DestroyRef);
@@ -47,6 +49,7 @@ export class NavbarComponent implements OnInit {
       next: (profile) => {
         this.consent.syncFromProfile(profile);
         this.isSuperAdmin.set(profile.role === 'super_admin');
+        this.presence.ping();
       },
       error: () => this.isSuperAdmin.set(false),
     });

@@ -1,0 +1,123 @@
+@if (loadError()) {
+  <p class="admin-page__error" role="alert">{{ loadError() }}</p>
+}
+
+@if (loading()) {
+  <p class="hint">{{ t().loading }}</p>
+} @else {
+  @if (stats(); as s) {
+    <section class="admin-kpi" aria-label="Metrics">
+      <article class="admin-kpi__card">
+        <span class="admin-kpi__label">{{ t().metricTotalUsers }}</span>
+        <strong class="admin-kpi__value">{{ s.totalUsers }}</strong>
+      </article>
+      <article class="admin-kpi__card">
+        <span class="admin-kpi__label">{{ t().metricPaidUsers }}</span>
+        <strong class="admin-kpi__value">{{ s.paidUsers }}</strong>
+      </article>
+      <article class="admin-kpi__card">
+        <span class="admin-kpi__label">{{ t().metricConversion }}</span>
+        <strong class="admin-kpi__value">{{ s.conversionPercent }}%</strong>
+      </article>
+      <article class="admin-kpi__card admin-kpi__card--wide">
+        <span class="admin-kpi__label">{{ t().metricRevenue }}</span>
+        <strong class="admin-kpi__value admin-kpi__value--sm">{{ revenueLabel() }}</strong>
+        <span class="admin-kpi__hint">{{ t().revenueHint }}</span>
+      </article>
+    </section>
+  }
+
+  <div class="admin-dashboard-grid">
+    <section class="admin-panel" aria-labelledby="admin-last-visits-title">
+      <header class="admin-panel__header">
+        <h2 id="admin-last-visits-title" class="admin-panel__title">{{ t().lastVisitsTitle }}</h2>
+        <p class="admin-panel__hint">{{ t().lastVisitsHint }}</p>
+      </header>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table--dashboard">
+          <thead>
+            <tr>
+              <th scope="col">{{ t().tableEmail }}</th>
+              <th scope="col">{{ t().tableStatus }}</th>
+              <th scope="col">{{ t().tableLastVisit }}</th>
+              <th scope="col">{{ t().tableLastChange }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (recentVisits().length === 0) {
+              <tr>
+                <td colspan="4" class="admin-table__empty">{{ t().noVisits }}</td>
+              </tr>
+            } @else {
+              @for (user of recentVisits(); track user._id) {
+                <tr>
+                  <td [attr.data-label]="t().tableEmail">{{ user.email }}</td>
+                  <td [attr.data-label]="t().tableStatus">
+                    <span [class]="statusClass(user.subscription_status)">
+                      {{ statusLabel(user.subscription_status) }}
+                    </span>
+                  </td>
+                  <td [attr.data-label]="t().tableLastVisit">
+                    @if (user.last_login_at) {
+                      {{ user.last_login_at | date: 'dd.MM.yyyy HH:mm' }}
+                    } @else {
+                      {{ t().never }}
+                    }
+                  </td>
+                  <td [attr.data-label]="t().tableLastChange">
+                    @if (user.last_activity_at) {
+                      {{ user.last_activity_at | date: 'dd.MM.yyyy HH:mm' }}
+                    } @else {
+                      {{ t().never }}
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-panel" aria-labelledby="admin-recent-changes-title">
+      <header class="admin-panel__header">
+        <h2 id="admin-recent-changes-title" class="admin-panel__title">{{ t().recentChangesTitle }}</h2>
+        <p class="admin-panel__hint">{{ t().recentChangesHint }}</p>
+      </header>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-table--dashboard">
+          <thead>
+            <tr>
+              <th scope="col">{{ t().tableEmail }}</th>
+              <th scope="col">{{ t().tableAction }}</th>
+              <th scope="col">{{ t().tableWhen }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (activity().length === 0) {
+              <tr>
+                <td colspan="3" class="admin-table__empty">{{ t().noActivity }}</td>
+              </tr>
+            } @else {
+              @for (item of activity(); track item._id) {
+                <tr>
+                  <td [attr.data-label]="t().tableEmail">{{ item.user_email || '—' }}</td>
+                  <td [attr.data-label]="t().tableAction">{{ activityTitle(item) }}</td>
+                  <td [attr.data-label]="t().tableWhen">
+                    @if (item.createdAt) {
+                      {{ item.createdAt | date: 'dd.MM.yyyy HH:mm' }}
+                    } @else {
+                      {{ t().never }}
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+}

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import type { AdminStats, AdminUserRow, SubscriptionStatus } from '@interfaces';
+import type { AdminRecentActivityItem, AdminStats, AdminUserRow, SubscriptionStatus } from '@interfaces';
 
 import { apiUrl } from '../config/api-url';
 
@@ -28,6 +28,12 @@ export class AdminService {
 
   getUsers(): Observable<AdminUserRow[]> {
     return this.http.get<AdminUserRow[]>(`${API}/users`);
+  }
+
+  getRecentActivity(limit = 50): Observable<AdminRecentActivityItem[]> {
+    return this.http.get<AdminRecentActivityItem[]>(`${API}/recent-activity`, {
+      params: { limit: String(limit) },
+    });
   }
 
   updateSubscription(
