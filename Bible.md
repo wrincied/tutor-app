@@ -6,22 +6,47 @@
 
 ## Git-ветки и CI/CD
 
-**Все изменения сначала проходят через ветку `dev`. Только после проверки на dev-окружении допускается мерж в `master` (или `main`).**
+В репозитории **три ветки**, у каждой своя роль:
+
+| Ветка | Роль | Кто пишет в неё |
+|-------|------|-----------------|
+| `dev` | Исходный код для разработки и тестирования | Разработчики |
+| `master` | Исходный код production | Только через мерж из `dev` |
+| `gh-pages` | Собранный статический сайт (артефакты деплоя) | Только GitHub Actions, **не коммить вручную** |
+
+**Все изменения сначала идут в `dev`. Сборка из `dev` деплоится на GitHub Pages. Если всё ок — `dev` мержится в `master`.**
 
 ### Порядок работы
 
-1. **Разработка** — создавай feature-ветку от `dev` или коммить напрямую в `dev` (по договорённости в команде).
-2. **Push в `dev`** — GitHub Actions автоматически собирает и деплоит dev-сборку на GitHub Pages.
-3. **Проверка** — убедись, что функциональность работает на dev-окружении.
-4. **Мерж в `master`** — только после успешной проверки на dev. Push в `master` запускает production-деплой.
+1. **Разработка** — feature-ветка от `dev` или коммиты напрямую в `dev`.
+2. **Push в `dev`** — CI (тесты + build) и деплой dev-сборки в ветку `gh-pages` (папка `/dev`).
+3. **Проверка** — открой https://wrincied.github.io/tutor-app/dev и убедись, что всё работает.
+4. **Мерж `dev` → `master`** — только после успешной проверки на gh-pages dev.
+5. **Push в `master`** — CI и production-деплой в `gh-pages` (корень сайта).
+
+```mermaid
+flowchart LR
+  Dev[dev — исходники]
+  Master[master — исходники prod]
+  GhPages[gh-pages — собранный сайт]
+
+  Dev -->|CI + deploy-dev.yml| GhPagesDev["/dev на gh-pages"]
+  Dev -->|мерж, если ок| Master
+  Master -->|CI + deploy-prod.yml| GhPagesProd["/ на gh-pages"]
+```
 
 ### CI/CD (GitHub Actions)
 
-| Ветка | Workflow | Триггер | Назначение |
-|-------|----------|---------|------------|
-| `dev`, `master` | `.github/workflows/ci.yml` | pull request и push | Unit-тесты (`npm test`) + сборка (`npm run build:dev`) |
-| `dev` | `.github/workflows/deploy-dev.yml` | push в `dev` | Dev-деплой → https://wrincied.github.io/tutor-app/dev |
-| `master` | `.github/workflows/deploy-prod.yml` | push в `master` | Prod-деплой → https://wrincied.github.io/tutor-app |
+| Исходная ветка | Workflow | Триггер | Куда деплоится |
+|----------------|----------|---------|----------------|
+| `dev`, `master` | `.github/workflows/ci.yml` | pull request и push | — (только проверки) |
+| `dev` | `.github/workflows/deploy-dev.yml` | push в `dev` | `gh-pages` → `/dev` |
+| `master` | `.github/workflows/deploy-prod.yml` | push в `master` | `gh-pages` → `/` (prod) |
+
+**URL после деплоя:**
+
+- Dev (из `dev`): https://wrincied.github.io/tutor-app/dev
+- Prod (из `master`): https://wrincied.github.io/tutor-app
 
 ### Обязательные проверки перед мержем PR
 
@@ -36,14 +61,15 @@
 
 ### Запрещено
 
-- Пушить непроверенные изменения напрямую в `master` / `main`, минуя `dev`.
-- Мержить в `master` без предварительного деплоя и проверки на dev.
+- Пушить непроверенные изменения напрямую в `master`, минуя `dev`.
+- Мержить `dev` → `master` без проверки dev-сборки на `gh-pages`.
+- Коммитить вручную в `gh-pages` — эта ветка управляется только CI/CD.
 
 ### Репозиторий
 
 - GitHub: https://github.com/wrincied/tutor-app
-- Основная production-ветка: `master`
-- Dev-ветка: `dev`
+- Ветки исходного кода: `dev` (разработка), `master` (production)
+- Ветка деплоя: `gh-pages` (автоматически)
 
 ---
 
