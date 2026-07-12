@@ -6,7 +6,7 @@
 
 ## Linear
 
-<!-- Link to Linear issue, e.g. SOM-XX -->
+<!-- Link to issue in the **Simple4U** project (not SOMLIA): https://linear.app/somlia/project/simple4u-5e4cd4471cc0 -->
 
 -
 

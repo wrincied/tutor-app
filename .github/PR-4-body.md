@@ -32,7 +32,7 @@ merge → master  → no workflow, no deploy
 
 ## Linear
 
-SOM-66 — Configure Simple4U tutor-app CI/CD pipeline and branch workflow
+**Simple4U** project → [SOM-66](https://linear.app/somlia/issue/SOM-66/configure-simple4u-tutor-app-cicd-pipeline-and-branch-workflow)
 
 ## Test plan
 
