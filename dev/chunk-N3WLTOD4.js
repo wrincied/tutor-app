@@ -1,1 +1,0 @@
-import{b as o,c as t}from"./chunk-UQBPQJ4B.js";function p(e){(e.querySelector(t)??e.body).querySelectorAll(".app-select-portal-host, .app-dialog-portal-host").forEach(r=>r.remove()),e.documentElement.classList.remove(o)}export{p as a};
