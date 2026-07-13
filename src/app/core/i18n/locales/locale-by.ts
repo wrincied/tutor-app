@@ -467,6 +467,11 @@ export const FINANCE_BY: FinanceStrings = {
     'Паўтаральны ўрок з памылкай у правіле — не адлюстроўваецца ў календары.',
   breakdownScheduleDerived:
     'Дакладны час не захаваны — паказана дата стварэння. Адкрыйце ўрок у календары і задайце час.',
+  exportPdf: 'Спампаваць PDF',
+  exportingPdf: 'Фарміруем PDF…',
+  exportPdfError: 'Не ўдалося стварыць PDF',
+  pdfGeneratedAt: 'Сфармавана',
+  pdfSummary: 'Вынік',
 };
 
 export const STUDENTS_BY: StudentStrings = {

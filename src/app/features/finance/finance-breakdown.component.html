@@ -1,20 +1,32 @@
 <div class="page app-scroll-page finance-breakdown-page">
   <header class="finance-breakdown-header">
-    <a class="finance-breakdown-header__back" [routerLink]="backLink().path" [queryParams]="backLink().queryParams">
-      ← {{ t.breakdownBack }}
-    </a>
-    <div class="finance-breakdown-header__titles">
-      <h1 class="finance-breakdown-header__title">{{ pageTitle() }}</h1>
-      <p class="finance-breakdown-header__period">
-        <span>{{ periodPresetLabel() }}</span>
-        @if (periodRangeLabel(); as range) {
-          <span>{{ range }}</span>
-        }
-        @if (displayCurrency(); as currency) {
-          <span>· {{ currency }}</span>
-        }
-      </p>
+    <div class="finance-breakdown-header__main">
+      <a class="finance-breakdown-header__back" [routerLink]="backLink().path" [queryParams]="backLink().queryParams">
+        ← {{ t.breakdownBack }}
+      </a>
+      <div class="finance-breakdown-header__titles">
+        <h1 class="finance-breakdown-header__title">{{ pageTitle() }}</h1>
+        <p class="finance-breakdown-header__period">
+          <span>{{ periodPresetLabel() }}</span>
+          @if (periodRangeLabel(); as range) {
+            <span>{{ range }}</span>
+          }
+          @if (displayCurrency(); as currency) {
+            <span>· {{ currency }}</span>
+          }
+        </p>
+      </div>
     </div>
+    @if (canExportPdf()) {
+      <button
+        type="button"
+        class="btn-secondary finance-breakdown-header__export"
+        [disabled]="exportingPdf()"
+        (click)="exportPdf()"
+      >
+        {{ exportingPdf() ? t.exportingPdf : t.exportPdf }}
+      </button>
+    }
   </header>
 
   <div class="scrollable-content">

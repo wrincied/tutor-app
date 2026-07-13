@@ -796,6 +796,11 @@ export interface FinanceStrings {
   breakdownHiddenNoSchedule: string;
   breakdownHiddenBrokenRecurrence: string;
   breakdownScheduleDerived: string;
+  exportPdf: string;
+  exportingPdf: string;
+  exportPdfError: string;
+  pdfGeneratedAt: string;
+  pdfSummary: string;
 }
 
 export interface FinanceLessonBreakdown {

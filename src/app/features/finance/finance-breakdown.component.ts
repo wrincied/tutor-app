@@ -8,11 +8,17 @@ import {
   FINANCE_CURRENCY_STORAGE_KEY,
   financeRouteQueryParams,
   isFinanceBreakdownPanel,
+  isFinancePdfExportPanel,
   isFinancePeriodPreset,
   type FinanceBreakdownPanel,
 } from '../../core/utils/finance-route';
 import { remapFinanceSummary } from '../../core/utils/finance-summary-currency';
 import { formatMoneyWithCode } from '../../core/utils/format-currency';
+import {
+  downloadFinanceBreakdownPdf,
+  type FinanceBreakdownPdfOptions,
+  type FinanceBreakdownPdfSummaryLine,
+} from '../../core/utils/finance-breakdown-pdf';
 
 @Component({
   selector: 'app-finance-breakdown',
@@ -32,6 +38,7 @@ export class FinanceBreakdownComponent implements OnInit {
   readonly reportCurrency = signal(this.readStoredReportCurrency());
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly exportingPdf = signal(false);
   readonly summary = signal<FinanceSummary | null>(null);
 
   readonly displayCurrency = computed(() => this.reportCurrency() || this.summary()?.currency || 'EUR');
@@ -87,6 +94,13 @@ export class FinanceBreakdownComponent implements OnInit {
   readonly showExpenses = computed(() => {
     const panel = this.panel();
     return panel === 'expenses' || panel === 'gross' || panel === 'net';
+  });
+
+  readonly canExportPdf = computed(() => {
+    if (!isFinancePdfExportPanel(this.panel())) {
+      return false;
+    }
+    return !this.loading() && !this.error() && Boolean(this.summary());
   });
 
   ngOnInit(): void {
@@ -257,5 +271,173 @@ export class FinanceBreakdownComponent implements OnInit {
   calendarLinkQuery(lesson: FinanceLessonBreakdown): { date?: string } {
     const date = lesson.occurrenceDate || lesson.scheduledAt?.slice(0, 10);
     return date ? { date } : {};
+  }
+
+  async exportPdf(): Promise<void> {
+    if (!this.canExportPdf() || this.exportingPdf()) {
+      return;
+    }
+    const summary = this.summary();
+    if (!summary) {
+      return;
+    }
+
+    this.exportingPdf.set(true);
+    try {
+      await downloadFinanceBreakdownPdf(this.buildPdfOptions(summary));
+    } catch {
+      this.error.set(this.t.exportPdfError);
+    } finally {
+      this.exportingPdf.set(false);
+    }
+  }
+
+  private buildPdfOptions(summary: FinanceSummary): FinanceBreakdownPdfOptions {
+    const panel = this.panel();
+    const periodParts = [this.periodPresetLabel(), this.periodRangeLabel()].filter(Boolean);
+    const generatedAt = new Date().toLocaleString(this.i18n.localeId(), {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+    const options: FinanceBreakdownPdfOptions = {
+      filename: this.pdfFilename(),
+      title: this.pageTitle(),
+      periodLabel: periodParts.join(' · '),
+      currency: this.displayCurrency(),
+      intro: this.pageIntro(),
+      generatedAtLabel: this.t.pdfGeneratedAt,
+      generatedAt,
+      summaryTitle: this.t.pdfSummary,
+      summaryLines: this.pdfSummaryLines(summary, panel),
+      lessonHeaders: [
+        this.t.breakdownLessonDate,
+        this.t.breakdownLessonStudent,
+        this.t.breakdownLessonStatus,
+        this.t.breakdownLessonDuration,
+        this.t.breakdownLessonAmount,
+      ],
+      lessons: [],
+      expenseHeaders: [
+        this.t.expenseDate,
+        this.t.expenseTitle,
+        this.t.expenseCategory,
+        this.t.expenseAmount,
+      ],
+      expenses: [],
+    };
+
+    if (this.showLessons()) {
+      options.lessonsSectionTitle = this.t.breakdownLessonsList;
+      options.lessonsEmpty = this.t.breakdownEmptyLessons;
+      options.lessons = this.lessonsBreakdown().map((lesson) => ({
+        date: this.formatLessonRowDate(lesson),
+        student: lesson.studentName || '—',
+        status: this.lessonStatusLabel(lesson.status),
+        duration: `${lesson.durationMinutes} ${this.t.breakdownMinutes}`,
+        amount: this.formatLessonRowAmount(lesson),
+      }));
+    }
+
+    if (this.showExpenses()) {
+      options.expensesSectionTitle = this.t.breakdownExpensesList;
+      options.expensesEmpty = this.t.breakdownEmptyExpenses;
+      options.expenses = this.expensesBreakdown().map((expense) => ({
+        date: expense.expense_date,
+        title: expense.title,
+        category: expense.category || '—',
+        amount: this.formatMoney(expense.amountReport),
+        original: this.expenseOriginalLabel(expense) ?? undefined,
+      }));
+    }
+
+    if (panel === 'net' && summary.austria) {
+      const at = summary.austria;
+      options.taxSectionTitle = this.t.netProfit;
+      options.taxLines = [
+        { label: this.t.grossProfit, value: this.formatMoney(summary.income.grossProfit) },
+        {
+          label: `${this.t.socialInsurance} (${this.formatPercent(at.socialInsuranceRate)})`,
+          value: `−${this.formatMoney(at.socialInsurance)}`,
+        },
+        { label: this.t.incomeTax, value: `−${this.formatMoney(at.incomeTax)}` },
+        {
+          label: this.t.netProfit,
+          value: this.formatMoney(at.netProfit),
+          highlight: true,
+        },
+      ];
+    }
+
+    return options;
+  }
+
+  private pdfSummaryLines(
+    summary: FinanceSummary,
+    panel: FinanceBreakdownPanel,
+  ): FinanceBreakdownPdfSummaryLine[] {
+    const income = summary.income;
+    switch (panel) {
+      case 'income':
+        return [
+          {
+            label: this.t.totalIncomeCombined,
+            value: this.formatMoney(income.combinedIncome),
+            highlight: true,
+          },
+          { label: this.t.incomeCompletedPart, value: this.formatMoney(income.totalIncome) },
+          { label: this.t.incomePlannedPart, value: this.formatMoney(income.scheduledIncome) },
+        ];
+      case 'expenses':
+        return [
+          {
+            label: this.t.totalExpenses,
+            value: this.formatMoney(income.totalExpenses),
+            highlight: true,
+          },
+          { label: this.t.expensesCount, value: String(summary.totals.expenseCount) },
+        ];
+      case 'gross':
+        return [
+          {
+            label: this.t.grossProfit,
+            value: this.formatMoney(income.grossProfit),
+            highlight: true,
+          },
+          { label: this.t.totalIncome, value: this.formatMoney(income.totalIncome) },
+          { label: this.t.totalExpenses, value: this.formatMoney(income.totalExpenses) },
+        ];
+      case 'net':
+        if (summary.austria) {
+          return [
+            {
+              label: this.t.netProfit,
+              value: this.formatMoney(summary.austria.netProfit),
+              highlight: true,
+            },
+            { label: this.t.grossProfit, value: this.formatMoney(income.grossProfit) },
+          ];
+        }
+        return [
+          {
+            label: this.t.grossProfit,
+            value: this.formatMoney(income.grossProfit),
+            highlight: true,
+          },
+        ];
+      default:
+        return [];
+    }
+  }
+
+  private pdfFilename(): string {
+    const panel = this.panel();
+    const period = this.periodPreset();
+    const currency = this.displayCurrency().toLowerCase();
+    return `finance-${panel}-${period}-${currency}.pdf`;
   }
 }
