@@ -723,11 +723,6 @@ export interface HomeStrings {
   overdueLessonsHint: string;
   lowBalanceTitle: string;
   lowBalanceLessonsLeft: string;
-  quickActions: string;
-  quickNewLesson: string;
-  quickNewStudent: string;
-  quickCalendar: string;
-  quickFinance: string;
   loading: string;
   loadError: string;
   betaTitle: string;
