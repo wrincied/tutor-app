@@ -116,13 +116,7 @@ export class AdminUsersComponent implements OnInit {
 
   exportCsv(): void {
     const rows = this.filteredUsers();
-    const header = [
-      'email',
-      'status',
-      'country',
-      'registered',
-      'last_visit',
-    ];
+    const header = ['email', 'status', 'country', 'registered', 'last_visit'];
     const lines = rows.map((user) =>
       [
         user.email,

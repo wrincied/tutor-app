@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -17,6 +18,7 @@ import {
   expenseAmountInReportCurrency,
   remapFinanceSummary,
 } from '../../core/utils/finance-summary-currency';
+import { getExchangeRateSourceLink } from '../../core/constants/exchange-rate-sources';
 import { formatMoneyWithCode } from '../../core/utils/format-currency';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
@@ -26,7 +28,7 @@ const FINANCE_CURRENCY_STORAGE_KEY = 'finance_report_currency';
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [FormsModule, RouterLink, AppDialogComponent, AppSelectComponent],
+  imports: [FormsModule, RouterLink, AppDialogComponent, AppSelectComponent, DecimalPipe],
   templateUrl: './finance.component.html',
   styleUrl: './finance.component.scss',
 })
@@ -257,13 +259,26 @@ export class FinanceComponent implements OnInit {
     return convertWithEurRates(amount, fromCurrency, this.displayCurrency(), s.exchangeRates.rates);
   }
 
-  exchangeRatesLabel(): string {
-    const s = this.summary();
-    if (!s?.exchangeRates) {
-      return '';
+  exchangeRateAsOf(): string {
+    return this.summary()?.exchangeRates?.asOf ?? '';
+  }
+
+  exchangeRateSourceLink() {
+    return getExchangeRateSourceLink(this.displayCurrency());
+  }
+
+  exchangeRatesSource(): string {
+    return this.summary()?.exchangeRates?.source ?? '';
+  }
+
+  exchangeRatesTable(): Array<{ code: string; perEur: number }> {
+    const rates = this.summary()?.exchangeRates?.rates;
+    if (!rates) {
+      return [];
     }
-    const { asOf, source } = s.exchangeRates;
-    return `${this.t.ratesAsOf} ${asOf} (${source})`;
+    return Object.entries(rates)
+      .map(([code, perEur]) => ({ code, perEur: Number(perEur) }))
+      .sort((a, b) => a.code.localeCompare(b.code));
   }
 
   openExpenseCreate(): void {

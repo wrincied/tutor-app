@@ -92,9 +92,37 @@
     } @else if (summary(); as s) {
       <p class="finance-disclaimer">{{ t.disclaimer }}</p>
       <p class="finance-disclaimer finance-disclaimer--rates">
-        {{ t.conversionNote }} <strong>{{ displayCurrency() }}</strong
-        >. {{ exchangeRatesLabel() }}
+        {{ t.conversionNote }} <strong>{{ displayCurrency() }}</strong>.
+        @if (exchangeRateAsOf(); as asOf) {
+          {{ t.ratesAsOf }} {{ asOf }}.
+          {{ t.ratesSource }}
+          <a
+            [href]="exchangeRateSourceLink().url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="finance-link"
+          >
+            {{ exchangeRateSourceLink().label }}
+          </a>
+          @if (exchangeRatesSource(); as apiSource) {
+            <span class="finance-disclaimer__api-source">({{ apiSource }})</span>
+          }
+        }
       </p>
+
+      @if (exchangeRatesTable().length) {
+        <details class="finance-rates-debug">
+          <summary>{{ t.ratesDebug }}</summary>
+          <ul>
+            @for (row of exchangeRatesTable(); track row.code) {
+              <li>
+                <strong>{{ row.code }}</strong
+                >: {{ row.perEur | number: '1.0-4' }} / 1 EUR
+              </li>
+            }
+          </ul>
+        </details>
+      }
 
       @if (!hasLessonsInPeriod()) {
         <p class="finance-note finance-note--warn">{{ t.lessonsEmptyHint }}</p>
@@ -228,42 +256,48 @@
         @if (filteredExpenses().length === 0) {
           <p class="hint">{{ t.emptyExpenses }}</p>
         } @else {
-          <div class="table-wrap">
-            <table class="finance-table">
-              <thead>
-                <tr>
-                  <th>{{ t.expenseDate }}</th>
-                  <th>{{ t.expenseTitle }}</th>
-                  <th>{{ t.expenseCategory }}</th>
-                  <th class="finance-table__num">{{ t.expenseAmount }}</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (e of filteredExpenses(); track e._id) {
-                  <tr>
-                    <td [attr.data-label]="t.expenseDate">{{ e.expense_date }}</td>
-                    <td [attr.data-label]="t.expenseTitle">{{ e.title }}</td>
-                    <td [attr.data-label]="t.expenseCategory">{{ e.category || '—' }}</td>
-                    <td class="finance-table__num" [attr.data-label]="t.expenseAmount">
-                      {{ formatExpenseAmount(e.amount) }}
-                    </td>
-                    <td class="finance-table__actions" data-label="Actions">
-                      <button
-                        type="button"
-                        class="btn-link danger"
-                        (click)="confirmDeleteExpense(e._id)"
-                      >
-                        {{ t.deleteExpense }}
-                      </button>
-                      <button type="button" class="btn-link" (click)="openExpenseEdit(e)">
-                        {{ t.editExpense }}
-                      </button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+          <div class="finance-expenses-grid">
+            <div class="finance-expenses-grid__head">
+              <span>{{ t.expenseDate }}</span>
+              <span>{{ t.expenseTitle }}</span>
+              <span>{{ t.expenseCategory }}</span>
+              <span class="finance-expenses-grid__num">{{ t.expenseAmount }}</span>
+              <span>{{ t.editExpense }}</span>
+            </div>
+            <div class="finance-expenses-grid__body" role="list">
+              @for (e of filteredExpenses(); track e._id) {
+                <article class="finance-expenses-grid__row" role="listitem">
+                  <div class="finance-expenses-grid__cell">
+                    <span class="finance-expenses-grid__label">{{ t.expenseDate }}</span>
+                    {{ e.expense_date }}
+                  </div>
+                  <div class="finance-expenses-grid__cell">
+                    <span class="finance-expenses-grid__label">{{ t.expenseTitle }}</span>
+                    {{ e.title }}
+                  </div>
+                  <div class="finance-expenses-grid__cell">
+                    <span class="finance-expenses-grid__label">{{ t.expenseCategory }}</span>
+                    {{ e.category || '—' }}
+                  </div>
+                  <div class="finance-expenses-grid__cell finance-expenses-grid__num">
+                    <span class="finance-expenses-grid__label">{{ t.expenseAmount }}</span>
+                    {{ formatExpenseAmount(e.amount) }}
+                  </div>
+                  <div class="finance-expenses-grid__cell finance-expenses-grid__actions">
+                    <button
+                      type="button"
+                      class="btn-link danger"
+                      (click)="confirmDeleteExpense(e._id)"
+                    >
+                      {{ t.deleteExpense }}
+                    </button>
+                    <button type="button" class="btn-link" (click)="openExpenseEdit(e)">
+                      {{ t.editExpense }}
+                    </button>
+                  </div>
+                </article>
+              }
+            </div>
           </div>
         }
       </section>

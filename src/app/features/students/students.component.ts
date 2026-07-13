@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { StudentService, Student } from '../../core/services/student.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType, type StudentRateUnit } from '@interfaces';
@@ -89,6 +89,7 @@ export class StudentsComponent implements OnInit {
   topupLessonsInput = 1;
   quickActionsStudent = signal<Student | null>(null);
   botToggleConfirm = signal<{ student: Student; nextActive: boolean } | null>(null);
+  formSubmitted = signal(false);
   readonly colorToHexForPicker = colorToHexForPicker;
 
   ngOnInit() {
@@ -162,6 +163,7 @@ export class StudentsComponent implements OnInit {
   }
 
   openCreate() {
+    this.formSubmitted.set(false);
     this.autoTimezone = true;
     this.form = {
       name: '',
@@ -180,6 +182,7 @@ export class StudentsComponent implements OnInit {
   }
 
   openEdit(s: Student) {
+    this.formSubmitted.set(false);
     this.closeQuickActions();
     this.autoTimezone = false;
     this.form = {
@@ -199,7 +202,24 @@ export class StudentsComponent implements OnInit {
   }
 
   closeForm() {
+    this.formSubmitted.set(false);
     this.showForm.set(false);
+  }
+
+  onSubmit(studentForm: NgForm): void {
+    this.formSubmitted.set(true);
+    if (studentForm.invalid) {
+      return;
+    }
+    this.save();
+  }
+
+  isFieldInvalid(controlName: string, studentForm: NgForm): boolean {
+    if (!this.formSubmitted()) {
+      return false;
+    }
+    const control = studentForm.controls[controlName];
+    return Boolean(control?.invalid);
   }
 
   onAutoTimezoneChange(checked: boolean) {

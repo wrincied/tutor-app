@@ -170,6 +170,7 @@ export class CalendarComponent implements OnInit {
   studentsSidebarQuery = signal('');
   focusedStudentId = signal<string | null>(null);
   lessonFormStep = signal<1 | 2>(1);
+  lessonFormSubmitted = signal(false);
   scheduledAtLocal = signal('');
   /** Урок в активном перетаскивании (pointer events). */
   readonly dragActiveLessonId = signal<string | null>(null);
@@ -1258,6 +1259,7 @@ export class CalendarComponent implements OnInit {
     PLN: 'PL',
     USD: 'US',
     RUB: 'RU',
+    KZT: 'KZ',
   };
 
   lessonHasSnapshotRate(lesson: Lesson): boolean {
@@ -2222,14 +2224,14 @@ export class CalendarComponent implements OnInit {
     this.deletingLesson.set(false);
     this.deleteRecurringModalOpen.set(false);
     this.lessonFormStep.set(1);
+    this.lessonFormSubmitted.set(false);
   }
 
-  goToNotesStep(): void {
-    this.lessonFormStep.set(2);
-  }
-
-  backToMainStep(): void {
-    this.lessonFormStep.set(1);
+  private resetNewLessonFormAfterCreate(): void {
+    this.resetLessonForm();
+    this.lessonFormSubmitted.set(false);
+    this.saveLessonError = null;
+    this.showLessonForm.set(true);
   }
 
   private resetLessonForm(): void {
@@ -2318,6 +2320,7 @@ export class CalendarComponent implements OnInit {
   }
 
   saveLesson(): void {
+    this.lessonFormSubmitted.set(true);
     this.saveLessonError = null;
     if (!this.form.student_id?.trim()) {
       this.saveLessonError = this.i18n.calendarUi().selectStudentError;
@@ -2512,7 +2515,7 @@ export class CalendarComponent implements OnInit {
         this.lessons.update((list) => [...list, this.normalizeLesson(created)]);
         this.refreshStudentsList();
         this.savingLesson.set(false);
-        this.closeLessonForm();
+        this.resetNewLessonFormAfterCreate();
       },
       error: (err: HttpErrorResponse) => {
         this.savingLesson.set(false);

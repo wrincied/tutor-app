@@ -1,7 +1,6 @@
 <div class="page students-page">
   <div class="page-header">
     <h1>{{ i18n.nav().students }}</h1>
-    <button type="button" class="btn-primary" (click)="openCreate()">{{ t.addButton }}</button>
   </div>
 
   @if (loading()) {
@@ -115,6 +114,11 @@
     </div>
   }
 
+  <div class="students-page__footer">
+    <button type="button" class="btn-primary students-page__add" (click)="openCreate()">
+      {{ t.addButton }}
+    </button>
+  </div>
 </div>
 
 <app-dialog
@@ -183,10 +187,18 @@
         </button>
       </div>
 
-      <form (ngSubmit)="save()" class="modal-body">
-        <div class="field">
+      <form #studentForm="ngForm" (ngSubmit)="onSubmit(studentForm)" class="modal-body" novalidate>
+        <div class="field" [class.field--invalid]="isFieldInvalid('name', studentForm)">
           <label for="st-name">{{ t.name }}</label>
-          <input id="st-name" type="text" [(ngModel)]="form.name" name="name" required autocomplete="name" />
+          <input
+            id="st-name"
+            type="text"
+            [(ngModel)]="form.name"
+            name="name"
+            required
+            autocomplete="name"
+            #nameCtrl="ngModel"
+          />
         </div>
         <fieldset class="field rate-unit-section">
           <legend>{{ t.rateUnitTitle }}</legend>
@@ -214,7 +226,7 @@
           </div>
         </fieldset>
 
-        <div class="field field--rate-row">
+        <div class="field field--rate-row" [class.field--invalid]="isFieldInvalid('rate', studentForm)">
           <label for="st-rate">{{ rateFieldLabel() }}</label>
           <div class="rate-row">
             <input
@@ -226,6 +238,7 @@
               min="1"
               inputmode="decimal"
               class="rate-row__amount"
+              #rateCtrl="ngModel"
             />
             <div class="field field--nested">
               <label for="st-currency" class="sr-only">{{ t.currency }}</label>

@@ -273,6 +273,8 @@ export const CALENDAR_BY: CalendarStrings = {
   studentsSidebarEmpty: 'Няма вучняў. Дадайце першага ў раздзеле «Вучні».',
   studentsSidebarNoResults: 'Нікога не знойдзена',
   scheduledAtLabel: 'Дата і час',
+  lessonDescriptionLabel: 'Апісанне',
+  advancedSettingsLabel: 'Пашыраныя налады',
   notesPlaceholder: 'Нататкі',
   notesNewPlaceholder: 'Нататкі да уроку',
   snapshotRateLabel: 'Стаўка уроку (здымак):',
@@ -426,6 +428,8 @@ export const FINANCE_BY: FinanceStrings = {
   reportCurrency: 'Валюта справаздачы',
   originalInCurrency: 'зыходна',
   ratesAsOf: 'Курс на',
+  ratesSource: 'Крыніца:',
+  ratesDebug: 'Курсы для праверкі (за 1 EUR)',
   activityLogSection: 'Гісторыя аперацый',
   activityLogEmpty: 'Пакуль няма запісаў пра выдаткі і грошы.',
 };

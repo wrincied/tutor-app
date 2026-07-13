@@ -270,6 +270,8 @@ export const CALENDAR_UK: CalendarStrings = {
   studentsSidebarEmpty: 'Немає учнів. Додайте першого в розділі «Учні».',
   studentsSidebarNoResults: 'Нікого не знайдено',
   scheduledAtLabel: 'Дата й час',
+  lessonDescriptionLabel: 'Опис',
+  advancedSettingsLabel: 'Розширені налаштування',
   notesPlaceholder: 'Нотатки',
   notesNewPlaceholder: 'Нотатки до уроку',
   snapshotRateLabel: 'Ставка уроку (знімок):',
@@ -423,6 +425,8 @@ export const FINANCE_UK: FinanceStrings = {
   reportCurrency: 'Валюта звіту',
   originalInCurrency: 'вихідно',
   ratesAsOf: 'Курс на',
+  ratesSource: 'Джерело:',
+  ratesDebug: 'Курси для звірки (за 1 EUR)',
   activityLogSection: 'Історія операцій',
   activityLogEmpty: 'Поки немає записів про витрати та гроші.',
 };

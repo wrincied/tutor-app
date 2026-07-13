@@ -91,17 +91,17 @@
 
   &--lessons {
     border-color: rgb(14 165 233 / 0.35);
-    background: linear-gradient(145deg, rgb(14 165 233 / 0.08), var(--nav-bg) 55%);
+    background: var(--nav-bg);
   }
 
   &--income {
     border-color: rgb(5 150 105 / 0.35);
-    background: linear-gradient(145deg, rgb(5 150 105 / 0.08), var(--nav-bg) 55%);
+    background: var(--nav-bg);
   }
 
   &--hours {
     border-color: rgb(99 102 241 / 0.35);
-    background: linear-gradient(145deg, rgb(99 102 241 / 0.08), var(--nav-bg) 55%);
+    background: var(--nav-bg);
   }
 
   &--skeleton {
@@ -144,7 +144,7 @@
 
   &--warn {
     border-color: rgb(245 158 11 / 0.45);
-    background: linear-gradient(145deg, rgb(245 158 11 / 0.06), var(--nav-bg) 60%);
+    background: var(--nav-bg);
   }
 
   &--next {

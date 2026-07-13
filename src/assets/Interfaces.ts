@@ -1,23 +1,22 @@
 /** Общие типы и интерфейсы приложения (i18n, API-модели). */
 
+import type {
+  AppCurrency,
+  FinanceReportCurrency,
+  RateCurrency,
+  WorkspaceCurrency,
+} from '../app/core/constants/currencies';
+import {
+  APP_CURRENCIES,
+  FINANCE_REPORT_CURRENCIES,
+  RATE_CURRENCIES,
+  WORKSPACE_CURRENCIES,
+} from '../app/core/constants/currencies';
+
+export type { AppCurrency, FinanceReportCurrency, RateCurrency, WorkspaceCurrency };
+export { APP_CURRENCIES, FINANCE_REPORT_CURRENCIES, RATE_CURRENCIES, WORKSPACE_CURRENCIES };
+
 export type Lang = 'ru' | 'en' | 'de' | 'kz' | 'uk' | 'by';
-
-/** Валюта ставки за час (BY — рубли, PL — злотые, AT/EU — евро, USD, RU — рубли). */
-export type RateCurrency = 'BYN' | 'PLN' | 'EUR' | 'USD' | 'RUB';
-
-export const RATE_CURRENCIES: RateCurrency[] = ['BYN', 'PLN', 'EUR', 'USD', 'RUB'];
-
-/** Валюты для сводки Finance (курсы Frankfurter + fallback на backend). */
-export type FinanceReportCurrency = 'EUR' | 'USD' | 'PLN' | 'RUB' | 'BYN' | 'KZT';
-
-export const FINANCE_REPORT_CURRENCIES: FinanceReportCurrency[] = [
-  'EUR',
-  'USD',
-  'PLN',
-  'RUB',
-  'BYN',
-  'KZT',
-];
 
 export interface PricingFaqItem {
   q: string;
@@ -124,8 +123,6 @@ export interface SubscriptionPricing {
   monthly: number;
   yearly: number;
 }
-
-export type WorkspaceCurrency = 'EUR' | 'USD' | 'RUB' | 'BYN';
 
 export type WorkspaceLessonDuration = 45 | 60 | 90;
 
@@ -586,6 +583,8 @@ export interface CalendarStrings {
   studentsSidebarEmpty: string;
   studentsSidebarNoResults: string;
   scheduledAtLabel: string;
+  lessonDescriptionLabel: string;
+  advancedSettingsLabel: string;
   notesPlaceholder: string;
   notesNewPlaceholder: string;
   snapshotRateLabel: string;
@@ -762,15 +761,21 @@ export interface FinanceStrings {
   reportCurrency: string;
   originalInCurrency: string;
   ratesAsOf: string;
+  ratesSource: string;
+  ratesDebug: string;
   activityLogSection: string;
   activityLogEmpty: string;
 }
 
 export interface FinanceExchangeRates {
+  /** Базовая валюта конвертации (обычно EUR). */
   base: string;
   reportCurrency: string;
+  /** Дата курса ЦБ / официального источника. */
   asOf: string;
+  /** Человекочитаемый источник, напр. ECB, NBRB, NBK. */
   source: string;
+  /** units per 1 base currency */
   rates: Record<string, number>;
 }
 
