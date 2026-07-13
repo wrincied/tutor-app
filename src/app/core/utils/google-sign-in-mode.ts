@@ -1,8 +1,13 @@
 import { environment } from '@environment';
 
 /**
- * signInWithRedirect ломается с hash-routing на GitHub Pages:
- * Firebase возвращает на URL без #/..., и OAuth-цикл не завершается.
+ * Выбор способа входа через Google.
+ *
+ * На GitHub Pages (wrincied.github.io) используем popup:
+ * signInWithRedirect возвращает браузер на URL без #/...,
+ * а у нас hash-routing — OAuth-цикл не завершается.
+ *
+ * На Firebase Hosting (simple4u-64822.web.app) оставляем redirect — там он работает штатно.
  */
 export function shouldUseGoogleSignInPopup(): boolean {
   if (!environment.production) {
