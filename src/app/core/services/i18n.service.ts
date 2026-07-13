@@ -1702,6 +1702,11 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'Повторяющийся урок с ошибкой в правиле — не отображается в календаре.',
     breakdownScheduleDerived:
       'Точное время не было сохранено — показана дата создания. Откройте урок в календаре и задайте время.',
+    exportPdf: 'Скачать PDF',
+    exportingPdf: 'Формируем PDF…',
+    exportPdfError: 'Не удалось создать PDF',
+    pdfGeneratedAt: 'Сформировано',
+    pdfSummary: 'Итого',
   },
   en: {
     loading: 'Loading…',
@@ -1794,6 +1799,11 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'Recurring lesson has an invalid rule — not shown in calendar.',
     breakdownScheduleDerived:
       'Exact time was not saved — showing creation date. Open the lesson in calendar and set the time.',
+    exportPdf: 'Download PDF',
+    exportingPdf: 'Generating PDF…',
+    exportPdfError: 'Could not create PDF',
+    pdfGeneratedAt: 'Generated',
+    pdfSummary: 'Summary',
   },
   de: {
     loading: 'Laden…',
@@ -1885,6 +1895,11 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'Serientermin mit ungültiger Regel — nicht im Kalender sichtbar.',
     breakdownScheduleDerived:
       'Keine genaue Uhrzeit gespeichert — Erstellungsdatum wird angezeigt. Bitte im Kalender die Zeit setzen.',
+    exportPdf: 'PDF herunterladen',
+    exportingPdf: 'PDF wird erstellt…',
+    exportPdfError: 'PDF konnte nicht erstellt werden',
+    pdfGeneratedAt: 'Erstellt',
+    pdfSummary: 'Zusammenfassung',
   },
   kz: {
     loading: 'Жүктелуде…',
@@ -1975,6 +1990,11 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'Қайталанатын сабақта ереже қатесі — кестеде көрінбейді.',
     breakdownScheduleDerived:
       'Нақты уақыт сақталмаған — жасалған күні көрсетіледі. Кестеде уақытты орнатыңыз.',
+    exportPdf: 'PDF жүктеу',
+    exportingPdf: 'PDF дайындалуда…',
+    exportPdfError: 'PDF жасау сәтсіз аяқталды',
+    pdfGeneratedAt: 'Құрылған',
+    pdfSummary: 'Қорытынды',
   },
   uk: FINANCE_UK,
   by: FINANCE_BY,

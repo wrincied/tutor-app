@@ -465,6 +465,11 @@ export const FINANCE_UK: FinanceStrings = {
     'Повторюваний урок з помилкою в правилі — не відображається в календарі.',
   breakdownScheduleDerived:
     'Точний час не збережено — показано дату створення. Відкрийте урок у календарі та задайте час.',
+  exportPdf: 'Завантажити PDF',
+  exportingPdf: 'Формуємо PDF…',
+  exportPdfError: 'Не вдалося створити PDF',
+  pdfGeneratedAt: 'Сформовано',
+  pdfSummary: 'Підсумок',
 };
 
 export const STUDENTS_UK: StudentStrings = {
