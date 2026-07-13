@@ -5,7 +5,6 @@ import type {
   ActivityLogEntry,
   AdminDashboardAlert,
   AdminDashboardPayload,
-  AdminRecentActivityItem,
   AdminUserRow,
   AdminUserSummary,
 } from '@interfaces';
@@ -35,7 +34,6 @@ export class AdminOverviewComponent implements OnInit {
 
   readonly dashboard = signal<AdminDashboardPayload | null>(null);
   readonly users = signal<AdminUserRow[]>([]);
-  readonly activity = signal<AdminRecentActivityItem[]>([]);
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
 
@@ -71,28 +69,15 @@ export class AdminOverviewComponent implements OnInit {
     this.loading.set(true);
     this.loadError.set(null);
 
-    let pending = 2;
-    const done = () => {
-      pending -= 1;
-      if (pending === 0) {
-        this.loading.set(false);
-      }
-    };
-    const fail = () => {
-      this.loadError.set(this.t().loadError);
-      done();
-    };
-
     this.adminSvc.getDashboard().subscribe({
-      next: (payload) => this.dashboard.set(payload),
-      error: fail,
-      complete: done,
-    });
-
-    this.adminSvc.getRecentActivity(40).subscribe({
-      next: (items) => this.activity.set(items),
-      error: fail,
-      complete: done,
+      next: (payload) => {
+        this.dashboard.set(payload);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loadError.set(this.t().loadError);
+        this.loading.set(false);
+      },
     });
 
     this.adminSvc.getUsers().subscribe({
@@ -136,17 +121,8 @@ export class AdminOverviewComponent implements OnInit {
     }
   }
 
-  activityTitle(item: AdminRecentActivityItem | ActivityLogEntry): string {
-    const entry: ActivityLogEntry = {
-      _id: item._id,
-      category: item.category,
-      action: item.action,
-      entity_type: item.category === 'students' ? 'student' : 'expense',
-      summary: 'summary' in item ? item.summary : undefined,
-      student_name: item.student_name,
-      createdAt: item.createdAt ?? undefined,
-    };
-    return formatActivityLogTitle(entry, this.i18n.activityLogUi());
+  activityTitle(item: ActivityLogEntry): string {
+    return formatActivityLogTitle(item, this.i18n.activityLogUi());
   }
 
   openUserDetail(userId: string): void {
