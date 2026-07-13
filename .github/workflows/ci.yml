@@ -102,6 +102,7 @@ jobs:
           branch: gh-pages
 
       - name: Redirect root gh-pages URL to /dev
+        # Старый URL /tutor-app/ вёл на устаревшую сборку. Корень — только редирект на /dev.
         run: |
           mkdir -p gh-pages-root
           cat > gh-pages-root/index.html << 'EOF'
