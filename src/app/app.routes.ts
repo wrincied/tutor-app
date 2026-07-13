@@ -90,6 +90,14 @@ export const routes: Routes = [
             data: { title: 'finance' satisfies PageTitleKey },
           },
           {
+            path: 'finance/breakdown/:panel',
+            loadComponent: () =>
+              import('./features/finance/finance-breakdown.component').then(
+                (m) => m.FinanceBreakdownComponent,
+              ),
+            data: { title: 'finance' satisfies PageTitleKey },
+          },
+          {
             path: 'pricing',
             loadComponent: () =>
               import('./features/pricing/pricing.component').then((m) => m.PricingComponent),

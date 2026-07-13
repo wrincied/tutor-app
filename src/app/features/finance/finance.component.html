@@ -92,16 +92,55 @@
     } @else if (summary(); as s) {
       <p class="finance-disclaimer">{{ t.disclaimer }}</p>
       <p class="finance-disclaimer finance-disclaimer--rates">
-        {{ t.conversionNote }} <strong>{{ displayCurrency() }}</strong
-        >. {{ exchangeRatesLabel() }}
+        {{ t.conversionNote }} <strong>{{ displayCurrency() }}</strong>.
+        @if (exchangeRateAsOf(); as asOf) {
+          {{ t.ratesAsOf }} {{ asOf }}.
+          {{ t.ratesSource }}
+          <a
+            [href]="exchangeRateSourceLink().url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="finance-link"
+          >
+            {{ exchangeRateSourceLink().label }}
+          </a>
+          @if (exchangeRatesSource(); as apiSource) {
+            <span class="finance-disclaimer__api-source">({{ apiSource }})</span>
+          }
+        }
       </p>
+
+      @if (exchangeRatesTable().length) {
+        <details class="finance-rates-debug">
+          <summary>{{ t.ratesDebug }}</summary>
+          <ul>
+            @for (row of exchangeRatesTable(); track row.code) {
+              <li>
+                <strong>{{ row.code }}</strong
+                >: {{ row.perEur | number: '1.0-4' }} / 1 EUR
+              </li>
+            }
+          </ul>
+        </details>
+      }
 
       @if (!hasLessonsInPeriod()) {
         <p class="finance-note finance-note--warn">{{ t.lessonsEmptyHint }}</p>
+      } @else if (hiddenCalendarLessons().length > 0) {
+        <p class="finance-note finance-note--warn">
+          {{ t.breakdownHiddenInCalendar }}
+          <a routerLink="/app/calendar" class="finance-link">{{ t.breakdownOpenCalendar }}</a>
+        </p>
       }
 
+      <p class="finance-note finance-note--muted">{{ t.breakdownTapHint }}</p>
+
       <section class="finance-kpi" aria-label="Summary">
-        <article class="finance-kpi__card finance-kpi__card--income finance-kpi__card--wide">
+        <button
+          type="button"
+          class="finance-kpi__card finance-kpi__card--income finance-kpi__card--wide finance-kpi__card--clickable"
+          (click)="openBreakdown('income')"
+        >
           <span class="finance-kpi__label">{{ t.totalIncomeCombined }}</span>
           <strong class="finance-kpi__value">{{ formatMoney(combinedIncome()) }}</strong>
           <div class="finance-kpi__split">
@@ -116,24 +155,40 @@
               ({{ s.totals.scheduledLessonCount }})
             </span>
           </div>
-        </article>
-        <article class="finance-kpi__card">
+        </button>
+        <button
+          type="button"
+          class="finance-kpi__card finance-kpi__card--clickable"
+          (click)="openBreakdown('expenses')"
+        >
           <span class="finance-kpi__label">{{ t.totalExpenses }}</span>
           <strong class="finance-kpi__value">{{ formatMoney(s.income.totalExpenses) }}</strong>
-        </article>
-        <article class="finance-kpi__card">
+        </button>
+        <button
+          type="button"
+          class="finance-kpi__card finance-kpi__card--clickable"
+          (click)="openBreakdown('gross')"
+        >
           <span class="finance-kpi__label">{{ t.grossProfit }}</span>
           <strong class="finance-kpi__value">{{ formatMoney(s.income.grossProfit) }}</strong>
-        </article>
+        </button>
         @if (s.austria; as at) {
-          <article class="finance-kpi__card finance-kpi__card--net">
+          <button
+            type="button"
+            class="finance-kpi__card finance-kpi__card--net finance-kpi__card--clickable"
+            (click)="openBreakdown('net')"
+          >
             <span class="finance-kpi__label">{{ t.netProfit }}</span>
             <strong class="finance-kpi__value">{{ formatMoney(at.netProfit) }}</strong>
-          </article>
+          </button>
         }
       </section>
 
-      <section class="finance-stats finance-stats--lessons">
+      <button
+        type="button"
+        class="finance-stats finance-stats--lessons finance-stats--clickable"
+        (click)="openBreakdown('lessons')"
+      >
         <span
           >{{ t.totalLessons }}: <strong>{{ s.totals.lessonCount }}</strong></span
         >
@@ -159,7 +214,7 @@
         <span
           >{{ t.expensesCount }}: <strong>{{ s.totals.expenseCount }}</strong></span
         >
-      </section>
+      </button>
 
       <p class="finance-note finance-note--muted">{{ t.markCompletedHint }}</p>
 
@@ -228,42 +283,38 @@
         @if (filteredExpenses().length === 0) {
           <p class="hint">{{ t.emptyExpenses }}</p>
         } @else {
-          <div class="table-wrap">
-            <table class="finance-table">
-              <thead>
-                <tr>
-                  <th>{{ t.expenseDate }}</th>
-                  <th>{{ t.expenseTitle }}</th>
-                  <th>{{ t.expenseCategory }}</th>
-                  <th class="finance-table__num">{{ t.expenseAmount }}</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (e of filteredExpenses(); track e._id) {
-                  <tr>
-                    <td [attr.data-label]="t.expenseDate">{{ e.expense_date }}</td>
-                    <td [attr.data-label]="t.expenseTitle">{{ e.title }}</td>
-                    <td [attr.data-label]="t.expenseCategory">{{ e.category || '—' }}</td>
-                    <td class="finance-table__num" [attr.data-label]="t.expenseAmount">
-                      {{ formatExpenseAmount(e.amount) }}
-                    </td>
-                    <td class="finance-table__actions" data-label="Actions">
-                      <button
-                        type="button"
-                        class="btn-link danger"
-                        (click)="confirmDeleteExpense(e._id)"
-                      >
-                        {{ t.deleteExpense }}
-                      </button>
-                      <button type="button" class="btn-link" (click)="openExpenseEdit(e)">
-                        {{ t.editExpense }}
-                      </button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+          <div class="finance-expense-cards" role="list">
+            @for (e of filteredExpenses(); track e._id) {
+              <article class="finance-expense-card" role="listitem">
+                <div class="finance-expense-card__head">
+                  <strong class="finance-expense-card__title">{{ e.title }}</strong>
+                  <span class="finance-expense-card__amount">
+                    {{ formatExpenseAmount(e) }}
+                    @if (expenseOriginalLabel(e); as original) {
+                      <span class="finance-expense-card__amount-original">{{ original }}</span>
+                    }
+                  </span>
+                </div>
+                <div class="finance-expense-card__meta">
+                  <span>{{ e.expense_date }}</span>
+                  @if (e.category) {
+                    <span class="finance-expense-card__category">{{ e.category }}</span>
+                  }
+                </div>
+                <div class="finance-expense-card__actions">
+                  <button type="button" class="btn-link" (click)="openExpenseEdit(e)">
+                    {{ t.editExpense }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-link danger"
+                    (click)="confirmDeleteExpense(e._id)"
+                  >
+                    {{ t.deleteExpense }}
+                  </button>
+                </div>
+              </article>
+            }
           </div>
         }
       </section>
@@ -285,17 +336,29 @@
       <input type="text" [(ngModel)]="expenseForm.title" name="expTitle" required placeholder=" " />
       <label>{{ t.expenseTitle }}</label>
     </div>
-    <div class="field field--float">
-      <input
-        type="number"
-        [(ngModel)]="expenseForm.amount"
-        name="expAmount"
-        min="0"
-        step="0.01"
-        required
-        placeholder=" "
-      />
-      <label>{{ t.expenseAmount }}</label>
+    <div class="finance-expense-form__amount-row">
+      <div class="field field--float finance-expense-form__amount">
+        <input
+          type="number"
+          [(ngModel)]="expenseForm.amount"
+          name="expAmount"
+          min="0"
+          step="0.01"
+          required
+          placeholder=" "
+        />
+        <label>{{ t.expenseAmount }}</label>
+      </div>
+      <div class="finance-expense-form__currency">
+        <label class="finance-expense-form__currency-label" for="expCurrency">{{ t.expenseCurrency }}</label>
+        <app-select
+          id="expCurrency"
+          size="compact"
+          [(ngModel)]="expenseForm.currency"
+          name="expCurrency"
+          [options]="currencySelectOptions()"
+        />
+      </div>
     </div>
     <div class="field field--float">
       <input

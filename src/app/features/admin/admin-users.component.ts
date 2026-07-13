@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import type { AdminUserRow, SubscriptionStatus } from '@interfaces';
+import type { AdminUserRow, AdminUserSummary, SubscriptionStatus } from '@interfaces';
 import { AdminService } from '../../core/services/admin.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
@@ -22,7 +22,7 @@ type UsersSortKey = 'email' | 'registered' | 'lastVisit';
   standalone: true,
   imports: [DatePipe, FormsModule, AppDialogComponent, AppSelectComponent, RelativeTimePipe],
   templateUrl: './admin-users.component.html',
-  styleUrl: './admin-dashboard.component.scss',
+  styleUrls: ['./admin-dashboard.component.scss', './admin-users.component.scss'],
 })
 export class AdminUsersComponent implements OnInit {
   private readonly adminSvc = inject(AdminService);
@@ -43,6 +43,11 @@ export class AdminUsersComponent implements OnInit {
   readonly editingUser = signal<AdminUserRow | null>(null);
   readonly editStatus = signal<SubscriptionStatus>('free');
   readonly editTrialEnds = signal('');
+
+  readonly detailOpen = signal(false);
+  readonly detailLoading = signal(false);
+  readonly detailError = signal<string | null>(null);
+  readonly detail = signal<AdminUserSummary | null>(null);
 
   readonly filteredUsers = computed(() => {
     const query = this.search().trim().toLowerCase();
@@ -114,15 +119,35 @@ export class AdminUsersComponent implements OnInit {
     return adminStatusClass(status);
   }
 
+  studentsButtonLabel(count: number | undefined): string {
+    return `${this.t().tableStudents}: ${count ?? 0}`;
+  }
+
+  openUserDetail(user: AdminUserRow): void {
+    this.detailOpen.set(true);
+    this.detailLoading.set(true);
+    this.detailError.set(null);
+    this.detail.set(null);
+    this.adminSvc.getUserSummary(user._id).subscribe({
+      next: (summary) => {
+        this.detail.set(summary);
+        this.detailLoading.set(false);
+      },
+      error: () => {
+        this.detailError.set(this.t().userDetailError);
+        this.detailLoading.set(false);
+      },
+    });
+  }
+
+  closeUserDetail(): void {
+    this.detailOpen.set(false);
+    this.detail.set(null);
+  }
+
   exportCsv(): void {
     const rows = this.filteredUsers();
-    const header = [
-      'email',
-      'status',
-      'country',
-      'registered',
-      'last_visit',
-    ];
+    const header = ['email', 'status', 'country', 'registered', 'last_visit', 'students'];
     const lines = rows.map((user) =>
       [
         user.email,
@@ -130,6 +155,7 @@ export class AdminUsersComponent implements OnInit {
         user.country_settings ?? '',
         user.createdAt ?? '',
         user.last_login_at ?? '',
+        user.studentsCount ?? 0,
       ]
         .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
         .join(','),

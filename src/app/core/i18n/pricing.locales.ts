@@ -2,13 +2,12 @@ import type { Lang, PricingStrings } from '@interfaces';
 
 /** Структура совпадает с assets/i18n/pricing.{ru,en,de}.json */
 export const PRICING_RU: PricingStrings = {
-  title: 'Меньше рутины — больше времени на уроки',
-  subtitle:
-    'Simple4U автоматизирует расписание, пакеты занятий и финансы. Начните с 14 дней Pro бесплатно — без привязки карты.',
+  title: 'Тарифы',
+  subtitle: 'Выберите план. Pro — 14 дней бесплатно, карта не нужна.',
   toggleMonthly: 'Ежемесячно',
   toggleYearly: 'Ежегодно',
-  saveBadge: 'Экономия 20%+',
-  recommendedBadge: 'Рекомендуем',
+  saveBadge: '−20%',
+  recommendedBadge: 'Pro',
   freePlan: {
     name: 'Start / Free',
     priceLabel: '0',
@@ -61,13 +60,12 @@ export const PRICING_RU: PricingStrings = {
 };
 
 export const PRICING_EN: PricingStrings = {
-  title: 'More time for teaching, less admin work',
-  subtitle:
-    'Simple4U automates scheduling, lesson packages, and finances. Start with 14 days of Pro free — no card required.',
+  title: 'Pricing',
+  subtitle: 'Pick a plan. Pro includes 14 days free — no card required.',
   toggleMonthly: 'Monthly',
   toggleYearly: 'Yearly',
-  saveBadge: 'Save 20%+',
-  recommendedBadge: 'Recommended',
+  saveBadge: '−20%',
+  recommendedBadge: 'Pro',
   freePlan: {
     name: 'Start / Free',
     priceLabel: '0',
@@ -120,13 +118,12 @@ export const PRICING_EN: PricingStrings = {
 };
 
 export const PRICING_DE: PricingStrings = {
-  title: 'Mehr Zeit für den Unterricht, weniger Verwaltung',
-  subtitle:
-    'Simple4U automatisiert Planung, Stundenpakete und Finanzen. 14 Tage Pro gratis — ohne Karte.',
+  title: 'Preise',
+  subtitle: 'Plan wählen. Pro — 14 Tage gratis, keine Karte nötig.',
   toggleMonthly: 'Monatlich',
   toggleYearly: 'Jährlich',
-  saveBadge: '20 %+ sparen',
-  recommendedBadge: 'Empfohlen',
+  saveBadge: '−20%',
+  recommendedBadge: 'Pro',
   freePlan: {
     name: 'Start / Free',
     priceLabel: '0',
@@ -181,13 +178,12 @@ export const PRICING_DE: PricingStrings = {
 
 export const PRICING_UK: PricingStrings = {
   ...PRICING_RU,
-  title: 'Менше рутини — більше часу на уроки',
-  subtitle:
-    'Simple4U автоматизує розклад, пакети занять і фінанси. Почніть з 14 днів Pro безкоштовно — без прив’язки картки.',
+  title: 'Тарифи',
+  subtitle: 'Оберіть план. Pro — 14 днів безкоштовно, картка не потрібна.',
   toggleMonthly: 'Щомісяця',
   toggleYearly: 'Щороку',
-  saveBadge: 'Економія 20%+',
-  recommendedBadge: 'Рекомендуємо',
+  saveBadge: '−20%',
+  recommendedBadge: 'Pro',
   freePlan: {
     ...PRICING_RU.freePlan,
     period: 'назавжди',
@@ -237,12 +233,12 @@ export const PRICING_UK: PricingStrings = {
 
 export const PRICING_BY: PricingStrings = {
   ...PRICING_RU,
-  title: 'Менш рутыні — больш часу на урокі',
-  subtitle:
-    'Simple4U аўтаматызуе расклад, пакеты заняткаў і фінансы. Пачніце з 14 дзён Pro бясплатна — без прывязкі карткі.',
+  title: 'Тарыфы',
+  subtitle: 'Абярыце план. Pro — 14 дзён бясплатна, картка не патрэбна.',
   toggleMonthly: 'Штомесяц',
   toggleYearly: 'Штогод',
-  recommendedBadge: 'Рэкамендуем',
+  saveBadge: '−20%',
+  recommendedBadge: 'Pro',
   freePlan: {
     ...PRICING_RU.freePlan,
     period: 'назаўжды',
@@ -272,13 +268,12 @@ export const PRICING_BY: PricingStrings = {
 
 export const PRICING_KZ: PricingStrings = {
   ...PRICING_RU,
-  title: 'Сабаққа көбірек уақыт — әкімшілікке аз',
-  subtitle:
-    'Simple4U кесте, сабақ пакеттері мен қаржыны автоматтандырады. 14 күн Pro тегін — карта қажет емес.',
+  title: 'Тарифтер',
+  subtitle: 'Жоспарды таңдаңыз. Pro — 14 күн тегін, карта қажет емес.',
   toggleMonthly: 'Ай сайын',
   toggleYearly: 'Жыл сайын',
-  saveBadge: '20%+ үнемдеу',
-  recommendedBadge: 'Ұсынылады',
+  saveBadge: '−20%',
+  recommendedBadge: 'Pro',
   freePlan: {
     ...PRICING_RU.freePlan,
     period: 'мәңгі',

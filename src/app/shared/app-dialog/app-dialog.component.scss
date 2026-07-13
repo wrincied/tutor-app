@@ -87,7 +87,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
       max-width: 100%;
     }
     border-color: rgb(254 202 202);
-    background: rgb(254 242 242);
+    background: var(--nav-bg);
     color: white;
 
     .app-dialog__title {

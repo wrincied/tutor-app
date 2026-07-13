@@ -103,41 +103,42 @@
       @if (isEnabled('alerts')) {
         <section class="admin-panel" aria-labelledby="admin-alerts-title">
           <h2 id="admin-alerts-title" class="admin-panel__title">{{ t().alertsTitle }}</h2>
-          <div class="admin-table-wrap">
-            <table class="admin-table admin-table--dashboard">
-              <thead>
-                <tr>
-                  <th scope="col">{{ t().tableEmail }}</th>
-                  <th scope="col">{{ t().tableAction }}</th>
-                  <th scope="col">{{ t().tableWhen }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @if (d.alerts.length === 0) {
-                  <tr><td colspan="3" class="admin-table__empty">{{ t().alertsEmpty }}</td></tr>
-                } @else {
-                  @for (alert of d.alerts; track alert.user_id + alert.type) {
-                    <tr>
-                      <td>
-                        <button type="button" class="admin-link-btn" (click)="openUserDetail(alert.user_id)">
-                          {{ alert.email }}
-                        </button>
-                      </td>
-                      <td>{{ alertLabel(alert) }}</td>
-                      <td>
-                        @if (alert.trial_ends_at) {
-                          <span [title]="alert.trial_ends_at | date: 'dd.MM.yyyy HH:mm'">{{ alert.trial_ends_at | relativeTime }}</span>
-                        } @else if (alert.last_login_at) {
-                          <span [title]="alert.last_login_at | date: 'dd.MM.yyyy HH:mm'">{{ alert.last_login_at | relativeTime }}</span>
-                        } @else {
-                          {{ t().never }}
-                        }
-                      </td>
-                    </tr>
-                  }
+          <div class="admin-data-grid admin-data-grid--cols-3">
+            <div class="admin-data-grid__head">
+              <span>{{ t().tableEmail }}</span>
+              <span>{{ t().tableAction }}</span>
+              <span>{{ t().tableWhen }}</span>
+            </div>
+            <div class="admin-data-grid__body">
+              @if (d.alerts.length === 0) {
+                <p class="admin-data-grid__empty">{{ t().alertsEmpty }}</p>
+              } @else {
+                @for (alert of d.alerts; track alert.user_id + alert.type) {
+                  <article class="admin-data-grid__row">
+                    <div class="admin-data-grid__cell">
+                      <span class="admin-data-grid__cell-label">{{ t().tableEmail }}</span>
+                      <button type="button" class="admin-link-btn" (click)="openUserDetail(alert.user_id)">
+                        {{ alert.email }}
+                      </button>
+                    </div>
+                    <div class="admin-data-grid__cell">
+                      <span class="admin-data-grid__cell-label">{{ t().tableAction }}</span>
+                      {{ alertLabel(alert) }}
+                    </div>
+                    <div class="admin-data-grid__cell">
+                      <span class="admin-data-grid__cell-label">{{ t().tableWhen }}</span>
+                      @if (alert.trial_ends_at) {
+                        <span [title]="alert.trial_ends_at | date: 'dd.MM.yyyy HH:mm'">{{ alert.trial_ends_at | relativeTime }}</span>
+                      } @else if (alert.last_login_at) {
+                        <span [title]="alert.last_login_at | date: 'dd.MM.yyyy HH:mm'">{{ alert.last_login_at | relativeTime }}</span>
+                      } @else {
+                        {{ t().never }}
+                      }
+                    </div>
+                  </article>
                 }
-              </tbody>
-            </table>
+              }
+            </div>
           </div>
         </section>
       }
@@ -145,27 +146,29 @@
       @if (isEnabled('geography')) {
         <section class="admin-panel" aria-labelledby="admin-geo-title">
           <h2 id="admin-geo-title" class="admin-panel__title">{{ t().geographyTitle }}</h2>
-          <div class="admin-table-wrap">
-            <table class="admin-table admin-table--dashboard">
-              <thead>
-                <tr>
-                  <th scope="col">{{ t().geographyCountry }}</th>
-                  <th scope="col">{{ t().geographyUsers }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @if (d.geography.length === 0) {
-                  <tr><td colspan="2" class="admin-table__empty">{{ t().geographyEmpty }}</td></tr>
-                } @else {
-                  @for (row of d.geography; track row.country) {
-                    <tr>
-                      <td>{{ row.country }}</td>
-                      <td>{{ row.count }}</td>
-                    </tr>
-                  }
+          <div class="admin-data-grid admin-data-grid--cols-2">
+            <div class="admin-data-grid__head">
+              <span>{{ t().geographyCountry }}</span>
+              <span>{{ t().geographyUsers }}</span>
+            </div>
+            <div class="admin-data-grid__body">
+              @if (d.geography.length === 0) {
+                <p class="admin-data-grid__empty">{{ t().geographyEmpty }}</p>
+              } @else {
+                @for (row of d.geography; track row.country) {
+                  <article class="admin-data-grid__row">
+                    <div class="admin-data-grid__cell">
+                      <span class="admin-data-grid__cell-label">{{ t().geographyCountry }}</span>
+                      {{ row.country }}
+                    </div>
+                    <div class="admin-data-grid__cell">
+                      <span class="admin-data-grid__cell-label">{{ t().geographyUsers }}</span>
+                      {{ row.count }}
+                    </div>
+                  </article>
                 }
-              </tbody>
-            </table>
+              }
+            </div>
           </div>
         </section>
       }
@@ -200,35 +203,36 @@
             <h2 id="admin-last-visits-title" class="admin-panel__title">{{ t().lastVisitsTitle }}</h2>
             <p class="admin-panel__hint">{{ t().lastVisitsHint }}</p>
           </header>
-          <div class="admin-table-wrap">
-            <table class="admin-table admin-table--dashboard">
-              <thead>
-                <tr>
-                  <th scope="col">{{ t().tableEmail }}</th>
-                  <th scope="col">{{ t().tableStatus }}</th>
-                  <th scope="col">{{ t().tableLastVisit }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @if (recentVisits().length === 0) {
-                  <tr><td colspan="3" class="admin-table__empty">{{ t().noVisits }}</td></tr>
-                } @else {
-                  @for (user of recentVisits(); track user._id) {
-                    <tr>
-                      <td>
-                        <button type="button" class="admin-link-btn" (click)="openUserDetail(user._id)">{{ user.email }}</button>
-                      </td>
-                      <td><span [class]="statusClass(user.subscription_status)">{{ statusLabel(user.subscription_status) }}</span></td>
-                      <td>
-                        @if (user.last_login_at) {
-                          <span [title]="user.last_login_at | date: 'dd.MM.yyyy HH:mm'">{{ user.last_login_at | relativeTime }}</span>
-                        } @else { {{ t().never }} }
-                      </td>
-                    </tr>
-                  }
+          <div class="admin-data-grid admin-data-grid--cols-3">
+            <div class="admin-data-grid__head">
+              <span>{{ t().tableEmail }}</span>
+              <span>{{ t().tableStatus }}</span>
+              <span>{{ t().tableLastVisit }}</span>
+            </div>
+            <div class="admin-data-grid__body">
+              @if (recentVisits().length === 0) {
+                <p class="admin-data-grid__empty">{{ t().noVisits }}</p>
+              } @else {
+                @for (user of recentVisits(); track user._id) {
+                  <article class="admin-data-grid__row">
+                    <div class="admin-data-grid__cell">
+                      <span class="admin-data-grid__cell-label">{{ t().tableEmail }}</span>
+                      <button type="button" class="admin-link-btn" (click)="openUserDetail(user._id)">{{ user.email }}</button>
+                    </div>
+                    <div class="admin-data-grid__cell">
+                      <span class="admin-data-grid__cell-label">{{ t().tableStatus }}</span>
+                      <span [class]="statusClass(user.subscription_status)">{{ statusLabel(user.subscription_status) }}</span>
+                    </div>
+                    <div class="admin-data-grid__cell">
+                      <span class="admin-data-grid__cell-label">{{ t().tableLastVisit }}</span>
+                      @if (user.last_login_at) {
+                        <span [title]="user.last_login_at | date: 'dd.MM.yyyy HH:mm'">{{ user.last_login_at | relativeTime }}</span>
+                      } @else { {{ t().never }} }
+                    </div>
+                  </article>
                 }
-              </tbody>
-            </table>
+              }
+            </div>
           </div>
         </section>
       }
@@ -256,19 +260,6 @@
         <div><dt>{{ t().tableCountry }}</dt><dd>{{ s.user.country_settings || '—' }}</dd></div>
         <div><dt>{{ t().tableLastVisit }}</dt><dd>{{ s.user.last_login_at ? (s.user.last_login_at | relativeTime) : t().never }}</dd></div>
       </dl>
-      @if (s.recentActivity.length) {
-        <h3 class="admin-user-detail__subtitle">{{ t().userDetailRecentActivity }}</h3>
-        <ul class="admin-user-detail__activity">
-          @for (entry of s.recentActivity; track entry._id) {
-            <li>
-              <span>{{ activityTitle(entry) }}</span>
-              @if (entry.createdAt) {
-                <time [dateTime]="entry.createdAt">{{ entry.createdAt | relativeTime }}</time>
-              }
-            </li>
-          }
-        </ul>
-      }
     </div>
   }
 </app-dialog>

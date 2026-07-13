@@ -2,7 +2,6 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import type {
-  ActivityLogEntry,
   AdminDashboardAlert,
   AdminDashboardPayload,
   AdminUserRow,
@@ -11,7 +10,6 @@ import type {
 import { AdminDashboardLayoutService } from '../../core/services/admin-dashboard-layout.service';
 import { AdminService } from '../../core/services/admin.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { formatActivityLogTitle } from '../../core/utils/activity-log-format';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
 import {
@@ -119,10 +117,6 @@ export class AdminOverviewComponent implements OnInit {
       default:
         return this.t().alertProInactive;
     }
-  }
-
-  activityTitle(item: ActivityLogEntry): string {
-    return formatActivityLogTitle(item, this.i18n.activityLogUi());
   }
 
   openUserDetail(userId: string): void {

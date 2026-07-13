@@ -16,6 +16,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { CurrencyPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { CalendarLessonDisplayService } from '../../core/services/calendar-lesson-display.service';
 import { LessonService } from '../../core/services/lesson.service';
 import { UserProfileSettingsService } from '../../core/services/user-profile-settings.service';
@@ -116,6 +117,7 @@ type BillingConfirmState = {
  })
 export class CalendarComponent implements OnInit {
   private readonly lessonsSvc = inject(LessonService);
+  private readonly route = inject(ActivatedRoute);
   private readonly studentSvc = inject(StudentService);
   private readonly lessonDisplay = inject(CalendarLessonDisplayService);
   readonly profileSettings = inject(UserProfileSettingsService);
@@ -170,6 +172,7 @@ export class CalendarComponent implements OnInit {
   studentsSidebarQuery = signal('');
   focusedStudentId = signal<string | null>(null);
   lessonFormStep = signal<1 | 2>(1);
+  lessonFormSubmitted = signal(false);
   scheduledAtLocal = signal('');
   /** Урок в активном перетаскивании (pointer events). */
   readonly dragActiveLessonId = signal<string | null>(null);
@@ -641,6 +644,7 @@ export class CalendarComponent implements OnInit {
   ngOnInit(): void {
     this.initViewportMediaQueries();
     this.initNowLineClock();
+    this.applyDateFromRoute();
     this.profileSettings.loadProfile().subscribe();
     this.loadLessons();
     this.studentSvc.getAll().subscribe({
@@ -1258,6 +1262,7 @@ export class CalendarComponent implements OnInit {
     PLN: 'PL',
     USD: 'US',
     RUB: 'RU',
+    KZT: 'KZ',
   };
 
   lessonHasSnapshotRate(lesson: Lesson): boolean {
@@ -2222,14 +2227,7 @@ export class CalendarComponent implements OnInit {
     this.deletingLesson.set(false);
     this.deleteRecurringModalOpen.set(false);
     this.lessonFormStep.set(1);
-  }
-
-  goToNotesStep(): void {
-    this.lessonFormStep.set(2);
-  }
-
-  backToMainStep(): void {
-    this.lessonFormStep.set(1);
+    this.lessonFormSubmitted.set(false);
   }
 
   private resetLessonForm(): void {
@@ -2263,6 +2261,19 @@ export class CalendarComponent implements OnInit {
     });
   }
 
+  private applyDateFromRoute(): void {
+    const dateParam = this.route.snapshot.queryParamMap.get('date');
+    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      return;
+    }
+    const target = new Date(`${dateParam}T12:00:00`);
+    if (Number.isNaN(target.getTime())) {
+      return;
+    }
+    this.currentDate.set(this.startOfLocalDay(target));
+    this.viewMode.set('1');
+  }
+
   private loadLessons(): void {
     this.lessonsSvc.getAll().subscribe({
       next: (data) => {
@@ -2289,7 +2300,7 @@ export class CalendarComponent implements OnInit {
       _id: raw._id,
       student_id: raw.student_id,
       status,
-      scheduledAt: String(raw.scheduledAt),
+      scheduledAt: String(raw.scheduledAt || raw.createdAt || ''),
       lesson_duration: raw.lesson_duration ?? 60,
       lesson_price: raw.lesson_price ?? 0,
       lesson_currency: raw.lesson_currency ?? 'EUR',
@@ -2318,6 +2329,7 @@ export class CalendarComponent implements OnInit {
   }
 
   saveLesson(): void {
+    this.lessonFormSubmitted.set(true);
     this.saveLessonError = null;
     if (!this.form.student_id?.trim()) {
       this.saveLessonError = this.i18n.calendarUi().selectStudentError;

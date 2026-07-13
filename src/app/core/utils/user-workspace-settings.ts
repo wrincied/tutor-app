@@ -1,6 +1,7 @@
-export type WorkspaceCurrency = 'EUR' | 'USD' | 'RUB' | 'BYN';
+import { WORKSPACE_CURRENCIES, type WorkspaceCurrency } from '../constants/currencies';
 
-export const WORKSPACE_CURRENCIES: readonly WorkspaceCurrency[] = ['EUR', 'USD', 'RUB', 'BYN'];
+export type { WorkspaceCurrency };
+export { WORKSPACE_CURRENCIES };
 
 export const WORKSPACE_LESSON_DURATIONS = [45, 60, 90] as const;
 

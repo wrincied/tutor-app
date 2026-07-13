@@ -1,7 +1,9 @@
 <div class="page students-page">
   <div class="page-header">
     <h1>{{ i18n.nav().students }}</h1>
-    <button type="button" class="btn-primary" (click)="openCreate()">{{ t.addButton }}</button>
+    <button type="button" class="btn-primary students-page__add students-page__add--header" (click)="openCreate()">
+      {{ t.addButton }}
+    </button>
   </div>
 
   @if (loading()) {
@@ -115,6 +117,11 @@
     </div>
   }
 
+  <div class="students-page__footer">
+    <button type="button" class="btn-primary students-page__add" (click)="openCreate()">
+      {{ t.addButton }}
+    </button>
+  </div>
 </div>
 
 <app-dialog
@@ -162,31 +169,28 @@
   <p>{{ botToggleMessage() }}</p>
 </app-dialog>
 
-@if (showForm()) {
-  <div
-    class="modal-overlay modal-overlay--sheet"
-    role="presentation"
-    animate.leave="modal-overlay-leave"
-  >
-    <div
-      class="modal modal-sheet"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-labelledby]="'student-form-title'"
-      animate.leave="modal-sheet-leave"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="modal-header">
-        <h2 id="student-form-title">{{ editTarget() ? t.editModalTitle : t.newStudent }}</h2>
-        <button type="button" class="modal-close" (click)="closeForm()" [attr.aria-label]="t.close">
-          <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
-        </button>
-      </div>
-
-      <form (ngSubmit)="save()" class="modal-body">
-        <div class="field">
+<app-dialog
+  [open]="showForm()"
+  layout="sheet"
+  [closeOnOverlay]="false"
+  [title]="editTarget() ? t.editModalTitle : t.newStudent"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="savingForm() ? t.saving : t.save"
+  (cancel)="closeForm()"
+  (confirm)="onSubmit()"
+>
+  <form #studentForm="ngForm" (ngSubmit)="onSubmit(studentForm)" class="student-form" novalidate>
+        <div class="field" [class.field--invalid]="isFieldInvalid('name', studentForm)">
           <label for="st-name">{{ t.name }}</label>
-          <input id="st-name" type="text" [(ngModel)]="form.name" name="name" required autocomplete="name" />
+          <input
+            id="st-name"
+            type="text"
+            [(ngModel)]="form.name"
+            name="name"
+            required
+            autocomplete="name"
+            #nameCtrl="ngModel"
+          />
         </div>
         <fieldset class="field rate-unit-section">
           <legend>{{ t.rateUnitTitle }}</legend>
@@ -214,7 +218,7 @@
           </div>
         </fieldset>
 
-        <div class="field field--rate-row">
+        <div class="field field--rate-row" [class.field--invalid]="isFieldInvalid('rate', studentForm)">
           <label for="st-rate">{{ rateFieldLabel() }}</label>
           <div class="rate-row">
             <input
@@ -226,6 +230,7 @@
               min="1"
               inputmode="decimal"
               class="rate-row__amount"
+              #rateCtrl="ngModel"
             />
             <div class="field field--nested">
               <label for="st-currency" class="sr-only">{{ t.currency }}</label>
@@ -355,14 +360,8 @@
           }
         </div>
 
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="closeForm()">{{ t.cancel }}</button>
-          <button type="submit" class="btn-primary">{{ t.save }}</button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
+  </form>
+</app-dialog>
 
 @if (deleteTargetId()) {
   <div

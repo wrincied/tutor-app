@@ -64,14 +64,15 @@ export function remapFinanceSummary(
   };
 }
 
-/** Сумма расхода в валюте отчёта (расходы хранятся в defaultCurrency аккаунта). */
+/** Сумма расхода в валюте отчёта. */
 export function expenseAmountInReportCurrency(
   amount: number,
   summary: FinanceSummary,
   targetCurrency: string,
+  fromCurrency?: string,
 ): number {
   const target = String(targetCurrency).trim().toUpperCase();
-  const from = String(summary.defaultCurrency ?? summary.currency).trim().toUpperCase();
+  const from = String(fromCurrency ?? summary.defaultCurrency ?? summary.currency).trim().toUpperCase();
   const rates = summary.exchangeRates?.rates;
   if (!rates || from === target) {
     return amount;

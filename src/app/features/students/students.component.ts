@@ -1,5 +1,5 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, inject, signal, OnInit, ViewChild } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
 import { StudentService, Student } from '../../core/services/student.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType, type StudentRateUnit } from '@interfaces';
@@ -55,6 +55,7 @@ function resolvedBrowserTimezone(): string {
 })
 export class StudentsComponent implements OnInit {
   private svc = inject(StudentService);
+  @ViewChild('studentForm') studentFormRef?: NgForm;
   students = signal<Student[]>([]);
   loading = signal(true);
   showForm = signal(false);
@@ -89,6 +90,8 @@ export class StudentsComponent implements OnInit {
   topupLessonsInput = 1;
   quickActionsStudent = signal<Student | null>(null);
   botToggleConfirm = signal<{ student: Student; nextActive: boolean } | null>(null);
+  formSubmitted = signal(false);
+  savingForm = signal(false);
   readonly colorToHexForPicker = colorToHexForPicker;
 
   ngOnInit() {
@@ -162,6 +165,7 @@ export class StudentsComponent implements OnInit {
   }
 
   openCreate() {
+    this.formSubmitted.set(false);
     this.autoTimezone = true;
     this.form = {
       name: '',
@@ -180,6 +184,7 @@ export class StudentsComponent implements OnInit {
   }
 
   openEdit(s: Student) {
+    this.formSubmitted.set(false);
     this.closeQuickActions();
     this.autoTimezone = false;
     this.form = {
@@ -199,7 +204,32 @@ export class StudentsComponent implements OnInit {
   }
 
   closeForm() {
+    if (this.savingForm()) {
+      return;
+    }
+    this.formSubmitted.set(false);
     this.showForm.set(false);
+    this.editTarget.set(null);
+  }
+
+  onSubmit(studentForm?: NgForm): void {
+    const form = studentForm ?? this.studentFormRef;
+    if (!form) {
+      return;
+    }
+    this.formSubmitted.set(true);
+    if (form.invalid) {
+      return;
+    }
+    this.save();
+  }
+
+  isFieldInvalid(controlName: string, studentForm: NgForm): boolean {
+    if (!this.formSubmitted()) {
+      return false;
+    }
+    const control = studentForm.controls[controlName];
+    return Boolean(control?.invalid);
   }
 
   onAutoTimezoneChange(checked: boolean) {
@@ -226,6 +256,10 @@ export class StudentsComponent implements OnInit {
   }
 
   save() {
+    if (this.savingForm()) {
+      return;
+    }
+
     const target = this.editTarget();
     const billing_type = this.billingType();
     const payload: Partial<Student> = {
@@ -242,17 +276,19 @@ export class StudentsComponent implements OnInit {
         : { credit_limit: this.creditLimit() }),
     };
 
-    if (target) {
-      this.svc.update(target._id, payload).subscribe(() => {
+    this.savingForm.set(true);
+    const req = target ? this.svc.update(target._id, payload) : this.svc.create(payload);
+
+    req.subscribe({
+      next: () => {
+        this.savingForm.set(false);
         this.closeForm();
         this.load();
-      });
-    } else {
-      this.svc.create(payload).subscribe(() => {
-        this.closeForm();
-        this.load();
-      });
-    }
+      },
+      error: () => {
+        this.savingForm.set(false);
+      },
+    });
   }
 
   openQuickActions(student: Student): void {

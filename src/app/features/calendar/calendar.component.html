@@ -581,8 +581,6 @@
         <h2>
           @if (editLessonTarget()) {
             {{ i18n.calendarUi().editLesson }}
-          } @else if (lessonFormStep() === 2) {
-            {{ i18n.calendarUi().notesStep }}
           } @else {
             {{ i18n.calendarUi().newLesson }}
           }
@@ -605,14 +603,19 @@
 
           @if (editLessonTarget()) {
             <div class="cal-form-fields">
-              <app-select
-                name="student_id"
-                [(ngModel)]="form.student_id"
-                [options]="studentSelectOptions()"
-                [placeholder]="i18n.calendarUi().studentPlaceholder"
-                [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
-                menuPlacement="below"
-              />
+              <div
+                class="cal-form-field"
+                [class.cal-form-field--invalid]="lessonFormSubmitted() && !form.student_id.trim()"
+              >
+                <app-select
+                  name="student_id"
+                  [(ngModel)]="form.student_id"
+                  [options]="studentSelectOptions()"
+                  [placeholder]="i18n.calendarUi().studentPlaceholder"
+                  [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
+                  menuPlacement="below"
+                />
+              </div>
 
               @if (editLessonTarget()?.isLastPaid) {
                 <p class="cal-form-last-paid-warning" role="status">
@@ -665,16 +668,15 @@
                 }
               </div>
 
-              <div class="cal-recurrence">
-                <p class="cal-recurrence__label">{{ i18n.calendarUi().recurrenceLabel }}</p>
-                <button
-                  type="button"
-                  class="cal-recurrence-trigger"
-                  (click)="openRecurrenceModal()"
-                >
-                  <span class="cal-recurrence-trigger__text">{{ recurrenceSummary() }}</span>
-                  <span class="cal-recurrence-trigger__chevron" aria-hidden="true">›</span>
-                </button>
+              <div class="field">
+                <label for="lesson-description-edit">{{ i18n.calendarUi().lessonDescriptionLabel }}</label>
+                <textarea
+                  id="lesson-description-edit"
+                  name="notes"
+                  rows="3"
+                  [placeholder]="i18n.calendarUi().notesNewPlaceholder"
+                  [(ngModel)]="form.notes"
+                ></textarea>
               </div>
 
               <app-select
@@ -699,16 +701,13 @@
                 </button>
               }
 
-              <div class="field">
-                <label for="lesson-notes-edit">{{ i18n.calendarUi().notesPlaceholder }}</label>
-                <textarea
-                  id="lesson-notes-edit"
-                  name="notes"
-                  rows="3"
-                  [placeholder]="i18n.calendarUi().notesPlaceholder"
-                  [(ngModel)]="form.notes"
-                ></textarea>
-              </div>
+              <button type="button" class="cal-advanced-settings" (click)="openRecurrenceModal()">
+                <span class="cal-advanced-settings__head">
+                  <span class="cal-advanced-settings__title">{{ i18n.calendarUi().advancedSettingsLabel }}</span>
+                  <span class="cal-advanced-settings__chevron" aria-hidden="true">›</span>
+                </span>
+                <span class="cal-advanced-settings__summary">{{ recurrenceSummary() }}</span>
+              </button>
             </div>
 
             @if (saveLessonError) {
@@ -739,16 +738,21 @@
                 {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}
               </button>
             </div>
-          } @else if (lessonFormStep() === 1) {
+          } @else {
             <div class="cal-form-fields">
-              <app-select
-                name="student_id"
-                [(ngModel)]="form.student_id"
-                [options]="studentSelectOptions()"
-                [placeholder]="i18n.calendarUi().studentPlaceholder"
-                [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
-                menuPlacement="below"
-              />
+              <div
+                class="cal-form-field"
+                [class.cal-form-field--invalid]="lessonFormSubmitted() && !form.student_id.trim()"
+              >
+                <app-select
+                  name="student_id"
+                  [(ngModel)]="form.student_id"
+                  [options]="studentSelectOptions()"
+                  [placeholder]="i18n.calendarUi().studentPlaceholder"
+                  [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
+                  menuPlacement="below"
+                />
+              </div>
 
               @if (selectedStudentForForm(); as picked) {
                 <p class="cal-form-preview cal-form-preview--snapshot">
@@ -791,16 +795,15 @@
                 }
               </div>
 
-              <div class="cal-recurrence">
-                <p class="cal-recurrence__label">{{ i18n.calendarUi().recurrenceLabel }}</p>
-                <button
-                  type="button"
-                  class="cal-recurrence-trigger"
-                  (click)="openRecurrenceModal()"
-                >
-                  <span class="cal-recurrence-trigger__text">{{ recurrenceSummary() }}</span>
-                  <span class="cal-recurrence-trigger__chevron" aria-hidden="true">›</span>
-                </button>
+              <div class="field">
+                <label for="lesson-description-new">{{ i18n.calendarUi().lessonDescriptionLabel }}</label>
+                <textarea
+                  id="lesson-description-new"
+                  name="notesNew"
+                  rows="3"
+                  [placeholder]="i18n.calendarUi().notesNewPlaceholder"
+                  [(ngModel)]="form.notes"
+                ></textarea>
               </div>
 
               <app-select
@@ -810,6 +813,14 @@
                 menuPlacement="below"
                 mobileBackdropSheet
               />
+
+              <button type="button" class="cal-advanced-settings" (click)="openRecurrenceModal()">
+                <span class="cal-advanced-settings__head">
+                  <span class="cal-advanced-settings__title">{{ i18n.calendarUi().advancedSettingsLabel }}</span>
+                  <span class="cal-advanced-settings__chevron" aria-hidden="true">›</span>
+                </span>
+                <span class="cal-advanced-settings__summary">{{ recurrenceSummary() }}</span>
+              </button>
             </div>
 
             @if (saveLessonError) {
@@ -817,46 +828,8 @@
             }
 
             <div class="cal-form-actions cal-form-actions--wrap">
-              <button type="button" class="btn-link secondary" (click)="goToNotesStep()">
-                {{ i18n.calendarUi().goToNotes }}
-              </button>
-
-              <div
-                class="cal-form-actions__right"
-                style="display: flex; gap: 0.5rem; align-items: center"
-              >
-                <button type="button" class="btn-link cancel" (click)="closeLessonForm()">
-                  {{ i18n.studentsUi().cancel }}
-                </button>
-                <button
-                  type="button"
-                  class="btn-primary"
-                  [disabled]="savingLesson()"
-                  (click)="saveLesson()"
-                >
-                  {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}
-                </button>
-              </div>
-            </div>
-          } @else {
-            <div class="field">
-              <label for="lesson-notes-new">{{ i18n.calendarUi().notesNewPlaceholder }}</label>
-              <textarea
-                id="lesson-notes-new"
-                name="notesNew"
-                rows="4"
-                [placeholder]="i18n.calendarUi().notesNewPlaceholder"
-                [(ngModel)]="form.notes"
-              ></textarea>
-            </div>
-
-            @if (saveLessonError) {
-              <p class="cal-form-error">{{ saveLessonError }}</p>
-            }
-
-            <div class="cal-form-actions">
-              <button type="button" class="btn-link cancel" (click)="backToMainStep()">
-                {{ i18n.calendarUi().back }}
+              <button type="button" class="btn-link cancel" (click)="closeLessonForm()">
+                {{ i18n.studentsUi().cancel }}
               </button>
               <button type="submit" class="btn-primary" [disabled]="savingLesson()">
                 {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}

@@ -15,6 +15,7 @@ export interface FinancePeriodQuery {
 export interface ExpensePayload {
   title: string;
   amount: number;
+  currency?: string;
   expense_date?: string;
   category?: string;
 }
