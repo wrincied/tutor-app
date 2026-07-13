@@ -41,14 +41,13 @@
           <th scope="col">{{ t().tableCountry }}</th>
           <th scope="col">{{ t().tableRegistered }}</th>
           <th scope="col">{{ t().tableLastVisit }}</th>
-          <th scope="col">{{ t().tableLastChange }}</th>
           <th scope="col">{{ t().tableActions }}</th>
         </tr>
       </thead>
       <tbody>
         @if (filteredUsers().length === 0) {
           <tr>
-            <td colspan="7" class="admin-table__empty">
+            <td colspan="6" class="admin-table__empty">
               {{ users().length === 0 ? t().noUsers : t().searchUsers }}
             </td>
           </tr>
@@ -85,15 +84,6 @@
                 @if (user.last_login_at) {
                   <span [title]="user.last_login_at | date: 'dd.MM.yyyy HH:mm'">
                     {{ user.last_login_at | relativeTime }}
-                  </span>
-                } @else {
-                  {{ t().never }}
-                }
-              </td>
-              <td [attr.data-label]="t().tableLastChange">
-                @if (user.last_activity_at) {
-                  <span [title]="user.last_activity_at | date: 'dd.MM.yyyy HH:mm'">
-                    {{ user.last_activity_at | relativeTime }}
                   </span>
                 } @else {
                   {{ t().never }}

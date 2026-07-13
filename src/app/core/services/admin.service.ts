@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import type {
   AdminDashboardPayload,
   AdminPreferences,
-  AdminRecentActivityItem,
   AdminStats,
   AdminUserRow,
   AdminUserSummary,
@@ -55,12 +54,6 @@ export class AdminService {
 
   getUsers(): Observable<AdminUserRow[]> {
     return this.http.get<AdminUserRow[]>(`${API}/users`);
-  }
-
-  getRecentActivity(limit = 50): Observable<AdminRecentActivityItem[]> {
-    return this.http.get<AdminRecentActivityItem[]>(`${API}/recent-activity`, {
-      params: { limit: String(limit) },
-    });
   }
 
   updateSubscription(
