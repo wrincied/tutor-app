@@ -183,7 +183,6 @@ export type AdminDashboardWidgetId =
   | 'activation-funnel'
   | 'alerts'
   | 'last-visits'
-  | 'recent-activity'
   | 'geography'
   | 'product-usage';
 
@@ -261,17 +260,6 @@ export interface AdminUserRow {
   role?: UserRole | string;
 }
 
-export interface AdminRecentActivityItem {
-  _id: string;
-  tutor_id: string;
-  user_email: string;
-  category: 'finance' | 'students';
-  action: string;
-  summary?: string;
-  student_name?: string | null;
-  createdAt: string | null;
-}
-
 export interface AdminStrings {
   title: string;
   navLink: string;
@@ -301,7 +289,6 @@ export interface AdminStrings {
   widgetActivationFunnel: string;
   widgetAlerts: string;
   widgetLastVisits: string;
-  widgetRecentActivity: string;
   widgetGeography: string;
   widgetProductUsage: string;
   metricTotalUsers: string;
@@ -338,18 +325,14 @@ export interface AdminStrings {
   productFinanceUsers: string;
   lastVisitsTitle: string;
   lastVisitsHint: string;
-  recentChangesTitle: string;
-  recentChangesHint: string;
   tableEmail: string;
   tableStatus: string;
   tableRegistered: string;
   tableLastVisit: string;
-  tableLastChange: string;
   tableWhen: string;
   tableAction: string;
   tableActions: string;
   tableCountry: string;
-  noActivity: string;
   noVisits: string;
   noAlerts: string;
   never: string;

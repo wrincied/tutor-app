@@ -122,7 +122,6 @@ export class AdminUsersComponent implements OnInit {
       'country',
       'registered',
       'last_visit',
-      'last_change',
     ];
     const lines = rows.map((user) =>
       [
@@ -131,7 +130,6 @@ export class AdminUsersComponent implements OnInit {
         user.country_settings ?? '',
         user.createdAt ?? '',
         user.last_login_at ?? '',
-        user.last_activity_at ?? '',
       ]
         .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
         .join(','),

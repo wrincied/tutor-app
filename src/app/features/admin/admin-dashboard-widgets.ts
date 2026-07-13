@@ -18,7 +18,6 @@ export const ADMIN_DASHBOARD_WIDGETS: AdminDashboardWidgetDef[] = [
   { id: 'geography', labelKey: 'widgetGeography', group: 'analytics' },
   { id: 'product-usage', labelKey: 'widgetProductUsage', group: 'analytics' },
   { id: 'last-visits', labelKey: 'widgetLastVisits', group: 'tables' },
-  { id: 'recent-activity', labelKey: 'widgetRecentActivity', group: 'tables' },
 ];
 
 export const DEFAULT_ADMIN_DASHBOARD_WIDGETS: AdminDashboardWidgetId[] =
