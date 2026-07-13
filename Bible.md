@@ -51,6 +51,27 @@ flowchart LR
 
 - https://wrincied.github.io/tutor-app/dev
 
+### Структура GitHub Pages (простыми словами)
+
+GitHub Pages — это **хостинг готового сайта** (HTML/JS), не сервер с API.
+
+```
+wrincied.github.io/tutor-app/          ← корень: редирект на /dev
+wrincied.github.io/tutor-app/dev/      ← актуальная сборка (открывать это!)
+wrincied.github.io/tutor-app/dev/#/login   ← вход
+```
+
+| Что | Где живёт |
+|-----|-----------|
+| Фронтенд (браузер) | `gh-pages` ветка → GitHub Pages |
+| Исходный код | ветка `dev` в tutor-app |
+| API, база, Stripe | `tutor-app-backend--tutorassis.europe-west4.hosted.app` |
+| Production для пользователей | `simple4u-64822.web.app` |
+
+**Цепочка:** PR → `dev` → CI собирает Angular → кладёт в `gh-pages/dev/` → сайт обновляется.
+
+**Auth на gh-pages:** Firebase Authorized domain `wrincied.github.io` + OAuth Client JavaScript origin `https://wrincied.github.io`. Подробнее: [Linear doc](https://linear.app/simple4u/document/github-pages-struktura-i-avtorizaciya-wrinciedgithubio-f48efeed151c).
+
 ### Обязательные настройки в GitHub
 
 **Settings → Branches → Branch protection rules**
