@@ -32,13 +32,14 @@
 @if (loading()) {
   <p class="hint">{{ t().loading }}</p>
 } @else {
-  <section class="admin-data-grid admin-data-grid--cols-6" aria-label="Users">
+  <section class="admin-data-grid admin-data-grid--cols-7" aria-label="Users">
     <div class="admin-data-grid__head">
       <span>{{ t().tableEmail }}</span>
       <span>{{ t().tableStatus }}</span>
       <span>{{ t().tableCountry }}</span>
       <span>{{ t().tableRegistered }}</span>
       <span>{{ t().tableLastVisit }}</span>
+      <span class="admin-data-grid__head--end">{{ t().tableStudents }}</span>
       <span>{{ t().tableActions }}</span>
     </div>
     <div class="admin-data-grid__body" role="list">
@@ -48,7 +49,7 @@
         </p>
       } @else {
         @for (user of filteredUsers(); track user._id) {
-          <article class="admin-data-grid__row" role="listitem">
+          <article class="admin-data-grid__row admin-users-row" role="listitem">
             <div class="admin-data-grid__cell">
               <span class="admin-data-grid__cell-label">{{ t().tableEmail }}</span>
               {{ user.email }}
@@ -91,6 +92,16 @@
                 {{ t().never }}
               }
             </div>
+            <div class="admin-data-grid__cell admin-users-row__students admin-users-row__students--desktop">
+              <span class="admin-data-grid__cell-label">{{ t().tableStudents }}</span>
+              <button
+                type="button"
+                class="btn-secondary admin-users-row__students-btn"
+                (click)="openUserDetail(user)"
+              >
+                {{ studentsButtonLabel(user.studentsCount) }}
+              </button>
+            </div>
             <div class="admin-data-grid__cell">
               <span class="admin-data-grid__cell-label">{{ t().tableActions }}</span>
               <div class="admin-table__actions">
@@ -106,6 +117,15 @@
                   {{ giftingUserId() === user._id ? t().giftingTrial : t().giftTrial }}
                 </button>
               </div>
+            </div>
+            <div class="admin-users-row__students admin-users-row__students--mobile">
+              <button
+                type="button"
+                class="btn-secondary admin-users-row__students-btn"
+                (click)="openUserDetail(user)"
+              >
+                {{ studentsButtonLabel(user.studentsCount) }}
+              </button>
             </div>
           </article>
         }
@@ -145,6 +165,30 @@
           (ngModelChange)="editTrialEnds.set($event)"
         />
       }
+    </div>
+  }
+</app-dialog>
+
+<app-dialog
+  [open]="detailOpen()"
+  [title]="t().userDetailTitle"
+  [dismissLabel]="t().cancelEdit"
+  (cancel)="closeUserDetail()"
+>
+  @if (detailLoading()) {
+    <p class="hint">{{ t().userDetailLoading }}</p>
+  } @else if (detailError()) {
+    <p class="admin-page__error" role="alert">{{ detailError() }}</p>
+  } @else if (detail(); as s) {
+    <div class="admin-user-detail">
+      <p class="admin-user-detail__email">{{ s.user.email }}</p>
+      <p><span [class]="statusClass(s.user.subscription_status)">{{ statusLabel(s.user.subscription_status) }}</span></p>
+      <dl class="admin-user-detail__stats">
+        <div><dt>{{ t().userDetailStudents }}</dt><dd>{{ s.studentsCount }}</dd></div>
+        <div><dt>{{ t().userDetailLessons }}</dt><dd>{{ s.lessonsCount }}</dd></div>
+        <div><dt>{{ t().tableCountry }}</dt><dd>{{ s.user.country_settings || '—' }}</dd></div>
+        <div><dt>{{ t().tableLastVisit }}</dt><dd>{{ s.user.last_login_at ? (s.user.last_login_at | relativeTime) : t().never }}</dd></div>
+      </dl>
     </div>
   }
 </app-dialog>

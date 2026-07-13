@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
   background-color: var(--page-bg);
@@ -156,7 +156,10 @@ app-navbar {
   @include route-view-enter-fade;
 }
 
-app-root > router-outlet > * > :where(.auth-page:not(.auth-page--onboarding), .landing, .legal-page) {
+app-root
+  > router-outlet
+  > *
+  > :where(.auth-page:not(.auth-page--onboarding), .landing, .legal-page) {
   @include route-view-enter;
 }
 
@@ -164,7 +167,8 @@ app-root > router-outlet > * > .onboarding-shell {
   @include route-view-enter-fade;
 }
 
-.app-page-host > :where(
+.app-page-host
+  > :where(
     app-home,
     app-students,
     app-finance,
@@ -213,7 +217,10 @@ html.app-select-dropdown-open {
 @media (prefers-reduced-motion: reduce) {
   .app-page-host > router-outlet > * > :where(.page, .cal-page),
   .account-page__content > :where(app-account-customization, app-account-profile),
-  app-root > router-outlet > * > :where(.auth-page:not(.auth-page--onboarding), .landing, .legal-page),
+  app-root
+    > router-outlet
+    > *
+    > :where(.auth-page:not(.auth-page--onboarding), .landing, .legal-page),
   app-root > router-outlet > * > .onboarding-shell {
     transition: none !important;
   }

@@ -1647,6 +1647,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     deleteExpense: 'Удалить',
     expenseTitle: 'Название',
     expenseAmount: 'Сумма',
+    expenseCurrency: 'Валюта',
     expenseDate: 'Дата',
     expenseCategory: 'Категория (необязательно)',
     emptyExpenses: 'Нет расходов за выбранный период.',
@@ -1665,6 +1666,42 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     ratesDebug: 'Курсы для сверки (за 1 EUR)',
     activityLogSection: 'История операций',
     activityLogEmpty: 'Пока нет записей о расходах и деньгах.',
+    kpiDetailsClose: 'Понятно',
+    incomeBreakdownTitle: 'Как считается доход',
+    incomeBreakdownIntro:
+      'Суммируем ставку ученика × длительность урока. Проведённые уроки — фактический доход, запланированные — ожидаемый. Валюты пересчитываются в выбранную по курсу ЦБ на дату отчёта.',
+    expensesBreakdownTitle: 'Как считаются расходы',
+    expensesBreakdownIntro:
+      'Складываем все ваши записи расходов за период. Каждая сумма хранится в выбранной при вводе валюте и пересчитывается в валюту отчёта по курсу ЦБ.',
+    grossProfitBreakdownTitle: 'Прибыль до налогов',
+    grossProfitBreakdownIntro:
+      'Доход только по проведённым урокам минус расходы за период. Запланированные уроки сюда не входят — это ориентир «на руках» до налогов.',
+    netProfitBreakdownTitle: 'Чистая прибыль (оценка)',
+    netProfitBreakdownIntro:
+      'От прибыли до налогов вычитаем ориентировочные соц. взносы (~18%) и подоходный налог по австрийским ставкам. Это приблизительная оценка, не налоговая декларация.',
+    breakdownLessonsList: 'Уроки в расчёте',
+    breakdownExpensesList: 'Расходы в расчёте',
+    breakdownLessonDate: 'Дата',
+    breakdownLessonStudent: 'Ученик',
+    breakdownLessonStatus: 'Статус',
+    breakdownLessonDuration: 'Длительность',
+    breakdownLessonAmount: 'Сумма',
+    breakdownRecurringNote: 'Повторяющийся урок — в календаре показаны отдельные даты',
+    breakdownHiddenInCalendar:
+      'Не виден в календаре — нет даты в расписании. Задайте время в календаре.',
+    breakdownOpenCalendar: 'Открыть календарь',
+    breakdownOpenCalendarDate: 'Показать в календаре',
+    breakdownMinutes: 'мин',
+    breakdownEmptyLessons: 'Нет уроков за выбранный период',
+    breakdownEmptyExpenses: 'Нет расходов за выбранный период',
+    breakdownTapHint: 'Нажмите на показатель — откроется страница с расчётом и списком',
+    breakdownBack: 'К финансам',
+    breakdownHiddenNoSchedule:
+      'Урок без даты в расписании — не виден в календаре и не учитывается в суммах.',
+    breakdownHiddenBrokenRecurrence:
+      'Повторяющийся урок с ошибкой в правиле — не отображается в календаре.',
+    breakdownScheduleDerived:
+      'Точное время не было сохранено — показана дата создания. Откройте урок в календаре и задайте время.',
   },
   en: {
     loading: 'Loading…',
@@ -1702,6 +1739,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     deleteExpense: 'Delete',
     expenseTitle: 'Title',
     expenseAmount: 'Amount',
+    expenseCurrency: 'Currency',
     expenseDate: 'Date',
     expenseCategory: 'Category (optional)',
     emptyExpenses: 'No expenses for this period.',
@@ -1720,6 +1758,42 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     ratesDebug: 'Rates for verification (per 1 EUR)',
     activityLogSection: 'Activity log',
     activityLogEmpty: 'No money-related changes yet.',
+    kpiDetailsClose: 'Got it',
+    incomeBreakdownTitle: 'How income is calculated',
+    incomeBreakdownIntro:
+      'We multiply the student rate by lesson duration. Completed lessons count as earned income, scheduled ones as expected. Currencies are converted to your report currency using central bank rates.',
+    expensesBreakdownTitle: 'How expenses are calculated',
+    expensesBreakdownIntro:
+      'We sum all expense entries in the selected period. Each amount is stored in the currency you chose when entering it, then converted to the report currency.',
+    grossProfitBreakdownTitle: 'Gross profit',
+    grossProfitBreakdownIntro:
+      'Income from completed lessons only, minus expenses for the period. Planned lessons are not included — this is cash-like profit before tax.',
+    netProfitBreakdownTitle: 'Net profit (estimate)',
+    netProfitBreakdownIntro:
+      'From gross profit we subtract estimated social insurance (~18%) and income tax using Austrian brackets. This is an approximation, not a tax return.',
+    breakdownLessonsList: 'Lessons in this calculation',
+    breakdownExpensesList: 'Expenses in this calculation',
+    breakdownLessonDate: 'Date',
+    breakdownLessonStudent: 'Student',
+    breakdownLessonStatus: 'Status',
+    breakdownLessonDuration: 'Duration',
+    breakdownLessonAmount: 'Amount',
+    breakdownRecurringNote: 'Recurring lesson — calendar shows individual dates',
+    breakdownHiddenInCalendar:
+      'Not visible in calendar — no scheduled time. Set a time in the calendar.',
+    breakdownOpenCalendar: 'Open calendar',
+    breakdownOpenCalendarDate: 'Show in calendar',
+    breakdownMinutes: 'min',
+    breakdownEmptyLessons: 'No lessons in this period',
+    breakdownEmptyExpenses: 'No expenses in this period',
+    breakdownTapHint: 'Tap a metric to open the calculation and full list',
+    breakdownBack: 'Back to finance',
+    breakdownHiddenNoSchedule:
+      'Lesson has no scheduled time — hidden from calendar and not counted in totals.',
+    breakdownHiddenBrokenRecurrence:
+      'Recurring lesson has an invalid rule — not shown in calendar.',
+    breakdownScheduleDerived:
+      'Exact time was not saved — showing creation date. Open the lesson in calendar and set the time.',
   },
   de: {
     loading: 'Laden…',
@@ -1757,6 +1831,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     deleteExpense: 'Löschen',
     expenseTitle: 'Bezeichnung',
     expenseAmount: 'Betrag',
+    expenseCurrency: 'Währung',
     expenseDate: 'Datum',
     expenseCategory: 'Kategorie (optional)',
     emptyExpenses: 'Keine Ausgaben im Zeitraum.',
@@ -1775,6 +1850,41 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     ratesDebug: 'Kurse zur Kontrolle (pro 1 EUR)',
     activityLogSection: 'Aktivitätsprotokoll',
     activityLogEmpty: 'Noch keine geldbezogenen Änderungen.',
+    kpiDetailsClose: 'Verstanden',
+    incomeBreakdownTitle: 'So wird das Einkommen berechnet',
+    incomeBreakdownIntro:
+      'Stundensatz × Dauer. Durchgeführte Stunden = erzieltes Einkommen, geplante = erwartetes. Währungen werden mit Zentralbankkursen umgerechnet.',
+    expensesBreakdownTitle: 'So werden Ausgaben berechnet',
+    expensesBreakdownIntro:
+      'Summe aller Ausgabeneinträge im Zeitraum, umgerechnet in die Berichtswährung.',
+    grossProfitBreakdownTitle: 'Bruttogewinn',
+    grossProfitBreakdownIntro:
+      'Nur Einkommen aus durchgeführten Stunden minus Ausgaben. Geplante Stunden zählen nicht.',
+    netProfitBreakdownTitle: 'Nettogewinn (Schätzung)',
+    netProfitBreakdownIntro:
+      'Bruttogewinn minus geschätzte SV (~18 %) und Einkommensteuer (AT). Keine Steuererklärung.',
+    breakdownLessonsList: 'Stunden in der Berechnung',
+    breakdownExpensesList: 'Ausgaben in der Berechnung',
+    breakdownLessonDate: 'Datum',
+    breakdownLessonStudent: 'Schüler',
+    breakdownLessonStatus: 'Status',
+    breakdownLessonDuration: 'Dauer',
+    breakdownLessonAmount: 'Betrag',
+    breakdownRecurringNote: 'Serientermin — im Kalender einzelne Daten',
+    breakdownHiddenInCalendar: 'Nicht im Kalender — keine Uhrzeit gesetzt.',
+    breakdownOpenCalendar: 'Kalender öffnen',
+    breakdownOpenCalendarDate: 'Im Kalender anzeigen',
+    breakdownMinutes: 'Min',
+    breakdownEmptyLessons: 'Keine Stunden im Zeitraum',
+    breakdownEmptyExpenses: 'Keine Ausgaben im Zeitraum',
+    breakdownTapHint: 'Tippen Sie auf eine Kennzahl für Details und Liste',
+    breakdownBack: 'Zurück zu Finanzen',
+    breakdownHiddenNoSchedule:
+      'Stunde ohne Terminzeit — nicht im Kalender und nicht in den Summen.',
+    breakdownHiddenBrokenRecurrence:
+      'Serientermin mit ungültiger Regel — nicht im Kalender sichtbar.',
+    breakdownScheduleDerived:
+      'Keine genaue Uhrzeit gespeichert — Erstellungsdatum wird angezeigt. Bitte im Kalender die Zeit setzen.',
   },
   kz: {
     loading: 'Жүктелуде…',
@@ -1812,6 +1922,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     deleteExpense: 'Жою',
     expenseTitle: 'Атауы',
     expenseAmount: 'Сома',
+    expenseCurrency: 'Валюта',
     expenseDate: 'Күні',
     expenseCategory: 'Санат (міндетті емес)',
     emptyExpenses: 'Таңдалған кезеңде шығын жоқ.',
@@ -1830,6 +1941,40 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     ratesDebug: 'Сверка курстары (1 EUR үшін)',
     activityLogSection: 'Операциялар журналы',
     activityLogEmpty: 'Ақшаға қатысты өзгерістер әлі жоқ.',
+    kpiDetailsClose: 'Түсінікті',
+    incomeBreakdownTitle: 'Кіріс қалай есептеледі',
+    incomeBreakdownIntro:
+      'Оқушы ставкасы × сабақ ұзақтығы. Өткізілген — нақты кіріс, жоспарланған — күтілетін. Валюталар Орталық банк курсымен айырбасталады.',
+    expensesBreakdownTitle: 'Шығын қалай есептеледі',
+    expensesBreakdownIntro: 'Кезеңдегі барлық шығын жазбалары қосылады және есеп валютасына айырбасталады.',
+    grossProfitBreakdownTitle: 'Салыққа дейінгі пайда',
+    grossProfitBreakdownIntro:
+      'Тек өткізілген сабақтар кірісі минус шығын. Жоспарланған сабақтар кірмейді.',
+    netProfitBreakdownTitle: 'Таза пайда (бағалау)',
+    netProfitBreakdownIntro:
+      'Салыққа дейінгі пайданан шамамен әлеуметтік сақтандыру (~18%) және кіріс салығы шегеріледі. Бұл жуық баға.',
+    breakdownLessonsList: 'Есептегі сабақтар',
+    breakdownExpensesList: 'Есептегі шығындар',
+    breakdownLessonDate: 'Күні',
+    breakdownLessonStudent: 'Оқушы',
+    breakdownLessonStatus: 'Күйі',
+    breakdownLessonDuration: 'Ұзақтығы',
+    breakdownLessonAmount: 'Сома',
+    breakdownRecurringNote: 'Қайталанатын сабақ — кестеде жеке күндер',
+    breakdownHiddenInCalendar: 'Кестеде көрінбейді — уақыт белгіленбеген.',
+    breakdownOpenCalendar: 'Кестені ашу',
+    breakdownOpenCalendarDate: 'Кестеде көрсету',
+    breakdownMinutes: 'мин',
+    breakdownEmptyLessons: 'Кезеңде сабақ жоқ',
+    breakdownEmptyExpenses: 'Кезеңде шығын жоқ',
+    breakdownTapHint: 'Есеп пен тізім үшін көрсеткішті басыңыз',
+    breakdownBack: 'Қаржыға оралу',
+    breakdownHiddenNoSchedule:
+      'Кестеде уақыты жоқ сабақ — кестеде көрінбейді және сомаларға кірмейді.',
+    breakdownHiddenBrokenRecurrence:
+      'Қайталанатын сабақта ереже қатесі — кестеде көрінбейді.',
+    breakdownScheduleDerived:
+      'Нақты уақыт сақталмаған — жасалған күні көрсетіледі. Кестеде уақытты орнатыңыз.',
   },
   uk: FINANCE_UK,
   by: FINANCE_BY,

@@ -255,6 +255,7 @@ export interface AdminUserRow {
   onboarding_completed?: boolean;
   country_settings?: string;
   role?: UserRole | string;
+  studentsCount?: number;
 }
 
 export interface AdminStrings {
@@ -330,6 +331,7 @@ export interface AdminStrings {
   tableAction: string;
   tableActions: string;
   tableCountry: string;
+  tableStudents: string;
   noVisits: string;
   noAlerts: string;
   never: string;
@@ -748,6 +750,7 @@ export interface FinanceStrings {
   deleteExpense: string;
   expenseTitle: string;
   expenseAmount: string;
+  expenseCurrency: string;
   expenseDate: string;
   expenseCategory: string;
   emptyExpenses: string;
@@ -765,6 +768,63 @@ export interface FinanceStrings {
   ratesDebug: string;
   activityLogSection: string;
   activityLogEmpty: string;
+  kpiDetailsClose: string;
+  incomeBreakdownTitle: string;
+  incomeBreakdownIntro: string;
+  expensesBreakdownTitle: string;
+  expensesBreakdownIntro: string;
+  grossProfitBreakdownTitle: string;
+  grossProfitBreakdownIntro: string;
+  netProfitBreakdownTitle: string;
+  netProfitBreakdownIntro: string;
+  breakdownLessonsList: string;
+  breakdownExpensesList: string;
+  breakdownLessonDate: string;
+  breakdownLessonStudent: string;
+  breakdownLessonStatus: string;
+  breakdownLessonDuration: string;
+  breakdownLessonAmount: string;
+  breakdownRecurringNote: string;
+  breakdownHiddenInCalendar: string;
+  breakdownOpenCalendar: string;
+  breakdownOpenCalendarDate: string;
+  breakdownMinutes: string;
+  breakdownEmptyLessons: string;
+  breakdownEmptyExpenses: string;
+  breakdownTapHint: string;
+  breakdownBack: string;
+  breakdownHiddenNoSchedule: string;
+  breakdownHiddenBrokenRecurrence: string;
+  breakdownScheduleDerived: string;
+}
+
+export interface FinanceLessonBreakdown {
+  id: string;
+  lessonId?: string;
+  studentId: string | null;
+  studentName: string | null;
+  scheduledAt: string | null;
+  occurrenceDate?: string | null;
+  status: string;
+  durationMinutes: number;
+  amountReport: number;
+  amountOriginal: number;
+  currency: string;
+  visibleInCalendar: boolean;
+  isRecurring: boolean;
+  incomeType: 'completed' | 'scheduled' | 'none';
+  hiddenReason?: 'no_schedule' | 'broken_recurrence' | null;
+  scheduleDerived?: boolean;
+}
+
+export interface FinanceExpenseBreakdown {
+  id: string;
+  title: string;
+  amount: number;
+  currency: string;
+  amountReport: number;
+  expense_date: string;
+  category: string;
 }
 
 export interface FinanceExchangeRates {
@@ -783,6 +843,8 @@ export interface Expense {
   _id: string;
   title: string;
   amount: number;
+  /** Валюта суммы при вводе; у старых записей может отсутствовать — тогда валюта страны аккаунта. */
+  currency?: string;
   expense_date: string;
   category?: string;
   createdAt?: string;
@@ -824,6 +886,8 @@ export interface FinanceSummary {
     incomeTax: number;
     netProfit: number;
   } | null;
+  lessonsBreakdown?: FinanceLessonBreakdown[];
+  expensesBreakdown?: FinanceExpenseBreakdown[];
 }
 
 export interface StudentStrings {

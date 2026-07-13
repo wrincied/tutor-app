@@ -220,6 +220,28 @@
   border: 1px solid var(--nav-border);
   border-radius: 0.75rem;
   background: var(--nav-bg);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+
+  &--clickable {
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: var(--nav-accent);
+      background: var(--nav-hover);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--nav-accent);
+      outline-offset: 2px;
+    }
+  }
 
   &--income {
     border-color: rgb(14 165 233 / 0.35);
@@ -303,6 +325,26 @@
   border: 1px solid var(--nav-border);
   border-radius: 0.5rem;
   background: var(--nav-bg);
+}
+
+.finance-stats--clickable {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--nav-accent);
+    background: var(--nav-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--nav-accent);
+    outline-offset: 2px;
+  }
 }
 
 .finance-currency-list--planned li {
@@ -422,6 +464,149 @@
   }
 }
 
+.finance-expense-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+
+.finance-expense-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--nav-border);
+  border-radius: 0.75rem;
+  background: var(--nav-bg);
+}
+
+.finance-expense-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.finance-expense-card__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.finance-expense-card__amount {
+  flex-shrink: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.finance-expense-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.finance-expense-card__category {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--nav-hover);
+  font-size: 0.75rem;
+}
+
+.finance-expense-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.125rem;
+}
+
+.finance-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.finance-detail__intro {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.finance-detail__subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.finance-detail__tax {
+  margin-top: 0.25rem;
+}
+
+.finance-breakdown-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.finance-breakdown-list__item {
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--nav-border);
+  border-radius: 0.625rem;
+  background: var(--nav-bg);
+
+  &--warn {
+    border-color: rgb(234 179 8 / 0.5);
+    background: rgb(254 252 232 / 0.5);
+  }
+}
+
+.finance-breakdown-list__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.finance-breakdown-list__date {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.finance-breakdown-list__amount {
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.finance-breakdown-list__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.finance-breakdown-list__note {
+  margin: 0.375rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+
+  &--warn {
+    color: rgb(120 53 15);
+  }
+}
+
 .finance-expenses-grid {
   display: flex;
   flex-direction: column;
@@ -537,6 +722,46 @@
   flex-direction: column;
   gap: 0.75rem;
   text-align: left;
+}
+
+.finance-expense-form__amount-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+
+  @media (min-width: 400px) {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+}
+
+.finance-expense-form__amount {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.finance-expense-form__currency {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  flex: 0 0 auto;
+  min-width: 6.5rem;
+}
+
+.finance-expense-form__currency-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.finance-expense-card__amount-original {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 640px) {

@@ -414,6 +414,7 @@ export const FINANCE_BY: FinanceStrings = {
   deleteExpense: 'Выдаліць',
   expenseTitle: 'Назва',
   expenseAmount: 'Сума',
+  expenseCurrency: 'Валюта',
   expenseDate: 'Дата',
   expenseCategory: 'Катэгорыя (неабавязкова)',
   emptyExpenses: 'Няма выдаткаў за абраны перыяд.',
@@ -432,6 +433,40 @@ export const FINANCE_BY: FinanceStrings = {
   ratesDebug: 'Курсы для праверкі (за 1 EUR)',
   activityLogSection: 'Гісторыя аперацый',
   activityLogEmpty: 'Пакуль няма запісаў пра выдаткі і грошы.',
+  kpiDetailsClose: 'Зразумела',
+  incomeBreakdownTitle: 'Як лічыцца даход',
+  incomeBreakdownIntro:
+    'Стаўка вучня × працягласць урока. Праведзеныя — фактычны даход, запланаваныя — чаканы. Валюты пералічваюцца па курсе ЦБ.',
+  expensesBreakdownTitle: 'Як лічацца выдаткі',
+  expensesBreakdownIntro: 'Складаем усе запісы выдаткаў за перыяд у валюце справаздачы.',
+  grossProfitBreakdownTitle: 'Прыбытак да падаткаў',
+  grossProfitBreakdownIntro:
+    'Даход толькі з праведзеных урокаў мінус выдаткі. Запланаваныя ўрокі не ўваходзяць.',
+  netProfitBreakdownTitle: 'Чысты прыбытак (ацэнка)',
+  netProfitBreakdownIntro:
+    'Ад прыбытку да падаткаў аднімаем арыентаваныя сац. уносы (~18%) і падатак на даходы (Аўстрыя).',
+  breakdownLessonsList: 'Урокі ў разліку',
+  breakdownExpensesList: 'Выдаткі ў разліку',
+  breakdownLessonDate: 'Дата',
+  breakdownLessonStudent: 'Вучань',
+  breakdownLessonStatus: 'Статус',
+  breakdownLessonDuration: 'Працягласць',
+  breakdownLessonAmount: 'Сума',
+  breakdownRecurringNote: 'Паўтаральны ўрок — у календары асобныя даты',
+  breakdownHiddenInCalendar: 'Не бачны ў календары — няма даты ў раскладзе.',
+  breakdownOpenCalendar: 'Адкрыць каляндар',
+  breakdownOpenCalendarDate: 'Паказаць у календары',
+  breakdownMinutes: 'хв',
+  breakdownEmptyLessons: 'Няма урокаў за абраны перыяд',
+  breakdownEmptyExpenses: 'Няма выдаткаў за абраны перыяд',
+  breakdownTapHint: 'Націсніце на паказнік, каб адкрыць разлік і спіс',
+  breakdownBack: 'Да фінансаў',
+  breakdownHiddenNoSchedule:
+    'Урок без даты ў раскладзе — не бачны ў календары і не ўлічваецца ў сумах.',
+  breakdownHiddenBrokenRecurrence:
+    'Паўтаральны ўрок з памылкай у правіле — не адлюстроўваецца ў календары.',
+  breakdownScheduleDerived:
+    'Дакладны час не захаваны — паказана дата стварэння. Адкрыйце ўрок у календары і задайце час.',
 };
 
 export const STUDENTS_BY: StudentStrings = {

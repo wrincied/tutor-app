@@ -426,7 +426,7 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   .modal-overlay-leave,
   .modal-sheet-leave,
   .modal-dialog-leave {
-    animation: none !important;
+    animation-duration: 0.01s !important;
     transition: none !important;
   }
 }

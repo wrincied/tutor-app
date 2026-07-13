@@ -108,6 +108,12 @@
   }
 }
 
+.admin-data-grid__head--end {
+  @media (min-width: 1100px) {
+    text-align: right;
+  }
+}
+
 .admin-data-grid__body {
   display: flex;
   flex-direction: column;
@@ -146,6 +152,14 @@
 
   @media (min-width: 900px) {
     display: none;
+  }
+}
+
+.admin-data-grid__cell--numeric {
+  font-variant-numeric: tabular-nums;
+
+  @media (min-width: 1100px) {
+    text-align: center;
   }
 }
 

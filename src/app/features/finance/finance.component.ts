@@ -1,12 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import {
-  FINANCE_REPORT_CURRENCIES,
-  type Expense,
-  type FinanceSummary,
-} from '@interfaces';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FINANCE_REPORT_CURRENCIES, type Expense, type FinanceSummary } from '@interfaces';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import {
@@ -18,12 +14,16 @@ import {
   expenseAmountInReportCurrency,
   remapFinanceSummary,
 } from '../../core/utils/finance-summary-currency';
+import {
+  FINANCE_CURRENCY_STORAGE_KEY,
+  financeRouteQueryParams,
+  isFinancePeriodPreset,
+  type FinanceBreakdownPanel,
+} from '../../core/utils/finance-route';
 import { getExchangeRateSourceLink } from '../../core/constants/exchange-rate-sources';
 import { formatMoneyWithCode } from '../../core/utils/format-currency';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
-
-const FINANCE_CURRENCY_STORAGE_KEY = 'finance_report_currency';
 
 @Component({
   selector: 'app-finance',
@@ -34,6 +34,8 @@ const FINANCE_CURRENCY_STORAGE_KEY = 'finance_report_currency';
 })
 export class FinanceComponent implements OnInit {
   private readonly financeSvc = inject(FinanceService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly i18n = inject(I18nService);
 
   loading = signal(true);
@@ -55,6 +57,7 @@ export class FinanceComponent implements OnInit {
   expenseForm = {
     title: '',
     amount: 0,
+    currency: 'EUR',
     expense_date: new Date().toISOString().slice(0, 10),
     category: '',
   };
@@ -81,6 +84,14 @@ export class FinanceComponent implements OnInit {
   });
 
   hasLessonsInPeriod = computed(() => (this.summary()?.totals.lessonCount ?? 0) > 0);
+
+  hiddenCalendarLessons = computed(() =>
+    (this.summary()?.lessonsBreakdown ?? []).filter(
+      (lesson) =>
+        Boolean(lesson.hiddenReason) ||
+        (!lesson.visibleInCalendar && !lesson.scheduleDerived),
+    ),
+  );
 
   periodPresetLabel = computed(() => {
     const preset = this.periodPreset();
@@ -140,6 +151,15 @@ export class FinanceComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    const periodParam = this.route.snapshot.queryParamMap.get('period');
+    if (isFinancePeriodPreset(periodParam)) {
+      this.periodPreset.set(periodParam);
+    }
+    const currencyParam = this.route.snapshot.queryParamMap.get('currency');
+    if (currencyParam) {
+      this.reportCurrency.set(currencyParam);
+    }
+    this.syncRouteQuery();
     this.reload();
   }
 
@@ -149,6 +169,7 @@ export class FinanceComponent implements OnInit {
 
   setPeriod(preset: FinancePeriodPreset): void {
     this.periodPreset.set(preset);
+    this.syncRouteQuery();
     this.reload();
   }
 
@@ -169,6 +190,7 @@ export class FinanceComponent implements OnInit {
     if (current) {
       this.summary.set(remapFinanceSummary(current, code));
     }
+    this.syncRouteQuery();
     this.reload();
   }
 
@@ -177,6 +199,14 @@ export class FinanceComponent implements OnInit {
       return '';
     }
     return localStorage.getItem(FINANCE_CURRENCY_STORAGE_KEY) ?? '';
+  }
+
+  private syncRouteQuery(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+      replaceUrl: true,
+    });
   }
 
   reload(): void {
@@ -228,14 +258,36 @@ export class FinanceComponent implements OnInit {
     return formatMoneyWithCode(amount, code, this.i18n.localeId());
   }
 
-  formatExpenseAmount(amount: number): string {
+  formatExpenseAmount(expense: Expense): string {
     const summary = this.summary();
     if (!summary) {
-      return this.formatMoney(amount);
+      return this.formatMoney(expense.amount, this.expenseCurrency(expense));
     }
     return this.formatMoney(
-      expenseAmountInReportCurrency(amount, summary, this.displayCurrency()),
+      expenseAmountInReportCurrency(
+        expense.amount,
+        summary,
+        this.displayCurrency(),
+        this.expenseCurrency(expense),
+      ),
     );
+  }
+
+  expenseOriginalLabel(expense: Expense): string | null {
+    const from = this.expenseCurrency(expense);
+    const report = this.displayCurrency();
+    if (from === report) {
+      return null;
+    }
+    return `(${this.formatMoney(expense.amount, from)} ${this.t.originalInCurrency})`;
+  }
+
+  private expenseCurrency(expense: Expense): string {
+    return expense.currency ?? this.summary()?.defaultCurrency ?? this.displayCurrency();
+  }
+
+  private defaultExpenseCurrency(): string {
+    return this.summary()?.defaultCurrency ?? this.displayCurrency();
   }
 
   formatHours(hours: number): string {
@@ -281,11 +333,18 @@ export class FinanceComponent implements OnInit {
       .sort((a, b) => a.code.localeCompare(b.code));
   }
 
+  openBreakdown(panel: FinanceBreakdownPanel): void {
+    void this.router.navigate(['/app/finance/breakdown', panel], {
+      queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+    });
+  }
+
   openExpenseCreate(): void {
     this.expenseEditTarget.set(null);
     this.expenseForm = {
       title: '',
       amount: 0,
+      currency: this.defaultExpenseCurrency(),
       expense_date: new Date().toISOString().slice(0, 10),
       category: '',
     };
@@ -297,6 +356,7 @@ export class FinanceComponent implements OnInit {
     this.expenseForm = {
       title: expense.title,
       amount: expense.amount,
+      currency: this.expenseCurrency(expense),
       expense_date: expense.expense_date || new Date().toISOString().slice(0, 10),
       category: expense.category ?? '',
     };
@@ -318,6 +378,7 @@ export class FinanceComponent implements OnInit {
     const payload = {
       title,
       amount,
+      currency: this.expenseForm.currency,
       expense_date: this.expenseForm.expense_date,
       category: this.expenseForm.category.trim() || undefined,
     };

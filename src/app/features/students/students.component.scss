@@ -2,18 +2,33 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex-grow: 1;
 }
 
 .students-page__footer {
   flex-shrink: 0;
   margin-top: auto;
   padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--nav-border);
+  // border-top: 1px solid var(--nav-border);
   background: var(--nav-bg);
+
+  @media (min-width: 769px) and (min-height: 441px) {
+    display: none;
+  }
 }
 
 .students-page__add {
   width: 100%;
+}
+
+.students-page__add--header {
+  display: none;
+  width: auto;
+  flex-shrink: 0;
+
+  @media (min-width: 769px) and (min-height: 441px) {
+    display: inline-flex;
+  }
 }
 
 .field--invalid {
@@ -93,6 +108,8 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
 
 .students-list {
   width: 100%;
+  flex-grow: 1;
+  overflow-y: auto;
 }
 
 .students-cards {
@@ -451,6 +468,13 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
   }
 }
 
+.student-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  text-align: left;
+}
+
 .modal-body {
   flex: 0 1 auto;
   padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
@@ -583,16 +607,5 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
 
   input {
     margin-top: 3px;
-  }
-}
-
-@media (max-width: 639px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .page-header .btn-primary {
-    width: 100%;
   }
 }

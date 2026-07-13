@@ -1,6 +1,9 @@
 <div class="page students-page">
   <div class="page-header">
     <h1>{{ i18n.nav().students }}</h1>
+    <button type="button" class="btn-primary students-page__add students-page__add--header" (click)="openCreate()">
+      {{ t.addButton }}
+    </button>
   </div>
 
   @if (loading()) {
@@ -166,28 +169,17 @@
   <p>{{ botToggleMessage() }}</p>
 </app-dialog>
 
-@if (showForm()) {
-  <div
-    class="modal-overlay modal-overlay--sheet"
-    role="presentation"
-    animate.leave="modal-overlay-leave"
-  >
-    <div
-      class="modal modal-sheet"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-labelledby]="'student-form-title'"
-      animate.leave="modal-sheet-leave"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="modal-header">
-        <h2 id="student-form-title">{{ editTarget() ? t.editModalTitle : t.newStudent }}</h2>
-        <button type="button" class="modal-close" (click)="closeForm()" [attr.aria-label]="t.close">
-          <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
-        </button>
-      </div>
-
-      <form #studentForm="ngForm" (ngSubmit)="onSubmit(studentForm)" class="modal-body" novalidate>
+<app-dialog
+  [open]="showForm()"
+  layout="sheet"
+  [closeOnOverlay]="false"
+  [title]="editTarget() ? t.editModalTitle : t.newStudent"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="savingForm() ? t.saving : t.save"
+  (cancel)="closeForm()"
+  (confirm)="onSubmit()"
+>
+  <form #studentForm="ngForm" (ngSubmit)="onSubmit(studentForm)" class="student-form" novalidate>
         <div class="field" [class.field--invalid]="isFieldInvalid('name', studentForm)">
           <label for="st-name">{{ t.name }}</label>
           <input
@@ -368,14 +360,8 @@
           }
         </div>
 
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="closeForm()">{{ t.cancel }}</button>
-          <button type="submit" class="btn-primary">{{ t.save }}</button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
+  </form>
+</app-dialog>
 
 @if (deleteTargetId()) {
   <div

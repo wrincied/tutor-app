@@ -411,6 +411,7 @@ export const FINANCE_UK: FinanceStrings = {
   deleteExpense: 'Видалити',
   expenseTitle: 'Назва',
   expenseAmount: 'Сума',
+  expenseCurrency: 'Валюта',
   expenseDate: 'Дата',
   expenseCategory: 'Категорія (необов’язково)',
   emptyExpenses: 'Немає витрат за обраний період.',
@@ -429,6 +430,41 @@ export const FINANCE_UK: FinanceStrings = {
   ratesDebug: 'Курси для звірки (за 1 EUR)',
   activityLogSection: 'Історія операцій',
   activityLogEmpty: 'Поки немає записів про витрати та гроші.',
+  kpiDetailsClose: 'Зрозуміло',
+  incomeBreakdownTitle: 'Як рахується дохід',
+  incomeBreakdownIntro:
+    'Ставка учня × тривалість уроку. Проведені — фактичний дохід, заплановані — очікуваний. Валюти перераховуються за курсом НБ на дату звіту.',
+  expensesBreakdownTitle: 'Як рахуються витрати',
+  expensesBreakdownIntro:
+    'Підсумовуємо всі записи витрат за період у валюті звіту.',
+  grossProfitBreakdownTitle: 'Прибуток до податків',
+  grossProfitBreakdownIntro:
+    'Дохід лише з проведених уроків мінус витрати. Заплановані уроки не входять.',
+  netProfitBreakdownTitle: 'Чистий прибуток (оцінка)',
+  netProfitBreakdownIntro:
+    'Від прибутку до податків віднімаємо орієнтовні соц. внески (~18%) та податок на доходи (Австрія). Це приблизна оцінка.',
+  breakdownLessonsList: 'Уроки в розрахунку',
+  breakdownExpensesList: 'Витрати в розрахунку',
+  breakdownLessonDate: 'Дата',
+  breakdownLessonStudent: 'Учень',
+  breakdownLessonStatus: 'Статус',
+  breakdownLessonDuration: 'Тривалість',
+  breakdownLessonAmount: 'Сума',
+  breakdownRecurringNote: 'Повторюваний урок — у календарі окремі дати',
+  breakdownHiddenInCalendar: 'Не видно в календарі — немає дати в розкладі.',
+  breakdownOpenCalendar: 'Відкрити календар',
+  breakdownOpenCalendarDate: 'Показати в календарі',
+  breakdownMinutes: 'хв',
+  breakdownEmptyLessons: 'Немає уроків за обраний період',
+  breakdownEmptyExpenses: 'Немає витрат за обраний період',
+  breakdownTapHint: 'Натисніть на показник, щоб відкрити розрахунок і список',
+  breakdownBack: 'До фінансів',
+  breakdownHiddenNoSchedule:
+    'Урок без дати в розкладі — не видно в календарі і не враховується в сумах.',
+  breakdownHiddenBrokenRecurrence:
+    'Повторюваний урок з помилкою в правилі — не відображається в календарі.',
+  breakdownScheduleDerived:
+    'Точний час не збережено — показано дату створення. Відкрийте урок у календарі та задайте час.',
 };
 
 export const STUDENTS_UK: StudentStrings = {
