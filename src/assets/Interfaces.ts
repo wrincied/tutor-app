@@ -695,8 +695,17 @@ export interface HomeStrings {
   todaySection: string;
   todayLessons: string;
   todayIncome: string;
+  todayHours: string;
+  todayCompleted: string;
+  todayScheduled: string;
   incomeApproxHint: string;
   lessonsEmpty: string;
+  nextLessonTitle: string;
+  nextLessonNone: string;
+  todayAgenda: string;
+  overdueLessonsHint: string;
+  lowBalanceTitle: string;
+  lowBalanceLessonsLeft: string;
   loading: string;
   loadError: string;
   betaTitle: string;
