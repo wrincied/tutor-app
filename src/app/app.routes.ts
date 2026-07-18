@@ -11,10 +11,11 @@ import {
 import { onboardingProfileResolver } from './core/resolvers/onboarding-profile.resolver';
 
 /** В designMode корень сразу показывает landing-v2; в prod остаётся старый LandingComponent. */
-const rootLandingLoad = environment.designMode
-  ? () =>
-      import('./features/landing-v2/landing-v2.component').then((m) => m.LandingV2Component)
-  : () => import('./features/landing/landing.component').then((m) => m.LandingComponent);
+const rootLandingLoad =
+  (environment as { designMode?: boolean }).designMode === true
+    ? () =>
+        import('./features/landing-v2/landing-v2.component').then((m) => m.LandingV2Component)
+    : () => import('./features/landing/landing.component').then((m) => m.LandingComponent);
 
 export const routes: Routes = [
   {
