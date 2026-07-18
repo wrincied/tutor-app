@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import type { PageTitleKey } from '@interfaces';
+import { environment } from '@environment';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard, emailVerifiedGuard } from './core/guards/auth.guard';
 import {
@@ -9,11 +10,16 @@ import {
 } from './core/guards/onboarding.guard';
 import { onboardingProfileResolver } from './core/resolvers/onboarding-profile.resolver';
 
+/** В designMode корень сразу показывает landing-v2; в prod остаётся старый LandingComponent. */
+const rootLandingLoad = environment.designMode
+  ? () =>
+      import('./features/landing-v2/landing-v2.component').then((m) => m.LandingV2Component)
+  : () => import('./features/landing/landing.component').then((m) => m.LandingComponent);
+
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./features/landing/landing.component').then((m) => m.LandingComponent),
+    loadComponent: rootLandingLoad,
     data: { title: 'landing' satisfies PageTitleKey },
   },
   {
