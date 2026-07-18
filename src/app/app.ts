@@ -25,7 +25,7 @@ export class App {
     inject(SeoService);
     inject(AnalyticsService);
     void this._theme;
-    if (environment.designMode) {
+    if ((environment as { designMode?: boolean }).designMode) {
       this.document.documentElement.dataset['design'] = 'v2';
     } else {
       delete this.document.documentElement.dataset['design'];

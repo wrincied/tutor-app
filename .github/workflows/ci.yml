@@ -76,6 +76,7 @@ jobs:
           cat > src/environments/environment.production.ts << EOF
           export const environment = {
             production: true,
+            designMode: false,
             apiUrl: '${API_URL}',
             appUrl: '${DEV_APP_URL}',
             firebaseConfig: {

@@ -36,7 +36,7 @@ export class HomeComponent implements OnInit {
   private readonly studentSvc = inject(StudentService);
   readonly i18n = inject(I18nService);
   /** True only for `ng serve --configuration=design` (:4300). */
-  readonly designMode = environment.designMode === true;
+  readonly designMode = (environment as { designMode?: boolean }).designMode === true;
 
 
   profile = signal<UserProfile | null>(null);
