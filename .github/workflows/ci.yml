@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - dev
+      - master
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -15,6 +16,8 @@ concurrency:
 
 permissions:
   contents: write
+  checks: write
+  pull-requests: write
 
 jobs:
   test-and-build:
@@ -129,3 +132,60 @@ jobs:
           target-folder: .
           branch: gh-pages
           clean: false
+
+  deploy-firebase-hosting:
+    name: Deploy to Firebase Hosting
+    needs: test-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    env:
+      PROD_API_URL: ${{ secrets.DEV_API_URL }}
+      PROD_API_URL_FALLBACK: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app'
+      PROD_APP_URL: https://simple4u-64822.web.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate studio production env for Firebase
+        run: |
+          API_URL="${PROD_API_URL:-$PROD_API_URL_FALLBACK}"
+          cat > src/environments/environment.production-design.ts << EOF
+          export const environment = {
+            production: true,
+            designMode: true,
+            apiUrl: '${API_URL}',
+            appUrl: '${PROD_APP_URL}',
+            firebaseConfig: {
+              apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
+              authDomain: 'simple4u-64822.web.app',
+              projectId: 'tutorassis',
+              storageBucket: 'tutorassis.firebasestorage.app',
+              messagingSenderId: '965411338053',
+              appId: '1:965411338053:web:d98317afdb5602a53c702c',
+              measurementId: 'G-TXM74NGN6R',
+            },
+          };
+          EOF
+          cp src/environments/environment.production-design.ts src/environments/environment.ts
+          node scripts/prepare-environment.mjs production-design
+
+      - name: Build Angular (studio) for Firebase Hosting
+        run: npx ng build --configuration=production-design
+
+      - name: Deploy to Firebase Hosting (live)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TUTORASSIS }}
+          channelId: live
+          projectId: tutorassis

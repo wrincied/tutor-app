@@ -11,18 +11,18 @@
 | Ветка | Роль | Кто пишет в неё |
 |-------|------|-----------------|
 | `dev` | Исходный код, тестирование и **единственный источник сборки для gh-pages** | Через PR |
-| `master` | Стабильный production-код (зеркало проверенного `dev`) | **Только через PR** из `dev` |
+| `master` | Стабильный production-код → **деплой на Firebase Hosting** | **Только через PR** из `dev` |
 | `gh-pages` | Собранный статический сайт (артефакты деплоя) | Только GitHub Actions, **не коммить вручную** |
 
-**Все изменения идут через PR → `dev`. Сборка на GitHub Pages — только из `dev`. После проверки — PR `dev` → `master`.**
+**Все изменения идут через PR → `dev`. Preview на GitHub Pages — из `dev`. После проверки — PR `dev` → `master` → Firebase Hosting (`simple4u-64822.web.app`).**
 
 ### Порядок работы
 
 1. **Feature-ветка** от `dev` → PR в `dev` → CI (тесты + build).
 2. **Мерж PR в `dev`** → CI снова (тесты + build) → деплой в `gh-pages` (папка `/dev`).
 3. **Проверка** — https://wrincied.github.io/tutor-app/dev
-4. **PR `dev` → `master`** → CI (тесты + build), без деплоя.
-5. **Мерж PR в `master`** — фиксация стабильной версии исходников. **Деплой не запускается.**
+4. **PR `dev` → `master`** → CI (тесты + build), без деплоя на gh-pages.
+5. **Мерж PR в `master`** → CI → **Deploy to Firebase Hosting** (live: https://simple4u-64822.web.app).
 
 ```mermaid
 flowchart LR
@@ -30,10 +30,12 @@ flowchart LR
   Dev[dev]
   Master[master]
   GhPages[gh-pages]
+  Firebase[Firebase Hosting]
 
   Feature -->|PR + CI| Dev
   Dev -->|push: CI + deploy| GhPagesDev["/dev на gh-pages"]
   Dev -->|PR + CI| Master
+  Master -->|push: CI + deploy| Firebase
 ```
 
 ### CI/CD (GitHub Actions)
@@ -45,11 +47,14 @@ flowchart LR
 | PR → `dev` | Test & Build | нет |
 | PR → `master` | Test & Build | нет |
 | push → `dev` | Test & Build → Deploy to GitHub Pages | `gh-pages` → `/dev` |
-| push → `master` | — | **запрещён** (нет workflow-триггера) |
+| push → `master` | Test & Build → Deploy to Firebase Hosting | `simple4u-64822.web.app` |
 
-**URL после деплоя (только из `dev`):**
+**Секрет для Firebase:** `FIREBASE_SERVICE_ACCOUNT_TUTORASSIS` (JSON service account с правом Firebase Hosting Admin).
 
-- https://wrincied.github.io/tutor-app/dev
+**URL:**
+
+- Preview: https://wrincied.github.io/tutor-app/dev
+- Production: https://simple4u-64822.web.app
 
 ### Структура GitHub Pages (простыми словами)
 
@@ -66,9 +71,11 @@ wrincied.github.io/tutor-app/dev/#/login   ← вход
 | Фронтенд (браузер) | `gh-pages` ветка → GitHub Pages |
 | Исходный код | ветка `dev` в tutor-app |
 | API, база, Stripe | `tutor-app-backend--tutorassis.europe-west4.hosted.app` |
-| Production для пользователей | `simple4u-64822.web.app` |
+| Production для пользователей | Firebase Hosting: `simple4u-64822.web.app` (деплой из `master`) |
 
-**Цепочка:** PR → `dev` → CI собирает Angular → кладёт в `gh-pages/dev/` → сайт обновляется.
+**Цепочка preview:** PR → `dev` → CI собирает Angular → `gh-pages/dev/`.
+
+**Цепочка production:** PR `dev` → `master` → CI → Firebase Hosting live.
 
 **Auth на gh-pages:** Firebase Authorized domain `wrincied.github.io` + OAuth Client JavaScript origin `https://wrincied.github.io`. Подробнее: [Linear doc](https://linear.app/simple4u/document/github-pages-struktura-i-avtorizaciya-wrinciedgithubio-f48efeed151c).
 
@@ -95,15 +102,15 @@ wrincied.github.io/tutor-app/dev/#/login   ← вход
 
 - Пушить напрямую в `master` — только PR из `dev`.
 - Пушить напрямую в `dev` без PR (после включения branch protection).
-- Деплоить на `gh-pages` из `master` — деплой **только** из `dev`.
+- Деплоить на `gh-pages` из `master` — preview **только** из `dev`; production Hosting — из `master`.
 - Коммитить вручную в `gh-pages`.
 
 ### Репозиторий
 
 - GitHub: https://github.com/wrincied/tutor-app
-- Разработка и деплой: `dev`
-- Стабильные исходники: `master` (без деплоя)
-- Артефакты сайта: `gh-pages` (автоматически из `dev`)
+- Preview: `dev` → gh-pages
+- Production: `master` → Firebase Hosting
+- Артефакты preview: `gh-pages` (автоматически из `dev`)
 
 ---
 
