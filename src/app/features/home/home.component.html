@@ -1,109 +1,101 @@
 @if (designMode) {
-  <div class="page app-scroll-page home-page home-page--design">
-    <header class="home-hero">
-      <p class="home-hero__brand">Simple4U</p>
-      <h1 class="home-hero__greeting">{{ greeting() }}</h1>
-      <p class="home-hero__date">{{ todayDateLabel() }}</p>
+  <div class="page app-scroll-page home-studio">
+    <div class="home-studio__glow" aria-hidden="true"></div>
+
+    <header class="home-studio__mast">
+      <p class="home-studio__date">{{ todayDateLabel() }}</p>
+      <h1 class="home-studio__greeting">{{ greeting() }}</h1>
     </header>
 
-    <div class="scrollable-content home-scroll">
+    <div class="scrollable-content home-studio__body">
       @if (loading()) {
         <div class="home-pulse" role="status" aria-busy="true">
           <span class="sr-only">{{ t.loading }}</span>
           @for (slot of [0, 1, 2]; track slot) {
             <div class="home-pulse__row">
               <span class="skeleton skeleton--line skeleton--line-sm" style="width: 40%"></span>
-              <span class="skeleton skeleton--line skeleton--line-lg" style="width: 55%"></span>
+              <span class="skeleton skeleton--line skeleton--line-lg" style="width: 70%"></span>
             </div>
           }
         </div>
       } @else if (error()) {
         <p class="home-page__error">{{ error() }}</p>
       } @else {
-        <section class="home-today" [attr.aria-label]="t.todaySection">
-          <p class="home-today__label">{{ t.todaySection }}</p>
-          <div class="home-metrics">
-            <a routerLink="/app/calendar" class="home-metric">
-              <span class="home-metric__value">{{ todayLessonCount() }}</span>
-              <span class="home-metric__label">{{ t.todayLessons }}</span>
-              <span class="home-metric__hint">
-                {{ todayCompletedCount() }} {{ t.todayCompleted }} ·
-                {{ todayScheduledCount() }} {{ t.todayScheduled }}
-              </span>
-            </a>
-            <a routerLink="/app/finance" class="home-metric">
-              <span class="home-metric__value home-metric__value--sm">{{ todayIncomeLabel() }}</span>
-              <span class="home-metric__label">{{ t.todayIncome }}</span>
-              <span class="home-metric__hint">{{ t.incomeApproxHint }}</span>
-            </a>
-            <a routerLink="/app/calendar" class="home-metric">
-              <span class="home-metric__value">{{ todayHours() | number: '1.0-1' }}</span>
-              <span class="home-metric__label">{{ t.todayHours }}</span>
-              @if (todayLessonCount() === 0) {
-                <span class="home-metric__hint">{{ t.lessonsEmpty }}</span>
-              }
-            </a>
-          </div>
-        </section>
-
-        <section class="home-next-block" aria-labelledby="home-next-lesson">
-          <h2 id="home-next-lesson" class="home-section-title">{{ t.nextLessonTitle }}</h2>
+        <section class="home-studio__focus" aria-labelledby="home-next-lesson">
+          <p id="home-next-lesson" class="home-studio__eyebrow">{{ t.nextLessonTitle }}</p>
           @if (nextLesson(); as row) {
-            <a routerLink="/app/calendar" class="home-next-link">
-              <span class="home-next-link__time">{{ lessonTime(row.lesson.scheduledAt) }}</span>
-              <span class="home-next-link__meta">
-                <span class="home-next-link__name">{{ row.studentName }}</span>
-                <span class="home-next-link__duration">{{ lessonDuration(row.lesson.lesson_duration) }}</span>
+            <a routerLink="/app/calendar" class="home-studio__focus-link">
+              <span class="home-studio__clock">{{ lessonTime(row.lesson.scheduledAt) }}</span>
+              <span class="home-studio__focus-copy">
+                <span class="home-studio__focus-name">{{ row.studentName }}</span>
+                <span class="home-studio__focus-meta">{{ lessonDuration(row.lesson.lesson_duration) }}</span>
               </span>
             </a>
           } @else {
-            <p class="home-empty">{{ t.nextLessonNone }}</p>
+            <p class="home-studio__quiet">{{ t.nextLessonNone }}</p>
+            <a routerLink="/app/calendar" class="home-studio__text-cta">{{ i18n.nav().calendar }}</a>
           }
         </section>
 
-        <section class="home-agenda-block" aria-labelledby="home-agenda">
-          <div class="home-agenda-block__head">
-            <h2 id="home-agenda" class="home-section-title">{{ t.todayAgenda }}</h2>
+        <p class="home-studio__strip" [attr.aria-label]="t.todaySection">
+          <a routerLink="/app/calendar" class="home-studio__chip">
+            <strong>{{ todayLessonCount() }}</strong> {{ t.todayLessons }}
+          </a>
+          <span class="home-studio__dot" aria-hidden="true"></span>
+          <a routerLink="/app/finance" class="home-studio__chip">
+            <strong>{{ todayIncomeLabel() }}</strong> {{ t.todayIncome }}
+          </a>
+          <span class="home-studio__dot" aria-hidden="true"></span>
+          <a routerLink="/app/calendar" class="home-studio__chip">
+            <strong>{{ todayHours() | number: '1.0-1' }}</strong> {{ t.todayHours }}
+          </a>
+        </p>
+
+        <section class="home-studio__day" aria-labelledby="home-agenda">
+          <div class="home-studio__day-head">
+            <h2 id="home-agenda" class="home-studio__eyebrow">{{ t.todayAgenda }}</h2>
             @if (overdueCount() > 0) {
-              <p class="home-agenda-block__alert">{{ overdueHint() }}</p>
+              <p class="home-studio__warn">{{ overdueHint() }}</p>
             }
           </div>
 
           @if (todayLessons().length === 0) {
-            <p class="home-empty">{{ t.lessonsEmpty }}</p>
+            <p class="home-studio__quiet">{{ t.lessonsEmpty }}</p>
           } @else {
-            <ul class="home-timeline">
+            <ol class="home-studio__list">
               @for (row of todayLessons(); track row.lesson.occurrenceKey ?? row.lesson._id + row.lesson.scheduledAt) {
                 <li>
                   <a
                     routerLink="/app/calendar"
-                    class="home-timeline__item"
-                    [class.home-timeline__item--overdue]="isLessonOverdue(row)"
+                    class="home-studio__item"
+                    [class.home-studio__item--overdue]="isLessonOverdue(row)"
                   >
-                    <span class="home-timeline__dot" [style.background]="row.studentColor"></span>
-                    <span class="home-timeline__time">{{ lessonTime(row.lesson.scheduledAt) }}</span>
-                    <span class="home-timeline__body">
-                      <span class="home-timeline__name">{{ row.studentName }}</span>
-                      <span class="home-timeline__status" [attr.data-status]="row.lesson.status">
+                    <time class="home-studio__item-time">{{ lessonTime(row.lesson.scheduledAt) }}</time>
+                    <span class="home-studio__rail" aria-hidden="true">
+                      <span class="home-studio__swatch" [style.background]="row.studentColor"></span>
+                    </span>
+                    <span class="home-studio__item-main">
+                      <span class="home-studio__item-name">{{ row.studentName }}</span>
+                      <span class="home-studio__item-status" [attr.data-status]="row.lesson.status">
                         {{ statusLabel(row.lesson.status) }}
                       </span>
                     </span>
                   </a>
                 </li>
               }
-            </ul>
+            </ol>
           }
         </section>
 
         @if (lowBalanceStudents().length > 0) {
-          <section class="home-balance-block" aria-labelledby="home-low-balance">
-            <h2 id="home-low-balance" class="home-section-title">{{ t.lowBalanceTitle }}</h2>
-            <ul class="home-balance-list">
+          <section class="home-studio__aside" aria-labelledby="home-low-balance">
+            <h2 id="home-low-balance" class="home-studio__eyebrow">{{ t.lowBalanceTitle }}</h2>
+            <ul class="home-studio__aside-list">
               @for (student of lowBalanceStudents(); track student._id) {
                 <li>
-                  <a routerLink="/app/students" class="home-balance-list__item">
+                  <a routerLink="/app/students" class="home-studio__aside-link">
                     <span>{{ student.name }}</span>
-                    <span class="home-balance-list__count">{{ lowBalanceLabel(student) }}</span>
+                    <span>{{ lowBalanceLabel(student) }}</span>
                   </a>
                 </li>
               }
