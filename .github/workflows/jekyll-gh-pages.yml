@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
       # environment.ts gitignored — Angular path @environment needs the file present.
-      - name: Generate environment for GitHub Pages
+      - name: Generate studio environment for GitHub Pages
         run: |
           API_URL="${DEV_API_URL:-$DEV_API_URL_FALLBACK}"
           if [ -z "$API_URL" ]; then
@@ -46,9 +46,10 @@ jobs:
           if [ -z "$DEV_API_URL" ]; then
             echo "::warning::Using DEV_API_URL_FALLBACK (secret DEV_API_URL is not set)"
           fi
-          cat > src/environments/environment.production.ts << EOF
+          cat > src/environments/environment.production-design.ts << EOF
           export const environment = {
             production: true,
+            designMode: true,
             apiUrl: '${API_URL}',
             appUrl: '${DEV_APP_URL}',
             firebaseConfig: {
@@ -62,10 +63,11 @@ jobs:
             },
           };
           EOF
-          node scripts/prepare-environment.mjs production
+          cp src/environments/environment.production-design.ts src/environments/environment.ts
+          node scripts/prepare-environment.mjs production-design
 
       - name: Build Angular for GitHub Pages
-        run: npx ng build --configuration=production --base-href=/tutor-app/dev/
+        run: npx ng build --configuration=production-design --base-href=/tutor-app/dev/
 
       - name: Create Root Redirect Fallback
         run: |
