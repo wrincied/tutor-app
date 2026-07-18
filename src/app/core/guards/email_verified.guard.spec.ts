@@ -17,10 +17,15 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GuardResult } from '@angular/router';
 import { emailVerifiedGuard } from './auth.guard';
 import { resolveFirebaseUser } from '../utils/resolve-firebase-user';
+import { UserService } from '../services/user.service';
 
 // Проект использует Vitest (не Jest): моки через vi.fn / vi.mock.
 vi.mock('../utils/resolve-firebase-user', () => ({
   resolveFirebaseUser: vi.fn(),
+}));
+
+vi.mock('../services/user.service', () => ({
+  UserService: class UserService {},
 }));
 
 describe('emailVerifiedGuard', () => {
@@ -49,6 +54,12 @@ describe('emailVerifiedGuard', () => {
       providers: [
         { provide: Router, useValue: routerMock },
         { provide: Auth, useValue: authMock },
+        {
+          provide: UserService,
+          useValue: {
+            ensureProfile: vi.fn(() => of({ role: 'tutor' })),
+          },
+        },
       ],
     });
 

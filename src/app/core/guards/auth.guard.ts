@@ -1,10 +1,11 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Auth } from '@angular/fire/auth';
-import { map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { from, of } from 'rxjs';
 
 import { resolveFirebaseUser } from '../utils/resolve-firebase-user';
+import { UserService } from '../services/user.service';
 
 export const authGuard: CanActivateFn = () => {
   const auth = inject(Auth);
@@ -18,6 +19,7 @@ export const authGuard: CanActivateFn = () => {
 export const emailVerifiedGuard: CanActivateFn = () => {
   const auth = inject(Auth);
   const router = inject(Router);
+  const userService = inject(UserService);
 
   return resolveFirebaseUser(auth).pipe(
     switchMap((user) => {
@@ -28,13 +30,21 @@ export const emailVerifiedGuard: CanActivateFn = () => {
       // Форсируем обновление стейта пользователя с серверов Firebase,
       // чтобы получить актуальный статус emailVerified
       return from(user.reload()).pipe(
-        map(() => {
-          if (!user.emailVerified) {
-            return router.createUrlTree(['/app/verify-email-notice']);
+        switchMap(() => {
+          if (user.emailVerified) {
+            return of(true);
           }
-          return true;
-        })
+          // GitHub super-admins are not gated on Firebase emailVerified.
+          return userService.ensureProfile().pipe(
+            map((profile) =>
+              profile.role === 'super_admin'
+                ? true
+                : router.createUrlTree(['/app/verify-email-notice']),
+            ),
+            catchError(() => of(router.createUrlTree(['/app/verify-email-notice']))),
+          );
+        }),
       );
-    })
+    }),
   );
 };
