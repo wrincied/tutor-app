@@ -90,6 +90,7 @@ jobs:
           };
           EOF
           cp src/environments/environment.production.ts src/environments/environment.ts
+          node scripts/prepare-environment.mjs production
 
       - name: Build Angular for GitHub Pages
         run: npx ng build --configuration=production --base-href=/tutor-app/dev/

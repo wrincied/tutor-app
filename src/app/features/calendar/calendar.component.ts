@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { CurrencyPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -115,7 +115,7 @@ type BillingConfirmState = {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, AppDialogComponent, AppSelectComponent, NgTemplateOutlet],
+  imports: [FormsModule, AppDialogComponent, AppSelectComponent, NgTemplateOutlet],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
  })
