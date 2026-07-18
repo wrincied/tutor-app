@@ -1,23 +1,22 @@
 /** Общие типы и интерфейсы приложения (i18n, API-модели). */
 
+import type {
+  AppCurrency,
+  FinanceReportCurrency,
+  RateCurrency,
+  WorkspaceCurrency,
+} from '../app/core/constants/currencies';
+import {
+  APP_CURRENCIES,
+  FINANCE_REPORT_CURRENCIES,
+  RATE_CURRENCIES,
+  WORKSPACE_CURRENCIES,
+} from '../app/core/constants/currencies';
+
+export type { AppCurrency, FinanceReportCurrency, RateCurrency, WorkspaceCurrency };
+export { APP_CURRENCIES, FINANCE_REPORT_CURRENCIES, RATE_CURRENCIES, WORKSPACE_CURRENCIES };
+
 export type Lang = 'ru' | 'en' | 'de' | 'kz' | 'uk' | 'by';
-
-/** Валюта ставки за час (BY — рубли, PL — злотые, AT/EU — евро, USD, RU — рубли). */
-export type RateCurrency = 'BYN' | 'PLN' | 'EUR' | 'USD' | 'RUB';
-
-export const RATE_CURRENCIES: RateCurrency[] = ['BYN', 'PLN', 'EUR', 'USD', 'RUB'];
-
-/** Валюты для сводки Finance (курсы Frankfurter + fallback на backend). */
-export type FinanceReportCurrency = 'EUR' | 'USD' | 'PLN' | 'RUB' | 'BYN' | 'KZT';
-
-export const FINANCE_REPORT_CURRENCIES: FinanceReportCurrency[] = [
-  'EUR',
-  'USD',
-  'PLN',
-  'RUB',
-  'BYN',
-  'KZT',
-];
 
 export interface PricingFaqItem {
   q: string;
@@ -71,6 +70,8 @@ export type PageTitleKey =
   | 'register'
   | 'legalDataProcessing'
   | 'legalCookies'
+  | 'legalImpressum'
+  | 'adminLogin'
   | 'verifyEmail'
   | 'onboarding'
   | 'home'
@@ -82,9 +83,26 @@ export type PageTitleKey =
   | 'accountCustomization'
   | 'accountProfile'
   | 'accountAdministration'
-  | 'admin';
+  | 'admin'
+  | 'adminUsers'
+  | 'adminSettings'
+  | 'adminLanding';
 
 export type PageTitleStrings = Record<PageTitleKey, string>;
+
+export type LegalCmsDocId = 'datenschutz' | 'impressum';
+
+export interface LegalCmsDocument {
+  id: LegalCmsDocId;
+  title: string;
+  body: string;
+  updatedAt?: string | null;
+  source?: 'firestore' | 'default';
+}
+
+export interface PublicContactInfo {
+  email: string;
+}
 
 export interface NavStrings {
   home: string;
@@ -110,6 +128,7 @@ export type TaxMode =
   | 'ru-ip'
   | 'by-ip'
   | 'kz-ip'
+  | 'ua-fop3'
   | 'none';
 
 export type SubscriptionStatus = 'free' | 'pro' | 'trial';
@@ -122,8 +141,6 @@ export interface SubscriptionPricing {
   monthly: number;
   yearly: number;
 }
-
-export type WorkspaceCurrency = 'EUR' | 'USD' | 'RUB' | 'BYN';
 
 export type WorkspaceLessonDuration = 45 | 60 | 90;
 
@@ -171,29 +188,194 @@ export interface AdminStats {
   estimatedMrr: Record<string, number>;
 }
 
+export type AdminDashboardWidgetId =
+  | 'kpi-total-users'
+  | 'kpi-paid-users'
+  | 'kpi-trial-users'
+  | 'kpi-conversion'
+  | 'kpi-mrr'
+  | 'segments'
+  | 'activation-funnel'
+  | 'alerts'
+  | 'last-visits'
+  | 'geography'
+  | 'product-usage';
+
+export interface AdminDashboardSegments {
+  active7d: number;
+  inactive14d: number;
+  trialExpiring7d: number;
+  onboardingIncomplete: number;
+  emailUnverified: number;
+}
+
+export interface AdminDashboardFunnel {
+  registered: number;
+  emailVerified: number;
+  onboardingDone: number;
+  hasStudent: number;
+  hasLesson: number;
+  activeWeek2: number;
+}
+
+export type AdminDashboardAlertType = 'trial_expiring_soon' | 'trial_expired' | 'pro_inactive';
+
+export interface AdminDashboardAlert {
+  type: AdminDashboardAlertType;
+  user_id: string;
+  email: string;
+  trial_ends_at?: string | null;
+  last_login_at?: string | null;
+}
+
+export interface AdminGeographyRow {
+  country: string;
+  count: number;
+}
+
+export interface AdminProductUsage {
+  lessonsLast7d: number;
+  totalStudents: number;
+  avgStudentsPerTutor: number;
+  tutorsWithFinance: number;
+  financeUsersPercent: number;
+}
+
+export interface AdminDashboardPayload {
+  stats: AdminStats;
+  segments: AdminDashboardSegments;
+  funnel: AdminDashboardFunnel;
+  alerts: AdminDashboardAlert[];
+  geography: AdminGeographyRow[];
+  productUsage: AdminProductUsage;
+}
+
+export interface AdminPreferences {
+  dashboard_widgets: AdminDashboardWidgetId[];
+}
+
+export interface AdminUserSummary {
+  user: AdminUserRow;
+  studentsCount: number;
+  lessonsCount: number;
+  recentActivity: ActivityLogEntry[];
+}
+
 export interface AdminUserRow {
   _id: string;
   email: string;
   subscription_status: SubscriptionStatus | string;
   trial_ends_at?: string | null;
   createdAt: string | null;
+  last_login_at?: string | null;
+  last_activity_at?: string | null;
+  email_verified?: boolean;
+  onboarding_completed?: boolean;
+  country_settings?: string;
   role?: UserRole | string;
+  studentsCount?: number;
 }
 
 export interface AdminStrings {
   title: string;
   navLink: string;
+  dashboardTab: string;
+  usersTab: string;
+  settingsTab: string;
+  landingTab: string;
+  landingTitle: string;
+  landingIntro: string;
+  landingDatenschutz: string;
+  landingImpressum: string;
+  landingTitleField: string;
+  landingBodyField: string;
+  landingBodyHint: string;
+  landingSave: string;
+  landingSaving: string;
+  landingSaved: string;
+  landingLoadError: string;
   loading: string;
   loadError: string;
+  refresh: string;
+  customizeDashboard: string;
+  settingsTitle: string;
+  settingsIntro: string;
+  settingsGroupKpi: string;
+  settingsGroupAnalytics: string;
+  settingsGroupTables: string;
+  settingsSave: string;
+  settingsSaving: string;
+  settingsSaved: string;
+  settingsReset: string;
+  settingsResetConfirm: string;
+  widgetKpiTotalUsers: string;
+  widgetKpiPaidUsers: string;
+  widgetKpiTrialUsers: string;
+  widgetKpiConversion: string;
+  widgetKpiMrr: string;
+  widgetSegments: string;
+  widgetActivationFunnel: string;
+  widgetAlerts: string;
+  widgetLastVisits: string;
+  widgetGeography: string;
+  widgetProductUsage: string;
   metricTotalUsers: string;
   metricPaidUsers: string;
+  metricTrialUsers: string;
   metricConversion: string;
   metricRevenue: string;
   revenueHint: string;
+  segmentActive7d: string;
+  segmentInactive14d: string;
+  segmentTrialExpiring: string;
+  segmentOnboardingIncomplete: string;
+  segmentEmailUnverified: string;
+  funnelTitle: string;
+  funnelRegistered: string;
+  funnelEmailVerified: string;
+  funnelOnboardingDone: string;
+  funnelHasStudent: string;
+  funnelHasLesson: string;
+  funnelActiveWeek2: string;
+  alertsTitle: string;
+  alertsEmpty: string;
+  alertTrialExpiringSoon: string;
+  alertTrialExpired: string;
+  alertProInactive: string;
+  geographyTitle: string;
+  geographyCountry: string;
+  geographyUsers: string;
+  geographyEmpty: string;
+  productUsageTitle: string;
+  productLessons7d: string;
+  productTotalStudents: string;
+  productAvgStudents: string;
+  productFinanceUsers: string;
+  lastVisitsTitle: string;
+  lastVisitsHint: string;
   tableEmail: string;
   tableStatus: string;
   tableRegistered: string;
+  tableLastVisit: string;
+  tableWhen: string;
+  tableAction: string;
   tableActions: string;
+  tableCountry: string;
+  tableStudents: string;
+  noVisits: string;
+  noAlerts: string;
+  never: string;
+  searchUsers: string;
+  exportCsv: string;
+  sortByRegistered: string;
+  sortByLastVisit: string;
+  sortByEmail: string;
+  userDetailTitle: string;
+  userDetailStudents: string;
+  userDetailLessons: string;
+  userDetailRecentActivity: string;
+  userDetailLoading: string;
+  userDetailError: string;
   statusFree: string;
   statusPro: string;
   statusTrial: string;
@@ -248,9 +430,7 @@ export interface AccountStrings {
   saveError: string;
   subscriptionManagedByPayment: string;
   taxModeRequiredHint: string;
-  taxModeLockedHintBefore: string;
-  taxModeLockedHintAfter: string;
-  taxSupportEmail: string;
+  taxModeChangeHint: string;
   taxModeConfirmTitle: string;
   taxModeConfirmBody: string;
   taxModeConfirmConfirm: string;
@@ -286,7 +466,28 @@ export interface AccountStrings {
   workspaceSaved: string;
 }
 
+/** Публичная визитка / лендинг + auth. */
 export interface AuthStrings {
+  landingHeadline: string;
+  landingSubtitle: string;
+  join: string;
+  landingSignIn: string;
+  landingFeaturesTitle: string;
+  landingFeatureScheduleTitle: string;
+  landingFeatureScheduleBody: string;
+  landingFeatureStudentsTitle: string;
+  landingFeatureStudentsBody: string;
+  landingFeatureFinanceTitle: string;
+  landingFeatureFinanceBody: string;
+  landingHowTitle: string;
+  landingHowBody: string;
+  landingClosingTitle: string;
+  landingClosingCta: string;
+  footerDatenschutz: string;
+  footerImpressum: string;
+  footerKontakt: string;
+  footerCookies: string;
+  footerRights: string;
   loginTitle: string;
   loginSubtitle: string;
   registerTitle: string;
@@ -298,6 +499,7 @@ export interface AuthStrings {
   loggingIn: string;
   createAccount: string;
   creating: string;
+  backHome: string;
   hasAccount: string;
   noAccount: string;
   wrongCredentials: string;
@@ -341,6 +543,7 @@ export interface AuthStrings {
   continueWithGoogle: string;
   orContinueWith: string;
   oauthError: string;
+  oauthErrorGithub: string;
   profileSyncError: string;
   onboardingTitle: string;
   onboardingSubtitle: string;
@@ -433,6 +636,8 @@ export interface CalendarStrings {
   studentsSidebarEmpty: string;
   studentsSidebarNoResults: string;
   scheduledAtLabel: string;
+  lessonDescriptionLabel: string;
+  advancedSettingsLabel: string;
   notesPlaceholder: string;
   notesNewPlaceholder: string;
   snapshotRateLabel: string;
@@ -542,8 +747,17 @@ export interface HomeStrings {
   todaySection: string;
   todayLessons: string;
   todayIncome: string;
+  todayHours: string;
+  todayCompleted: string;
+  todayScheduled: string;
   incomeApproxHint: string;
   lessonsEmpty: string;
+  nextLessonTitle: string;
+  nextLessonNone: string;
+  todayAgenda: string;
+  overdueLessonsHint: string;
+  lowBalanceTitle: string;
+  lowBalanceLessonsLeft: string;
   loading: string;
   loadError: string;
   betaTitle: string;
@@ -587,6 +801,7 @@ export interface FinanceStrings {
   deleteExpense: string;
   expenseTitle: string;
   expenseAmount: string;
+  expenseCurrency: string;
   expenseDate: string;
   expenseCategory: string;
   emptyExpenses: string;
@@ -600,15 +815,83 @@ export interface FinanceStrings {
   reportCurrency: string;
   originalInCurrency: string;
   ratesAsOf: string;
+  ratesSource: string;
+  ratesDebug: string;
   activityLogSection: string;
   activityLogEmpty: string;
+  kpiDetailsClose: string;
+  incomeBreakdownTitle: string;
+  incomeBreakdownIntro: string;
+  expensesBreakdownTitle: string;
+  expensesBreakdownIntro: string;
+  grossProfitBreakdownTitle: string;
+  grossProfitBreakdownIntro: string;
+  netProfitBreakdownTitle: string;
+  netProfitBreakdownIntro: string;
+  breakdownLessonsList: string;
+  breakdownExpensesList: string;
+  breakdownLessonDate: string;
+  breakdownLessonStudent: string;
+  breakdownLessonStatus: string;
+  breakdownLessonDuration: string;
+  breakdownLessonAmount: string;
+  breakdownRecurringNote: string;
+  breakdownHiddenInCalendar: string;
+  breakdownOpenCalendar: string;
+  breakdownOpenCalendarDate: string;
+  breakdownMinutes: string;
+  breakdownEmptyLessons: string;
+  breakdownEmptyExpenses: string;
+  breakdownTapHint: string;
+  breakdownBack: string;
+  breakdownHiddenNoSchedule: string;
+  breakdownHiddenBrokenRecurrence: string;
+  breakdownScheduleDerived: string;
+  exportPdf: string;
+  exportingPdf: string;
+  exportPdfError: string;
+  pdfGeneratedAt: string;
+  pdfSummary: string;
+}
+
+export interface FinanceLessonBreakdown {
+  id: string;
+  lessonId?: string;
+  studentId: string | null;
+  studentName: string | null;
+  scheduledAt: string | null;
+  occurrenceDate?: string | null;
+  status: string;
+  durationMinutes: number;
+  amountReport: number;
+  amountOriginal: number;
+  currency: string;
+  visibleInCalendar: boolean;
+  isRecurring: boolean;
+  incomeType: 'completed' | 'scheduled' | 'none';
+  hiddenReason?: 'no_schedule' | 'broken_recurrence' | null;
+  scheduleDerived?: boolean;
+}
+
+export interface FinanceExpenseBreakdown {
+  id: string;
+  title: string;
+  amount: number;
+  currency: string;
+  amountReport: number;
+  expense_date: string;
+  category: string;
 }
 
 export interface FinanceExchangeRates {
+  /** Базовая валюта конвертации (обычно EUR). */
   base: string;
   reportCurrency: string;
+  /** Дата курса ЦБ / официального источника. */
   asOf: string;
+  /** Человекочитаемый источник, напр. ECB, NBRB, NBK. */
   source: string;
+  /** units per 1 base currency */
   rates: Record<string, number>;
 }
 
@@ -616,10 +899,21 @@ export interface Expense {
   _id: string;
   title: string;
   amount: number;
+  /** Валюта суммы при вводе; у старых записей может отсутствовать — тогда валюта страны аккаунта. */
+  currency?: string;
   expense_date: string;
   category?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface FinanceTaxProjection {
+  mode: string;
+  socialInsuranceRate: number;
+  socialInsurance: number;
+  taxableBase: number;
+  incomeTax: number;
+  netProfit: number;
 }
 
 export interface FinanceSummary {
@@ -650,13 +944,15 @@ export interface FinanceSummary {
     scheduledByCurrency: Record<string, number>;
     combinedByCurrency: Record<string, number>;
   };
-  austria: {
-    socialInsuranceRate: number;
-    socialInsurance: number;
-    taxableBase: number;
-    incomeTax: number;
-    netProfit: number;
-  } | null;
+  /** Универсальная налоговая оценка для выбранного режима. */
+  tax: FinanceTaxProjection | null;
+  /**
+   * @deprecated Alias для AT: совпадает с tax при at-self-employed.
+   * Новый код должен читать `tax`.
+   */
+  austria: FinanceTaxProjection | null;
+  lessonsBreakdown?: FinanceLessonBreakdown[];
+  expensesBreakdown?: FinanceExpenseBreakdown[];
 }
 
 export interface StudentStrings {
@@ -669,6 +965,10 @@ export interface StudentStrings {
   ratePerLesson: string;
   ratePerHour: string;
   rateUnitTitle: string;
+  /** Aria for rate-unit help tip */
+  rateUnitInfoAria: string;
+  /** Hover/tap explanation for hour vs lesson pricing */
+  rateUnitInfo: string;
   rateColumn: string;
   balanceLessons: string;
   perLesson: string;
@@ -694,6 +994,10 @@ export interface StudentStrings {
   randomColor: string;
   /** Уведомления ученику через Telegram-бота */
   botNotifications: string;
+  /** Aria for Telegram help tip */
+  botInfoAria: string;
+  /** Temporary Telegram tip copy */
+  botComingSoon: string;
   botEnabled: string;
   botDisabled: string;
   botEnableTitle: string;
@@ -782,10 +1086,12 @@ export type StudentBillingType = 'package' | 'postpaid';
 
 export type StudentRateUnit = 'hour' | 'lesson';
 
+export type LessonPriceMode = 'fixed' | 'hourly';
+
 /**
  * Урок в коллекции `lessons`.
  * `scheduledAt` + `lesson_duration` — интервал в БД (без миграции на start_at/end_at).
- * `lesson_price` + `lesson_currency` — снапшот ставки за час и валюты на момент создания
+ * `lesson_price` + `lesson_currency` + `price_mode` — снапшот ставки и режима на момент создания
  * (или при смене ученика); не меняется при правке ставки ученика в профиле.
  */
 export interface Lesson {
@@ -794,10 +1100,15 @@ export interface Lesson {
   status: LessonStatus;
   scheduledAt: string;
   lesson_duration: number;
-  /** Ставка за час (снапшот), не сумма за весь урок. */
+  /**
+   * Ставка снапшота: при `price_mode: 'hourly'` — за час;
+   * при `price_mode: 'fixed'` — фиксированная сумма за урок.
+   */
   lesson_price: number;
-  /** Валюта снапшота (BYN, PLN, EUR, USD, RUB). */
+  /** Валюта снапшота (EUR, USD, PLN, RUB, BYN, KZT, UAH). */
   lesson_currency: string;
+  /** Режим цены: hourly = × duration/60, fixed = lesson_price как есть. */
+  price_mode?: LessonPriceMode;
   /** Часовой пояс ученика (снапшот региона) на момент урока. */
   student_timezone?: string;
   reminder_sent: boolean;

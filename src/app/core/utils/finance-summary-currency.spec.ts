@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FinanceSummary } from '@interfaces';
-import { remapFinanceSummary } from './finance-summary-currency';
+import { remapFinanceSummary, expenseAmountInReportCurrency } from './finance-summary-currency';
 
 function baseSummary(currency: string, totalIncome: number): FinanceSummary {
   return {
@@ -37,6 +37,7 @@ function baseSummary(currency: string, totalIncome: number): FinanceSummary {
       combinedByCurrency: { EUR: totalIncome },
     },
     austria: null,
+    tax: null,
   };
 }
 
@@ -51,5 +52,21 @@ describe('remapFinanceSummary', () => {
   it('returns same object when currency unchanged', () => {
     const summary = baseSummary('EUR', 100);
     expect(remapFinanceSummary(summary, 'EUR')).toBe(summary);
+  });
+});
+
+describe('expenseAmountInReportCurrency', () => {
+  it('converts from expense currency to report currency', () => {
+    const summary = baseSummary('EUR', 0);
+    summary.defaultCurrency = 'EUR';
+    const converted = expenseAmountInReportCurrency(100, summary, 'USD', 'EUR');
+    expect(converted).toBe(109);
+  });
+
+  it('uses expense currency instead of account default', () => {
+    const summary = baseSummary('EUR', 0);
+    summary.defaultCurrency = 'EUR';
+    const converted = expenseAmountInReportCurrency(100, summary, 'EUR', 'USD');
+    expect(converted).toBeCloseTo(91.74, 2);
   });
 });

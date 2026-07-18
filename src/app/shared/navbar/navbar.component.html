@@ -55,7 +55,12 @@
       </svg>
       <span>{{ i18n.nav().calendar }}</span>
     </a>
-    <a routerLink="/app/finance" routerLinkActive="active" class="nav-link">
+    <a
+      routerLink="/app/finance"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ paths: 'subset' }"
+      class="nav-link"
+    >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="1" x2="12" y2="23"/>
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -63,7 +68,7 @@
       <span>{{ i18n.nav().finance }}</span>
     </a>
     @if (isSuperAdmin()) {
-      <a routerLink="/app/admin" routerLinkActive="active" class="nav-link">
+      <a routerLink="/admin-login" routerLinkActive="active" class="nav-link">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 15v2"/>
           <path d="M12 3v2"/>
@@ -118,7 +123,12 @@
     </svg>
     {{ i18n.nav().calendar }}
   </a>
-  <a routerLink="/app/finance" routerLinkActive="active" class="bottom-link">
+  <a
+    routerLink="/app/finance"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ paths: 'subset' }"
+    class="bottom-link"
+  >
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <line x1="12" y1="1" x2="12" y2="23"/>
       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -126,7 +136,7 @@
     {{ i18n.nav().finance }}
   </a>
   @if (isSuperAdmin()) {
-    <a routerLink="/app/admin" routerLinkActive="active" class="bottom-link">
+    <a routerLink="/admin-login" routerLinkActive="active" class="bottom-link">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 15v2"/>
         <path d="M12 3v2"/>

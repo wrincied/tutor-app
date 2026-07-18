@@ -33,8 +33,10 @@
   margin-bottom: 24px;
 
   h1 {
-    font-size: 22px;
-    font-weight: 500;
+    font-family: var(--font-display, 'Syne', sans-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
   }
 }
@@ -48,16 +50,20 @@
 // ─── Кнопки ────────────────────────────────────────────────────────────────────
 
 .btn-primary {
-  background: var(--nav-accent);
-  color: #fff;
+  background: var(--btn-primary-bg, var(--ink, #071714));
+  color: var(--btn-primary-fg, var(--lime, #c6f071));
   border: none;
-  padding: 8px 18px;
-  border-radius: 6px;
+  padding: 9px 20px;
+  border-radius: 999px;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s,
+    background 0.15s;
   &:hover {
-    opacity: 0.88;
+    background-color: var(--btn-primary-hover, #0d2a24);
   }
 }
 
@@ -65,13 +71,18 @@
   background: none;
   color: var(--text-secondary);
   border: 1px solid var(--nav-border);
-  padding: 8px 18px;
-  border-radius: 6px;
+  padding: 9px 20px;
+  border-radius: 999px;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
   &:hover {
     background: var(--nav-hover);
+    border-color: color-mix(in srgb, var(--moss, #0f3d34) 28%, var(--nav-border));
+    color: var(--text-primary);
   }
 }
 
@@ -286,7 +297,7 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   @media (min-width: $modal-desktop-min) {
     align-self: center;
     width: 100%;
-    max-width: 28rem;
+    max-width: 72rem;
     margin-inline: auto;
     max-height: min(90dvh, calc(100dvh - 2rem));
     max-height: min(90svh, calc(100svh - 2rem));
@@ -364,6 +375,15 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   }
 }
 
+@keyframes modal-drawer-out-desktop {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 .modal-overlay-leave {
   // opacity: 0;
   // animation: modal-overlay-out 0.22s ease-in forwards;
@@ -416,6 +436,25 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   }
 }
 
+.modal-drawer-leave {
+  pointer-events: none;
+
+  @media (max-width: $modal-mobile-max) {
+    opacity: 0 !important;
+    transform: translateY(100%) !important;
+    transition:
+      transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 0.25s ease-in !important;
+    animation: modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+  }
+
+  @media (min-width: $modal-desktop-min) {
+    transform: translateX(100%) !important;
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    animation: modal-drawer-out-desktop 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .modal-overlay,
   .modal-sheet,
@@ -425,8 +464,9 @@ $modal-mobile-max: $modal-desktop-min - 1px;
 
   .modal-overlay-leave,
   .modal-sheet-leave,
-  .modal-dialog-leave {
-    animation: none !important;
+  .modal-dialog-leave,
+  .modal-drawer-leave {
+    animation-duration: 0.01s !important;
     transition: none !important;
   }
 }
@@ -519,7 +559,7 @@ $modal-mobile-max: $modal-desktop-min - 1px;
 
     a {
       font-size: 14px;
-      color: #0f9d58;
+      color: var(--moss, #0f3d34);
       text-decoration: none;
 
       &:hover {
@@ -528,7 +568,7 @@ $modal-mobile-max: $modal-desktop-min - 1px;
     }
 
     button {
-      background: #0f9d58;
+      background: var(--moss, #0f3d34);
       color: #fff;
       border: none;
       border-radius: 4px;

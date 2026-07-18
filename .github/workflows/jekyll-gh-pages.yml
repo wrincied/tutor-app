@@ -2,22 +2,26 @@ name: Deploy Dev to GitHub Pages
 
 on:
   push:
-    branches: ["dev"] # Срабатывает, когда ты пушишь в ветку dev (как на твоем скрине)
-  workflow_dispatch: # Оставляет кнопку ручного запуска в панели Actions
+    branches: ['dev']
+  workflow_dispatch:
 
-# Явно задаем права для выполнения деплоя через GitHub Actions
 permissions:
-  contents: write # Нужно write, чтобы экшен мог записать файлы сборки
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      DEV_API_URL: ${{ secrets.DEV_API_URL }}
+      DEV_API_URL_FALLBACK: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app'
+      DEV_APP_URL: https://wrincied.github.io/tutor-app/dev
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -26,32 +30,73 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm' # Кеширование ускорит последующие сборки
+          cache: npm
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Angular Dev
-        run: npx ng build --configuration=development --base-href=/tutor-app/dev/
+      # environment.ts gitignored — Angular path @environment needs the file present.
+      - name: Generate environment for GitHub Pages
+        run: |
+          API_URL="${DEV_API_URL:-$DEV_API_URL_FALLBACK}"
+          if [ -z "$API_URL" ]; then
+            echo "::error::Backend URL is missing. Set secret DEV_API_URL or DEV_API_URL_FALLBACK."
+            exit 1
+          fi
+          if [ -z "$DEV_API_URL" ]; then
+            echo "::warning::Using DEV_API_URL_FALLBACK (secret DEV_API_URL is not set)"
+          fi
+          cat > src/environments/environment.production.ts << EOF
+          export const environment = {
+            production: true,
+            apiUrl: '${API_URL}',
+            appUrl: '${DEV_APP_URL}',
+            firebaseConfig: {
+              apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
+              authDomain: 'simple4u-64822.web.app',
+              projectId: 'tutorassis',
+              storageBucket: 'tutorassis.firebasestorage.app',
+              messagingSenderId: '965411338053',
+              appId: '1:965411338053:web:d98317afdb5602a53c702c',
+              measurementId: 'G-TXM74NGN6R',
+            },
+          };
+          EOF
+          node scripts/prepare-environment.mjs production
 
-      # Создаем авто-редирект из корня проекта в подпапку /dev, чтобы не открывался пустой md
+      - name: Build Angular for GitHub Pages
+        run: npx ng build --configuration=production --base-href=/tutor-app/dev/
+
       - name: Create Root Redirect Fallback
         run: |
           mkdir -p dist/root_fallback
-          echo '<meta http-equiv="refresh" content="0;URL='\''/tutor-app/dev/'\''" />' > dist/root_fallback/index.html
+          cat > dist/root_fallback/index.html << 'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <title>Simple4U</title>
+              <meta http-equiv="refresh" content="0; url=/tutor-app/dev/">
+              <link rel="canonical" href="/tutor-app/dev/">
+              <script>location.replace('/tutor-app/dev/' + (location.hash || ''));</script>
+            </head>
+            <body>
+              <p>Redirecting to <a href="/tutor-app/dev/">Simple4U dev</a>…</p>
+            </body>
+          </html>
+          EOF
 
-      # Деплоим собранный Angular в папку /dev
       - name: Deploy Angular App
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist/tutor-app/browser # Проверь это имя папки в твоем dist после локального билда
+          folder: dist/tutor/browser
           target-folder: dev
-          branch: gh-pages # Файлы будут лежать в изолированной ветке gh-pages
+          branch: gh-pages
 
-      # Деплоим редирект в корень сайта
       - name: Deploy Root Redirect
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist/root_fallback
           target-folder: .
           branch: gh-pages
+          clean: false

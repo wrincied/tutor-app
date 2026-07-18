@@ -1,26 +1,33 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import type { AdminStats, AdminUserRow, SubscriptionStatus } from '@interfaces';
+import type { AdminUserRow, AdminUserSummary, SubscriptionStatus } from '@interfaces';
 import { AdminService } from '../../core/services/admin.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
+import {
+  adminStatusClass,
+  adminStatusLabel,
+  parseTimestamp,
+} from './admin-subscription.helpers';
 
 const TRIAL_GIFT_DAYS = 14;
 
+type UsersSortKey = 'email' | 'registered' | 'lastVisit';
+
 @Component({
-  selector: 'app-admin-dashboard',
+  selector: 'app-admin-users',
   standalone: true,
-  imports: [DatePipe, FormsModule, AppDialogComponent, AppSelectComponent],
-  templateUrl: './admin-dashboard.component.html',
-  styleUrl: './admin-dashboard.component.scss',
+  imports: [DatePipe, FormsModule, AppDialogComponent, AppSelectComponent, RelativeTimePipe],
+  templateUrl: './admin-users.component.html',
+  styleUrls: ['./admin-dashboard.component.scss', './admin-users.component.scss'],
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminUsersComponent implements OnInit {
   private readonly adminSvc = inject(AdminService);
   readonly i18n = inject(I18nService);
 
-  readonly stats = signal<AdminStats | null>(null);
   readonly users = signal<AdminUserRow[]>([]);
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -29,19 +36,46 @@ export class AdminDashboardComponent implements OnInit {
   readonly actionMessage = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
 
+  readonly search = signal('');
+  readonly sortKey = signal<UsersSortKey>('registered');
+
   readonly editOpen = signal(false);
   readonly editingUser = signal<AdminUserRow | null>(null);
   readonly editStatus = signal<SubscriptionStatus>('free');
   readonly editTrialEnds = signal('');
 
-  readonly revenueLabel = computed(() => {
-    const mrr = this.stats()?.estimatedMrr;
-    if (!mrr || Object.keys(mrr).length === 0) {
-      return '—';
+  readonly detailOpen = signal(false);
+  readonly detailLoading = signal(false);
+  readonly detailError = signal<string | null>(null);
+  readonly detail = signal<AdminUserSummary | null>(null);
+
+  readonly filteredUsers = computed(() => {
+    const query = this.search().trim().toLowerCase();
+    let rows = [...this.users()];
+    if (query) {
+      rows = rows.filter((user) => user.email.toLowerCase().includes(query));
     }
-    return Object.entries(mrr)
-      .map(([currency, amount]) => `${amount.toLocaleString()} ${currency}`)
-      .join(' · ');
+    const key = this.sortKey();
+    rows.sort((left, right) => {
+      switch (key) {
+        case 'email':
+          return left.email.localeCompare(right.email);
+        case 'lastVisit':
+          return parseTimestamp(right.last_login_at) - parseTimestamp(left.last_login_at);
+        default:
+          return parseTimestamp(right.createdAt) - parseTimestamp(left.createdAt);
+      }
+    });
+    return rows;
+  });
+
+  readonly sortOptions = computed((): AppSelectOption[] => {
+    const labels = this.t();
+    return [
+      { value: 'registered', label: labels.sortByRegistered },
+      { value: 'lastVisit', label: labels.sortByLastVisit },
+      { value: 'email', label: labels.sortByEmail },
+    ];
   });
 
   ngOnInit(): void {
@@ -51,11 +85,6 @@ export class AdminDashboardComponent implements OnInit {
   reload(): void {
     this.loading.set(true);
     this.loadError.set(null);
-
-    this.adminSvc.getStats().subscribe({
-      next: (stats) => this.stats.set(stats),
-      error: () => this.loadError.set(this.t().loadError),
-    });
 
     this.adminSvc.getUsers().subscribe({
       next: (users) => {
@@ -83,26 +112,62 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   statusLabel(status: SubscriptionStatus | string): string {
-    const labels = this.t();
-    switch (status) {
-      case 'pro':
-        return labels.statusPro;
-      case 'trial':
-        return labels.statusTrial;
-      default:
-        return labels.statusFree;
-    }
+    return adminStatusLabel(status, this.t());
   }
 
   statusClass(status: SubscriptionStatus | string): string {
-    switch (status) {
-      case 'pro':
-        return 'admin-status admin-status--pro';
-      case 'trial':
-        return 'admin-status admin-status--trial';
-      default:
-        return 'admin-status admin-status--free';
-    }
+    return adminStatusClass(status);
+  }
+
+  studentsButtonLabel(count: number | undefined): string {
+    return `${this.t().tableStudents}: ${count ?? 0}`;
+  }
+
+  openUserDetail(user: AdminUserRow): void {
+    this.detailOpen.set(true);
+    this.detailLoading.set(true);
+    this.detailError.set(null);
+    this.detail.set(null);
+    this.adminSvc.getUserSummary(user._id).subscribe({
+      next: (summary) => {
+        this.detail.set(summary);
+        this.detailLoading.set(false);
+      },
+      error: () => {
+        this.detailError.set(this.t().userDetailError);
+        this.detailLoading.set(false);
+      },
+    });
+  }
+
+  closeUserDetail(): void {
+    this.detailOpen.set(false);
+    this.detail.set(null);
+  }
+
+  exportCsv(): void {
+    const rows = this.filteredUsers();
+    const header = ['email', 'status', 'country', 'registered', 'last_visit', 'students'];
+    const lines = rows.map((user) =>
+      [
+        user.email,
+        user.subscription_status,
+        user.country_settings ?? '',
+        user.createdAt ?? '',
+        user.last_login_at ?? '',
+        user.studentsCount ?? 0,
+      ]
+        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(','),
+    );
+    const csv = [header.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `simple4u-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   openEdit(user: AdminUserRow): void {
@@ -149,7 +214,6 @@ export class AdminDashboardComponent implements OnInit {
           this.actionMessage.set(this.t().updateSubscriptionSuccess);
           this.savingUserId.set(null);
           this.closeEdit();
-          this.refreshStats();
         },
         error: () => {
           this.actionError.set(this.t().updateSubscriptionError);
@@ -171,7 +235,6 @@ export class AdminDashboardComponent implements OnInit {
         this.applyUserUpdate(res.user);
         this.actionMessage.set(this.t().giftTrialSuccess);
         this.giftingUserId.set(null);
-        this.refreshStats();
       },
       error: () => {
         this.actionError.set(this.t().giftTrialError);
@@ -184,12 +247,6 @@ export class AdminDashboardComponent implements OnInit {
     this.users.update((rows) =>
       rows.map((row) => (row._id === user._id ? { ...row, ...user } : row)),
     );
-  }
-
-  private refreshStats(): void {
-    this.adminSvc.getStats().subscribe({
-      next: (stats) => this.stats.set(stats),
-    });
   }
 
   private defaultTrialEndsInput(from = new Date()): string {

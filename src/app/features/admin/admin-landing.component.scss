@@ -1,0 +1,120 @@
+.admin-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  max-width: 44rem;
+}
+
+.admin-landing__head {
+  h2 {
+    margin: 0 0 0.35rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--ink, #071714);
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+}
+
+.admin-landing__tabs {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background: rgb(15 122 95 / 0.08);
+  width: fit-content;
+}
+
+.admin-landing__tab {
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  &--active {
+    background: #fff;
+    color: var(--ink, #071714);
+    box-shadow: 0 4px 14px rgb(15 35 28 / 0.08);
+  }
+}
+
+.admin-landing__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+
+  input,
+  textarea {
+    width: 100%;
+    border: 1px solid var(--line, #cfe3d9);
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+    font: inherit;
+    font-weight: 400;
+    color: var(--text-primary);
+    background: #fff;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 16rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  small {
+    font-weight: 400;
+    color: var(--text-secondary);
+  }
+}
+
+.admin-landing__save {
+  align-self: flex-start;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.4rem;
+  background: var(--btn-primary-bg, var(--ink, #071714));
+  color: var(--btn-primary-fg, var(--lime, #c6f071));
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--btn-primary-hover, #0d2a24);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.admin-landing__status,
+.admin-landing__ok {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.admin-landing__error {
+  margin: 0;
+  color: #c5221f;
+  font-size: 0.875rem;
+}
+
+.admin-landing__ok {
+  color: var(--moss, #0f3d34);
+}

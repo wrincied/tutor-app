@@ -3,6 +3,7 @@
     <div
       class="app-dialog-overlay"
       [class.app-dialog-overlay--sheet]="layout() === 'sheet'"
+      [class.app-dialog-overlay--drawer]="layout() === 'drawer'"
       [class.app-dialog-overlay--on-top]="stackOnTop()"
       role="presentation"
       animate.leave="modal-overlay-leave"
@@ -12,10 +13,17 @@
         class="app-dialog"
         [class.app-dialog--error]="variant() === 'error'"
         [class.app-dialog--sheet]="layout() === 'sheet'"
+        [class.app-dialog--drawer]="layout() === 'drawer'"
         role="alertdialog"
         aria-modal="true"
         [attr.aria-labelledby]="'app-dialog-title'"
-        [animate.leave]="layout() === 'sheet' ? 'modal-sheet-leave' : 'modal-dialog-leave'"
+        [animate.leave]="
+          layout() === 'drawer'
+            ? 'modal-drawer-leave'
+            : layout() === 'sheet'
+              ? 'modal-sheet-leave'
+              : 'modal-dialog-leave'
+        "
         (click)="$event.stopPropagation()"
       >
         @if (iconSrc(); as src) {

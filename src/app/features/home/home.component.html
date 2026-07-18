@@ -1,56 +1,227 @@
-<div class="page app-scroll-page home-page">
-  <header class="home-page__header">
-    <p class="home-page__badge">Beta</p>
-    <h1 class="home-page__greeting">{{ greeting() }}</h1>
-    <p class="home-page__subtitle">{{ t.todaySection }}</p>
-  </header>
+@if (designMode) {
+  <div class="page app-scroll-page home-studio">
+    <div class="home-studio__glow" aria-hidden="true"></div>
 
-  <div class="scrollable-content">
-  @if (loading()) {
-    <div class="home-stats home-stats--loading" role="status" aria-busy="true">
-      <span class="sr-only">{{ t.loading }}</span>
-      @for (slot of [0, 1]; track slot) {
-        <div class="home-stat home-stat--skeleton">
-          <span class="skeleton skeleton--line skeleton--line-sm" style="width: 55%"></span>
-          <span class="skeleton skeleton--line skeleton--line-lg" style="width: 40%"></span>
+    <header class="home-studio__mast">
+      <p class="home-studio__date">{{ todayDateLabel() }}</p>
+      <h1 class="home-studio__greeting">{{ greeting() }}</h1>
+    </header>
+
+    <div class="scrollable-content home-studio__body">
+      @if (loading()) {
+        <div class="home-pulse" role="status" aria-busy="true">
+          <span class="sr-only">{{ t.loading }}</span>
+          @for (slot of [0, 1, 2]; track slot) {
+            <div class="home-pulse__row">
+              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 40%"></span>
+              <span class="skeleton skeleton--line skeleton--line-lg" style="width: 70%"></span>
+            </div>
+          }
         </div>
+      } @else if (error()) {
+        <p class="home-page__error">{{ error() }}</p>
+      } @else {
+        <section class="home-studio__focus" aria-labelledby="home-next-lesson">
+          <p id="home-next-lesson" class="home-studio__eyebrow">{{ t.nextLessonTitle }}</p>
+          @if (nextLesson(); as row) {
+            <a routerLink="/app/calendar" class="home-studio__focus-link">
+              <span class="home-studio__clock">{{ lessonTime(row.lesson.scheduledAt) }}</span>
+              <span class="home-studio__focus-copy">
+                <span class="home-studio__focus-name">{{ row.studentName }}</span>
+                <span class="home-studio__focus-meta">{{ lessonDuration(row.lesson.lesson_duration) }}</span>
+              </span>
+            </a>
+          } @else {
+            <p class="home-studio__quiet">{{ t.nextLessonNone }}</p>
+            <a routerLink="/app/calendar" class="home-studio__text-cta">{{ i18n.nav().calendar }}</a>
+          }
+        </section>
+
+        <p class="home-studio__strip" [attr.aria-label]="t.todaySection">
+          <a routerLink="/app/calendar" class="home-studio__chip">
+            <strong>{{ todayLessonCount() }}</strong> {{ t.todayLessons }}
+          </a>
+          <span class="home-studio__dot" aria-hidden="true"></span>
+          <a routerLink="/app/finance" class="home-studio__chip">
+            <strong>{{ todayIncomeLabel() }}</strong> {{ t.todayIncome }}
+          </a>
+          <span class="home-studio__dot" aria-hidden="true"></span>
+          <a routerLink="/app/calendar" class="home-studio__chip">
+            <strong>{{ todayHours() | number: '1.0-1' }}</strong> {{ t.todayHours }}
+          </a>
+        </p>
+
+        <section class="home-studio__day" aria-labelledby="home-agenda">
+          <div class="home-studio__day-head">
+            <h2 id="home-agenda" class="home-studio__eyebrow">{{ t.todayAgenda }}</h2>
+            @if (overdueCount() > 0) {
+              <p class="home-studio__warn">{{ overdueHint() }}</p>
+            }
+          </div>
+
+          @if (todayLessons().length === 0) {
+            <p class="home-studio__quiet">{{ t.lessonsEmpty }}</p>
+          } @else {
+            <ol class="home-studio__list">
+              @for (row of todayLessons(); track row.lesson.occurrenceKey ?? row.lesson._id + row.lesson.scheduledAt) {
+                <li>
+                  <a
+                    routerLink="/app/calendar"
+                    class="home-studio__item"
+                    [class.home-studio__item--overdue]="isLessonOverdue(row)"
+                  >
+                    <time class="home-studio__item-time">{{ lessonTime(row.lesson.scheduledAt) }}</time>
+                    <span class="home-studio__rail" aria-hidden="true">
+                      <span class="home-studio__swatch" [style.background]="row.studentColor"></span>
+                    </span>
+                    <span class="home-studio__item-main">
+                      <span class="home-studio__item-name">{{ row.studentName }}</span>
+                      <span class="home-studio__item-status" [attr.data-status]="row.lesson.status">
+                        {{ statusLabel(row.lesson.status) }}
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ol>
+          }
+        </section>
+
+        @if (lowBalanceStudents().length > 0) {
+          <section class="home-studio__aside" aria-labelledby="home-low-balance">
+            <h2 id="home-low-balance" class="home-studio__eyebrow">{{ t.lowBalanceTitle }}</h2>
+            <ul class="home-studio__aside-list">
+              @for (student of lowBalanceStudents(); track student._id) {
+                <li>
+                  <a routerLink="/app/students" class="home-studio__aside-link">
+                    <span>{{ student.name }}</span>
+                    <span>{{ lowBalanceLabel(student) }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </section>
+        }
       }
     </div>
-  } @else if (error()) {
-    <p class="home-page__error">{{ error() }}</p>
-  } @else {
-    <div class="home-stats">
-      <a routerLink="/app/calendar" class="home-stat home-stat--lessons">
-        <span class="home-stat__icon" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-        </span>
-        <span class="home-stat__value">{{ todayLessonCount() }}</span>
-        <span class="home-stat__label">{{ t.todayLessons }}</span>
-        @if (todayLessonCount() === 0) {
-          <span class="home-stat__hint">{{ t.lessonsEmpty }}</span>
-        }
-      </a>
-
-      <a routerLink="/app/finance" class="home-stat home-stat--income">
-        <span class="home-stat__icon" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-            <line x1="12" y1="1" x2="12" y2="23" />
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
-        </span>
-        <span class="home-stat__value">{{ todayIncomeLabel() }}</span>
-        <span class="home-stat__label">{{ t.todayIncome }}</span>
-        <span class="home-stat__hint">{{ t.incomeApproxHint }}</span>
-      </a>
-    </div>
-  }
   </div>
-</div>
+} @else {
+  <div class="page app-scroll-page home-page">
+    <header class="home-page__header">
+      <p class="home-page__badge">Beta</p>
+      <h1 class="home-page__greeting">{{ greeting() }}</h1>
+      <p class="home-page__subtitle">{{ todayDateLabel() }}</p>
+    </header>
+
+    <div class="scrollable-content">
+      @if (loading()) {
+        <div class="home-stats home-stats--loading" role="status" aria-busy="true">
+          <span class="sr-only">{{ t.loading }}</span>
+          @for (slot of [0, 1, 2]; track slot) {
+            <div class="home-stat home-stat--skeleton">
+              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 55%"></span>
+              <span class="skeleton skeleton--line skeleton--line-lg" style="width: 40%"></span>
+            </div>
+          }
+        </div>
+      } @else if (error()) {
+        <p class="home-page__error">{{ error() }}</p>
+      } @else {
+        <p class="home-page__section-label">{{ t.todaySection }}</p>
+
+        <div class="home-stats">
+          <a routerLink="/app/calendar" class="home-stat home-stat--lessons">
+            <span class="home-stat__value">{{ todayLessonCount() }}</span>
+            <span class="home-stat__label">{{ t.todayLessons }}</span>
+            <span class="home-stat__hint">
+              {{ todayCompletedCount() }} {{ t.todayCompleted }} ·
+              {{ todayScheduledCount() }} {{ t.todayScheduled }}
+            </span>
+          </a>
+
+          <a routerLink="/app/finance" class="home-stat home-stat--income">
+            <span class="home-stat__value home-stat__value--sm">{{ todayIncomeLabel() }}</span>
+            <span class="home-stat__label">{{ t.todayIncome }}</span>
+            <span class="home-stat__hint">{{ t.incomeApproxHint }}</span>
+          </a>
+
+          <a routerLink="/app/calendar" class="home-stat home-stat--hours">
+            <span class="home-stat__value">{{ todayHours() | number: '1.0-1' }}</span>
+            <span class="home-stat__label">{{ t.todayHours }}</span>
+            @if (todayLessonCount() === 0) {
+              <span class="home-stat__hint">{{ t.lessonsEmpty }}</span>
+            }
+          </a>
+        </div>
+
+        <section class="home-panel home-panel--next" aria-labelledby="home-next-lesson">
+          <h2 id="home-next-lesson" class="home-panel__title">{{ t.nextLessonTitle }}</h2>
+          @if (nextLesson(); as row) {
+            <a routerLink="/app/calendar" class="home-next">
+              <span class="home-next__time">{{ lessonTime(row.lesson.scheduledAt) }}</span>
+              <span class="home-next__meta">
+                <span class="home-next__name">{{ row.studentName }}</span>
+                <span class="home-next__duration">{{ lessonDuration(row.lesson.lesson_duration) }}</span>
+              </span>
+            </a>
+          } @else {
+            <p class="home-panel__empty">{{ t.nextLessonNone }}</p>
+          }
+        </section>
+
+        <section class="home-panel" aria-labelledby="home-agenda">
+          <div class="home-panel__head">
+            <h2 id="home-agenda" class="home-panel__title">{{ t.todayAgenda }}</h2>
+            @if (overdueCount() > 0) {
+              <p class="home-panel__alert">{{ overdueHint() }}</p>
+            }
+          </div>
+
+          @if (todayLessons().length === 0) {
+            <p class="home-panel__empty">{{ t.lessonsEmpty }}</p>
+          } @else {
+            <ul class="home-agenda">
+              @for (row of todayLessons(); track row.lesson.occurrenceKey ?? row.lesson._id + row.lesson.scheduledAt) {
+                <li>
+                  <a
+                    routerLink="/app/calendar"
+                    class="home-agenda__item"
+                    [class.home-agenda__item--overdue]="isLessonOverdue(row)"
+                  >
+                    <span class="home-agenda__stripe" [style.background]="row.studentColor"></span>
+                    <span class="home-agenda__time">{{ lessonTime(row.lesson.scheduledAt) }}</span>
+                    <span class="home-agenda__body">
+                      <span class="home-agenda__name">{{ row.studentName }}</span>
+                      <span class="home-agenda__status" [attr.data-status]="row.lesson.status">
+                        {{ statusLabel(row.lesson.status) }}
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        @if (lowBalanceStudents().length > 0) {
+          <section class="home-panel home-panel--warn" aria-labelledby="home-low-balance">
+            <h2 id="home-low-balance" class="home-panel__title">{{ t.lowBalanceTitle }}</h2>
+            <ul class="home-balance">
+              @for (student of lowBalanceStudents(); track student._id) {
+                <li>
+                  <a routerLink="/app/students" class="home-balance__item">
+                    <span class="home-balance__name">{{ student.name }}</span>
+                    <span class="home-balance__count">{{ lowBalanceLabel(student) }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
+    </div>
+  </div>
+}
 
 <app-dialog
   [open]="betaOpen()"

@@ -5,7 +5,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { resolveRegisterError } from '../../core/utils/auth-errors';
-import { environment } from '@environment';
+import { shouldUseGoogleSignInPopup } from '../../core/utils/google-sign-in-mode';
 
 @Component({
   selector: 'app-register',
@@ -68,11 +68,11 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  /** В dev используем popup (обход проблем redirect на localhost), в prod — redirect. */
+  /** В dev и на GitHub Pages — popup; на Firebase Hosting prod — redirect. */
   signInWithGoogle(): void {
     this.error.set('');
     this.loading.set(true);
-    if (environment.production) {
+    if (!shouldUseGoogleSignInPopup()) {
       this.auth.loginWithGoogleRedirect();
       return;
     }

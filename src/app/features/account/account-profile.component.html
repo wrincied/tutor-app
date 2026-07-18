@@ -136,27 +136,20 @@
 
       @if (!taxModeConfigured()) {
         <p class="account-hint account-hint--warn">{{ i18n.accountUi().taxModeRequiredHint }}</p>
-
-        <div class="field field--select">
-          <app-select
-            name="tax_mode"
-            [ngModel]="taxModeSelectValue"
-            (ngModelChange)="onTaxModePick($event)"
-            [options]="taxModeSelectOptions()"
-            menuPlacement="below"
-          />
-          <label>{{ i18n.accountUi().taxMode }}</label>
-        </div>
       } @else {
-        <p class="account-readonly">
-          <span class="account-readonly__label">{{ i18n.accountUi().taxMode }}</span>
-          <strong>{{ i18n.taxModeLabel(tax_mode) }}</strong>
-        </p>
-        <p class="account-hint">
-          {{ i18n.accountUi().taxModeLockedHintBefore }}
-          <a [href]="supportMailto()">{{ i18n.accountUi().taxSupportEmail }}</a>{{ i18n.accountUi().taxModeLockedHintAfter }}
-        </p>
+        <p class="account-hint">{{ i18n.accountUi().taxModeChangeHint }}</p>
       }
+
+      <div class="field field--select">
+        <app-select
+          name="tax_mode"
+          [ngModel]="taxModeSelectValue"
+          (ngModelChange)="onTaxModePick($event)"
+          [options]="taxModeSelectOptions()"
+          menuPlacement="below"
+        />
+        <label>{{ i18n.accountUi().taxMode }}</label>
+      </div>
     </section>
 
     <button type="submit" class="btn-primary account-form__submit" [disabled]="saving()">

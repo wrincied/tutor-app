@@ -8,11 +8,13 @@ on:
   push:
     branches:
       - dev
-      - master
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
 
 jobs:
   test-and-build:
@@ -37,3 +39,93 @@ jobs:
 
       - name: Build (development)
         run: npm run build:dev
+
+  deploy-gh-pages:
+    name: Deploy to GitHub Pages
+    needs: test-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    env:
+      DEV_API_URL: ${{ secrets.DEV_API_URL }}
+      DEV_API_URL_FALLBACK: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app'
+      DEV_APP_URL: https://wrincied.github.io/tutor-app/dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate studio production env for GitHub Pages
+        run: |
+          API_URL="${DEV_API_URL:-$DEV_API_URL_FALLBACK}"
+          if [ -z "$API_URL" ]; then
+            echo "::error::Backend URL is missing. Set secret DEV_API_URL in GitHub Actions OR fill DEV_API_URL_FALLBACK in .github/workflows/ci.yml"
+            exit 1
+          fi
+          if [ -z "$DEV_API_URL" ]; then
+            echo "::warning::Using DEV_API_URL_FALLBACK from workflow file (secret DEV_API_URL is not set)"
+          fi
+          cat > src/environments/environment.production-design.ts << EOF
+          export const environment = {
+            production: true,
+            designMode: true,
+            apiUrl: '${API_URL}',
+            appUrl: '${DEV_APP_URL}',
+            firebaseConfig: {
+              apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
+              authDomain: 'simple4u-64822.web.app',
+              projectId: 'tutorassis',
+              storageBucket: 'tutorassis.firebasestorage.app',
+              messagingSenderId: '965411338053',
+              appId: '1:965411338053:web:d98317afdb5602a53c702c',
+              measurementId: 'G-TXM74NGN6R',
+            },
+          };
+          EOF
+          cp src/environments/environment.production-design.ts src/environments/environment.ts
+          node scripts/prepare-environment.mjs production-design
+
+      - name: Build Angular (studio) for GitHub Pages
+        run: npx ng build --configuration=production-design --base-href=/tutor-app/dev/
+
+      - name: Deploy studio to /dev
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist/tutor/browser
+          target-folder: dev
+          branch: gh-pages
+
+      - name: Redirect root gh-pages URL to /dev
+        run: |
+          mkdir -p gh-pages-root
+          cat > gh-pages-root/index.html << 'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <title>Simple4U</title>
+              <meta http-equiv="refresh" content="0; url=/tutor-app/dev/">
+              <link rel="canonical" href="/tutor-app/dev/">
+              <script>location.replace('/tutor-app/dev/' + (location.hash || ''));</script>
+            </head>
+            <body>
+              <p>Redirecting to <a href="/tutor-app/dev/">Simple4U</a>…</p>
+            </body>
+          </html>
+          EOF
+
+      - name: Publish root redirect
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: gh-pages-root
+          target-folder: .
+          branch: gh-pages
+          clean: false

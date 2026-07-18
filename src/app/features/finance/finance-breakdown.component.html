@@ -1,0 +1,155 @@
+<div class="page app-scroll-page finance-breakdown-page">
+  <header class="finance-breakdown-header">
+    <div class="finance-breakdown-header__main">
+      <a class="finance-breakdown-header__back" [routerLink]="backLink().path" [queryParams]="backLink().queryParams">
+        ← {{ t.breakdownBack }}
+      </a>
+      <div class="finance-breakdown-header__titles">
+        <h1 class="finance-breakdown-header__title">{{ pageTitle() }}</h1>
+        <p class="finance-breakdown-header__period">
+          <span>{{ periodPresetLabel() }}</span>
+          @if (periodRangeLabel(); as range) {
+            <span>{{ range }}</span>
+          }
+          @if (displayCurrency(); as currency) {
+            <span>· {{ currency }}</span>
+          }
+        </p>
+      </div>
+    </div>
+    @if (canExportPdf()) {
+      <button
+        type="button"
+        class="btn-secondary finance-breakdown-header__export"
+        [disabled]="exportingPdf()"
+        (click)="exportPdf()"
+      >
+        {{ exportingPdf() ? t.exportingPdf : t.exportPdf }}
+      </button>
+    }
+  </header>
+
+  <div class="scrollable-content">
+    @if (loading()) {
+      <p class="hint">{{ t.loading }}</p>
+    } @else if (error()) {
+      <p class="finance-breakdown-page__error">{{ error() }}</p>
+    } @else {
+      <div class="finance-detail">
+        <p class="finance-detail__intro">{{ pageIntro() }}</p>
+
+        @if (showLessons()) {
+          <h2 class="finance-detail__subtitle">{{ t.breakdownLessonsList }}</h2>
+          @if (lessonsBreakdown().length === 0) {
+            <p class="hint">{{ t.breakdownEmptyLessons }}</p>
+          } @else {
+            <ul class="finance-breakdown-list">
+              @for (lesson of lessonsBreakdown(); track lesson.id) {
+              <li
+                class="finance-breakdown-list__item"
+                [class.finance-breakdown-list__item--warn]="lesson.hiddenReason || lesson.scheduleDerived"
+              >
+                  <div class="finance-breakdown-list__row">
+                    <span class="finance-breakdown-list__date">{{ formatLessonRowDate(lesson) }}</span>
+                    <strong class="finance-breakdown-list__amount">{{
+                      formatLessonRowAmount(lesson)
+                    }}</strong>
+                  </div>
+                  <div class="finance-breakdown-list__meta">
+                    <span>{{ lesson.studentName || '—' }}</span>
+                    <span>{{ lessonStatusLabel(lesson.status) }}</span>
+                    <span>{{ lesson.durationMinutes }} {{ t.breakdownMinutes }}</span>
+                  </div>
+                @if (lesson.isRecurring && !lesson.hiddenReason) {
+                  <p class="finance-breakdown-list__note">{{ t.breakdownRecurringNote }}</p>
+                }
+                @if (lesson.hiddenReason) {
+                  <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
+                    {{ hiddenReasonLabel(lesson.hiddenReason) }}
+                  </p>
+                } @else if (lesson.scheduleDerived) {
+                  <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
+                    {{ t.breakdownScheduleDerived }}
+                  </p>
+                } @else if (!lesson.visibleInCalendar) {
+                  <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
+                    {{ t.breakdownHiddenInCalendar }}
+                  </p>
+                }
+                @if (lesson.scheduledAt && !lesson.hiddenReason) {
+                  <p class="finance-breakdown-list__note">
+                    <a
+                      routerLink="/app/calendar"
+                      [queryParams]="calendarLinkQuery(lesson)"
+                      class="finance-link"
+                    >
+                      {{ t.breakdownOpenCalendarDate }}
+                    </a>
+                  </p>
+                } @else if (!lesson.hiddenReason) {
+                  <p class="finance-breakdown-list__note">
+                    <a routerLink="/app/calendar" class="finance-link">{{ t.breakdownOpenCalendar }}</a>
+                  </p>
+                }
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @if (showExpenses()) {
+          <h2 class="finance-detail__subtitle">{{ t.breakdownExpensesList }}</h2>
+          @if (expensesBreakdown().length === 0) {
+            <p class="hint">{{ t.breakdownEmptyExpenses }}</p>
+          } @else {
+            <ul class="finance-breakdown-list">
+              @for (expense of expensesBreakdown(); track expense.id) {
+                <li class="finance-breakdown-list__item">
+                  <div class="finance-breakdown-list__row">
+                    <span class="finance-breakdown-list__date">{{ expense.expense_date }}</span>
+                    <strong class="finance-breakdown-list__amount">{{
+                      formatMoney(expense.amountReport)
+                    }}</strong>
+                  </div>
+                  <div class="finance-breakdown-list__meta">
+                    <span>{{ expense.title }}</span>
+                    @if (expense.category) {
+                      <span>{{ expense.category }}</span>
+                    }
+                    @if (expenseOriginalLabel(expense); as original) {
+                      <span>{{ original }}</span>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @if (panel() === 'net' && summary()?.tax; as tax) {
+          <h2 class="finance-detail__subtitle">{{ t.netProfit }}</h2>
+          <dl class="finance-dl finance-dl--compact finance-detail__tax">
+            <div>
+              <dt>{{ t.grossProfit }}</dt>
+              <dd>{{ formatMoney(summary()!.income.grossProfit) }}</dd>
+            </div>
+            @if (tax.socialInsuranceRate > 0 || tax.socialInsurance > 0) {
+              <div>
+                <dt>{{ t.socialInsurance }} ({{ formatPercent(tax.socialInsuranceRate) }})</dt>
+                <dd>−{{ formatMoney(tax.socialInsurance) }}</dd>
+              </div>
+            }
+            <div>
+              <dt>{{ t.incomeTax }}</dt>
+              <dd>−{{ formatMoney(tax.incomeTax) }}</dd>
+            </div>
+            <div class="finance-dl__highlight">
+              <dt>{{ t.netProfit }}</dt>
+              <dd>{{ formatMoney(tax.netProfit) }}</dd>
+            </div>
+          </dl>
+        }
+      </div>
+    }
+  </div>
+</div>

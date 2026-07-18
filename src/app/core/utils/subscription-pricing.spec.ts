@@ -8,6 +8,12 @@ describe('subscription-pricing', () => {
     expect(pl.monthly).toBe(39);
   });
 
+  it('returns Ukraine pricing in UAH', () => {
+    const ua = getSubscriptionPricing('UA');
+    expect(ua.currency).toBe('UAH');
+    expect(ua.monthly).toBe(399);
+  });
+
   it('falls back to AT for unknown country', () => {
     expect(getSubscriptionPricing('XX').currency).toBe('EUR');
   });

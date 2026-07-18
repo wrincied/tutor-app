@@ -1,0 +1,51 @@
+<section class="admin-landing">
+  <header class="admin-landing__head">
+    <h2>{{ i18n.adminUi().landingTitle }}</h2>
+    <p>{{ i18n.adminUi().landingIntro }}</p>
+  </header>
+
+  <div class="admin-landing__tabs" role="tablist">
+    <button
+      type="button"
+      class="admin-landing__tab"
+      [class.admin-landing__tab--active]="activeDoc() === 'datenschutz'"
+      (click)="selectDoc('datenschutz')"
+    >
+      {{ i18n.adminUi().landingDatenschutz }}
+    </button>
+    <button
+      type="button"
+      class="admin-landing__tab"
+      [class.admin-landing__tab--active]="activeDoc() === 'impressum'"
+      (click)="selectDoc('impressum')"
+    >
+      {{ i18n.adminUi().landingImpressum }}
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p class="admin-landing__status">{{ i18n.adminUi().loading }}</p>
+  } @else {
+    @if (error()) {
+      <p class="admin-landing__error" role="alert">{{ error() }}</p>
+    }
+    @if (saved()) {
+      <p class="admin-landing__ok" role="status">{{ i18n.adminUi().landingSaved }}</p>
+    }
+
+    <label class="admin-landing__field">
+      <span>{{ i18n.adminUi().landingTitleField }}</span>
+      <input type="text" [(ngModel)]="title" name="legal_title" maxlength="200" />
+    </label>
+
+    <label class="admin-landing__field">
+      <span>{{ i18n.adminUi().landingBodyField }}</span>
+      <textarea [(ngModel)]="body" name="legal_body" rows="18" spellcheck="true"></textarea>
+      <small>{{ i18n.adminUi().landingBodyHint }}</small>
+    </label>
+
+    <button type="button" class="admin-landing__save" [disabled]="saving()" (click)="save()">
+      {{ saving() ? i18n.adminUi().landingSaving : i18n.adminUi().landingSave }}
+    </button>
+  }
+</section>

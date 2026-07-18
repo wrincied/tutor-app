@@ -1,0 +1,194 @@
+@if (loadError()) {
+  <p class="admin-page__error" role="alert">{{ loadError() }}</p>
+}
+
+@if (actionMessage()) {
+  <p class="admin-page__success" role="status">{{ actionMessage() }}</p>
+}
+@if (actionError()) {
+  <p class="admin-page__error" role="alert">{{ actionError() }}</p>
+}
+
+<div class="admin-users-toolbar">
+  <input
+    type="search"
+    class="app-input admin-users-toolbar__search"
+    [placeholder]="t().searchUsers"
+    [ngModel]="search()"
+    (ngModelChange)="search.set($event)"
+  />
+  <app-select
+    class="admin-users-toolbar__sort"
+    size="compact"
+    [ngModel]="sortKey()"
+    (ngModelChange)="sortKey.set($event)"
+    [options]="sortOptions()"
+  />
+  <button type="button" class="btn-secondary" (click)="exportCsv()" [disabled]="filteredUsers().length === 0">
+    {{ t().exportCsv }}
+  </button>
+</div>
+
+@if (loading()) {
+  <p class="hint">{{ t().loading }}</p>
+} @else {
+  <section class="admin-data-grid admin-data-grid--cols-7" aria-label="Users">
+    <div class="admin-data-grid__head">
+      <span>{{ t().tableEmail }}</span>
+      <span>{{ t().tableStatus }}</span>
+      <span>{{ t().tableCountry }}</span>
+      <span>{{ t().tableRegistered }}</span>
+      <span>{{ t().tableLastVisit }}</span>
+      <span class="admin-data-grid__head--end">{{ t().tableStudents }}</span>
+      <span>{{ t().tableActions }}</span>
+    </div>
+    <div class="admin-data-grid__body" role="list">
+      @if (filteredUsers().length === 0) {
+        <p class="admin-data-grid__empty">
+          {{ users().length === 0 ? t().noUsers : t().searchUsers }}
+        </p>
+      } @else {
+        @for (user of filteredUsers(); track user._id) {
+          <article class="admin-data-grid__row admin-users-row" role="listitem">
+            <div class="admin-data-grid__cell">
+              <span class="admin-data-grid__cell-label">{{ t().tableEmail }}</span>
+              {{ user.email }}
+            </div>
+            <div class="admin-data-grid__cell">
+              <span class="admin-data-grid__cell-label">{{ t().tableStatus }}</span>
+              <div class="admin-status-cell">
+                <span [class]="statusClass(user.subscription_status)">
+                  {{ statusLabel(user.subscription_status) }}
+                </span>
+                @if (user.subscription_status === 'trial' && user.trial_ends_at) {
+                  <span class="admin-trial-ends">
+                    {{ t().trialEndsUntil }}
+                    {{ user.trial_ends_at | date: 'dd.MM.yyyy' }}
+                  </span>
+                }
+              </div>
+            </div>
+            <div class="admin-data-grid__cell">
+              <span class="admin-data-grid__cell-label">{{ t().tableCountry }}</span>
+              {{ user.country_settings || '—' }}
+            </div>
+            <div class="admin-data-grid__cell">
+              <span class="admin-data-grid__cell-label">{{ t().tableRegistered }}</span>
+              @if (user.createdAt) {
+                <span [title]="user.createdAt | date: 'dd.MM.yyyy HH:mm'">
+                  {{ user.createdAt | relativeTime }}
+                </span>
+              } @else {
+                —
+              }
+            </div>
+            <div class="admin-data-grid__cell">
+              <span class="admin-data-grid__cell-label">{{ t().tableLastVisit }}</span>
+              @if (user.last_login_at) {
+                <span [title]="user.last_login_at | date: 'dd.MM.yyyy HH:mm'">
+                  {{ user.last_login_at | relativeTime }}
+                </span>
+              } @else {
+                {{ t().never }}
+              }
+            </div>
+            <div class="admin-data-grid__cell admin-users-row__students admin-users-row__students--desktop">
+              <span class="admin-data-grid__cell-label">{{ t().tableStudents }}</span>
+              <button
+                type="button"
+                class="btn-secondary admin-users-row__students-btn"
+                (click)="openUserDetail(user)"
+              >
+                {{ studentsButtonLabel(user.studentsCount) }}
+              </button>
+            </div>
+            <div class="admin-data-grid__cell">
+              <span class="admin-data-grid__cell-label">{{ t().tableActions }}</span>
+              <div class="admin-table__actions">
+                <button type="button" class="btn-secondary" (click)="openEdit(user)">
+                  {{ t().editSubscription }}
+                </button>
+                <button
+                  type="button"
+                  class="btn-secondary admin-table__gift"
+                  [disabled]="giftingUserId() === user._id"
+                  (click)="giftTrial(user)"
+                >
+                  {{ giftingUserId() === user._id ? t().giftingTrial : t().giftTrial }}
+                </button>
+              </div>
+            </div>
+            <div class="admin-users-row__students admin-users-row__students--mobile">
+              <button
+                type="button"
+                class="btn-secondary admin-users-row__students-btn"
+                (click)="openUserDetail(user)"
+              >
+                {{ studentsButtonLabel(user.studentsCount) }}
+              </button>
+            </div>
+          </article>
+        }
+      }
+    </div>
+  </section>
+}
+
+<app-dialog
+  [open]="editOpen()"
+  [title]="t().editSubscriptionTitle"
+  [confirmLabel]="savingUserId() ? t().savingSubscription : t().saveSubscription"
+  [cancelLabel]="t().cancelEdit"
+  (cancel)="closeEdit()"
+  (confirm)="saveSubscription()"
+>
+  @if (editingUser(); as user) {
+    <div class="admin-sub-form">
+      <p class="admin-sub-form__email">{{ user.email }}</p>
+
+      <label class="admin-sub-form__label" for="admin-sub-status">{{ t().subscriptionField }}</label>
+      <app-select
+        id="admin-sub-status"
+        size="compact"
+        [ngModel]="editStatus()"
+        (ngModelChange)="onEditStatusChange($event)"
+        [options]="subscriptionOptions()"
+      />
+
+      @if (editStatus() === 'trial') {
+        <label class="admin-sub-form__label" for="admin-sub-trial-ends">{{ t().trialEndsLabel }}</label>
+        <input
+          id="admin-sub-trial-ends"
+          class="app-input"
+          type="date"
+          [ngModel]="editTrialEnds()"
+          (ngModelChange)="editTrialEnds.set($event)"
+        />
+      }
+    </div>
+  }
+</app-dialog>
+
+<app-dialog
+  [open]="detailOpen()"
+  [title]="t().userDetailTitle"
+  [dismissLabel]="t().cancelEdit"
+  (cancel)="closeUserDetail()"
+>
+  @if (detailLoading()) {
+    <p class="hint">{{ t().userDetailLoading }}</p>
+  } @else if (detailError()) {
+    <p class="admin-page__error" role="alert">{{ detailError() }}</p>
+  } @else if (detail(); as s) {
+    <div class="admin-user-detail">
+      <p class="admin-user-detail__email">{{ s.user.email }}</p>
+      <p><span [class]="statusClass(s.user.subscription_status)">{{ statusLabel(s.user.subscription_status) }}</span></p>
+      <dl class="admin-user-detail__stats">
+        <div><dt>{{ t().userDetailStudents }}</dt><dd>{{ s.studentsCount }}</dd></div>
+        <div><dt>{{ t().userDetailLessons }}</dt><dd>{{ s.lessonsCount }}</dd></div>
+        <div><dt>{{ t().tableCountry }}</dt><dd>{{ s.user.country_settings || '—' }}</dd></div>
+        <div><dt>{{ t().tableLastVisit }}</dt><dd>{{ s.user.last_login_at ? (s.user.last_login_at | relativeTime) : t().never }}</dd></div>
+      </dl>
+    </div>
+  }
+</app-dialog>

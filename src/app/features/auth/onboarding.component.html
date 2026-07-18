@@ -2,7 +2,7 @@
   class="onboarding-shell"
   [class.onboarding-shell--cookie-dismissed]="consent.hasChoice()"
 >
-  <div class="auth-page auth-page--onboarding" [class.auth-page--submitting]="loading()">
+  <div class="auth-split auth-split--onboarding" [class.auth-split--submitting]="loading()">
     @if (loading()) {
       <div class="onboarding-submit-overlay" role="status" aria-live="polite" aria-busy="true">
         <div class="onboarding-submit-overlay__panel">
@@ -12,10 +12,10 @@
       </div>
     }
 
-    <div class="auth-page__scroll">
-      <span class="auth-logo">Simple4U</span>
+    <section class="auth-split__panel auth-split__panel--scroll">
+      <span class="auth-split__brand">Simple4U</span>
 
-      <div class="auth-card auth-card--onboarding">
+      <div class="auth-split__card">
         <h1>{{ i18n.authUi().onboardingTitle }}</h1>
         <p class="subtitle">{{ i18n.authUi().onboardingSubtitle }}</p>
 
@@ -121,51 +121,59 @@
           </div>
         </form>
       </div>
-    </div>
+    </section>
+
+    <aside class="auth-split__visual" aria-hidden="true">
+      <div class="auth-aurora">
+        <span class="auth-aurora__blob auth-aurora__blob--1"></span>
+        <span class="auth-aurora__blob auth-aurora__blob--2"></span>
+        <span class="auth-aurora__blob auth-aurora__blob--3"></span>
+      </div>
+    </aside>
   </div>
 
   @if (!consent.hasChoice()) {
     <footer class="onboarding-cookie-bar" aria-labelledby="onboarding-cookies-heading">
-    <div class="onboarding-cookie-bar__inner">
-      <h2 id="onboarding-cookies-heading" class="onboarding-cookie-bar__title">
-        {{ i18n.authUi().onboardingCookiesTitle }}
-      </h2>
-      <p class="onboarding-cookie-bar__text">
-        {{ i18n.authUi().onboardingCookiesBody }}
-        <a
-          routerLink="/legal/cookies"
-          class="onboarding-cookie-bar__link"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {{ i18n.authUi().onboardingCookiePolicyLink }}
-        </a>
-      </p>
-      <p class="onboarding-cookie-bar__hint">{{ i18n.authUi().onboardingCookiesOptional }}</p>
+      <div class="onboarding-cookie-bar__inner">
+        <h2 id="onboarding-cookies-heading" class="onboarding-cookie-bar__title">
+          {{ i18n.authUi().onboardingCookiesTitle }}
+        </h2>
+        <p class="onboarding-cookie-bar__text">
+          {{ i18n.authUi().onboardingCookiesBody }}
+          <a
+            routerLink="/legal/cookies"
+            class="onboarding-cookie-bar__link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ i18n.authUi().onboardingCookiePolicyLink }}
+          </a>
+        </p>
+        <p class="onboarding-cookie-bar__hint">{{ i18n.authUi().onboardingCookiesOptional }}</p>
 
-      <div
-        class="onboarding-cookie-actions"
-        role="group"
-        [attr.aria-label]="i18n.authUi().onboardingCookiesTitle"
-      >
-        <button
-          type="button"
-          class="onboarding-cookie-btn onboarding-cookie-btn--accept"
-          [class.onboarding-cookie-btn--active]="consent.isAccepted()"
-          (click)="acceptMarketingCookies()"
+        <div
+          class="onboarding-cookie-actions"
+          role="group"
+          [attr.aria-label]="i18n.authUi().onboardingCookiesTitle"
         >
-          {{ i18n.authUi().onboardingCookiesAccept }}
-        </button>
-        <button
-          type="button"
-          class="onboarding-cookie-btn onboarding-cookie-btn--muted"
-          [class.onboarding-cookie-btn--active]="consent.choice() === false"
-          (click)="declineMarketingCookies()"
-        >
-          {{ i18n.authUi().onboardingCookiesDecline }}
-        </button>
+          <button
+            type="button"
+            class="onboarding-cookie-btn onboarding-cookie-btn--accept"
+            [class.onboarding-cookie-btn--active]="consent.isAccepted()"
+            (click)="acceptMarketingCookies()"
+          >
+            {{ i18n.authUi().onboardingCookiesAccept }}
+          </button>
+          <button
+            type="button"
+            class="onboarding-cookie-btn onboarding-cookie-btn--muted"
+            [class.onboarding-cookie-btn--active]="consent.choice() === false"
+            (click)="declineMarketingCookies()"
+          >
+            {{ i18n.authUi().onboardingCookiesDecline }}
+          </button>
+        </div>
       </div>
-    </div>
     </footer>
   }
 </div>

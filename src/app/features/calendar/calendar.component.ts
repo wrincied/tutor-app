@@ -13,15 +13,20 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { CurrencyPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { CalendarLessonDisplayService } from '../../core/services/calendar-lesson-display.service';
 import { LessonService } from '../../core/services/lesson.service';
 import { UserProfileSettingsService } from '../../core/services/user-profile-settings.service';
 import { StudentService, type Student } from '../../core/services/student.service';
 import { isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
 import type { CalendarLesson, Lesson, LessonStatus } from '@interfaces';
+import {
+  lessonAmountFromPrice,
+  normalizeLessonPriceMode,
+} from '../../core/utils/lesson-amount';
 import { DEFAULT_STUDENT_BORDER_COLOR } from '../../core/utils/pastel-color';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
@@ -110,12 +115,13 @@ type BillingConfirmState = {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, AppDialogComponent, AppSelectComponent, NgTemplateOutlet],
+  imports: [FormsModule, AppDialogComponent, AppSelectComponent, NgTemplateOutlet],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
  })
 export class CalendarComponent implements OnInit {
   private readonly lessonsSvc = inject(LessonService);
+  private readonly route = inject(ActivatedRoute);
   private readonly studentSvc = inject(StudentService);
   private readonly lessonDisplay = inject(CalendarLessonDisplayService);
   readonly profileSettings = inject(UserProfileSettingsService);
@@ -170,6 +176,7 @@ export class CalendarComponent implements OnInit {
   studentsSidebarQuery = signal('');
   focusedStudentId = signal<string | null>(null);
   lessonFormStep = signal<1 | 2>(1);
+  lessonFormSubmitted = signal(false);
   scheduledAtLocal = signal('');
   /** Урок в активном перетаскивании (pointer events). */
   readonly dragActiveLessonId = signal<string | null>(null);
@@ -218,6 +225,8 @@ export class CalendarComponent implements OnInit {
   recurrenceConfig = signal<RecurrenceRuleConfig>({ ...DEFAULT_RECURRENCE_CONFIG });
   recurrenceDraft = signal<RecurrenceRuleConfig>({ ...DEFAULT_RECURRENCE_CONFIG });
   recurrenceModalOpen = signal(false);
+  /** Мобилка: сначала список режимов, затем детали. */
+  recurrenceModalStep = signal<'picker' | 'details'>('picker');
   /** Дата вхождения при редактировании виртуальной карточки (YYYY-MM-DD). */
   editingOccurrenceDate = signal<string | null>(null);
   deleteRecurringModalOpen = signal(false);
@@ -479,6 +488,131 @@ export class CalendarComponent implements OnInit {
     }));
   });
 
+  /** Desktop + mobile picker: включая «пользовательский». */
+  recurrenceSegmentOptions = computed(() => {
+    const t = this.i18n.calendarUi();
+    return [
+      {
+        value: 'none' as const,
+        label: t.recurrencePresetNone,
+        icon: 'assets/icons/icon-repeat-once.svg',
+      },
+      {
+        value: 'daily' as const,
+        label: t.recurrencePresetDaily,
+        icon: 'assets/icons/icon-repeat-daily.svg',
+      },
+      {
+        value: 'weekly' as const,
+        label: t.recurrencePresetWeekly,
+        icon: 'assets/icons/icon-repeat-weekly.svg',
+      },
+      {
+        value: 'monthly' as const,
+        label: t.recurrencePresetMonthly,
+        icon: 'assets/icons/icon-repeat-monthly.svg',
+      },
+      {
+        value: 'custom' as const,
+        label: t.recurrencePresetCustom,
+        icon: 'assets/icons/icon-repeat-custom.svg',
+      },
+    ];
+  });
+
+  recurrenceEndListOptions = computed(() => {
+    const t = this.i18n.calendarUi();
+    return [
+      {
+        value: 'never' as const,
+        label: t.recurrenceEndNever,
+        icon: 'assets/icons/icon-end-never.svg',
+      },
+      {
+        value: 'until' as const,
+        label: t.recurrenceEndUntilShort,
+        icon: 'assets/icons/icon-end-until.svg',
+      },
+      {
+        value: 'count' as const,
+        label: t.recurrenceEndCountShort,
+        icon: 'assets/icons/icon-end-count.svg',
+      },
+    ];
+  });
+
+  recurrenceSegmentActive = computed((): RecurrencePreset => {
+    const preset = this.recurrenceConfig().preset;
+    if (
+      preset === 'none' ||
+      preset === 'daily' ||
+      preset === 'weekly' ||
+      preset === 'monthly' ||
+      preset === 'custom'
+    ) {
+      return preset;
+    }
+    return 'none';
+  });
+
+  recurrenceConfigShowsDetails = computed(() => this.recurrenceSegmentActive() !== 'none');
+
+  recurrenceSegmentLabel = computed(() => {
+    const active = this.recurrenceSegmentActive();
+    return (
+      this.recurrenceSegmentOptions().find((opt) => opt.value === active)?.label ??
+      this.i18n.calendarUi().recurrenceModalTitle
+    );
+  });
+
+  recurrenceConfigShowsWeekdays = computed(() => {
+    const config = this.recurrenceConfig();
+    return (
+      config.preset === 'weekly' || (config.preset === 'custom' && config.customFreq === 'weekly')
+    );
+  });
+
+  recurrenceConfigShowsMonthlyHint = computed(() => {
+    const config = this.recurrenceConfig();
+    return (
+      config.preset === 'monthly' || (config.preset === 'custom' && config.customFreq === 'monthly')
+    );
+  });
+
+  recurrenceConfigMonthlyHint = computed(() =>
+    this.i18n
+      .calendarUi()
+      .recurrenceMonthlyOnDay.replace('{day}', this.recurrenceConfigMonthDay()),
+  );
+
+  recurrenceConfigIntervalUnit = computed(() => {
+    const config = this.recurrenceConfig();
+    const freq =
+      config.preset === 'custom'
+        ? config.customFreq
+        : config.preset === 'daily' || config.preset === 'weekly' || config.preset === 'monthly'
+          ? config.preset
+          : null;
+    if (freq === 'daily') {
+      return 'days' as const;
+    }
+    if (freq === 'weekly') {
+      return 'weeks' as const;
+    }
+    if (freq === 'monthly') {
+      return 'months' as const;
+    }
+    return 'weeks' as const;
+  });
+
+  recurrenceConfigMonthDay = computed(() => {
+    const scheduledAt = this.form.scheduledAt?.trim();
+    if (!scheduledAt) {
+      return '—';
+    }
+    return String(new Date(scheduledAt).getDate());
+  });
+
   /** Диапазон дат текущего вида (неделя / день / месяц). */
   visibleRange = computed((): { start: Date; end: Date } | null => {
     if (this.isMonthOverview()) {
@@ -641,6 +775,7 @@ export class CalendarComponent implements OnInit {
   ngOnInit(): void {
     this.initViewportMediaQueries();
     this.initNowLineClock();
+    this.applyDateFromRoute();
     this.profileSettings.loadProfile().subscribe();
     this.loadLessons();
     this.studentSvc.getAll().subscribe({
@@ -1159,24 +1294,68 @@ export class CalendarComponent implements OnInit {
 
   openRecurrenceModal(): void {
     this.recurrenceDraft.set(structuredClone(this.recurrenceConfig()));
+    this.recurrenceModalStep.set('picker');
     this.recurrenceModalOpen.set(true);
   }
 
+  /** Мобилка: выбор режима в списке → Einmalig закрывает, иначе экран деталей. */
+  onMobileRecurrencePresetPick(value: string): void {
+    const preset = value as RecurrencePreset;
+    if (!['none', 'daily', 'weekly', 'monthly', 'custom'].includes(preset)) {
+      return;
+    }
+    if (preset === 'none') {
+      this.onRecurrenceConfigPresetChange('none');
+      this.recurrenceDraft.set(structuredClone(this.recurrenceConfig()));
+      this.recurrenceModalOpen.set(false);
+      this.recurrenceModalStep.set('picker');
+      return;
+    }
+    if (this.recurrenceConfig().preset !== preset) {
+      this.onRecurrenceConfigPresetChange(preset);
+    }
+    this.recurrenceModalStep.set('details');
+  }
+
   closeRecurrenceModal(): void {
+    if (this.recurrenceModalStep() === 'details') {
+      this.recurrenceModalStep.set('picker');
+      return;
+    }
+    this.closeRecurrencePickerFully();
+  }
+
+  closeRecurrencePickerFully(): void {
+    this.recurrenceConfig.set(structuredClone(this.recurrenceDraft()));
     this.recurrenceModalOpen.set(false);
+    this.recurrenceModalStep.set('picker');
+  }
+
+  onRecurrenceOverlayClick(): void {
+    if (this.recurrenceModalStep() === 'picker') {
+      this.closeRecurrencePickerFully();
+    }
   }
 
   applyRecurrenceModal(): void {
-    const draft = this.recurrenceDraft();
-    if (draft.preset === 'weekly' || (draft.preset === 'custom' && draft.customFreq === 'weekly')) {
-      if (draft.byDay.length === 0) {
-        this.saveLessonError = this.i18n.calendarUi().recurrenceWeekdaysRequired;
-        return;
-      }
+    const config = this.recurrenceConfig();
+    if (
+      (config.preset === 'weekly' ||
+        (config.preset === 'custom' && config.customFreq === 'weekly')) &&
+      config.byDay.length === 0
+    ) {
+      this.saveLessonError = this.i18n.calendarUi().recurrenceWeekdaysRequired;
+      return;
     }
-    this.recurrenceConfig.set(structuredClone(draft));
+    this.recurrenceDraft.set(structuredClone(config));
     this.recurrenceModalOpen.set(false);
+    this.recurrenceModalStep.set('picker');
     this.saveLessonError = null;
+  }
+
+  /** Мобилка: сегмент на главном sheet; детали — отдельная «страница». */
+  onMobileRecurrenceSegmentChange(value: string): void {
+    this.onMobileRecurrencePresetPick(value);
   }
 
   onRecurrencePresetChange(value: string): void {
@@ -1231,6 +1410,58 @@ export class CalendarComponent implements OnInit {
     });
   }
 
+  onRecurrenceConfigPresetChange(value: string): void {
+    const preset = value as RecurrencePreset;
+    if (!['none', 'daily', 'weekly', 'monthly', 'custom'].includes(preset)) {
+      return;
+    }
+    const anchor = this.scheduledAtAnchor();
+    this.recurrenceConfig.set(configFromPreset(preset, anchor, this.recurrenceConfig()));
+  }
+
+  onRecurrenceConfigCustomFreqChange(value: string): void {
+    const customFreq = value as RecurrenceCustomFreq;
+    this.recurrenceConfig.update((current) => ({ ...current, customFreq }));
+  }
+
+  onRecurrenceConfigEndModeChange(value: string): void {
+    const endMode = value as RecurrenceEndMode;
+    this.recurrenceConfig.update((current) => ({ ...current, endMode }));
+  }
+
+  onRecurrenceConfigIntervalChange(raw: string | number): void {
+    const interval = Math.min(99, Math.max(1, Math.round(Number(raw) || 1)));
+    this.recurrenceConfig.update((current) => ({ ...current, interval }));
+  }
+
+  onRecurrenceConfigCountChange(raw: string | number): void {
+    const count = Math.min(999, Math.max(1, Math.round(Number(raw) || 1)));
+    this.recurrenceConfig.update((current) => ({ ...current, count }));
+  }
+
+  onRecurrenceConfigUntilChange(value: string): void {
+    this.recurrenceConfig.update((current) => ({
+      ...current,
+      untilDate: value?.trim() ? value.trim() : null,
+    }));
+  }
+
+  isRecurrenceConfigDayActive(code: RruleWeekdayCode): boolean {
+    return this.recurrenceConfig().byDay.includes(code);
+  }
+
+  toggleRecurrenceConfigDay(code: RruleWeekdayCode): void {
+    this.recurrenceConfig.update((current) => {
+      const set = new Set(current.byDay);
+      if (set.has(code)) {
+        set.delete(code);
+      } else {
+        set.add(code);
+      }
+      return { ...current, byDay: RRULE_WEEKDAY_CODES.filter((day) => set.has(day)) };
+    });
+  }
+
   private scheduledAtAnchor(): Date {
     const raw = this.form.scheduledAt?.trim();
     if (raw) {
@@ -1258,6 +1489,8 @@ export class CalendarComponent implements OnInit {
     PLN: 'PL',
     USD: 'US',
     RUB: 'RU',
+    KZT: 'KZ',
+    UAH: 'UA',
   };
 
   lessonHasSnapshotRate(lesson: Lesson): boolean {
@@ -1296,12 +1529,66 @@ export class CalendarComponent implements OnInit {
     if (!this.lessonHasSnapshotRate(lesson)) {
       return '—';
     }
+    const priceMode = this.lessonPriceMode(lesson);
+    const amount = lessonAmountFromPrice(
+      Number(lesson.lesson_price),
+      lesson.lesson_duration,
+      priceMode,
+    );
+    const formatted = new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: lesson.lesson_currency || 'EUR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+    if (priceMode === 'fixed') {
+      return `${formatted}${this.i18n.studentsUi().perLesson}`;
+    }
+    if (lesson.lesson_duration === 60) {
+      return `${formatted}${this.i18n.studentsUi().perHour}`;
+    }
+    return formatted;
+  }
+
+  lessonPriceMode(lesson: Lesson) {
+    return normalizeLessonPriceMode(lesson.price_mode);
+  }
+
+  formatStudentRatePreview(student: Student, durationMinutes?: number): string {
+    const priceMode = normalizeLessonPriceMode(null, student.rate_unit);
+    const amount = lessonAmountFromPrice(
+      Number(student.rate_per_hour),
+      durationMinutes ?? this.duration(),
+      priceMode,
+    );
+    const formatted = new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: student.rate_currency || 'EUR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+    const unit =
+      priceMode === 'fixed'
+        ? this.i18n.studentsUi().perLesson
+        : this.i18n.studentsUi().perHour;
+    if (priceMode === 'hourly' && (durationMinutes ?? this.duration()) !== 60) {
+      return formatted;
+    }
+    return `${formatted}${unit}`;
+  }
+
+  formatLessonSnapshotRateLabel(lesson: Lesson): string {
+    if (!this.lessonHasSnapshotRate(lesson)) {
+      return '—';
+    }
     const formatted = new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: lesson.lesson_currency || 'EUR',
       maximumFractionDigits: 0,
     }).format(Number(lesson.lesson_price));
-    return `${formatted}${this.i18n.studentsUi().perLesson}`;
+    const unit =
+      this.lessonPriceMode(lesson) === 'fixed'
+        ? this.i18n.studentsUi().perLesson
+        : this.i18n.studentsUi().perHour;
+    return `${formatted}${unit}`;
   }
 
   formatLessonDuration(minutes: number): string {
@@ -2222,14 +2509,7 @@ export class CalendarComponent implements OnInit {
     this.deletingLesson.set(false);
     this.deleteRecurringModalOpen.set(false);
     this.lessonFormStep.set(1);
-  }
-
-  goToNotesStep(): void {
-    this.lessonFormStep.set(2);
-  }
-
-  backToMainStep(): void {
-    this.lessonFormStep.set(1);
+    this.lessonFormSubmitted.set(false);
   }
 
   private resetLessonForm(): void {
@@ -2263,6 +2543,19 @@ export class CalendarComponent implements OnInit {
     });
   }
 
+  private applyDateFromRoute(): void {
+    const dateParam = this.route.snapshot.queryParamMap.get('date');
+    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      return;
+    }
+    const target = new Date(`${dateParam}T12:00:00`);
+    if (Number.isNaN(target.getTime())) {
+      return;
+    }
+    this.currentDate.set(this.startOfLocalDay(target));
+    this.viewMode.set('1');
+  }
+
   private loadLessons(): void {
     this.lessonsSvc.getAll().subscribe({
       next: (data) => {
@@ -2289,10 +2582,13 @@ export class CalendarComponent implements OnInit {
       _id: raw._id,
       student_id: raw.student_id,
       status,
-      scheduledAt: String(raw.scheduledAt),
+      scheduledAt: String(raw.scheduledAt || raw.createdAt || ''),
       lesson_duration: raw.lesson_duration ?? 60,
       lesson_price: raw.lesson_price ?? 0,
       lesson_currency: raw.lesson_currency ?? 'EUR',
+      price_mode: normalizeLessonPriceMode(
+        (raw as LessonApiRow & { price_mode?: string }).price_mode,
+      ),
       student_timezone: raw.student_timezone,
       reminder_sent: raw.reminder_sent ?? false,
       balance_debited: Boolean(
@@ -2318,9 +2614,20 @@ export class CalendarComponent implements OnInit {
   }
 
   saveLesson(): void {
+    this.lessonFormSubmitted.set(true);
     this.saveLessonError = null;
     if (!this.form.student_id?.trim()) {
       this.saveLessonError = this.i18n.calendarUi().selectStudentError;
+      return;
+    }
+
+    const recurrence = this.recurrenceConfig();
+    if (
+      (recurrence.preset === 'weekly' ||
+        (recurrence.preset === 'custom' && recurrence.customFreq === 'weekly')) &&
+      recurrence.byDay.length === 0
+    ) {
+      this.saveLessonError = this.i18n.calendarUi().recurrenceWeekdaysRequired;
       return;
     }
 

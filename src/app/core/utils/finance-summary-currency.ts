@@ -61,17 +61,27 @@ export function remapFinanceSummary(
           netProfit: convert(summary.austria.netProfit),
         }
       : null,
+    tax: summary.tax
+      ? {
+          ...summary.tax,
+          socialInsurance: convert(summary.tax.socialInsurance),
+          taxableBase: convert(summary.tax.taxableBase),
+          incomeTax: convert(summary.tax.incomeTax),
+          netProfit: convert(summary.tax.netProfit),
+        }
+      : null,
   };
 }
 
-/** Сумма расхода в валюте отчёта (расходы хранятся в defaultCurrency аккаунта). */
+/** Сумма расхода в валюте отчёта. */
 export function expenseAmountInReportCurrency(
   amount: number,
   summary: FinanceSummary,
   targetCurrency: string,
+  fromCurrency?: string,
 ): number {
   const target = String(targetCurrency).trim().toUpperCase();
-  const from = String(summary.defaultCurrency ?? summary.currency).trim().toUpperCase();
+  const from = String(fromCurrency ?? summary.defaultCurrency ?? summary.currency).trim().toUpperCase();
   const rates = summary.exchangeRates?.rates;
   if (!rates || from === target) {
     return amount;

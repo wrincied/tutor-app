@@ -44,8 +44,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "24kB",
-                  "maximumError": "32kB"
+                  "maximumWarning": "40kB",
+                  "maximumError": "48kB"
                 }
               ],
               "outputHashing": "all",
@@ -53,6 +53,31 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.production.ts"
+                }
+              ]
+            },
+            "production-design": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "850kB",
+                  "maximumError": "1.2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "40kB",
+                  "maximumError": "48kB"
+                }
+              ],
+              "outputHashing": "all",
+              "styles": [
+                "src/styles.scss",
+                "src/styles/design-v2.scss"
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production-design.ts"
                 }
               ]
             },
@@ -66,6 +91,21 @@
                   "with": "src/environments/environment.development.ts"
                 }
               ]
+            },
+            "design": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "styles": [
+                "src/styles.scss",
+                "src/styles/design-v2.scss"
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.design.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -76,8 +116,14 @@
             "production": {
               "buildTarget": "tutor:build:production"
             },
+            "production-design": {
+              "buildTarget": "tutor:build:production-design"
+            },
             "development": {
               "buildTarget": "tutor:build:development"
+            },
+            "design": {
+              "buildTarget": "tutor:build:design"
             }
           },
           "defaultConfiguration": "development"

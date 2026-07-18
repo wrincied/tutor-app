@@ -85,10 +85,6 @@ export class AccountProfileComponent implements OnInit {
     return this.i18n.accountUi().taxModeConfirmBody.replace('{mode}', label);
   });
 
-  supportMailto = computed(
-    () => `mailto:${this.i18n.accountUi().taxSupportEmail}`,
-  );
-
   ngOnInit(): void {
     this.userSvc.getProfile().subscribe({
       next: (user) => {
@@ -177,11 +173,12 @@ export class AccountProfileComponent implements OnInit {
       payload.last_name = trimmedLast;
     }
 
-    if (!this.taxModeConfigured()) {
-      if (!isTaxModeConfigured(this.tax_mode)) {
-        this.error.set(t.taxModeRequiredHint);
-        return;
-      }
+    if (!isTaxModeConfigured(this.tax_mode)) {
+      this.error.set(t.taxModeRequiredHint);
+      return;
+    }
+    const currentTax = normalizeTaxMode(current?.tax_mode);
+    if (normalizeTaxMode(this.tax_mode) !== currentTax) {
       payload.tax_mode = this.tax_mode;
     }
 

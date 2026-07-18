@@ -62,13 +62,12 @@ export const ACCOUNT_UK: AccountStrings = {
   currentPasswordRequired: 'Вкажіть поточний пароль',
   saveError: 'Помилка збереження',
   subscriptionManagedByPayment: 'Тариф змінюється лише після оплати. Вручну змінити його не можна.',
-  taxModeRequiredHint: 'Вкажіть податковий режим один раз — без цього покупка підписки недоступна.',
-  taxModeLockedHintBefore: 'Щоб змінити податковий режим, напишіть на ',
-  taxModeLockedHintAfter: '. Самостійна зміна в застосунку з’явиться трохи пізніше.',
-  taxSupportEmail: 'tutorassistent@gmail.com',
+  taxModeRequiredHint: 'Вкажіть податковий режим — без цього покупка підписки недоступна.',
+  taxModeChangeHint:
+    'Можна змінити будь-коли. Нетто у Фінансах перерахується за новим режимом (це оцінка, не декларація).',
   taxModeConfirmTitle: 'Підтвердження податкового режиму',
   taxModeConfirmBody:
-    'Ви підтверджуєте, що обираєте режим «{mode}»? Після збереження профілю змінити його можна лише через підтримку.',
+    'Обрати режим «{mode}»? Після збереження оцінка Нетто у Фінансах перерахується. Це довідковий розрахунок, не податкова декларація.',
   taxModeConfirmConfirm: 'Підтвердити',
   taxModeConfirmCancel: 'Скасувати',
   upgradePro: 'Оформити Pro',
@@ -106,6 +105,30 @@ export const ACCOUNT_UK: AccountStrings = {
 };
 
 export const AUTH_UK: AuthStrings = {
+  landingHeadline: 'Кабінет, де уроки й учні не губляються',
+  landingSubtitle: 'Розклад, учні та фінанси — один спокійний простір для репетитора.',
+  join: 'Join',
+  landingSignIn: 'Уже є акаунт? Увійти',
+  landingFeaturesTitle: 'Усе, що потрібно для уроків',
+  landingFeatureScheduleTitle: 'Розклад',
+  landingFeatureScheduleBody:
+    'Плануйте заняття, повторювані уроки та статуси — без хаосу в нотатках і чатах.',
+  landingFeatureStudentsTitle: 'Учні',
+  landingFeatureStudentsBody:
+    'Контакти, ставки й історія поруч. Швидко знаходьте потрібного учня перед уроком.',
+  landingFeatureFinanceTitle: 'Фінанси',
+  landingFeatureFinanceBody:
+    'Рахуйте дохід, податки й оплату уроків в одній картині — зрозуміло і без таблиць «на коліні».',
+  landingHowTitle: 'Як це працює',
+  landingHowBody:
+    'Створюєте акаунт, підтверджуєте email, заповнюєте короткий профіль — і одразу потрапляєте в кабінет із календарем, учнями та фінансами.',
+  landingClosingTitle: 'Ведіть уроки спокійніше',
+  landingClosingCta: 'Join',
+  footerDatenschutz: 'Datenschutz',
+  footerImpressum: 'Impressum',
+  footerKontakt: 'Kontakt',
+  footerCookies: 'Cookies',
+  footerRights: '© Simple4U',
   loginTitle: 'Увійти',
   loginSubtitle: 'у кабінет репетитора',
   registerTitle: 'Створити акаунт',
@@ -117,6 +140,7 @@ export const AUTH_UK: AuthStrings = {
   loggingIn: 'Входимо...',
   createAccount: 'Створити акаунт',
   creating: 'Створюємо...',
+  backHome: 'На головну',
   hasAccount: 'Уже є акаунт',
   noAccount: 'Створити акаунт',
   wrongCredentials: 'Невірний email або пароль',
@@ -163,6 +187,7 @@ export const AUTH_UK: AuthStrings = {
   continueWithGoogle: 'Увійти через Google',
   orContinueWith: 'або',
   oauthError: 'Не вдалося увійти через Google',
+  oauthErrorGithub: 'Не вдалося увійти через GitHub',
   profileSyncError:
     'Вхід виконано, але профіль не завантажився. Перевірте інтернет і спробуйте знову.',
   onboardingTitle: 'Ласкаво просимо',
@@ -269,7 +294,9 @@ export const CALENDAR_UK: CalendarStrings = {
   noStudentsForLesson: 'Немає учнів. Додайте учня в розділі «Учні».',
   studentsSidebarEmpty: 'Немає учнів. Додайте першого в розділі «Учні».',
   studentsSidebarNoResults: 'Нікого не знайдено',
-  scheduledAtLabel: 'Дата й час',
+  scheduledAtLabel: 'Дата й час уроку',
+  lessonDescriptionLabel: 'Опис',
+  advancedSettingsLabel: 'Розширені налаштування',
   notesPlaceholder: 'Нотатки',
   notesNewPlaceholder: 'Нотатки до уроку',
   snapshotRateLabel: 'Ставка уроку (знімок):',
@@ -397,10 +424,10 @@ export const FINANCE_UK: FinanceStrings = {
     'За обраний період уроків немає. Спробуйте «Увесь час» або додайте уроки в розкладі.',
   markCompletedHint: 'Фактичний дохід враховується лише для уроків зі статусом «Проведено».',
   incomeByCurrency: 'Дохід за валютами',
-  taxSection: 'Оцінка податків (Австрія)',
+  taxSection: 'Оцінка податків',
   taxNotConfigured: 'Податковий режим не задано — оцінка недоступна.',
   taxConfigureHint: 'Задайте режим у розділі «Акаунт».',
-  socialInsurance: 'Соц. страхування (~18,12%)',
+  socialInsurance: 'Соц. страхування',
   incomeTax: 'Податок на доходи (оцінка)',
   taxableBase: 'Податкова база',
   expensesSection: 'Витрати',
@@ -409,6 +436,7 @@ export const FINANCE_UK: FinanceStrings = {
   deleteExpense: 'Видалити',
   expenseTitle: 'Назва',
   expenseAmount: 'Сума',
+  expenseCurrency: 'Валюта',
   expenseDate: 'Дата',
   expenseCategory: 'Категорія (необов’язково)',
   emptyExpenses: 'Немає витрат за обраний період.',
@@ -423,8 +451,50 @@ export const FINANCE_UK: FinanceStrings = {
   reportCurrency: 'Валюта звіту',
   originalInCurrency: 'вихідно',
   ratesAsOf: 'Курс на',
+  ratesSource: 'Джерело:',
+  ratesDebug: 'Курси для звірки (за 1 EUR)',
   activityLogSection: 'Історія операцій',
   activityLogEmpty: 'Поки немає записів про витрати та гроші.',
+  kpiDetailsClose: 'Зрозуміло',
+  incomeBreakdownTitle: 'Як рахується дохід',
+  incomeBreakdownIntro:
+    'Ставка учня × тривалість уроку. Проведені — фактичний дохід, заплановані — очікуваний. Валюти перераховуються за курсом НБ на дату звіту.',
+  expensesBreakdownTitle: 'Як рахуються витрати',
+  expensesBreakdownIntro:
+    'Підсумовуємо всі записи витрат за період у валюті звіту.',
+  grossProfitBreakdownTitle: 'Прибуток до податків',
+  grossProfitBreakdownIntro:
+    'Дохід лише з проведених уроків мінус витрати. Заплановані уроки не входять.',
+  netProfitBreakdownTitle: 'Чистий прибуток (оцінка)',
+  netProfitBreakdownIntro:
+    'Від прибутку до податків віднімаємо орієнтовні внески та податок за обраним податковим режимом. Це приблизна оцінка.',
+  breakdownLessonsList: 'Уроки в розрахунку',
+  breakdownExpensesList: 'Витрати в розрахунку',
+  breakdownLessonDate: 'Дата',
+  breakdownLessonStudent: 'Учень',
+  breakdownLessonStatus: 'Статус',
+  breakdownLessonDuration: 'Тривалість',
+  breakdownLessonAmount: 'Сума',
+  breakdownRecurringNote: 'Повторюваний урок — у календарі окремі дати',
+  breakdownHiddenInCalendar: 'Не видно в календарі — немає дати в розкладі.',
+  breakdownOpenCalendar: 'Відкрити календар',
+  breakdownOpenCalendarDate: 'Показати в календарі',
+  breakdownMinutes: 'хв',
+  breakdownEmptyLessons: 'Немає уроків за обраний період',
+  breakdownEmptyExpenses: 'Немає витрат за обраний період',
+  breakdownTapHint: 'Натисніть на показник, щоб відкрити розрахунок і список',
+  breakdownBack: 'До фінансів',
+  breakdownHiddenNoSchedule:
+    'Урок без дати в розкладі — не видно в календарі і не враховується в сумах.',
+  breakdownHiddenBrokenRecurrence:
+    'Повторюваний урок з помилкою в правилі — не відображається в календарі.',
+  breakdownScheduleDerived:
+    'Точний час не збережено — показано дату створення. Відкрийте урок у календарі та задайте час.',
+  exportPdf: 'Завантажити PDF',
+  exportingPdf: 'Формуємо PDF…',
+  exportPdfError: 'Не вдалося створити PDF',
+  pdfGeneratedAt: 'Сформовано',
+  pdfSummary: 'Підсумок',
 };
 
 export const STUDENTS_UK: StudentStrings = {
@@ -437,6 +507,9 @@ export const STUDENTS_UK: StudentStrings = {
   ratePerLesson: 'Ставка за урок',
   ratePerHour: 'Ставка за годину',
   rateUnitTitle: 'Розрахунок суми',
+  rateUnitInfoAria: 'Як рахується ставка за годину і за урок',
+  rateUnitInfo:
+    'Ставка за годину: сума = ставка × (тривалість заняття ÷ 60). Година — астрономічна (60 хвилин).\n\nСтавка за урок: фіксована сума за одне заняття. Якщо урок триває 90 хвилин і ви поставили N EUR за заняття — до оплати буде саме N EUR за урок, а не за півтори години.',
   rateColumn: 'Ставка',
   balanceLessons: 'Баланс уроків',
   perLesson: '/ урок',
@@ -458,6 +531,8 @@ export const STUDENTS_UK: StudentStrings = {
   calendarColor: 'Колір у календарі',
   randomColor: 'Випадковий',
   botNotifications: 'Сповіщення в Telegram',
+  botInfoAria: 'Про сповіщення в Telegram',
+  botComingSoon: 'Coming soon — інтеграція з Telegram ще в розробці.',
   botEnabled: 'Увімкнено',
   botDisabled: 'Вимкнено',
   botEnableTitle: 'Увімкнути сповіщення?',
@@ -474,9 +549,9 @@ export const STUDENTS_UK: StudentStrings = {
   billingTypePostpaid: 'Післяоплата / разова оплата',
   billingInfoAria: 'Що таке абонемент і післяоплата',
   billingInfoPackage:
-    'Учень заздалегідь оплачує пакет уроків. Після кожного проведеного заняття один урок списується з балансу.',
+    'Абонемент: репетитор вносить кількість уже оплачених занять. Після кожного проведеного уроку з балансу списується одне заняття.',
   billingInfoPostpaid:
-    'Уроки враховуються як борг. Оплата — після заняття або наприкінці періоду, у межах ліміту боргу.',
+    'Післяоплата: оплата враховується одразу після заняття (у борг / до оплати), у межах ліміту боргу.',
   balanceLessonsField: 'Залишилось уроків на балансі',
   creditLimitField: 'Ліміт боргу (уроків)',
   activityLogSection: 'Історія змін',
@@ -543,6 +618,11 @@ export const PAGE_TITLE_UK: PageTitleStrings = {
   accountProfile: 'Особистий кабінет | Simple4U',
   accountAdministration: 'Адміністрування | Simple4U',
   admin: 'Адмін | Simple4U',
+  adminUsers: 'Користувачі | Simple4U',
+  adminSettings: 'Налаштування адмінки | Simple4U',
+  adminLanding: 'Landing | Simple4U',
+  legalImpressum: 'Impressum | Simple4U',
+  adminLogin: 'Admin | Simple4U',
 };
 
 export const TAX_MODE_LABELS_UK: Record<TaxMode, string> = {
@@ -553,5 +633,6 @@ export const TAX_MODE_LABELS_UK: Record<TaxMode, string> = {
   'ru-ip': 'RU — ФОП',
   'by-ip': 'BY — ФОП',
   'kz-ip': 'KZ — ФОП',
+  'ua-fop3': 'UA — ФОП 3 група',
   none: '— не задано',
 };
