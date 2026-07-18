@@ -249,14 +249,12 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     subscriptionManagedByPayment:
       'Тариф меняется только после оплаты. Вручную изменить его нельзя.',
     taxModeRequiredHint:
-      'Укажите налоговый режим один раз — без этого покупка подписки недоступна.',
-    taxModeLockedHintBefore: 'Чтобы изменить налоговый режим, напишите на ',
-    taxModeLockedHintAfter:
-      '. Самостоятельная смена в приложении появится чуть позже.',
-    taxSupportEmail: 'tutorassistent@gmail.com',
+      'Укажите налоговый режим — без этого покупка подписки недоступна.',
+    taxModeChangeHint:
+      'Можно сменить в любой момент. Нетто в Финансах пересчитается по новому режиму (это оценка, не декларация).',
     taxModeConfirmTitle: 'Подтверждение налогового режима',
     taxModeConfirmBody:
-      'Вы подтверждаете, что выбираете режим «{mode}»? После сохранения профиля сменить его можно будет только через поддержку.',
+      'Выбрать режим «{mode}»? После сохранения оценка Нетто в Финансах пересчитается. Это справочный расчёт, не налоговая декларация.',
     taxModeConfirmConfirm: 'Подтвердить',
     taxModeConfirmCancel: 'Отмена',
     upgradePro: 'Оформить Pro',
@@ -325,13 +323,12 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     subscriptionManagedByPayment:
       'Your plan only changes after payment. It cannot be edited manually.',
     taxModeRequiredHint:
-      'Set your tax regime once — subscription purchase is unavailable until then.',
-    taxModeLockedHintBefore: 'To change your tax regime, email ',
-    taxModeLockedHintAfter: '. In-app changes will be available a bit later.',
-    taxSupportEmail: 'tutorassistent@gmail.com',
+      'Set your tax regime — subscription purchase is unavailable until then.',
+    taxModeChangeHint:
+      'You can change this anytime. Net profit in Finance will recalculate for the new regime (an estimate, not a tax return).',
     taxModeConfirmTitle: 'Confirm tax regime',
     taxModeConfirmBody:
-      'Do you confirm that you are selecting «{mode}»? After saving your profile, you can only change it via support.',
+      'Select «{mode}»? After saving, the Net estimate in Finance will recalculate. This is a reference figure, not a tax return.',
     taxModeConfirmConfirm: 'Confirm',
     taxModeConfirmCancel: 'Cancel',
     upgradePro: 'Subscribe to Pro',
@@ -401,13 +398,12 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     subscriptionManagedByPayment:
       'Der Tarif ändert sich nur nach Zahlung. Manuelle Änderung ist nicht möglich.',
     taxModeRequiredHint:
-      'Legen Sie das Steuerregime einmal fest — ohne dies ist kein Abo-Kauf möglich.',
-    taxModeLockedHintBefore: 'Um das Steuerregime zu ändern, schreiben Sie an ',
-    taxModeLockedHintAfter: '. Die Änderung in der App kommt in Kürze.',
-    taxSupportEmail: 'tutorassistent@gmail.com',
+      'Legen Sie das Steuerregime fest — ohne dies ist kein Abo-Kauf möglich.',
+    taxModeChangeHint:
+      'Jederzeit änderbar. Der Nettogewinn unter Finanzen wird neu berechnet (Schätzung, keine Steuererklärung).',
     taxModeConfirmTitle: 'Steuerregime bestätigen',
     taxModeConfirmBody:
-      'Bestätigen Sie die Auswahl «{mode}»? Nach dem Speichern ist eine Änderung nur über den Support möglich.',
+      'Regime «{mode}» wählen? Nach dem Speichern wird die Netto-Schätzung neu berechnet. Das ist eine Orientierung, keine Steuererklärung.',
     taxModeConfirmConfirm: 'Bestätigen',
     taxModeConfirmCancel: 'Abbrechen',
     upgradePro: 'Pro abonnieren',
@@ -475,13 +471,12 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     currentPasswordRequired: 'Ағымдағы құпия сөзді енгізіңіз',
     saveError: 'Сақтау сәтсіз',
     subscriptionManagedByPayment: 'Тариф тек төлемнен кейін өзгереді. Қолмен өзгерту мүмкін емес.',
-    taxModeRequiredHint: 'Салық режимін бір рет көрсетіңіз — олсыз жазылым сатып алу мүмкін емес.',
-    taxModeLockedHintBefore: 'Салық режимін өзгерту үшін ',
-    taxModeLockedHintAfter: ' поштасына жазыңыз. Қосымшада өзгерту жақында қосылады.',
-    taxSupportEmail: 'tutorassistent@gmail.com',
+    taxModeRequiredHint: 'Салық режимін көрсетіңіз — олсыз жазылым сатып алу мүмкін емес.',
+    taxModeChangeHint:
+      'Кез келген уақытта өзгертуге болады. Қаржыдағы Таза пайда жаңа режим бойынша қайта есептеледі (бағалау, декларация емес).',
     taxModeConfirmTitle: 'Салық режимін растау',
     taxModeConfirmBody:
-      '«{mode}» режимін таңдағаныңызды растайсыз ба? Профильді сақтағаннан кейін тек қолдау арқылы өзгертуге болады.',
+      '«{mode}» режимін таңдайсыз ба? Сақтағаннан кейін Таза пайда бағасы қайта есептеледі. Бұл анықтамалық есеп, салық декларациясы емес.',
     taxModeConfirmConfirm: 'Растау',
     taxModeConfirmCancel: 'Болдырмау',
     upgradePro: 'Pro рәсімдеу',
@@ -1080,7 +1075,7 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
     noStudentsForLesson: 'Нет учеников. Добавьте ученика в разделе «Ученики».',
     studentsSidebarEmpty: 'Нет учеников. Добавьте первого в разделе «Ученики».',
     studentsSidebarNoResults: 'Никого не найдено',
-    scheduledAtLabel: 'Дата и время',
+    scheduledAtLabel: 'Дата и время урока',
     lessonDescriptionLabel: 'Описание',
     advancedSettingsLabel: 'Расширенные настройки',
     notesPlaceholder: 'Заметки',
@@ -1206,7 +1201,7 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
     noStudentsForLesson: 'No students yet. Add a student in Students.',
     studentsSidebarEmpty: 'No students yet. Add the first one in Students.',
     studentsSidebarNoResults: 'No matches',
-    scheduledAtLabel: 'Date and time',
+    scheduledAtLabel: 'Lesson date and time',
     lessonDescriptionLabel: 'Description',
     advancedSettingsLabel: 'Advanced settings',
     notesPlaceholder: 'Notes',
@@ -1331,7 +1326,7 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
     noStudentsForLesson: 'Keine Schüler. Fügen Sie einen Schüler unter «Schüler» hinzu.',
     studentsSidebarEmpty: 'Noch keine Schüler. Legen Sie den ersten unter «Schüler» an.',
     studentsSidebarNoResults: 'Keine Treffer',
-    scheduledAtLabel: 'Datum und Uhrzeit',
+    scheduledAtLabel: 'Datum und Uhrzeit des Unterrichts',
     lessonDescriptionLabel: 'Beschreibung',
     advancedSettingsLabel: 'Erweiterte Einstellungen',
     notesPlaceholder: 'Notizen',
@@ -1457,7 +1452,7 @@ const CALENDAR: Record<Lang, CalendarStrings> = {
     noStudentsForLesson: 'Оқушылар жоқ. «Оқушылар» бөлімінде оқушы қосыңыз.',
     studentsSidebarEmpty: 'Оқушылар жоқ. «Оқушылар» бөлімінде біріншісін қосыңыз.',
     studentsSidebarNoResults: 'Ештеңе табылмады',
-    scheduledAtLabel: 'Күні мен уақыты',
+    scheduledAtLabel: 'Сабақ күні мен уақыты',
     lessonDescriptionLabel: 'Сипаттама',
     advancedSettingsLabel: 'Кеңейтілген баптаулар',
     notesPlaceholder: 'Жазбалар',
@@ -1573,6 +1568,7 @@ const TAX_MODE_LABELS: Record<Lang, Record<TaxMode, string>> = {
     'ru-ip': 'RU — ИП',
     'by-ip': 'BY — ИП',
     'kz-ip': 'KZ — ИП',
+    'ua-fop3': 'UA — ФОП 3 група',
     none: '— не задан',
   },
   en: {
@@ -1583,6 +1579,7 @@ const TAX_MODE_LABELS: Record<Lang, Record<TaxMode, string>> = {
     'ru-ip': 'RU — sole proprietor',
     'by-ip': 'BY — sole proprietor',
     'kz-ip': 'KZ — sole proprietor',
+    'ua-fop3': 'UA — FOP group 3',
     none: '— not set',
   },
   de: {
@@ -1593,6 +1590,7 @@ const TAX_MODE_LABELS: Record<Lang, Record<TaxMode, string>> = {
     'ru-ip': 'RU — Einzelunternehmen',
     'by-ip': 'BY — Einzelunternehmen',
     'kz-ip': 'KZ — Einzelunternehmen',
+    'ua-fop3': 'UA — FOP Gruppe 3',
     none: '— nicht gesetzt',
   },
   kz: {
@@ -1603,6 +1601,7 @@ const TAX_MODE_LABELS: Record<Lang, Record<TaxMode, string>> = {
     'ru-ip': 'RU — ЖК',
     'by-ip': 'BY — ЖК',
     'kz-ip': 'KZ — ЖК',
+    'ua-fop3': 'UA — ФОП 3 топ',
     none: '— көрсетілмеген',
   },
   uk: TAX_MODE_LABELS_UK,
@@ -1635,10 +1634,10 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'За выбранный период уроков нет. Попробуйте «Всё время» или добавьте уроки в расписании.',
     markCompletedHint: 'Фактический доход учитывается только для уроков со статусом «Проведён».',
     incomeByCurrency: 'Доход по валютам',
-    taxSection: 'Оценка налогов (Австрия)',
+    taxSection: 'Оценка налогов',
     taxNotConfigured: 'Налоговый режим не задан — оценка недоступна.',
     taxConfigureHint: 'Задайте режим в разделе «Аккаунт».',
-    socialInsurance: 'Соц. страхование (~18,12%)',
+    socialInsurance: 'Соц. страхование',
     incomeTax: 'Подоходный налог (оценка)',
     taxableBase: 'Налоговая база',
     expensesSection: 'Расходы',
@@ -1678,7 +1677,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'Доход только по проведённым урокам минус расходы за период. Запланированные уроки сюда не входят — это ориентир «на руках» до налогов.',
     netProfitBreakdownTitle: 'Чистая прибыль (оценка)',
     netProfitBreakdownIntro:
-      'От прибыли до налогов вычитаем ориентировочные соц. взносы (~18%) и подоходный налог по австрийским ставкам. Это приблизительная оценка, не налоговая декларация.',
+      'От прибыли до налогов вычитаем ориентировочные взносы и налог по выбранному налоговому режиму. Это приблизительная оценка, не налоговая декларация.',
     breakdownLessonsList: 'Уроки в расчёте',
     breakdownExpensesList: 'Расходы в расчёте',
     breakdownLessonDate: 'Дата',
@@ -1732,10 +1731,10 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     lessonsEmptyHint: 'No lessons in this period. Try “All time” or add lessons in the calendar.',
     markCompletedHint: 'Earned income counts only lessons marked as completed.',
     incomeByCurrency: 'Income by currency',
-    taxSection: 'Tax estimate (Austria)',
+    taxSection: 'Tax estimate',
     taxNotConfigured: 'Tax regime not set — estimate unavailable.',
     taxConfigureHint: 'Set your regime in Account.',
-    socialInsurance: 'Social insurance (~18.12%)',
+    socialInsurance: 'Social insurance',
     incomeTax: 'Income tax (estimate)',
     taxableBase: 'Taxable base',
     expensesSection: 'Expenses',
@@ -1775,7 +1774,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'Income from completed lessons only, minus expenses for the period. Planned lessons are not included — this is cash-like profit before tax.',
     netProfitBreakdownTitle: 'Net profit (estimate)',
     netProfitBreakdownIntro:
-      'From gross profit we subtract estimated social insurance (~18%) and income tax using Austrian brackets. This is an approximation, not a tax return.',
+      'From gross profit we subtract estimated contributions and tax for your selected tax regime. This is an approximation, not a tax return.',
     breakdownLessonsList: 'Lessons in this calculation',
     breakdownExpensesList: 'Expenses in this calculation',
     breakdownLessonDate: 'Date',
@@ -1829,10 +1828,10 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     lessonsEmptyHint: 'Keine Stunden im Zeitraum. „Gesamt“ wählen oder im Kalender anlegen.',
     markCompletedHint: 'Einnahmen nur für abgeschlossene Stunden.',
     incomeByCurrency: 'Einnahmen nach Währung',
-    taxSection: 'Steuerschätzung (Österreich)',
+    taxSection: 'Steuerschätzung',
     taxNotConfigured: 'Steuerregime nicht gesetzt — keine Schätzung.',
     taxConfigureHint: 'Regime unter „Konto“ festlegen.',
-    socialInsurance: 'Sozialversicherung (~18,12 %)',
+    socialInsurance: 'Sozialversicherung',
     incomeTax: 'Einkommensteuer (Schätzung)',
     taxableBase: 'Bemessungsgrundlage',
     expensesSection: 'Ausgaben',
@@ -1872,7 +1871,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'Nur Einkommen aus durchgeführten Stunden minus Ausgaben. Geplante Stunden zählen nicht.',
     netProfitBreakdownTitle: 'Nettogewinn (Schätzung)',
     netProfitBreakdownIntro:
-      'Bruttogewinn minus geschätzte SV (~18 %) und Einkommensteuer (AT). Keine Steuererklärung.',
+      'Bruttogewinn minus geschätzte Abgaben und Steuer nach dem gewählten Regime. Keine Steuererklärung.',
     breakdownLessonsList: 'Stunden in der Berechnung',
     breakdownExpensesList: 'Ausgaben in der Berechnung',
     breakdownLessonDate: 'Datum',
@@ -1925,10 +1924,10 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     lessonsEmptyHint: 'Таңдалған кезеңде сабақ жоқ. «Барлық уақыт» немесе кестеден қосыңыз.',
     markCompletedHint: 'Нақты кіріс тек «өткізілді» статусымен есептеледі.',
     incomeByCurrency: 'Валюта бойынша кіріс',
-    taxSection: 'Салық бағасы (Австрия)',
+    taxSection: 'Салық бағасы',
     taxNotConfigured: 'Салық режимі көрсетілмеген — баға жоқ.',
     taxConfigureHint: 'Режимді «Аккаунт» бөлімінде орнатыңыз.',
-    socialInsurance: 'Әлеуметтік сақтандыру (~18,12%)',
+    socialInsurance: 'Әлеуметтік сақтандыру',
     incomeTax: 'Кіріс салығы (бағалау)',
     taxableBase: 'Салық базасы',
     expensesSection: 'Шығындар',
@@ -1967,7 +1966,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
       'Тек өткізілген сабақтар кірісі минус шығын. Жоспарланған сабақтар кірмейді.',
     netProfitBreakdownTitle: 'Таза пайда (бағалау)',
     netProfitBreakdownIntro:
-      'Салыққа дейінгі пайданан шамамен әлеуметтік сақтандыру (~18%) және кіріс салығы шегеріледі. Бұл жуық баға.',
+      'Салыққа дейінгі пайдадан таңдалған салық режимі бойынша шамамен жарналар мен салық шегеріледі. Бұл жуық баға.',
     breakdownLessonsList: 'Есептегі сабақтар',
     breakdownExpensesList: 'Есептегі шығындар',
     breakdownLessonDate: 'Күні',
@@ -2464,15 +2463,15 @@ const HOME: Record<Lang, HomeStrings> = {
 
 /** Названия языков на самом языке (в списке выбора). */
 const LANG_LABEL: Record<Lang, string> = {
-  ru: 'Русский',
-  en: 'English',
   de: 'Deutsch',
-  kz: 'Қазақша',
-  uk: 'Українська',
+  en: 'English',
   by: 'Беларуская',
+  uk: 'Українська',
+  ru: 'Русский',
+  kz: 'Қазақша',
 };
 
-const ALL_LANGS: Lang[] = ['ru', 'en', 'de', 'kz', 'uk', 'by'];
+const ALL_LANGS: Lang[] = ['de', 'en', 'by', 'uk', 'ru', 'kz'];
 
 const LOCALE_TO_LANG: Record<string, Lang> = {
   ru: 'ru',
@@ -2589,12 +2588,12 @@ export class I18nService {
   /** BCP 47 для Intl (даты, числа). */
   localeId(): string {
     const map: Record<Lang, string> = {
-      ru: 'ru-RU',
-      en: 'en-US',
       de: 'de-DE',
-      kz: 'kk-KZ',
-      uk: 'uk-UA',
+      en: 'en-US',
       by: 'be-BY',
+      uk: 'uk-UA',
+      ru: 'ru-RU',
+      kz: 'kk-KZ',
     };
     return map[this._lang()];
   }

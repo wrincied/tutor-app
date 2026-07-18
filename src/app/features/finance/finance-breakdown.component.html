@@ -126,24 +126,26 @@
           }
         }
 
-        @if (panel() === 'net' && summary()?.austria; as at) {
+        @if (panel() === 'net' && summary()?.tax; as tax) {
           <h2 class="finance-detail__subtitle">{{ t.netProfit }}</h2>
           <dl class="finance-dl finance-dl--compact finance-detail__tax">
             <div>
               <dt>{{ t.grossProfit }}</dt>
               <dd>{{ formatMoney(summary()!.income.grossProfit) }}</dd>
             </div>
-            <div>
-              <dt>{{ t.socialInsurance }} ({{ formatPercent(at.socialInsuranceRate) }})</dt>
-              <dd>−{{ formatMoney(at.socialInsurance) }}</dd>
-            </div>
+            @if (tax.socialInsuranceRate > 0 || tax.socialInsurance > 0) {
+              <div>
+                <dt>{{ t.socialInsurance }} ({{ formatPercent(tax.socialInsuranceRate) }})</dt>
+                <dd>−{{ formatMoney(tax.socialInsurance) }}</dd>
+              </div>
+            }
             <div>
               <dt>{{ t.incomeTax }}</dt>
-              <dd>−{{ formatMoney(at.incomeTax) }}</dd>
+              <dd>−{{ formatMoney(tax.incomeTax) }}</dd>
             </div>
             <div class="finance-dl__highlight">
               <dt>{{ t.netProfit }}</dt>
-              <dd>{{ formatMoney(at.netProfit) }}</dd>
+              <dd>{{ formatMoney(tax.netProfit) }}</dd>
             </div>
           </dl>
         }

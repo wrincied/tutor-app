@@ -37,7 +37,7 @@
             <span class="student-card__body">
               <span class="student-card__name">{{ s.name }}</span>
               <span class="student-card__meta">
-                <span>{{ s.rate_per_hour }} {{ i18n.currencyLabel(rateCurrencyOf(s)) }}{{ t.perHour }}</span>
+                <span>{{ formatStudentRate(s) }}</span>
                 <span class="student-card__dot" aria-hidden="true">·</span>
                 <span>{{ s.timezone }}</span>
               </span>
@@ -81,7 +81,7 @@
               </div>
 
               <div class="students-grid__col students-grid__col--rate">
-                {{ s.rate_per_hour }} {{ i18n.currencyLabel(rateCurrencyOf(s)) }} {{ t.perHour }}
+                {{ formatStudentRate(s) }}
               </div>
 
               <div class="students-grid__col students-grid__col--balance">
@@ -140,7 +140,7 @@
           aria-hidden="true"
         ></span>
         <span>
-          {{ student.rate_per_hour }} {{ i18n.currencyLabel(rateCurrencyOf(student)) }}{{ t.perHour }} ·
+          {{ formatStudentRate(student) }} ·
           {{ student.timezone }} · {{ student.balance_lessons }} {{ t.lessonsShort }}
         </span>
       </p>
@@ -171,7 +171,7 @@
 
 <app-dialog
   [open]="showForm()"
-  layout="sheet"
+  layout="drawer"
   [closeOnOverlay]="false"
   [title]="editTarget() ? t.editModalTitle : t.newStudent"
   [cancelLabel]="t.cancel"

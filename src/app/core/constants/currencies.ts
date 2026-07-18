@@ -2,7 +2,7 @@
  * Единый список валют приложения.
  * Используется для ставок учеников, Finance, workspace и конвертации.
  */
-export const APP_CURRENCIES = ['EUR', 'USD', 'PLN', 'RUB', 'BYN', 'KZT'] as const;
+export const APP_CURRENCIES = ['EUR', 'USD', 'PLN', 'RUB', 'BYN', 'KZT', 'UAH'] as const;
 
 export type AppCurrency = (typeof APP_CURRENCIES)[number];
 

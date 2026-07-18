@@ -172,14 +172,14 @@
           <span class="finance-kpi__label">{{ t.grossProfit }}</span>
           <strong class="finance-kpi__value">{{ formatMoney(s.income.grossProfit) }}</strong>
         </button>
-        @if (s.austria; as at) {
+        @if (s.tax; as tax) {
           <button
             type="button"
             class="finance-kpi__card finance-kpi__card--net finance-kpi__card--clickable"
             (click)="openBreakdown('net')"
           >
             <span class="finance-kpi__label">{{ t.netProfit }}</span>
-            <strong class="finance-kpi__value">{{ formatMoney(at.netProfit) }}</strong>
+            <strong class="finance-kpi__value">{{ formatMoney(tax.netProfit) }}</strong>
           </button>
         }
       </section>
@@ -240,23 +240,25 @@
 
       <section class="finance-card">
         <h2>{{ t.taxSection }}</h2>
-        @if (s.austria; as at) {
+        @if (s.tax; as tax) {
           <dl class="finance-dl">
             <div>
               <dt>{{ t.taxableBase }}</dt>
-              <dd>{{ formatMoney(at.taxableBase) }}</dd>
+              <dd>{{ formatMoney(tax.taxableBase) }}</dd>
             </div>
-            <div>
-              <dt>{{ t.socialInsurance }} ({{ formatPercent(at.socialInsuranceRate) }})</dt>
-              <dd>−{{ formatMoney(at.socialInsurance) }}</dd>
-            </div>
+            @if (tax.socialInsuranceRate > 0 || tax.socialInsurance > 0) {
+              <div>
+                <dt>{{ t.socialInsurance }} ({{ formatPercent(tax.socialInsuranceRate) }})</dt>
+                <dd>−{{ formatMoney(tax.socialInsurance) }}</dd>
+              </div>
+            }
             <div>
               <dt>{{ t.incomeTax }}</dt>
-              <dd>−{{ formatMoney(at.incomeTax) }}</dd>
+              <dd>−{{ formatMoney(tax.incomeTax) }}</dd>
             </div>
             <div class="finance-dl__highlight">
               <dt>{{ t.netProfit }}</dt>
-              <dd>{{ formatMoney(at.netProfit) }}</dd>
+              <dd>{{ formatMoney(tax.netProfit) }}</dd>
             </div>
           </dl>
         } @else {

@@ -355,19 +355,23 @@ export class FinanceBreakdownComponent implements OnInit {
       }));
     }
 
-    if (panel === 'net' && summary.austria) {
-      const at = summary.austria;
+    if (panel === 'net' && summary.tax) {
+      const tax = summary.tax;
       options.taxSectionTitle = this.t.netProfit;
       options.taxLines = [
         { label: this.t.grossProfit, value: this.formatMoney(summary.income.grossProfit) },
-        {
-          label: `${this.t.socialInsurance} (${this.formatPercent(at.socialInsuranceRate)})`,
-          value: `−${this.formatMoney(at.socialInsurance)}`,
-        },
-        { label: this.t.incomeTax, value: `−${this.formatMoney(at.incomeTax)}` },
+        ...(tax.socialInsuranceRate > 0 || tax.socialInsurance > 0
+          ? [
+              {
+                label: `${this.t.socialInsurance} (${this.formatPercent(tax.socialInsuranceRate)})`,
+                value: `−${this.formatMoney(tax.socialInsurance)}`,
+              },
+            ]
+          : []),
+        { label: this.t.incomeTax, value: `−${this.formatMoney(tax.incomeTax)}` },
         {
           label: this.t.netProfit,
-          value: this.formatMoney(at.netProfit),
+          value: this.formatMoney(tax.netProfit),
           highlight: true,
         },
       ];
@@ -412,11 +416,11 @@ export class FinanceBreakdownComponent implements OnInit {
           { label: this.t.totalExpenses, value: this.formatMoney(income.totalExpenses) },
         ];
       case 'net':
-        if (summary.austria) {
+        if (summary.tax) {
           return [
             {
               label: this.t.netProfit,
-              value: this.formatMoney(summary.austria.netProfit),
+              value: this.formatMoney(summary.tax.netProfit),
               highlight: true,
             },
             { label: this.t.grossProfit, value: this.formatMoney(income.grossProfit) },

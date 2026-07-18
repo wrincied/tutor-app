@@ -33,6 +33,9 @@ const PRICING_BY_COUNTRY: Record<string, SubscriptionPricing> = {
   // Россия — 1490 RUB за узкую CRM блокирует конверсию.
   // 590 RUB (около €6) — стандартная цена для локальных сервисов учета/записи.
   RU: { country: 'RU', currency: 'RUB', monthly: 590, yearly: 5900 },
+
+  // Украина — ~€9 в гривне, сопоставимо с PL/EU entry.
+  UA: { country: 'UA', currency: 'UAH', monthly: 399, yearly: 3990 },
 };
 
 const DEFAULT_PRICING = PRICING_BY_COUNTRY['AT'];

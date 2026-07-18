@@ -518,10 +518,7 @@
                         }
                       </span>
                       <span class="cal-sidebar__rate">
-                        {{
-                          sidebarStudent.rate_per_hour
-                            | currency: sidebarStudent.rate_currency ?? 'EUR' : 'code' : '1.0-0'
-                        }}{{ i18n.studentsUi().perHour }}
+                        {{ formatStudentRatePreview(sidebarStudent, 60) }}
                       </span>
                     </span>
                   </span>
@@ -567,11 +564,14 @@
 @if (showLessonForm()) {
   <div
     class="modal-overlay modal-overlay--sheet"
+    [class.modal-overlay--full]="isBottomNavLayout()"
     role="presentation"
     animate.leave="modal-overlay-leave"
   >
     <div
       class="modal modal-sheet modal--lesson"
+      [class.modal--lesson-wide]="!isBottomNavLayout()"
+      [class.modal--lesson-full]="isBottomNavLayout()"
       role="dialog"
       aria-modal="true"
       animate.leave="modal-sheet-leave"
@@ -595,138 +595,317 @@
         </button>
       </div>
 
+      <form class="cal-lesson-form" (ngSubmit)="saveLesson()">
       <div class="modal-sheet__scroll">
-        <form class="modal-body" (ngSubmit)="saveLesson()">
+        <div class="modal-body">
           @if (studentsLoadError) {
             <p class="cal-form-error">{{ studentsLoadError }}</p>
           }
 
           @if (editLessonTarget()) {
-            <div class="cal-form-fields">
-              <div
-                class="cal-form-field"
-                [class.cal-form-field--invalid]="lessonFormSubmitted() && !form.student_id.trim()"
-              >
-                <app-select
-                  name="student_id"
-                  [(ngModel)]="form.student_id"
-                  [options]="studentSelectOptions()"
-                  [placeholder]="i18n.calendarUi().studentPlaceholder"
-                  [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
-                  menuPlacement="below"
-                />
+            <div
+              class="cal-lesson-layout"
+              [class.cal-lesson-layout--desktop]="!isBottomNavLayout()"
+            >
+              <div class="cal-lesson-layout__main cal-form-fields">
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon" aria-hidden="true">
+                  <img src="assets/icons/icon-account.svg" width="20" height="20" alt="" />
+                </span>
+                <div
+                  class="cal-form-row__body cal-form-field"
+                  [class.cal-form-field--invalid]="lessonFormSubmitted() && !form.student_id.trim()"
+                >
+                  <app-select
+                    name="student_id"
+                    [(ngModel)]="form.student_id"
+                    [options]="studentSelectOptions()"
+                    [placeholder]="i18n.calendarUi().studentPlaceholder"
+                    [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
+                    menuPlacement="below"
+                  />
+                </div>
               </div>
 
               @if (editLessonTarget()?.isLastPaid) {
-                <p class="cal-form-last-paid-warning" role="status">
-                  {{ i18n.calendarUi().lastPaidPackageWarning }}
-                </p>
+                <div class="cal-form-row">
+                  <span class="cal-form-row__icon cal-form-row__icon--spacer" aria-hidden="true"></span>
+                  <p class="cal-form-row__body cal-form-last-paid-warning" role="status">
+                    {{ i18n.calendarUi().lastPaidPackageWarning }}
+                  </p>
+                </div>
               }
 
               @if (editLessonTarget(); as editing) {
-                <p class="cal-form-preview cal-form-preview--snapshot">
-                  {{ i18n.calendarUi().snapshotRateLabel }}
-                  @if (lessonHasSnapshotRate(editing)) {
-                    {{
-                      editing.lesson_price | currency: editing.lesson_currency : 'code' : '1.0-0'
-                    }}/ч
-                  } @else {
-                    —
-                  }
-                </p>
-                @if (editLessonStudentChanged()) {
-                  <p class="cal-form-preview cal-form-preview--hint">
-                    {{ i18n.calendarUi().snapshotWillUpdate }}
-                  </p>
-                }
+                <div class="cal-form-row">
+                  <span class="cal-form-row__icon cal-form-row__icon--spacer" aria-hidden="true"></span>
+                  <div class="cal-form-row__body">
+                    <p class="cal-form-preview cal-form-preview--snapshot">
+                      {{ i18n.calendarUi().snapshotRateLabel }}
+                      @if (lessonHasSnapshotRate(editing)) {
+                        {{ formatLessonSnapshotRateLabel(editing) }}
+                        · {{ formatLessonSnapshotRate(editing) }}
+                      } @else {
+                        —
+                      }
+                    </p>
+                    @if (editLessonStudentChanged()) {
+                      <p class="cal-form-preview cal-form-preview--hint">
+                        {{ i18n.calendarUi().snapshotWillUpdate }}
+                      </p>
+                    }
+                  </div>
+                </div>
               }
 
-              <div class="field field--datetime">
-                <label for="scheduledAtLocal">{{ i18n.calendarUi().scheduledAtLabel }}</label>
-                <input
-                  id="scheduledAtLocal"
-                  class="app-input app-input--datetime"
-                  type="datetime-local"
-                  name="scheduledAtLocal"
-                  [ngModel]="scheduledAtLocal()"
-                  (ngModelChange)="onScheduledAtLocalChange($event)"
-                />
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon" aria-hidden="true">
+                  <img src="assets/icons/icon-clock.svg" width="20" height="20" alt="" />
+                </span>
+                <div class="cal-form-row__body field field--datetime">
+                  <label for="scheduledAtLocal">{{ i18n.calendarUi().scheduledAtLabel }}</label>
+                  <input
+                    id="scheduledAtLocal"
+                    class="app-input app-input--datetime"
+                    type="datetime-local"
+                    name="scheduledAtLocal"
+                    [ngModel]="scheduledAtLocal()"
+                    (ngModelChange)="onScheduledAtLocalChange($event)"
+                  />
+                </div>
               </div>
 
-              <div class="cal-chips">
-                @for (presetMinutes of durationPresets; track presetMinutes) {
-                  <button
-                    type="button"
-                    class="cal-chip"
-                    [class.cal-chip--active]="
-                      durationChipMode() === 'preset' && duration() === presetMinutes
-                    "
-                    (click)="selectDurationPreset(presetMinutes)"
-                  >
-                    {{ formatDurationPresetLabel(presetMinutes) }}
-                  </button>
-                }
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon cal-form-row__icon--spacer" aria-hidden="true"></span>
+                <div class="cal-form-row__body cal-chips">
+                  @for (presetMinutes of durationPresets; track presetMinutes) {
+                    <button
+                      type="button"
+                      class="cal-chip"
+                      [class.cal-chip--active]="
+                        durationChipMode() === 'preset' && duration() === presetMinutes
+                      "
+                      (click)="selectDurationPreset(presetMinutes)"
+                    >
+                      {{ formatDurationPresetLabel(presetMinutes) }}
+                    </button>
+                  }
+                </div>
               </div>
 
-              <div class="field">
-                <label for="lesson-description-edit">{{ i18n.calendarUi().lessonDescriptionLabel }}</label>
-                <textarea
-                  id="lesson-description-edit"
-                  name="notes"
-                  rows="3"
-                  [placeholder]="i18n.calendarUi().notesNewPlaceholder"
-                  [(ngModel)]="form.notes"
-                ></textarea>
+              @if (isBottomNavLayout()) {
+                <ng-container *ngTemplateOutlet="recurrenceMobileTriggerTemplate"></ng-container>
+              }
+
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon" aria-hidden="true">
+                  <img src="assets/icons/icon-notes.svg" width="20" height="20" alt="" />
+                </span>
+                <div class="cal-form-row__body field field--notes">
+                  <label for="lesson-description-edit">{{ i18n.calendarUi().lessonDescriptionLabel }}</label>
+                  <textarea
+                    id="lesson-description-edit"
+                    name="notes"
+                    rows="2"
+                    [placeholder]="i18n.calendarUi().notesNewPlaceholder"
+                    [(ngModel)]="form.notes"
+                  ></textarea>
+                </div>
               </div>
 
-              <app-select
-                name="status"
-                [(ngModel)]="form.status"
-                [options]="lessonStatusSelectOptions()"
-                menuPlacement="below"
-                mobileBackdropSheet
-              />
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon" aria-hidden="true">
+                  <img src="assets/icons/icon-status.svg" width="20" height="20" alt="" />
+                </span>
+                <div class="cal-form-row__body">
+                  <app-select
+                    name="status"
+                    [(ngModel)]="form.status"
+                    [options]="lessonStatusSelectOptions()"
+                    menuPlacement="below"
+                    mobileBackdropSheet
+                  />
+                </div>
+              </div>
 
               @if (canRefundLessonBalance()) {
-                <p class="cal-form-preview cal-form-preview--hint" role="status">
-                  {{ i18n.calendarUi().billingDebitedHint }}
-                </p>
-                <button
-                  type="button"
-                  class="btn-link secondary cal-refund-balance-btn"
-                  [disabled]="savingLesson() || deletingLesson()"
-                  (click)="openRefundOnlyConfirm()"
-                >
-                  {{ i18n.calendarUi().billingRefundOnlyAction }}
-                </button>
+                <div class="cal-form-row">
+                  <span class="cal-form-row__icon cal-form-row__icon--spacer" aria-hidden="true"></span>
+                  <div class="cal-form-row__body">
+                    <p class="cal-form-preview cal-form-preview--hint" role="status">
+                      {{ i18n.calendarUi().billingDebitedHint }}
+                    </p>
+                    <button
+                      type="button"
+                      class="btn-link secondary cal-refund-balance-btn"
+                      [disabled]="savingLesson() || deletingLesson()"
+                      (click)="openRefundOnlyConfirm()"
+                    >
+                      {{ i18n.calendarUi().billingRefundOnlyAction }}
+                    </button>
+                  </div>
+                </div>
               }
+              </div>
 
-              <button type="button" class="cal-advanced-settings" (click)="openRecurrenceModal()">
-                <span class="cal-advanced-settings__head">
-                  <span class="cal-advanced-settings__title">{{ i18n.calendarUi().advancedSettingsLabel }}</span>
-                  <span class="cal-advanced-settings__chevron" aria-hidden="true">›</span>
-                </span>
-                <span class="cal-advanced-settings__summary">{{ recurrenceSummary() }}</span>
-              </button>
+              @if (!isBottomNavLayout()) {
+                <aside
+                  class="cal-lesson-layout__side"
+                  [attr.aria-label]="i18n.calendarUi().recurrenceModalTitle"
+                >
+                  <ng-container *ngTemplateOutlet="recurrenceInlineTemplate"></ng-container>
+                </aside>
+              }
             </div>
 
             @if (saveLessonError) {
               <p class="cal-form-error">{{ saveLessonError }}</p>
             }
+          } @else {
+            <div
+              class="cal-lesson-layout"
+              [class.cal-lesson-layout--desktop]="!isBottomNavLayout()"
+            >
+              <div class="cal-lesson-layout__main cal-form-fields">
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon" aria-hidden="true">
+                  <img src="assets/icons/icon-account.svg" width="20" height="20" alt="" />
+                </span>
+                <div
+                  class="cal-form-row__body cal-form-field"
+                  [class.cal-form-field--invalid]="lessonFormSubmitted() && !form.student_id.trim()"
+                >
+                  <app-select
+                    name="student_id"
+                    [(ngModel)]="form.student_id"
+                    [options]="studentSelectOptions()"
+                    [placeholder]="i18n.calendarUi().studentPlaceholder"
+                    [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
+                    menuPlacement="below"
+                  />
+                </div>
+              </div>
+
+              @if (selectedStudentForForm(); as picked) {
+                <div class="cal-form-row">
+                  <span class="cal-form-row__icon cal-form-row__icon--spacer" aria-hidden="true"></span>
+                  <p class="cal-form-row__body cal-form-preview cal-form-preview--snapshot">
+                    {{ i18n.calendarUi().snapshotWillFix }}
+                    {{ formatStudentRatePreview(picked) }}
+                  </p>
+                </div>
+              }
+
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon" aria-hidden="true">
+                  <img src="assets/icons/icon-clock.svg" width="20" height="20" alt="" />
+                </span>
+                <div class="cal-form-row__body field field--datetime">
+                  <label for="scheduledAtLocalNew">{{ i18n.calendarUi().scheduledAtLabel }}</label>
+                  <input
+                    id="scheduledAtLocalNew"
+                    class="app-input app-input--datetime"
+                    type="datetime-local"
+                    name="scheduledAtLocalNew"
+                    [ngModel]="scheduledAtLocal()"
+                    (ngModelChange)="onScheduledAtLocalChange($event)"
+                  />
+                </div>
+              </div>
+
+              @if (getSchedulePreviewText(); as preview) {
+                <div class="cal-form-row">
+                  <span class="cal-form-row__icon cal-form-row__icon--spacer" aria-hidden="true"></span>
+                  <p class="cal-form-row__body cal-form-preview">{{ preview }}</p>
+                </div>
+              }
+
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon cal-form-row__icon--spacer" aria-hidden="true"></span>
+                <div class="cal-form-row__body cal-chips">
+                  @for (presetMinutes of durationPresets; track presetMinutes) {
+                    <button
+                      type="button"
+                      class="cal-chip"
+                      [class.cal-chip--active]="
+                        durationChipMode() === 'preset' && duration() === presetMinutes
+                      "
+                      (click)="selectDurationPreset(presetMinutes)"
+                    >
+                      {{ formatDurationPresetLabel(presetMinutes) }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (isBottomNavLayout()) {
+                <ng-container *ngTemplateOutlet="recurrenceMobileTriggerTemplate"></ng-container>
+              }
+
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon" aria-hidden="true">
+                  <img src="assets/icons/icon-notes.svg" width="20" height="20" alt="" />
+                </span>
+                <div class="cal-form-row__body field field--notes">
+                  <label for="lesson-description-new">{{ i18n.calendarUi().lessonDescriptionLabel }}</label>
+                  <textarea
+                    id="lesson-description-new"
+                    name="notesNew"
+                    rows="2"
+                    [placeholder]="i18n.calendarUi().notesNewPlaceholder"
+                    [(ngModel)]="form.notes"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="cal-form-row">
+                <span class="cal-form-row__icon" aria-hidden="true">
+                  <img src="assets/icons/icon-status.svg" width="20" height="20" alt="" />
+                </span>
+                <div class="cal-form-row__body">
+                  <app-select
+                    name="status"
+                    [(ngModel)]="form.status"
+                    [options]="lessonStatusSelectOptions()"
+                    menuPlacement="below"
+                    mobileBackdropSheet
+                  />
+                </div>
+              </div>
+              </div>
+
+              @if (!isBottomNavLayout()) {
+                <aside
+                  class="cal-lesson-layout__side"
+                  [attr.aria-label]="i18n.calendarUi().recurrenceModalTitle"
+                >
+                  <ng-container *ngTemplateOutlet="recurrenceInlineTemplate"></ng-container>
+                </aside>
+              }
+            </div>
+
+            @if (saveLessonError) {
+              <p class="cal-form-error">{{ saveLessonError }}</p>
+            }
+          }
+        </div>
+      </div>
 
             <div class="cal-form-actions cal-form-actions--wrap">
-              <button
-                type="button"
-                class="cal-btn-delete"
-                [disabled]="savingLesson() || deletingLesson()"
-                (click)="deleteLesson()"
-              >
-                {{
-                  deletingLesson()
-                    ? i18n.calendarUi().deletingLesson
-                    : i18n.calendarUi().deleteLesson
-                }}
-              </button>
+              @if (editLessonTarget()) {
+                <button
+                  type="button"
+                  class="cal-btn-delete"
+                  [disabled]="savingLesson() || deletingLesson()"
+                  (click)="deleteLesson()"
+                >
+                  {{
+                    deletingLesson()
+                      ? i18n.calendarUi().deletingLesson
+                      : i18n.calendarUi().deleteLesson
+                  }}
+                </button>
+              }
               <button type="button" class="btn-link cancel" (click)="closeLessonForm()">
                 {{ i18n.studentsUi().cancel }}
               </button>
@@ -738,106 +917,7 @@
                 {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}
               </button>
             </div>
-          } @else {
-            <div class="cal-form-fields">
-              <div
-                class="cal-form-field"
-                [class.cal-form-field--invalid]="lessonFormSubmitted() && !form.student_id.trim()"
-              >
-                <app-select
-                  name="student_id"
-                  [(ngModel)]="form.student_id"
-                  [options]="studentSelectOptions()"
-                  [placeholder]="i18n.calendarUi().studentPlaceholder"
-                  [emptyMessage]="i18n.calendarUi().noStudentsForLesson"
-                  menuPlacement="below"
-                />
-              </div>
-
-              @if (selectedStudentForForm(); as picked) {
-                <p class="cal-form-preview cal-form-preview--snapshot">
-                  {{ i18n.calendarUi().snapshotWillFix }}
-                  {{
-                    picked.rate_per_hour
-                      | currency: picked.rate_currency ?? 'EUR' : 'code' : '1.0-0'
-                  }}/ч
-                </p>
-              }
-
-              <div class="field field--datetime">
-                <label for="scheduledAtLocalNew">{{ i18n.calendarUi().scheduledAtLabel }}</label>
-                <input
-                  id="scheduledAtLocalNew"
-                  class="app-input app-input--datetime"
-                  type="datetime-local"
-                  name="scheduledAtLocalNew"
-                  [ngModel]="scheduledAtLocal()"
-                  (ngModelChange)="onScheduledAtLocalChange($event)"
-                />
-              </div>
-
-              @if (getSchedulePreviewText(); as preview) {
-                <p class="cal-form-preview">{{ preview }}</p>
-              }
-
-              <div class="cal-chips">
-                @for (presetMinutes of durationPresets; track presetMinutes) {
-                  <button
-                    type="button"
-                    class="cal-chip"
-                    [class.cal-chip--active]="
-                      durationChipMode() === 'preset' && duration() === presetMinutes
-                    "
-                    (click)="selectDurationPreset(presetMinutes)"
-                  >
-                    {{ formatDurationPresetLabel(presetMinutes) }}
-                  </button>
-                }
-              </div>
-
-              <div class="field">
-                <label for="lesson-description-new">{{ i18n.calendarUi().lessonDescriptionLabel }}</label>
-                <textarea
-                  id="lesson-description-new"
-                  name="notesNew"
-                  rows="3"
-                  [placeholder]="i18n.calendarUi().notesNewPlaceholder"
-                  [(ngModel)]="form.notes"
-                ></textarea>
-              </div>
-
-              <app-select
-                name="status"
-                [(ngModel)]="form.status"
-                [options]="lessonStatusSelectOptions()"
-                menuPlacement="below"
-                mobileBackdropSheet
-              />
-
-              <button type="button" class="cal-advanced-settings" (click)="openRecurrenceModal()">
-                <span class="cal-advanced-settings__head">
-                  <span class="cal-advanced-settings__title">{{ i18n.calendarUi().advancedSettingsLabel }}</span>
-                  <span class="cal-advanced-settings__chevron" aria-hidden="true">›</span>
-                </span>
-                <span class="cal-advanced-settings__summary">{{ recurrenceSummary() }}</span>
-              </button>
-            </div>
-
-            @if (saveLessonError) {
-              <p class="cal-form-error">{{ saveLessonError }}</p>
-            }
-
-            <div class="cal-form-actions cal-form-actions--wrap">
-              <button type="button" class="btn-link cancel" (click)="closeLessonForm()">
-                {{ i18n.studentsUi().cancel }}
-              </button>
-              <button type="submit" class="btn-primary" [disabled]="savingLesson()">
-                {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}
-              </button>
-            </div>
-          }
-        </form>
-      </div>
+      </form>
     </div>
   </div>
 }
@@ -911,181 +991,365 @@
 
 @if (recurrenceModalOpen()) {
   <div
-    class="modal-overlay modal-overlay--sheet modal-overlay--stack-top"
+    class="modal-overlay modal-overlay--stack-top"
+    [class.modal-overlay--recurrence-center]="recurrenceModalStep() === 'picker'"
+    [class.modal-overlay--sheet]="recurrenceModalStep() === 'details'"
+    [class.modal-overlay--full]="recurrenceModalStep() === 'details'"
     animate.enter="modal-overlay-out 0.24s ease-out reverse"
     animate.leave="modal-overlay-out 0.2s ease-in"
     role="presentation"
+    (click)="onRecurrenceOverlayClick()"
   >
-    @if (isBottomNavLayout()) {
+    @if (recurrenceModalStep() === 'picker') {
       <div
-        class="modal modal-sheet modal--recurrence"
-        animate.enter="modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) reverse"
-        animate.leave="modal-sheet-out-mobile 0.25s cubic-bezier(0.32, 0.72, 0, 1)"
-        role="dialog"
-        aria-modal="true"
-        (click)="$event.stopPropagation()"
-      >
-        <ng-container *ngTemplateOutlet="recurrenceFormTemplate"></ng-container>
-      </div>
-    } @else {
-      <div
-        class="modal modal-sheet modal--recurrence"
+        class="modal modal--recurrence-center"
         animate.enter="modal-sheet-out-desktop 0.28s cubic-bezier(0.22, 1, 0.36, 1) reverse"
         animate.leave="modal-sheet-out-desktop 0.22s cubic-bezier(0.22, 1, 0.36, 1)"
         role="dialog"
         aria-modal="true"
         (click)="$event.stopPropagation()"
       >
-        <ng-container *ngTemplateOutlet="recurrenceFormTemplate"></ng-container>
+        <div class="modal-header">
+          <h2>{{ i18n.calendarUi().recurrenceModalTitle }}</h2>
+          <button
+            type="button"
+            class="modal-close"
+            (click)="closeRecurrencePickerFully()"
+            [attr.aria-label]="i18n.studentsUi().close"
+          >
+            <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
+          </button>
+        </div>
+
+        <div class="modal-sheet__scroll">
+          <div class="modal-body cal-recurrence-modal">
+            <div class="cal-recurrence-pick" role="listbox">
+              @for (opt of recurrenceSegmentOptions(); track opt.value) {
+                <button
+                  type="button"
+                  class="cal-recurrence-pick__item"
+                  role="option"
+                  [attr.aria-selected]="recurrenceSegmentActive() === opt.value"
+                  [class.cal-recurrence-pick__item--active]="recurrenceSegmentActive() === opt.value"
+                  (click)="onMobileRecurrencePresetPick(opt.value)"
+                >
+                  <span class="cal-recurrence-pick__main">
+                    <img
+                      class="cal-recurrence-pick__icon"
+                      [src]="opt.icon"
+                      width="20"
+                      height="20"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span>{{ opt.label }}</span>
+                  </span>
+                  @if (recurrenceSegmentActive() === opt.value) {
+                    <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div
+        class="modal modal-sheet modal--recurrence modal--recurrence-page"
+        animate.enter="modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) reverse"
+        animate.leave="modal-sheet-out-mobile 0.25s cubic-bezier(0.32, 0.72, 0, 1)"
+        role="dialog"
+        aria-modal="true"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="modal-header">
+          <button
+            type="button"
+            class="modal-back"
+            (click)="closeRecurrenceModal()"
+            [attr.aria-label]="i18n.studentsUi().cancel"
+          >
+            ‹
+          </button>
+          <h2>{{ recurrenceSegmentLabel() }}</h2>
+          <button
+            type="button"
+            class="modal-close"
+            (click)="closeRecurrencePickerFully()"
+            [attr.aria-label]="i18n.studentsUi().close"
+          >
+            <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
+          </button>
+        </div>
+
+        <div class="modal-sheet__scroll">
+          <div class="modal-body cal-recurrence-modal">
+            <ng-container *ngTemplateOutlet="recurrenceDetailsTemplate"></ng-container>
+          </div>
+        </div>
+
+        <div class="cal-recurrence-modal__actions">
+          <button type="button" class="btn-link cancel" (click)="closeRecurrenceModal()">
+            {{ i18n.studentsUi().cancel }}
+          </button>
+          <button type="button" class="btn-primary" (click)="applyRecurrenceModal()">
+            {{ i18n.calendarUi().recurrenceApply }}
+          </button>
+        </div>
       </div>
     }
   </div>
 }
 
-<ng-template #recurrenceFormTemplate>
-  <div class="modal-header">
-    <h2>{{ i18n.calendarUi().recurrenceModalTitle }}</h2>
-    <button
-      type="button"
-      class="modal-close"
-      (click)="closeRecurrenceModal()"
-      [attr.aria-label]="i18n.studentsUi().close"
-    >
-      <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
-    </button>
-  </div>
+<ng-template #recurrenceMobileTriggerTemplate>
+  <button type="button" class="cal-recurrence-link" (click)="openRecurrenceModal()">
+    <span class="cal-form-row__icon cal-recurrence-link__icon" aria-hidden="true">
+      <img src="assets/icons/icon-repeat.svg" width="20" height="20" alt="" />
+    </span>
+    <span class="cal-recurrence-link__text">{{ recurrenceSummary() }}</span>
+    <span class="cal-recurrence-link__chevron" aria-hidden="true">›</span>
+  </button>
+</ng-template>
 
-  <div class="modal-sheet__scroll">
-    <div class="modal-body cal-recurrence-modal">
-      <app-select
-        name="recurrencePreset"
-        [ngModel]="recurrenceDraft().preset"
-        (ngModelChange)="onRecurrencePresetChange($event)"
-        [options]="recurrencePresetSelectOptions()"
-        menuPlacement="below"
-        mobileBackdropSheet
-      />
-
-      @if (recurrenceDraft().preset === 'custom') {
-        <app-select
-          name="recurrenceCustomFreq"
-          [ngModel]="recurrenceDraft().customFreq"
-          (ngModelChange)="onRecurrenceCustomFreqChange($event)"
-          [options]="recurrenceCustomFreqSelectOptions()"
-          menuPlacement="below"
-          mobileBackdropSheet
-        />
-      }
-
-      @if (recurrenceDraft().preset !== 'none') {
-        @if (
-          recurrenceDraft().preset === 'monthly' ||
-          (recurrenceDraft().preset === 'custom' && recurrenceDraft().customFreq === 'monthly')
-        ) {
-          <p class="cal-recurrence__hint">{{ recurrenceDraftMonthlyHint() }}</p>
-        }
-
-        @if (recurrenceDraftShowsInterval()) {
-          <div class="cal-recurrence-interval">
-            <label class="cal-recurrence-interval__label" for="recurrenceInterval">
-              {{ i18n.calendarUi().recurrenceEveryLabel }}
-            </label>
-            <input
-              id="recurrenceInterval"
-              class="app-input cal-recurrence-interval__input"
-              type="number"
-              min="1"
-              max="99"
-              name="recurrenceInterval"
-              [ngModel]="recurrenceDraft().interval"
-              (ngModelChange)="onRecurrenceIntervalChange($event)"
-            />
-            <span class="cal-recurrence-interval__unit">
-              @if (recurrenceDraftIntervalUnit() === 'days') {
-                {{ i18n.calendarUi().recurrenceUnitDays }}
-              } @else if (recurrenceDraftIntervalUnit() === 'weeks') {
-                {{ i18n.calendarUi().recurrenceUnitWeeks }}
-              } @else {
-                {{ i18n.calendarUi().recurrenceUnitMonths }}
-              }
-            </span>
-          </div>
-        }
-
-        @if (recurrenceDraftShowsWeekdays()) {
-          <div
-            class="cal-recurrence__days"
-            role="group"
-            [attr.aria-label]="i18n.calendarUi().recurrenceWeekdaysLabel"
+<ng-template #recurrenceDetailsTemplate>
+  <div class="cal-recurrence-inline__panel cal-recurrence-details">
+    @if (recurrenceConfig().preset === 'custom') {
+      <p class="cal-recurrence__label">{{ i18n.calendarUi().recurrencePresetCustom }}</p>
+      <div class="cal-seg cal-seg--compact" role="group">
+        @for (opt of recurrenceCustomFreqSelectOptions(); track opt.value) {
+          <button
+            type="button"
+            class="cal-seg__btn"
+            [class.cal-seg__btn--active]="recurrenceConfig().customFreq === opt.value"
+            (click)="onRecurrenceConfigCustomFreqChange(opt.value)"
           >
-            @for (day of recurrenceDayOptions(); track day.code) {
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (recurrenceConfigShowsMonthlyHint()) {
+      <p class="cal-recurrence__hint">{{ recurrenceConfigMonthlyHint() }}</p>
+    }
+
+    @if (recurrenceConfigShowsWeekdays()) {
+      <p class="cal-recurrence__label">{{ i18n.calendarUi().recurrenceWeekdaysLabel }}</p>
+      <div
+        class="cal-recurrence__days"
+        role="group"
+        [attr.aria-label]="i18n.calendarUi().recurrenceWeekdaysLabel"
+      >
+        @for (day of recurrenceDayOptions(); track day.code) {
+          <button
+            type="button"
+            class="cal-recurrence-day"
+            [class.cal-recurrence-day--active]="isRecurrenceConfigDayActive(day.code)"
+            (click)="toggleRecurrenceConfigDay(day.code)"
+          >
+            {{ day.label }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="cal-recurrence-interval">
+      <label class="cal-recurrence-interval__label" for="recurrenceIntervalDetails">
+        {{ i18n.calendarUi().recurrenceEveryLabel }}
+      </label>
+      <input
+        id="recurrenceIntervalDetails"
+        class="app-input cal-recurrence-interval__input"
+        type="number"
+        min="1"
+        max="99"
+        name="recurrenceIntervalDetails"
+        [ngModel]="recurrenceConfig().interval"
+        (ngModelChange)="onRecurrenceConfigIntervalChange($event)"
+      />
+      <span class="cal-recurrence-interval__unit">
+        @if (recurrenceConfigIntervalUnit() === 'days') {
+          {{ i18n.calendarUi().recurrenceUnitDays }}
+        } @else if (recurrenceConfigIntervalUnit() === 'weeks') {
+          {{ i18n.calendarUi().recurrenceUnitWeeks }}
+        } @else {
+          {{ i18n.calendarUi().recurrenceUnitMonths }}
+        }
+      </span>
+    </div>
+
+    <p class="cal-recurrence__section">{{ i18n.calendarUi().recurrenceEndSection }}</p>
+    @if (isBottomNavLayout()) {
+      <div class="cal-recurrence-end-list" role="radiogroup" [attr.aria-label]="i18n.calendarUi().recurrenceEndSection">
+        @for (opt of recurrenceEndListOptions(); track opt.value) {
+          @if (opt.value === 'never') {
+            <button
+              type="button"
+              class="cal-recurrence-end-list__item"
+              role="radio"
+              [attr.aria-checked]="recurrenceConfig().endMode === 'never'"
+              [class.cal-recurrence-end-list__item--active]="recurrenceConfig().endMode === 'never'"
+              (click)="onRecurrenceConfigEndModeChange('never')"
+            >
+              <span class="cal-recurrence-pick__main">
+                <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
+                <span>{{ opt.label }}</span>
+              </span>
+              @if (recurrenceConfig().endMode === 'never') {
+                <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
+              }
+            </button>
+          } @else if (opt.value === 'until') {
+            <div
+              class="cal-recurrence-end-list__item cal-recurrence-end-list__item--block"
+              [class.cal-recurrence-end-list__item--active]="recurrenceConfig().endMode === 'until'"
+            >
               <button
                 type="button"
-                class="cal-recurrence-day"
-                [class.cal-recurrence-day--active]="isRecurrenceDraftDayActive(day.code)"
-                (click)="toggleRecurrenceDraftDay(day.code)"
+                class="cal-recurrence-end-list__row"
+                role="radio"
+                [attr.aria-checked]="recurrenceConfig().endMode === 'until'"
+                (click)="onRecurrenceConfigEndModeChange('until')"
               >
-                {{ day.label }}
+                <span class="cal-recurrence-pick__main">
+                  <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
+                  <span>{{ opt.label }}</span>
+                </span>
+                @if (recurrenceConfig().endMode === 'until') {
+                  <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
+                }
               </button>
-            }
-          </div>
+              <div class="field field--date cal-recurrence-end-list__field">
+                <label for="recurrenceUntilDetails">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
+                <input
+                  id="recurrenceUntilDetails"
+                  class="app-input"
+                  type="date"
+                  name="recurrenceUntilDetails"
+                  [ngModel]="recurrenceConfig().untilDate"
+                  (ngModelChange)="onRecurrenceConfigUntilChange($event); onRecurrenceConfigEndModeChange('until')"
+                />
+              </div>
+            </div>
+          } @else {
+            <div
+              class="cal-recurrence-end-list__item cal-recurrence-end-list__item--block"
+              [class.cal-recurrence-end-list__item--active]="recurrenceConfig().endMode === 'count'"
+            >
+              <button
+                type="button"
+                class="cal-recurrence-end-list__row"
+                role="radio"
+                [attr.aria-checked]="recurrenceConfig().endMode === 'count'"
+                (click)="onRecurrenceConfigEndModeChange('count')"
+              >
+                <span class="cal-recurrence-pick__main">
+                  <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
+                  <span>{{ opt.label }}</span>
+                </span>
+                @if (recurrenceConfig().endMode === 'count') {
+                  <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
+                }
+              </button>
+              <div class="cal-recurrence-interval cal-recurrence-end-list__field">
+                <label class="cal-recurrence-interval__label" for="recurrenceCountDetails">
+                  {{ i18n.calendarUi().recurrenceCountLabel }}
+                </label>
+                <input
+                  id="recurrenceCountDetails"
+                  class="app-input cal-recurrence-interval__input"
+                  type="number"
+                  min="1"
+                  max="999"
+                  name="recurrenceCountDetails"
+                  [ngModel]="recurrenceConfig().count"
+                  (ngModelChange)="onRecurrenceConfigCountChange($event); onRecurrenceConfigEndModeChange('count')"
+                />
+                <span class="cal-recurrence-interval__unit">
+                  {{ i18n.calendarUi().recurrenceUnitOccurrences }}
+                </span>
+              </div>
+            </div>
+          }
         }
-
-        <p class="cal-recurrence__section">{{ i18n.calendarUi().recurrenceEndSection }}</p>
-        <app-select
-          name="recurrenceEndMode"
-          [ngModel]="recurrenceDraft().endMode"
-          (ngModelChange)="onRecurrenceEndModeChange($event)"
-          [options]="recurrenceEndModeSelectOptions()"
-          menuPlacement="below"
-          mobileBackdropSheet
-        />
-
-        @if (recurrenceDraft().endMode === 'until') {
-          <div class="field field--date">
-            <label for="recurrenceUntilModal">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
-            <input
-              id="recurrenceUntilModal"
-              class="app-input"
-              type="date"
-              name="recurrenceUntilModal"
-              [ngModel]="recurrenceDraft().untilDate"
-              (ngModelChange)="onRecurrenceUntilChange($event)"
-            />
-          </div>
+      </div>
+    } @else {
+      <div class="cal-seg cal-seg--compact" role="group">
+        @for (opt of recurrenceEndModeSelectOptions(); track opt.value) {
+          <button
+            type="button"
+            class="cal-seg__btn"
+            [class.cal-seg__btn--active]="recurrenceConfig().endMode === opt.value"
+            (click)="onRecurrenceConfigEndModeChange(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
         }
+      </div>
 
-        @if (recurrenceDraft().endMode === 'count') {
-          <div class="cal-recurrence-interval">
-            <label class="cal-recurrence-interval__label" for="recurrenceCount">
-              {{ i18n.calendarUi().recurrenceCountLabel }}
-            </label>
-            <input
-              id="recurrenceCount"
-              class="app-input cal-recurrence-interval__input"
-              type="number"
-              min="1"
-              max="999"
-              name="recurrenceCount"
-              [ngModel]="recurrenceDraft().count"
-              (ngModelChange)="onRecurrenceCountChange($event)"
-            />
-            <span class="cal-recurrence-interval__unit">
-              {{ i18n.calendarUi().recurrenceUnitOccurrences }}
-            </span>
-          </div>
-        }
+      @if (recurrenceConfig().endMode === 'until') {
+        <div class="field field--date">
+          <label for="recurrenceUntilDesktop">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
+          <input
+            id="recurrenceUntilDesktop"
+            class="app-input"
+            type="date"
+            name="recurrenceUntilDesktop"
+            [ngModel]="recurrenceConfig().untilDate"
+            (ngModelChange)="onRecurrenceConfigUntilChange($event)"
+          />
+        </div>
+      }
+
+      @if (recurrenceConfig().endMode === 'count') {
+        <div class="cal-recurrence-interval">
+          <label class="cal-recurrence-interval__label" for="recurrenceCountDesktop">
+            {{ i18n.calendarUi().recurrenceCountLabel }}
+          </label>
+          <input
+            id="recurrenceCountDesktop"
+            class="app-input cal-recurrence-interval__input"
+            type="number"
+            min="1"
+            max="999"
+            name="recurrenceCountDesktop"
+            [ngModel]="recurrenceConfig().count"
+            (ngModelChange)="onRecurrenceConfigCountChange($event)"
+          />
+          <span class="cal-recurrence-interval__unit">
+            {{ i18n.calendarUi().recurrenceUnitOccurrences }}
+          </span>
+        </div>
+      }
+    }
+  </div>
+</ng-template>
+
+<ng-template #recurrenceInlineTemplate>
+  <div class="cal-recurrence-inline">
+    <p class="cal-recurrence-inline__title">{{ i18n.calendarUi().recurrenceModalTitle }}</p>
+
+    <div class="cal-seg" role="tablist" [attr.aria-label]="i18n.calendarUi().recurrenceModalTitle">
+      @for (opt of recurrenceSegmentOptions(); track opt.value) {
+        <button
+          type="button"
+          class="cal-seg__btn cal-seg__btn--with-icon"
+          role="tab"
+          [attr.aria-selected]="recurrenceSegmentActive() === opt.value"
+          [class.cal-seg__btn--active]="recurrenceSegmentActive() === opt.value"
+          (click)="onRecurrenceConfigPresetChange(opt.value)"
+        >
+          <img class="cal-seg__icon" [src]="opt.icon" width="14" height="14" alt="" aria-hidden="true" />
+          <span>{{ opt.label }}</span>
+        </button>
       }
     </div>
-  </div>
 
-  <div class="cal-recurrence-modal__actions">
-    <button type="button" class="btn-link cancel" (click)="closeRecurrenceModal()">
-      {{ i18n.studentsUi().cancel }}
-    </button>
-    <button type="button" class="btn-primary" (click)="applyRecurrenceModal()">
-      {{ i18n.calendarUi().recurrenceApply }}
-    </button>
+    @if (!recurrenceConfigShowsDetails()) {
+      <p class="cal-recurrence-inline__empty">{{ i18n.calendarUi().recurrencePresetNone }}</p>
+    } @else {
+      <ng-container *ngTemplateOutlet="recurrenceDetailsTemplate"></ng-container>
+    }
   </div>
 </ng-template>
 

@@ -111,6 +111,7 @@ export type TaxMode =
   | 'ru-ip'
   | 'by-ip'
   | 'kz-ip'
+  | 'ua-fop3'
   | 'none';
 
 export type SubscriptionStatus = 'free' | 'pro' | 'trial';
@@ -400,9 +401,7 @@ export interface AccountStrings {
   saveError: string;
   subscriptionManagedByPayment: string;
   taxModeRequiredHint: string;
-  taxModeLockedHintBefore: string;
-  taxModeLockedHintAfter: string;
-  taxSupportEmail: string;
+  taxModeChangeHint: string;
   taxModeConfirmTitle: string;
   taxModeConfirmBody: string;
   taxModeConfirmConfirm: string;
@@ -856,6 +855,15 @@ export interface Expense {
   updatedAt?: string;
 }
 
+export interface FinanceTaxProjection {
+  mode: string;
+  socialInsuranceRate: number;
+  socialInsurance: number;
+  taxableBase: number;
+  incomeTax: number;
+  netProfit: number;
+}
+
 export interface FinanceSummary {
   currency: string;
   defaultCurrency?: string;
@@ -884,13 +892,13 @@ export interface FinanceSummary {
     scheduledByCurrency: Record<string, number>;
     combinedByCurrency: Record<string, number>;
   };
-  austria: {
-    socialInsuranceRate: number;
-    socialInsurance: number;
-    taxableBase: number;
-    incomeTax: number;
-    netProfit: number;
-  } | null;
+  /** Универсальная налоговая оценка для выбранного режима. */
+  tax: FinanceTaxProjection | null;
+  /**
+   * @deprecated Alias для AT: совпадает с tax при at-self-employed.
+   * Новый код должен читать `tax`.
+   */
+  austria: FinanceTaxProjection | null;
   lessonsBreakdown?: FinanceLessonBreakdown[];
   expensesBreakdown?: FinanceExpenseBreakdown[];
 }
@@ -1018,10 +1026,12 @@ export type StudentBillingType = 'package' | 'postpaid';
 
 export type StudentRateUnit = 'hour' | 'lesson';
 
+export type LessonPriceMode = 'fixed' | 'hourly';
+
 /**
  * Урок в коллекции `lessons`.
  * `scheduledAt` + `lesson_duration` — интервал в БД (без миграции на start_at/end_at).
- * `lesson_price` + `lesson_currency` — снапшот ставки за час и валюты на момент создания
+ * `lesson_price` + `lesson_currency` + `price_mode` — снапшот ставки и режима на момент создания
  * (или при смене ученика); не меняется при правке ставки ученика в профиле.
  */
 export interface Lesson {
@@ -1030,10 +1040,15 @@ export interface Lesson {
   status: LessonStatus;
   scheduledAt: string;
   lesson_duration: number;
-  /** Ставка за час (снапшот), не сумма за весь урок. */
+  /**
+   * Ставка снапшота: при `price_mode: 'hourly'` — за час;
+   * при `price_mode: 'fixed'` — фиксированная сумма за урок.
+   */
   lesson_price: number;
-  /** Валюта снапшота (BYN, PLN, EUR, USD, RUB). */
+  /** Валюта снапшота (EUR, USD, PLN, RUB, BYN, KZT, UAH). */
   lesson_currency: string;
+  /** Режим цены: hourly = × duration/60, fixed = lesson_price как есть. */
+  price_mode?: LessonPriceMode;
   /** Часовой пояс ученика (снапшот региона) на момент урока. */
   student_timezone?: string;
   reminder_sent: boolean;

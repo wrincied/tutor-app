@@ -49,7 +49,8 @@ export class AppDialogComponent implements OnDestroy {
   open = input(false, { transform: booleanAttribute });
   title = input.required<string>();
   variant = input<AppDialogVariant>('default');
-  layout = input<'center' | 'sheet'>('center');
+  /** `drawer` — телефон: bottom sheet; ≥768px: slide-over справа. */
+  layout = input<'center' | 'sheet' | 'drawer'>('center');
   iconSrc = input<string | null>(null);
   cancelLabel = input<string | null>(null);
   /** Красная кнопка отмены (как btn-link.danger). */

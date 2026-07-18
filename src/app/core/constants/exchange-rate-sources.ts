@@ -31,6 +31,10 @@ export const EXCHANGE_RATE_LINKS: Record<AppCurrency, ExchangeRateSource> = {
     label: 'НБК',
     url: 'https://nationalbank.kz/ru/exchangerates/ezhednevnye-oficialnye-rynochnye-kursy-valyut',
   },
+  UAH: {
+    label: 'НБУ',
+    url: 'https://bank.gov.ua/ua/markets/exchangerates',
+  },
 };
 
 export function getExchangeRateSourceLink(currency: string): ExchangeRateSource {

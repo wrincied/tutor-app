@@ -57,7 +57,8 @@
   cursor: pointer;
   transition: opacity 0.15s;
   &:hover {
-    opacity: 0.88;
+    background-color: #0b7c45; /* Смещение по яркости вниз */
+    // box-shadow: 0 6px 12px rgba(15, 157, 88, 0.3);
   }
 }
 
@@ -286,7 +287,7 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   @media (min-width: $modal-desktop-min) {
     align-self: center;
     width: 100%;
-    max-width: 28rem;
+    max-width: 72rem;
     margin-inline: auto;
     max-height: min(90dvh, calc(100dvh - 2rem));
     max-height: min(90svh, calc(100svh - 2rem));
@@ -364,6 +365,15 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   }
 }
 
+@keyframes modal-drawer-out-desktop {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 .modal-overlay-leave {
   // opacity: 0;
   // animation: modal-overlay-out 0.22s ease-in forwards;
@@ -416,6 +426,25 @@ $modal-mobile-max: $modal-desktop-min - 1px;
   }
 }
 
+.modal-drawer-leave {
+  pointer-events: none;
+
+  @media (max-width: $modal-mobile-max) {
+    opacity: 0 !important;
+    transform: translateY(100%) !important;
+    transition:
+      transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 0.25s ease-in !important;
+    animation: modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+  }
+
+  @media (min-width: $modal-desktop-min) {
+    transform: translateX(100%) !important;
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    animation: modal-drawer-out-desktop 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .modal-overlay,
   .modal-sheet,
@@ -425,7 +454,8 @@ $modal-mobile-max: $modal-desktop-min - 1px;
 
   .modal-overlay-leave,
   .modal-sheet-leave,
-  .modal-dialog-leave {
+  .modal-dialog-leave,
+  .modal-drawer-leave {
     animation-duration: 0.01s !important;
     transition: none !important;
   }
