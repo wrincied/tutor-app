@@ -8,6 +8,7 @@ const CONFIGURED_TAX_MODES = new Set<string>([
   'ru-ip',
   'by-ip',
   'kz-ip',
+  'ua-fop3',
 ]);
 
 export function normalizeTaxMode(raw: string | null | undefined): TaxMode | 'none' {
@@ -55,4 +56,5 @@ export const SETUP_TAX_MODES: TaxMode[] = [
   'ru-ip',
   'by-ip',
   'kz-ip',
+  'ua-fop3',
 ];

@@ -39,6 +39,10 @@ function resolveRateUnit(raw?: string): StudentRateUnit {
   return raw === 'lesson' ? 'lesson' : 'hour';
 }
 
+function rateUnitSuffix(unit: StudentRateUnit, t: { perHour: string; perLesson: string }): string {
+  return unit === 'lesson' ? t.perLesson : t.perHour;
+}
+
 function resolvedBrowserTimezone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -162,6 +166,11 @@ export class StudentsComponent implements OnInit {
 
   setRateUnit(unit: StudentRateUnit): void {
     this.rateUnit.set(unit);
+  }
+
+  formatStudentRate(student: Student): string {
+    const unit = resolveRateUnit(student.rate_unit);
+    return `${student.rate_per_hour} ${this.i18n.currencyLabel(this.rateCurrencyOf(student))}${rateUnitSuffix(unit, this.t)}`;
   }
 
   openCreate() {

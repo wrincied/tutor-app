@@ -37,6 +37,7 @@ function baseSummary(currency: string, totalIncome: number): FinanceSummary {
       combinedByCurrency: { EUR: totalIncome },
     },
     austria: null,
+    tax: null,
   };
 }
 

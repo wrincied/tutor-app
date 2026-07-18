@@ -61,6 +61,15 @@ export function remapFinanceSummary(
           netProfit: convert(summary.austria.netProfit),
         }
       : null,
+    tax: summary.tax
+      ? {
+          ...summary.tax,
+          socialInsurance: convert(summary.tax.socialInsurance),
+          taxableBase: convert(summary.tax.taxableBase),
+          incomeTax: convert(summary.tax.incomeTax),
+          netProfit: convert(summary.tax.netProfit),
+        }
+      : null,
   };
 }
 
