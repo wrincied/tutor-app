@@ -1,0 +1,76 @@
+/* Design preview (:4300) — shell polish under data-design="v2". Does not affect :4200. */
+
+html[data-design='v2'] {
+  --page-bg:
+    radial-gradient(90% 60% at 0% 0%, #e7f5ef 0%, transparent 55%),
+    radial-gradient(70% 50% at 100% 10%, #d8efe4 0%, transparent 50%),
+    #f4faf7;
+  --nav-bg: color-mix(in srgb, #f4faf7 92%, #e7f5ef);
+  --nav-border: #cfe3d9;
+  --nav-active-bg: color-mix(in srgb, var(--lime, #c6f071) 22%, #e7f5ef);
+  --nav-accent: var(--moss, #0f3d34);
+  --text-primary: var(--ink, #071714);
+  font-family: var(--font-body, 'Figtree', sans-serif);
+
+  body {
+    background: var(--page-bg);
+  }
+
+  .page-header h1 {
+    font-family: var(--font-display, 'Syne', sans-serif);
+    letter-spacing: -0.03em;
+  }
+
+  .main-content,
+  .app-main,
+  main {
+    animation: design-v2-enter 0.35s ease-out both;
+  }
+
+  .sidebar {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--foam, #e7f5ef) 55%, #fff) 0%,
+      var(--nav-bg) 40%
+    );
+    padding: 18px 10px;
+  }
+
+  .sidebar-logo {
+    font-size: 1.25rem;
+    letter-spacing: -0.04em;
+  }
+
+  .nav-link,
+  .sidebar-btn {
+    border-radius: 999px;
+    padding: 10px 14px;
+  }
+
+  .nav-link.active,
+  .sidebar-btn--account.active {
+    color: var(--moss, #0f3d34);
+    font-weight: 600;
+  }
+
+  .bottom-nav {
+    background: color-mix(in srgb, var(--nav-bg) 92%, #fff);
+    backdrop-filter: blur(8px);
+  }
+
+  .bottom-link.active {
+    color: var(--moss, #0f3d34);
+    font-weight: 700;
+  }
+}
+
+@keyframes design-v2-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

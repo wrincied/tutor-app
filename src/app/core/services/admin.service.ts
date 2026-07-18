@@ -7,6 +7,8 @@ import type {
   AdminStats,
   AdminUserRow,
   AdminUserSummary,
+  LegalCmsDocId,
+  LegalCmsDocument,
   SubscriptionStatus,
 } from '@interfaces';
 
@@ -67,5 +69,16 @@ export class AdminService {
     return this.http.post<AdminSubscriptionResponse>(`${API}/users/${userId}/grant-trial`, {
       trial_ends_at: trialEndsAt,
     });
+  }
+
+  getLandingLegal(doc: LegalCmsDocId): Observable<LegalCmsDocument> {
+    return this.http.get<LegalCmsDocument>(`${API}/landing/legal/${doc}`);
+  }
+
+  saveLandingLegal(
+    doc: LegalCmsDocId,
+    payload: { title: string; body: string },
+  ): Observable<LegalCmsDocument & { ok: boolean }> {
+    return this.http.put<LegalCmsDocument & { ok: boolean }>(`${API}/landing/legal/${doc}`, payload);
   }
 }

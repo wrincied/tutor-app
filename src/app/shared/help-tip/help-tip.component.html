@@ -1,0 +1,24 @@
+<span
+  class="help-tip"
+  [class.help-tip--open]="open()"
+  (pointerenter)="onPointerEnter()"
+  (pointerleave)="onPointerLeave()"
+>
+  <button
+    type="button"
+    class="help-tip__btn"
+    [attr.aria-label]="label()"
+    [attr.aria-expanded]="open()"
+    [attr.aria-controls]="panelId"
+    (click)="toggle($event)"
+  >
+    ?
+  </button>
+  @if (open()) {
+    <span
+      class="help-tip__panel"
+      role="tooltip"
+      [id]="panelId"
+    >{{ text() }}</span>
+  }
+</span>

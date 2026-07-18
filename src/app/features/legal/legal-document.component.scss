@@ -20,7 +20,7 @@
     background: none;
     font-size: 0.875rem;
     font-weight: 500;
-    color: #0f9d58;
+    color: var(--moss, #0f3d34);
     cursor: pointer;
     text-decoration: none;
 
@@ -61,5 +61,35 @@
     margin: 0;
     font-size: 0.875rem;
     color: #3c4043;
+  }
+
+  &__cms {
+    h1 {
+      display: none;
+    }
+
+    h2,
+    h3 {
+      margin: 1.25rem 0 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #202124;
+    }
+
+    p,
+    li {
+      font-size: 0.875rem;
+      color: #3c4043;
+      line-height: 1.55;
+    }
+
+    ul {
+      margin: 0 0 1rem;
+      padding-left: 1.2rem;
+    }
+
+    a {
+      color: var(--moss, #0f3d34);
+    }
   }
 }

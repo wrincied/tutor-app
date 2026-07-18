@@ -11,6 +11,7 @@ import {
 } from '../../core/utils/pastel-color';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+import { HelpTipComponent } from '../../shared/help-tip/help-tip.component';
 
 /** IANA: репетитор в AT, ученики в KZ/BY/RU и др. */
 const TIMEZONE_PRESETS: string[] = [
@@ -53,7 +54,7 @@ function resolvedBrowserTimezone(): string {
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, AppDialogComponent, AppSelectComponent],
+  imports: [FormsModule, AppDialogComponent, AppSelectComponent, HelpTipComponent],
   templateUrl: './students.component.html',
   styleUrl: './students.component.scss',
 })
@@ -104,6 +105,11 @@ export class StudentsComponent implements OnInit {
 
   get t() {
     return this.i18n.studentsUi();
+  }
+
+  billingHelpText(): string {
+    const t = this.t;
+    return `${t.billingInfoPackage}\n\n${t.billingInfoPostpaid}`;
   }
 
   rateCurrencyOf(s: Student): RateCurrency {

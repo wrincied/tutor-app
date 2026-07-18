@@ -1,4 +1,3 @@
-
 :root {
   --sidebar-w: 220px;
   /** Нижний navbar на телефоне */
@@ -14,31 +13,55 @@
   /** Select открыт — поверх app-dialog (--z-app-dialog-top) */
   --z-app-dropdown-top: 1500;
 
-  // Google Sheets — light
-  --nav-bg: #fff;
-  --nav-border: #e0e0e0;
-  --nav-text: #3c4043;
-  --nav-hover: #f1f3f4;
-  --nav-accent: #0f9d58;
-  --nav-active-bg: #e6f4ea;
-  --page-bg: #f8f9fa;
-  --text-primary: #202124;
-  --text-secondary: #5f6368;
-  --skeleton-base: #e8eaed;
-  --skeleton-highlight: #f8f9fa;
-  --text-main:#fff;
+  /* Landing / Simple4U brand tokens */
+  --ink: #071714;
+  --moss: #0f3d34;
+  --foam: #e7f5ef;
+  --lime: #c6f071;
+  --line: #cfe3d9;
+
+  /* Interactive accent = moss (quiet brand green). Not lime — lime is for CTAs only. */
+  --accent: var(--moss);
+  --nav-accent: var(--moss);
+
+  /* Primary CTA: ink fill + lime label (app). Landing hero uses the inverse. */
+  --btn-primary-bg: #071714;
+  --btn-primary-fg: #c6f071;
+  --btn-primary-hover: #0d2a24;
+
+  --nav-bg: #f4faf7;
+  --nav-border: #cfe3d9;
+  --nav-text: #13241f;
+  --nav-hover: #e8f4ef;
+  --nav-active-bg: #dff3ea;
+  --page-bg: #f4faf7;
+  --text-primary: #071714;
+  --text-secondary: #5f746c;
+  --skeleton-base: #d9ebe3;
+  --skeleton-highlight: #f4faf7;
+  --text-main: #fff;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'Figtree', sans-serif;
 }
 
 [data-theme='dark'] {
-  --nav-bg: #2d2d2d;
-  --nav-border: #4a4a4a;
-  --nav-text: #e0e0e0;
-  --nav-hover: #383838;
-  --nav-accent: #34a853;
-  --nav-active-bg: #2a4a35;
-  --page-bg: #242424;
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
-  --skeleton-base: #3c4043;
-  --skeleton-highlight: #5f6368;
+  --nav-bg: #0a1f1b;
+  --nav-border: #1a3a32;
+  --nav-text: #e7f5ef;
+  --nav-hover: #14332c;
+  --nav-accent: #c6f071;
+  --nav-active-bg: #143d36;
+  --page-bg: #071714;
+  --text-primary: #e7f5ef;
+  --text-secondary: #9bb5ab;
+  --skeleton-base: #1a3a32;
+  --skeleton-highlight: #0f3d34;
+  --ink: #e7f5ef;
+  --lime: #c6f071;
+  --accent: #c6f071;
+  --line: #1a3a32;
+  /* On dark page, primary flips to landing-style lime fill */
+  --btn-primary-bg: #c6f071;
+  --btn-primary-fg: #071714;
+  --btn-primary-hover: #d4f58a;
 }

@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import type { FinanceSummary, Lesson, Student, UserProfile } from '@interfaces';
+import { environment } from '../../../environments/environment';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -34,6 +35,9 @@ export class HomeComponent implements OnInit {
   private readonly lessonSvc = inject(LessonService);
   private readonly studentSvc = inject(StudentService);
   readonly i18n = inject(I18nService);
+  /** True only for `ng serve --configuration=design` (:4300). */
+  readonly designMode = environment.designMode === true;
+
 
   profile = signal<UserProfile | null>(null);
   summary = signal<FinanceSummary | null>(null);

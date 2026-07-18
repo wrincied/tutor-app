@@ -35,10 +35,22 @@ export const routes: Routes = [
     data: { doc: 'data-processing', title: 'legalDataProcessing' satisfies PageTitleKey },
   },
   {
+    path: 'legal/impressum',
+    loadComponent: () =>
+      import('./features/legal/legal-document.component').then((m) => m.LegalDocumentComponent),
+    data: { doc: 'impressum', title: 'legalImpressum' satisfies PageTitleKey },
+  },
+  {
     path: 'legal/cookies',
     loadComponent: () =>
       import('./features/legal/legal-document.component').then((m) => m.LegalDocumentComponent),
     data: { doc: 'cookies', title: 'legalCookies' satisfies PageTitleKey },
+  },
+  {
+    path: 'admin-login',
+    loadComponent: () =>
+      import('./features/auth/admin-login.component').then((m) => m.AdminLoginComponent),
+    data: { title: 'adminLogin' satisfies PageTitleKey },
   },
   {
     path: 'app',
@@ -59,6 +71,42 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/auth/onboarding.component').then((m) => m.OnboardingComponent),
         data: { title: 'onboarding' satisfies PageTitleKey },
+      },
+      {
+        // Admin console: GitHub + role only — no email verify / onboarding / consent gates
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/admin-shell.component').then((m) => m.AdminShellComponent),
+        data: { title: 'admin' satisfies PageTitleKey },
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/admin/admin-overview.component').then(
+                (m) => m.AdminOverviewComponent,
+              ),
+            data: { title: 'admin' satisfies PageTitleKey },
+          },
+          {
+            path: 'users',
+            loadComponent: () =>
+              import('./features/admin/admin-users.component').then((m) => m.AdminUsersComponent),
+            data: { title: 'adminUsers' satisfies PageTitleKey },
+          },
+          {
+            path: 'settings',
+            loadComponent: () =>
+              import('./features/admin/admin-settings.component').then((m) => m.AdminSettingsComponent),
+            data: { title: 'adminSettings' satisfies PageTitleKey },
+          },
+          {
+            path: 'landing',
+            loadComponent: () =>
+              import('./features/admin/admin-landing.component').then((m) => m.AdminLandingComponent),
+            data: { title: 'adminLanding' satisfies PageTitleKey },
+          },
+        ],
       },
       {
         path: '',
@@ -133,35 +181,6 @@ export const routes: Routes = [
                     (m) => m.AccountAdministrationComponent,
                   ),
                 data: { title: 'accountAdministration' satisfies PageTitleKey },
-              },
-            ],
-          },
-          {
-            path: 'admin',
-            canActivate: [adminGuard],
-            loadComponent: () =>
-              import('./features/admin/admin-shell.component').then((m) => m.AdminShellComponent),
-            data: { title: 'admin' satisfies PageTitleKey },
-            children: [
-              {
-                path: '',
-                loadComponent: () =>
-                  import('./features/admin/admin-overview.component').then(
-                    (m) => m.AdminOverviewComponent,
-                  ),
-                data: { title: 'admin' satisfies PageTitleKey },
-              },
-              {
-                path: 'users',
-                loadComponent: () =>
-                  import('./features/admin/admin-users.component').then((m) => m.AdminUsersComponent),
-                data: { title: 'adminUsers' satisfies PageTitleKey },
-              },
-              {
-                path: 'settings',
-                loadComponent: () =>
-                  import('./features/admin/admin-settings.component').then((m) => m.AdminSettingsComponent),
-                data: { title: 'adminSettings' satisfies PageTitleKey },
               },
             ],
           },

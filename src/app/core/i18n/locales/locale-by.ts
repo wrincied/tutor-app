@@ -105,6 +105,30 @@ export const ACCOUNT_BY: AccountStrings = {
 };
 
 export const AUTH_BY: AuthStrings = {
+  landingHeadline: 'Кабінет, дзе ўрокі і вучні не губляюцца',
+  landingSubtitle: 'Расклад, вучні і фінансы — адна спакойная прастора для рэпетытара.',
+  join: 'Join',
+  landingSignIn: 'Ужо ёсць акаўнт? Увайсці',
+  landingFeaturesTitle: 'Усё, што трэба для ўрокаў',
+  landingFeatureScheduleTitle: 'Расклад',
+  landingFeatureScheduleBody:
+    'Плануйце заняткі, паўтаральныя ўрокі і статусы — без хаосу ў нататках і чатах.',
+  landingFeatureStudentsTitle: 'Вучні',
+  landingFeatureStudentsBody:
+    'Кантакты, стаўкі і гісторыя побач. Хутка знаходзьце патрэбнага вучня перад урокам.',
+  landingFeatureFinanceTitle: 'Фінансы',
+  landingFeatureFinanceBody:
+    'Лічыце даход, падаткі і аплату ўрокаў ў адной карціне — зразумела і без табліц «на калене».',
+  landingHowTitle: 'Як гэта працуе',
+  landingHowBody:
+    'Ствараеце акаўнт, пацвярджаеце email, запаўняеце кароткі профіль — і адразу трапляеце ў кабінет з календаром, вучнямі і фінансамі.',
+  landingClosingTitle: 'Вядзіце ўрокі спакайней',
+  landingClosingCta: 'Join',
+  footerDatenschutz: 'Datenschutz',
+  footerImpressum: 'Impressum',
+  footerKontakt: 'Kontakt',
+  footerCookies: 'Cookies',
+  footerRights: '© Simple4U',
   loginTitle: 'Увайсці',
   loginSubtitle: 'у кабінет рэпетытара',
   registerTitle: 'Стварыць акаўнт',
@@ -116,6 +140,7 @@ export const AUTH_BY: AuthStrings = {
   loggingIn: 'Уваходзім...',
   createAccount: 'Стварыць акаўнт',
   creating: 'Ствараем...',
+  backHome: 'На галоўную',
   hasAccount: 'Ужо ёсць акаўнт',
   noAccount: 'Стварыць акаўнт',
   wrongCredentials: 'Няправільны email або пароль',
@@ -162,6 +187,7 @@ export const AUTH_BY: AuthStrings = {
   continueWithGoogle: 'Увайсці праз Google',
   orContinueWith: 'або',
   oauthError: 'Не ўдалося ўвайсці праз Google',
+  oauthErrorGithub: 'Не ўдалося ўвайсці праз GitHub',
   profileSyncError:
     'Уваход выкананы, але профіль не загрузіўся. Праверце інтэрнэт і паспрабуйце зноў.',
   onboardingTitle: 'Сардэчна запрашаем',
@@ -482,6 +508,9 @@ export const STUDENTS_BY: StudentStrings = {
   ratePerLesson: 'Стаўка за ўрок',
   ratePerHour: 'Стаўка за гадзіну',
   rateUnitTitle: 'Разлік сумы',
+  rateUnitInfoAria: 'Як лічыцца стаўка за гадзіну і за ўрок',
+  rateUnitInfo:
+    'Стаўка за гадзіну: сума = стаўка × (працягласць занятка ÷ 60). Гадзіна — астранамічная (60 хвілін).\n\nСтаўка за ўрок: фіксаваная сума за адно занятак. Калі ўрок доўжыцца 90 хвілін і вы паставілі N EUR за занятак — да аплаты будзе менавіта N EUR за ўрок, а не за паўтары гадзіны.',
   rateColumn: 'Стаўка',
   balanceLessons: 'Баланс урокаў',
   perLesson: '/ урок',
@@ -503,6 +532,8 @@ export const STUDENTS_BY: StudentStrings = {
   calendarColor: 'Колер у календары',
   randomColor: 'Выпадковы',
   botNotifications: 'Апавяшчэнні ў Telegram',
+  botInfoAria: 'Пра апавяшчэнні ў Telegram',
+  botComingSoon: 'Coming soon — інтэграцыя з Telegram пакуль у распрацоўцы.',
   botEnabled: 'Уключана',
   botDisabled: 'Выключана',
   botEnableTitle: 'Уключыць апавяшчэнні?',
@@ -519,9 +550,9 @@ export const STUDENTS_BY: StudentStrings = {
   billingTypePostpaid: 'Пасляплата / разавая аплата',
   billingInfoAria: 'Што такое абанемент і пасляплата',
   billingInfoPackage:
-    'Вучань загадзя аплачвае пакет урокаў. Пасля кожнага праведзенага занятка адзін урок спісваецца з балансу.',
+    'Абанемент: рэпетытар уносіць колькасць ужо аплочаных заняткаў. Пасля кожнага праведзенага ўрока з балансу спісваецца адно занятак.',
   billingInfoPostpaid:
-    'Урокі ўлічваюцца як доўг. Аплата — пасля занятка або ў канцы перыяду, у межах ліміту доўгу.',
+    'Пасляплата: аплата ўлічваецца адразу пасля занятка (у доўг / да аплаты), у межах ліміту доўгу.',
   balanceLessonsField: 'Засталося урокаў на балансе',
   creditLimitField: 'Ліміт доўгу (урокаў)',
   activityLogSection: 'Гісторыя змен',
@@ -590,6 +621,9 @@ export const PAGE_TITLE_BY: PageTitleStrings = {
   admin: 'Адмін | Simple4U',
   adminUsers: 'Карыстальнікі | Simple4U',
   adminSettings: 'Налады адмінкі | Simple4U',
+  adminLanding: 'Landing | Simple4U',
+  legalImpressum: 'Impressum | Simple4U',
+  adminLogin: 'Admin | Simple4U',
 };
 
 export const TAX_MODE_LABELS_BY: Record<TaxMode, string> = {

@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  designMode: false,
   apiUrl: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app',
   appUrl: 'https://simple4u-64822.web.app',
   firebaseConfig: {

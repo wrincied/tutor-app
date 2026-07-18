@@ -1,81 +1,104 @@
-<div class="auth-page">
-  <span class="auth-logo">Simple4U</span>
+<div class="auth-split">
+  <section class="auth-split__panel">
+    <a routerLink="/" class="auth-split__brand">Simple4U</a>
 
-  <div class="auth-card">
-    <h1>{{ i18n.authUi().loginTitle }}</h1>
-    <p class="subtitle">{{ i18n.authUi().loginSubtitle }}</p>
+    <div class="auth-split__tabs" role="tablist">
+      <a
+        routerLink="/login"
+        class="auth-split__tab auth-split__tab--active"
+        role="tab"
+        aria-selected="true"
+      >
+        {{ i18n.authUi().login }}
+      </a>
+      <a routerLink="/register" class="auth-split__tab" role="tab" aria-selected="false">
+        {{ i18n.authUi().createAccount }}
+      </a>
+    </div>
 
-    @if (verifySuccess()) {
-      <div class="auth-banner-success">{{ i18n.authUi().verifySuccessBanner }}</div>
-    }
+    <div class="auth-split__card">
+      <h1>{{ i18n.authUi().loginTitle }}</h1>
+      <p class="subtitle">{{ i18n.authUi().loginSubtitle }}</p>
 
-    @if (consentDeclined()) {
-      <div class="auth-error">{{ i18n.authUi().onboardingDeclinedNotice }}</div>
-    }
+      @if (verifySuccess()) {
+        <div class="auth-banner-success">{{ i18n.authUi().verifySuccessBanner }}</div>
+      }
 
-    @if (error()) {
-      <div class="auth-error">{{ error() }}</div>
-    }
+      @if (consentDeclined()) {
+        <div class="auth-error">{{ i18n.authUi().onboardingDeclinedNotice }}</div>
+      }
 
-    <form (ngSubmit)="submit()" class="auth-form" autocomplete="on">
-      <div class="field field--float">
-        <input
-          type="email"
-          [(ngModel)]="email"
-          name="email"
-          required
-          placeholder=" "
-          autocomplete="username"
-          inputmode="email"
-          spellcheck="false"
-        />
-        <label>{{ i18n.authUi().email }}</label>
-      </div>
+      @if (error()) {
+        <div class="auth-error">{{ error() }}</div>
+      }
 
-      <div class="field field--float">
-        <input
-          type="password"
-          [(ngModel)]="password"
-          name="password"
-          required
-          placeholder=" "
-          autocomplete="current-password"
-        />
-        <label>{{ i18n.authUi().password }}</label>
-      </div>
+      <form (ngSubmit)="submit()" class="auth-form" autocomplete="on">
+        <div class="field field--float">
+          <input
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            required
+            placeholder=" "
+            autocomplete="username"
+            inputmode="email"
+            spellcheck="false"
+          />
+          <label>{{ i18n.authUi().email }}</label>
+        </div>
 
-      <div class="auth-forgot-row">
-        <button
-          type="button"
-          class="auth-link-button"
-          [disabled]="loading()"
-          (click)="openResetModal()"
-        >
-          {{ i18n.authUi().forgotPassword }}
-        </button>
-      </div>
+        <div class="field field--float">
+          <input
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            required
+            placeholder=" "
+            autocomplete="current-password"
+          />
+          <label>{{ i18n.authUi().password }}</label>
+        </div>
 
-      <div class="auth-actions">
-        <a routerLink="/register">{{ i18n.authUi().noAccount }}</a>
-        <button type="submit" [disabled]="loading()">
+        <div class="auth-forgot-row">
+          <button
+            type="button"
+            class="auth-link-button"
+            [disabled]="loading()"
+            (click)="openResetModal()"
+          >
+            {{ i18n.authUi().forgotPassword }}
+          </button>
+        </div>
+
+        <button type="submit" class="auth-btn-primary" [disabled]="loading()">
           {{ loading() ? i18n.authUi().loggingIn : i18n.authUi().login }}
         </button>
-      </div>
 
-      <div class="auth-divider">
-        <span>{{ i18n.authUi().orContinueWith }}</span>
-      </div>
+        <div class="auth-divider">
+          <span>{{ i18n.authUi().orContinueWith }}</span>
+        </div>
 
-      <button
-        type="button"
-        class="auth-oauth-btn"
-        [disabled]="loading()"
-        (click)="signInWithGoogle()"
-      >
-        {{ i18n.authUi().continueWithGoogle }}
-      </button>
-    </form>
-  </div>
+        <button
+          type="button"
+          class="auth-oauth-btn"
+          [disabled]="loading()"
+          (click)="signInWithGoogle()"
+        >
+          {{ i18n.authUi().continueWithGoogle }}
+        </button>
+      </form>
+    </div>
+
+    <a routerLink="/" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
+  </section>
+
+  <aside class="auth-split__visual" aria-hidden="true">
+    <div class="auth-aurora">
+      <span class="auth-aurora__blob auth-aurora__blob--1"></span>
+      <span class="auth-aurora__blob auth-aurora__blob--2"></span>
+      <span class="auth-aurora__blob auth-aurora__blob--3"></span>
+    </div>
+  </aside>
 </div>
 
 <app-dialog

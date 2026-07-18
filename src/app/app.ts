@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
+import { environment } from '../environments/environment';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { AuthService } from './core/services/auth.service';
 import { AnalyticsService } from './core/services/analytics.service';
@@ -24,6 +25,11 @@ export class App {
     inject(SeoService);
     inject(AnalyticsService);
     void this._theme;
+    if (environment.designMode) {
+      this.document.documentElement.dataset['design'] = 'v2';
+    } else {
+      delete this.document.documentElement.dataset['design'];
+    }
     // После HMR могут остаться невидимые слои select — они блокируют клики по всему UI
     purgeStaleOverlayLayers(this.document);
   }

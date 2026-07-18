@@ -1,0 +1,36 @@
+<div class="auth-split">
+  <section class="auth-split__panel">
+    <a routerLink="/" class="auth-split__brand">Simple4U</a>
+
+    <div class="auth-split__card">
+      <h1>Admin</h1>
+      <p class="subtitle">GitHub only — use an account with 2FA enabled on GitHub</p>
+
+      @if (error()) {
+        <div class="auth-error">{{ error() }}</div>
+      }
+      @if (info()) {
+        <div class="auth-banner-success">{{ info() }}</div>
+      }
+
+      <button
+        type="button"
+        class="auth-btn-primary"
+        [disabled]="loading()"
+        (click)="signInWithGithub()"
+      >
+        {{ loading() ? '…' : 'Continue with GitHub' }}
+      </button>
+
+      <a routerLink="/" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
+    </div>
+  </section>
+
+  <aside class="auth-split__visual" aria-hidden="true">
+    <div class="auth-aurora">
+      <span class="auth-aurora__blob auth-aurora__blob--1"></span>
+      <span class="auth-aurora__blob auth-aurora__blob--2"></span>
+      <span class="auth-aurora__blob auth-aurora__blob--3"></span>
+    </div>
+  </aside>
+</div>

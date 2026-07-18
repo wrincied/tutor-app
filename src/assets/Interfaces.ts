@@ -70,6 +70,8 @@ export type PageTitleKey =
   | 'register'
   | 'legalDataProcessing'
   | 'legalCookies'
+  | 'legalImpressum'
+  | 'adminLogin'
   | 'verifyEmail'
   | 'onboarding'
   | 'home'
@@ -83,9 +85,24 @@ export type PageTitleKey =
   | 'accountAdministration'
   | 'admin'
   | 'adminUsers'
-  | 'adminSettings';
+  | 'adminSettings'
+  | 'adminLanding';
 
 export type PageTitleStrings = Record<PageTitleKey, string>;
+
+export type LegalCmsDocId = 'datenschutz' | 'impressum';
+
+export interface LegalCmsDocument {
+  id: LegalCmsDocId;
+  title: string;
+  body: string;
+  updatedAt?: string | null;
+  source?: 'firestore' | 'default';
+}
+
+export interface PublicContactInfo {
+  email: string;
+}
 
 export interface NavStrings {
   home: string;
@@ -265,6 +282,18 @@ export interface AdminStrings {
   dashboardTab: string;
   usersTab: string;
   settingsTab: string;
+  landingTab: string;
+  landingTitle: string;
+  landingIntro: string;
+  landingDatenschutz: string;
+  landingImpressum: string;
+  landingTitleField: string;
+  landingBodyField: string;
+  landingBodyHint: string;
+  landingSave: string;
+  landingSaving: string;
+  landingSaved: string;
+  landingLoadError: string;
   loading: string;
   loadError: string;
   refresh: string;
@@ -437,7 +466,28 @@ export interface AccountStrings {
   workspaceSaved: string;
 }
 
+/** Публичная визитка / лендинг + auth. */
 export interface AuthStrings {
+  landingHeadline: string;
+  landingSubtitle: string;
+  join: string;
+  landingSignIn: string;
+  landingFeaturesTitle: string;
+  landingFeatureScheduleTitle: string;
+  landingFeatureScheduleBody: string;
+  landingFeatureStudentsTitle: string;
+  landingFeatureStudentsBody: string;
+  landingFeatureFinanceTitle: string;
+  landingFeatureFinanceBody: string;
+  landingHowTitle: string;
+  landingHowBody: string;
+  landingClosingTitle: string;
+  landingClosingCta: string;
+  footerDatenschutz: string;
+  footerImpressum: string;
+  footerKontakt: string;
+  footerCookies: string;
+  footerRights: string;
   loginTitle: string;
   loginSubtitle: string;
   registerTitle: string;
@@ -449,6 +499,7 @@ export interface AuthStrings {
   loggingIn: string;
   createAccount: string;
   creating: string;
+  backHome: string;
   hasAccount: string;
   noAccount: string;
   wrongCredentials: string;
@@ -492,6 +543,7 @@ export interface AuthStrings {
   continueWithGoogle: string;
   orContinueWith: string;
   oauthError: string;
+  oauthErrorGithub: string;
   profileSyncError: string;
   onboardingTitle: string;
   onboardingSubtitle: string;
@@ -913,6 +965,10 @@ export interface StudentStrings {
   ratePerLesson: string;
   ratePerHour: string;
   rateUnitTitle: string;
+  /** Aria for rate-unit help tip */
+  rateUnitInfoAria: string;
+  /** Hover/tap explanation for hour vs lesson pricing */
+  rateUnitInfo: string;
   rateColumn: string;
   balanceLessons: string;
   perLesson: string;
@@ -938,6 +994,10 @@ export interface StudentStrings {
   randomColor: string;
   /** Уведомления ученику через Telegram-бота */
   botNotifications: string;
+  /** Aria for Telegram help tip */
+  botInfoAria: string;
+  /** Temporary Telegram tip copy */
+  botComingSoon: string;
   botEnabled: string;
   botDisabled: string;
   botEnableTitle: string;
