@@ -33,8 +33,10 @@
   margin-bottom: 24px;
 
   h1 {
-    font-size: 22px;
-    font-weight: 500;
+    font-family: var(--font-display, 'Syne', sans-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
   }
 }
@@ -48,17 +50,20 @@
 // ─── Кнопки ────────────────────────────────────────────────────────────────────
 
 .btn-primary {
-  background: var(--nav-accent);
-  color: #fff;
+  background: var(--btn-primary-bg, var(--ink, #071714));
+  color: var(--btn-primary-fg, var(--lime, #c6f071));
   border: none;
-  padding: 8px 18px;
-  border-radius: 6px;
+  padding: 9px 20px;
+  border-radius: 999px;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s,
+    background 0.15s;
   &:hover {
-    background-color: #0b7c45; /* Смещение по яркости вниз */
-    // box-shadow: 0 6px 12px rgba(15, 157, 88, 0.3);
+    background-color: var(--btn-primary-hover, #0d2a24);
   }
 }
 
@@ -66,13 +71,18 @@
   background: none;
   color: var(--text-secondary);
   border: 1px solid var(--nav-border);
-  padding: 8px 18px;
-  border-radius: 6px;
+  padding: 9px 20px;
+  border-radius: 999px;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
   &:hover {
     background: var(--nav-hover);
+    border-color: color-mix(in srgb, var(--moss, #0f3d34) 28%, var(--nav-border));
+    color: var(--text-primary);
   }
 }
 
@@ -549,7 +559,7 @@ $modal-mobile-max: $modal-desktop-min - 1px;
 
     a {
       font-size: 14px;
-      color: #0f9d58;
+      color: var(--moss, #0f3d34);
       text-decoration: none;
 
       &:hover {
@@ -558,7 +568,7 @@ $modal-mobile-max: $modal-desktop-min - 1px;
     }
 
     button {
-      background: #0f9d58;
+      background: var(--moss, #0f3d34);
       color: #fff;
       border: none;
       border-radius: 4px;

@@ -1,4 +1,66 @@
 <div class="landing">
-  <a routerLink="/login">{{ i18n.authUi().login }}</a>
-  <a routerLink="/register">{{ i18n.authUi().createAccount }}</a>
+  <div class="landing__atmosphere" aria-hidden="true">
+    <span class="landing__orb landing__orb--a"></span>
+    <span class="landing__orb landing__orb--b"></span>
+    <span class="landing__orb landing__orb--c"></span>
+    <span class="landing__grain"></span>
+  </div>
+
+  <header class="landing__hero">
+    <p class="landing__brand">Simple4U</p>
+    <h1 class="landing__headline">{{ i18n.authUi().landingHeadline }}</h1>
+    <p class="landing__subtitle">{{ i18n.authUi().landingSubtitle }}</p>
+    <div class="landing__cta-row">
+      <a class="landing__cta" routerLink="/register">{{ i18n.authUi().join }}</a>
+      <a class="landing__sign-in" routerLink="/login">{{ i18n.authUi().landingSignIn }}</a>
+    </div>
+  </header>
+
+  <section class="landing__section landing__section--foam" aria-labelledby="landing-features-heading">
+    <h2 id="landing-features-heading" class="landing__section-title">
+      {{ i18n.authUi().landingFeaturesTitle }}
+    </h2>
+
+    <div class="landing__features">
+      <article class="landing__feature">
+        <p class="landing__feature-index" aria-hidden="true">01</p>
+        <h3 class="landing__feature-title">{{ i18n.authUi().landingFeatureScheduleTitle }}</h3>
+        <p class="landing__feature-body">{{ i18n.authUi().landingFeatureScheduleBody }}</p>
+      </article>
+      <article class="landing__feature">
+        <p class="landing__feature-index" aria-hidden="true">02</p>
+        <h3 class="landing__feature-title">{{ i18n.authUi().landingFeatureStudentsTitle }}</h3>
+        <p class="landing__feature-body">{{ i18n.authUi().landingFeatureStudentsBody }}</p>
+      </article>
+      <article class="landing__feature">
+        <p class="landing__feature-index" aria-hidden="true">03</p>
+        <h3 class="landing__feature-title">{{ i18n.authUi().landingFeatureFinanceTitle }}</h3>
+        <p class="landing__feature-body">{{ i18n.authUi().landingFeatureFinanceBody }}</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="landing__section landing__section--ink" aria-labelledby="landing-how-heading">
+    <h2 id="landing-how-heading" class="landing__section-title">
+      {{ i18n.authUi().landingHowTitle }}
+    </h2>
+    <p class="landing__section-copy">{{ i18n.authUi().landingHowBody }}</p>
+  </section>
+
+  <section class="landing__closing" aria-labelledby="landing-closing-heading">
+    <h2 id="landing-closing-heading" class="landing__closing-title">
+      {{ i18n.authUi().landingClosingTitle }}
+    </h2>
+    <a class="landing__cta" routerLink="/register">{{ i18n.authUi().landingClosingCta }}</a>
+  </section>
+
+  <footer class="landing__footer">
+    <nav class="landing__footer-nav" [attr.aria-label]="i18n.authUi().footerRights">
+      <a routerLink="/legal/data-processing">{{ i18n.authUi().footerDatenschutz }}</a>
+      <a routerLink="/legal/impressum">{{ i18n.authUi().footerImpressum }}</a>
+      <a [href]="'mailto:' + contactEmail()">{{ i18n.authUi().footerKontakt }}</a>
+      <a routerLink="/legal/cookies">{{ i18n.authUi().footerCookies }}</a>
+    </nav>
+    <p class="landing__footer-copy">{{ i18n.authUi().footerRights }}</p>
+  </footer>
 </div>

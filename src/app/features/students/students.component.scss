@@ -528,6 +528,14 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
   }
 }
 
+.checkbox-label__text {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.2rem;
+  min-width: 0;
+}
+
 .confirm-text {
   margin: 0 0 16px;
   font-size: 14px;
@@ -557,6 +565,12 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
     font-weight: 600;
     font-size: 0.9rem;
   }
+}
+
+.field-legend-with-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
 }
 
 .rate-unit-section {

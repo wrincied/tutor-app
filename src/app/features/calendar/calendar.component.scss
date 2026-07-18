@@ -433,9 +433,9 @@
 }
 
 .cal-btn--today {
-  background: var(--nav-accent);
-  border-color: var(--nav-accent);
-  color: #fff;
+  background: var(--btn-primary-bg, var(--ink, #071714));
+  border-color: var(--btn-primary-bg, var(--ink, #071714));
+  color: var(--btn-primary-fg, var(--lime, #c6f071));
   padding: 0.25rem 0.5rem;
   min-width: 2.5rem;
 
@@ -445,7 +445,9 @@
   }
 
   &:hover {
-    filter: brightness(1.08);
+    background: var(--btn-primary-hover, #0d2a24);
+    border-color: var(--btn-primary-hover, #0d2a24);
+    filter: none;
   }
 }
 

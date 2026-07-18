@@ -5,48 +5,59 @@
   </header>
 
   @if (isCookies()) {
-  <h1>{{ i18n.legalCookiesUi().title }}</h1>
-  <p class="legal-page__intro">{{ i18n.legalCookiesUi().intro }}</p>
+    <h1>{{ i18n.legalCookiesUi().title }}</h1>
+    <p class="legal-page__intro">{{ i18n.legalCookiesUi().intro }}</p>
 
-  <section>
-    <h2>{{ i18n.legalCookiesUi().section1Title }}</h2>
-    <p>{{ i18n.legalCookiesUi().section1Body }}</p>
-  </section>
-  <section>
-    <h2>{{ i18n.legalCookiesUi().section2Title }}</h2>
-    <p>{{ i18n.legalCookiesUi().section2Body }}</p>
-  </section>
-  <section>
-    <h2>{{ i18n.legalCookiesUi().section3Title }}</h2>
-    <p>{{ i18n.legalCookiesUi().section3Body }}</p>
-  </section>
-  <section>
-    <h2>{{ i18n.legalCookiesUi().section4Title }}</h2>
-    <p>{{ i18n.legalCookiesUi().section4Body }}</p>
-  </section>
-  } @else {
-  <h1>{{ i18n.legalDataUi().title }}</h1>
-  <p class="legal-page__intro">{{ i18n.legalDataUi().intro }}</p>
-
-  <section>
-    <h2>{{ i18n.legalDataUi().section1Title }}</h2>
-    <p>{{ i18n.legalDataUi().section1Body }}</p>
-  </section>
-  <section>
-    <h2>{{ i18n.legalDataUi().section2Title }}</h2>
-    <p>{{ i18n.legalDataUi().section2Body }}</p>
-  </section>
-  <section>
-    <h2>{{ i18n.legalDataUi().section3Title }}</h2>
-    <p>{{ i18n.legalDataUi().section3Body }}</p>
-  </section>
-  <section>
-    <h2>{{ i18n.legalDataUi().section4Title }}</h2>
-    <p>{{ i18n.legalDataUi().section4Body }}</p>
-  </section>
-  <section>
-    <h2>{{ i18n.legalDataUi().section5Title }}</h2>
-    <p>{{ i18n.legalDataUi().section5Body }}</p>
-  </section>
+    <section>
+      <h2>{{ i18n.legalCookiesUi().section1Title }}</h2>
+      <p>{{ i18n.legalCookiesUi().section1Body }}</p>
+    </section>
+    <section>
+      <h2>{{ i18n.legalCookiesUi().section2Title }}</h2>
+      <p>{{ i18n.legalCookiesUi().section2Body }}</p>
+    </section>
+    <section>
+      <h2>{{ i18n.legalCookiesUi().section3Title }}</h2>
+      <p>{{ i18n.legalCookiesUi().section3Body }}</p>
+    </section>
+    <section>
+      <h2>{{ i18n.legalCookiesUi().section4Title }}</h2>
+      <p>{{ i18n.legalCookiesUi().section4Body }}</p>
+    </section>
+  } @else if (isCmsDoc()) {
+    @if (cmsLoading()) {
+      <p>{{ i18n.sharedUi().loadingContent }}</p>
+    } @else if (cmsHtml()) {
+      <h1>{{ cmsTitle() }}</h1>
+      <div class="legal-page__cms" [innerHTML]="cmsHtml()"></div>
+    } @else {
+      @if (documentId() === 'impressum') {
+        <h1>Impressum</h1>
+        <p class="legal-page__intro">Content temporarily unavailable.</p>
+      } @else {
+        <h1>{{ i18n.legalDataUi().title }}</h1>
+        <p class="legal-page__intro">{{ i18n.legalDataUi().intro }}</p>
+        <section>
+          <h2>{{ i18n.legalDataUi().section1Title }}</h2>
+          <p>{{ i18n.legalDataUi().section1Body }}</p>
+        </section>
+        <section>
+          <h2>{{ i18n.legalDataUi().section2Title }}</h2>
+          <p>{{ i18n.legalDataUi().section2Body }}</p>
+        </section>
+        <section>
+          <h2>{{ i18n.legalDataUi().section3Title }}</h2>
+          <p>{{ i18n.legalDataUi().section3Body }}</p>
+        </section>
+        <section>
+          <h2>{{ i18n.legalDataUi().section4Title }}</h2>
+          <p>{{ i18n.legalDataUi().section4Body }}</p>
+        </section>
+        <section>
+          <h2>{{ i18n.legalDataUi().section5Title }}</h2>
+          <p>{{ i18n.legalDataUi().section5Body }}</p>
+        </section>
+      }
+    }
   }
 </article>

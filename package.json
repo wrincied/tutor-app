@@ -4,7 +4,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:design": "ng serve --configuration=design --port 4300",
     "prestart": "node scripts/prepare-environment.mjs development",
+    "prestart:design": "node scripts/prepare-environment.mjs design",
     "build": "ng build --configuration production",
     "prebuild": "node scripts/prepare-environment.mjs production",
     "build:dev": "ng build --configuration development",

@@ -193,7 +193,10 @@
           />
         </div>
         <fieldset class="field rate-unit-section">
-          <legend>{{ t.rateUnitTitle }}</legend>
+          <legend class="field-legend-with-tip">
+            <span>{{ t.rateUnitTitle }}</span>
+            <app-help-tip [label]="t.rateUnitInfoAria" [text]="t.rateUnitInfo" />
+          </legend>
           <div class="rate-unit-options" role="radiogroup" [attr.aria-label]="t.rateUnitTitle">
             <label class="rate-unit-option">
               <input
@@ -265,7 +268,10 @@
         </div>
 
         <fieldset class="field billing-section">
-          <legend>{{ t.billingSectionTitle }}</legend>
+          <legend class="field-legend-with-tip">
+            <span>{{ t.billingSectionTitle }}</span>
+            <app-help-tip [label]="t.billingInfoAria" [text]="billingHelpText()" />
+          </legend>
           <div class="billing-type-options" role="radiogroup" [attr.aria-label]="t.billingSectionTitle">
             <label class="billing-type-option">
               <input
@@ -323,7 +329,10 @@
         <div class="field field--checkbox">
           <label class="checkbox-label">
             <input type="checkbox" [(ngModel)]="form.bot_active" name="bot_active" />
-            <span>{{ t.botNotifications }}</span>
+            <span class="checkbox-label__text">
+              {{ t.botNotifications }}
+              <app-help-tip [label]="t.botInfoAria" [text]="t.botComingSoon" />
+            </span>
           </label>
         </div>
 

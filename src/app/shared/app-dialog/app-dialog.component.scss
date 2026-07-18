@@ -113,13 +113,13 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     }
 
     .app-dialog__btn--primary {
-      color: white;
-      background: var(--nav-accent);
+      color: #fff;
+      background: #b91c1c;
 
       &:hover {
-        background-color: #0b7c45; /* Смещение по яркости вниз */
-        box-shadow: 0 6px 12px rgba(15, 157, 88, 0.3);
-        opacity: 0.8;
+        background-color: #991b1b;
+        box-shadow: none;
+        opacity: 0.95;
         transition: all 0.15s ease;
       }
     }
@@ -165,7 +165,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
   }
 
   &:not(.app-dialog--error) .app-dialog__body :where(strong) {
-    color: var(--nav-accent);
+    color: var(--moss, #0f3d34);
   }
 
   &__actions {
@@ -179,19 +179,20 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
   &__btn {
     min-height: 2.75rem;
     min-width: 2.75rem;
-    border-radius: 0.5rem;
+    border-radius: 999px;
     padding: 8px 18px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
 
     &--secondary {
-      border: 1px solid rgb(148 163 184);
-      background: #fff;
-      color: rgb(51 65 85);
+      border: 1px solid var(--nav-border);
+      background: transparent;
+      color: var(--text-secondary);
 
       &:hover {
-        background: rgb(210, 217, 227);
+        background: var(--nav-hover);
+        color: var(--text-primary);
         transition: all 0.15s ease;
       }
     }
@@ -206,21 +207,23 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     }
 
     &--neutral {
-      border: 1px solid rgb(148 163 184);
-      background: #fff;
+      border: 1px solid var(--nav-border);
+      background: transparent;
+      color: var(--text-secondary);
       &:hover {
-        background: var(--nav-accent);
-        color: #fff;
+        background: var(--nav-hover);
+        color: var(--text-primary);
       }
     }
 
     &--primary {
-      background: var(--nav-accent);
-      color: var(--text-main);
+      background: var(--btn-primary-bg, var(--ink, #071714));
+      color: var(--btn-primary-fg, var(--lime, #c6f071));
+      border: none;
 
       &:hover {
-        background-color: #0b7c45; /* Смещение по яркости вниз */
-        box-shadow: 0 6px 12px rgba(15, 157, 88, 0.3);
+        background-color: var(--btn-primary-hover, #0d2a24);
+        box-shadow: none;
       }
 
       &:active {
