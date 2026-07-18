@@ -28,7 +28,7 @@ export const adminGuard: CanActivateFn = () => {
     take(1),
     switchMap((profile) => {
       if (profile.role !== 'super_admin') {
-        return of(router.createUrlTree(['/app/home']));
+        return of(router.createUrlTree(['/admin-login']));
       }
       return from(auth.getIdToken()).pipe(
         map((token) => {

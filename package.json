@@ -13,6 +13,7 @@
     "prestart:prod:design": "node scripts/prepare-environment.mjs production-design",
     "build": "ng build --configuration production",
     "prebuild": "node scripts/prepare-environment.mjs production",
+    "build:hosting": "node scripts/prepare-environment.mjs production-design && ng build --configuration=production-design",
     "build:dev": "ng build --configuration development",
     "prebuild:dev": "node scripts/prepare-environment.mjs development",
     "watch": "ng build --watch --configuration development",

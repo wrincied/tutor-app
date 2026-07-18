@@ -3,6 +3,7 @@ import type { Lesson, Student } from '@interfaces';
 import {
   findNextLesson,
   lessonsForDay,
+  lessonsFromFinanceBreakdown,
   overdueLessonCount,
   studentsLowBalance,
 } from './home-dashboard';
@@ -77,6 +78,47 @@ describe('home-dashboard', () => {
     const rows = lessonsForDay(lessons, students, day);
     expect(overdueLessonCount(rows, new Date('2026-07-13T13:00:00.000Z'))).toBe(0);
     expect(overdueLessonCount(rows, new Date('2026-07-13T15:00:00.000Z'))).toBe(1);
+  });
+
+  it('builds agenda from finance breakdown without full lessons list', () => {
+    const rows = lessonsFromFinanceBreakdown(
+      [
+        {
+          id: 'l2',
+          lessonId: 'l2',
+          studentId: 's1',
+          studentName: 'Anna',
+          scheduledAt: '2026-07-13T14:00:00.000Z',
+          status: 'scheduled',
+          durationMinutes: 45,
+          amountReport: 30,
+          amountOriginal: 30,
+          currency: 'EUR',
+          visibleInCalendar: true,
+          isRecurring: false,
+          incomeType: 'scheduled',
+        },
+        {
+          id: 'orphan',
+          studentId: null,
+          studentName: null,
+          scheduledAt: null,
+          status: 'scheduled',
+          durationMinutes: 60,
+          amountReport: 0,
+          amountOriginal: 0,
+          currency: 'EUR',
+          visibleInCalendar: false,
+          isRecurring: false,
+          incomeType: 'none',
+          hiddenReason: 'no_schedule',
+        },
+      ],
+      students,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.studentColor).toBe('#f00');
+    expect(rows[0]?.lesson.lesson_duration).toBe(45);
   });
 
   it('lists prepaid students with low balance only', () => {
