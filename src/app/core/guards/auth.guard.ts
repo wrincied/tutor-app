@@ -16,6 +16,10 @@ export const authGuard: CanActivateFn = () => {
   );
 };
 
+function isGithubUser(user: { providerData: { providerId: string }[] }): boolean {
+  return user.providerData.some((p) => p.providerId === 'github.com');
+}
+
 export const emailVerifiedGuard: CanActivateFn = () => {
   const auth = inject(Auth);
   const router = inject(Router);
@@ -27,14 +31,15 @@ export const emailVerifiedGuard: CanActivateFn = () => {
         return of(router.createUrlTree(['/login']));
       }
 
-      // Форсируем обновление стейта пользователя с серверов Firebase,
-      // чтобы получить актуальный статус emailVerified
       return from(user.reload()).pipe(
         switchMap(() => {
           if (user.emailVerified) {
             return of(true);
           }
-          // GitHub super-admins are not gated on Firebase emailVerified.
+          // Only GitHub super-admins skip Firebase emailVerified (admin UID allowlist).
+          if (!isGithubUser(user)) {
+            return of(router.createUrlTree(['/app/verify-email-notice']));
+          }
           return userService.ensureProfile().pipe(
             map((profile) =>
               profile.role === 'super_admin'

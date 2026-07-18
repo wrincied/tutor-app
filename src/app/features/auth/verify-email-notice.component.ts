@@ -26,9 +26,11 @@ export class VerifyEmailNoticeComponent implements OnInit {
     if (!this.auth.isLoggedIn()) {
       return;
     }
+    const firebaseUser = this.auth.firebaseUser();
+    const isGithub = firebaseUser?.providerData.some((p) => p.providerId === 'github.com');
     this.userSvc.ensureProfile().subscribe({
       next: (profile) => {
-        if (profile.role === 'super_admin') {
+        if (profile.role === 'super_admin' && isGithub) {
           void this.router.navigate(['/app/admin']);
         }
       },
@@ -63,8 +65,11 @@ export class VerifyEmailNoticeComponent implements OnInit {
           next: (profile) => {
             this.loading.set(false);
             if (profile.role === 'super_admin') {
-              void this.router.navigate(['/app/admin']);
-              return;
+              const isGithub = user?.providerData.some((p) => p.providerId === 'github.com');
+              if (isGithub) {
+                void this.router.navigate(['/app/admin']);
+                return;
+              }
             }
             if (user?.emailVerified) {
               this.auth.navigateAfterAuth(profile, user);

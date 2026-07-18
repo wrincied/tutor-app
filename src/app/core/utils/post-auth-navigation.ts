@@ -1,11 +1,8 @@
 import type { UserProfile } from '@interfaces';
 
-/** Маршрут после успешной аутентификации и bootstrap. */
+/** Маршрут после успешной аутентификации и bootstrap (обычный login / Google). */
 export function postAuthPath(profile: UserProfile, emailVerified: boolean): string {
-  // Super-admin (GitHub) skips email verification / onboarding gates.
-  if (profile.role === 'super_admin') {
-    return '/app/admin';
-  }
+  // Admin console is only via /admin-login + GitHub — never auto-route here.
   if (!emailVerified) {
     return '/app/verify-email-notice';
   }
