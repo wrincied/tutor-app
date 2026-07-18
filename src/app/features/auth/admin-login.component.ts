@@ -5,7 +5,6 @@ import type { User } from 'firebase/auth';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { UserService } from '../../core/services/user.service';
 
 @Component({
   selector: 'app-admin-login',
@@ -17,7 +16,6 @@ import { UserService } from '../../core/services/user.service';
 export class AdminLoginComponent implements OnInit {
   private readonly auth = inject(Auth);
   private readonly authSvc = inject(AuthService);
-  private readonly userSvc = inject(UserService);
   private readonly router = inject(Router);
   readonly i18n = inject(I18nService);
 
@@ -65,23 +63,19 @@ export class AdminLoginComponent implements OnInit {
   private async finishAdmin(user: User): Promise<void> {
     this.loading.set(true);
     try {
-      await firstValueFrom(this.authSvc.bootstrapProfile());
-    } catch {
-      /* continue — role check below */
-    }
+      // Bootstrap may repair allowlisted role → super_admin; always use that response.
+      const profile = await firstValueFrom(this.authSvc.bootstrapProfile());
 
-    const token = await user.getIdTokenResult(true);
-    const provider = (
-      token.claims['firebase'] as { sign_in_provider?: string } | undefined
-    )?.sign_in_provider;
-    if (provider !== 'github.com') {
-      this.error.set('Admin access requires GitHub sign-in');
-      this.loading.set(false);
-      return;
-    }
+      const token = await user.getIdTokenResult(true);
+      const provider = (
+        token.claims['firebase'] as { sign_in_provider?: string } | undefined
+      )?.sign_in_provider;
+      if (provider !== 'github.com') {
+        this.error.set('Admin access requires GitHub sign-in');
+        this.loading.set(false);
+        return;
+      }
 
-    try {
-      const profile = await firstValueFrom(this.userSvc.ensureProfile());
       if (profile.role !== 'super_admin') {
         this.error.set('This GitHub account is not a super admin');
         this.loading.set(false);
@@ -89,7 +83,8 @@ export class AdminLoginComponent implements OnInit {
       }
       this.loading.set(false);
       void this.router.navigate(['/app/admin']);
-    } catch {
+    } catch (err) {
+      console.error('[admin-login finish]', err);
       this.error.set(this.i18n.authUi().profileSyncError);
       this.loading.set(false);
     }

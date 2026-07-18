@@ -1,19 +1,26 @@
-/* Design preview (:4300) — shell polish under data-design="v2". Does not affect :4200. */
+/* Design preview (:4300) — calm studio shell. Does not affect :4200. */
 
 html[data-design='v2'] {
   --page-bg:
-    radial-gradient(90% 60% at 0% 0%, #e7f5ef 0%, transparent 55%),
-    radial-gradient(70% 50% at 100% 10%, #d8efe4 0%, transparent 50%),
-    #f4faf7;
-  --nav-bg: color-mix(in srgb, #f4faf7 92%, #e7f5ef);
-  --nav-border: #cfe3d9;
-  --nav-active-bg: color-mix(in srgb, var(--lime, #c6f071) 22%, #e7f5ef);
+    linear-gradient(180deg, #f7fbf8 0%, #eef6f1 45%, #f4faf7 100%);
+  --nav-bg: #f7fbf8;
+  --nav-border: #d5e6dc;
+  --nav-active-bg: color-mix(in srgb, var(--moss, #0f3d34) 8%, #e7f5ef);
   --nav-accent: var(--moss, #0f3d34);
   --text-primary: var(--ink, #071714);
+  --sidebar-w: 232px;
   font-family: var(--font-body, 'Figtree', sans-serif);
 
   body {
     background: var(--page-bg);
+  }
+
+  .app-content {
+    background: transparent;
+  }
+
+  .app-page-host {
+    animation: design-v2-enter 0.35s ease-out both;
   }
 
   .page-header h1 {
@@ -21,40 +28,37 @@ html[data-design='v2'] {
     letter-spacing: -0.03em;
   }
 
-  .main-content,
-  .app-main,
-  main {
-    animation: design-v2-enter 0.35s ease-out both;
-  }
-
   .sidebar {
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--foam, #e7f5ef) 55%, #fff) 0%,
-      var(--nav-bg) 40%
-    );
-    padding: 18px 10px;
+    background: #f7fbf8;
+    border-right: 1px solid var(--nav-border);
+    padding: 1.25rem 0.65rem;
   }
 
   .sidebar-logo {
-    font-size: 1.25rem;
+    font-family: var(--font-display, 'Syne', sans-serif);
+    font-size: 1.2rem;
+    font-weight: 800;
     letter-spacing: -0.04em;
+    color: var(--ink, #071714);
   }
 
   .nav-link,
   .sidebar-btn {
-    border-radius: 999px;
-    padding: 10px 14px;
+    border-radius: 0.65rem;
+    padding: 0.65rem 0.85rem;
+    font-weight: 500;
   }
 
   .nav-link.active,
   .sidebar-btn--account.active {
+    background: var(--nav-active-bg);
     color: var(--moss, #0f3d34);
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .bottom-nav {
-    background: color-mix(in srgb, var(--nav-bg) 92%, #fff);
+    background: color-mix(in srgb, #f7fbf8 92%, #fff);
+    border-top: 1px solid var(--nav-border);
     backdrop-filter: blur(8px);
   }
 
@@ -67,7 +71,7 @@ html[data-design='v2'] {
 @keyframes design-v2-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
