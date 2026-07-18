@@ -56,6 +56,31 @@
                 }
               ]
             },
+            "production-design": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "850kB",
+                  "maximumError": "1.2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "40kB",
+                  "maximumError": "48kB"
+                }
+              ],
+              "outputHashing": "all",
+              "styles": [
+                "src/styles.scss",
+                "src/styles/design-v2.scss"
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production-design.ts"
+                }
+              ]
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -90,6 +115,9 @@
           "configurations": {
             "production": {
               "buildTarget": "tutor:build:production"
+            },
+            "production-design": {
+              "buildTarget": "tutor:build:production-design"
             },
             "development": {
               "buildTarget": "tutor:build:development"

@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 const mode = process.argv[2] ?? 'development';
 const sourceByMode = {
   production: 'src/environments/environment.production.ts',
+  'production-design': 'src/environments/environment.production-design.ts',
   design: 'src/environments/environment.design.ts',
   development: 'src/environments/environment.development.ts',
 };

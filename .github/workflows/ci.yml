@@ -49,6 +49,7 @@ jobs:
       DEV_API_URL: ${{ secrets.DEV_API_URL }}
       DEV_API_URL_FALLBACK: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app'
       DEV_APP_URL: https://wrincied.github.io/tutor-app/dev
+      DESIGN_APP_URL: https://wrincied.github.io/tutor-app/design
 
     steps:
       - name: Checkout code
@@ -63,7 +64,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate environment.production.ts for GitHub Pages
+      - name: Resolve API URL
+        id: api
         run: |
           API_URL="${DEV_API_URL:-$DEV_API_URL_FALLBACK}"
           if [ -z "$API_URL" ]; then
@@ -73,6 +75,11 @@ jobs:
           if [ -z "$DEV_API_URL" ]; then
             echo "::warning::Using DEV_API_URL_FALLBACK from workflow file (secret DEV_API_URL is not set)"
           fi
+          echo "url=$API_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Build classic home (/dev)
+        run: |
+          API_URL='${{ steps.api.outputs.url }}'
           cat > src/environments/environment.production.ts << EOF
           export const environment = {
             production: true,
@@ -92,19 +99,48 @@ jobs:
           EOF
           cp src/environments/environment.production.ts src/environments/environment.ts
           node scripts/prepare-environment.mjs production
+          npx ng build --configuration=production --base-href=/tutor-app/dev/ --output-path=dist/classic
 
-      - name: Build Angular for GitHub Pages
-        run: npx ng build --configuration=production --base-href=/tutor-app/dev/
+      - name: Build studio home (/design)
+        run: |
+          API_URL='${{ steps.api.outputs.url }}'
+          cat > src/environments/environment.production-design.ts << EOF
+          export const environment = {
+            production: true,
+            designMode: true,
+            apiUrl: '${API_URL}',
+            appUrl: '${DESIGN_APP_URL}',
+            firebaseConfig: {
+              apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
+              authDomain: 'simple4u-64822.web.app',
+              projectId: 'tutorassis',
+              storageBucket: 'tutorassis.firebasestorage.app',
+              messagingSenderId: '965411338053',
+              appId: '1:965411338053:web:d98317afdb5602a53c702c',
+              measurementId: 'G-TXM74NGN6R',
+            },
+          };
+          EOF
+          cp src/environments/environment.production-design.ts src/environments/environment.ts
+          node scripts/prepare-environment.mjs production-design
+          npx ng build --configuration=production-design --base-href=/tutor-app/design/ --output-path=dist/studio
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy classic to /dev
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist/tutor/browser
+          folder: dist/classic/browser
           target-folder: dev
           branch: gh-pages
 
-      - name: Redirect root gh-pages URL to /dev
-        # Старый URL /tutor-app/ вёл на устаревшую сборку. Корень — только редирект на /dev.
+      - name: Deploy studio to /design
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist/studio/browser
+          target-folder: design
+          branch: gh-pages
+          clean: false
+
+      - name: Write root chooser
         run: |
           mkdir -p gh-pages-root
           cat > gh-pages-root/index.html << 'EOF'
@@ -112,18 +148,31 @@ jobs:
           <html lang="en">
             <head>
               <meta charset="utf-8">
-              <title>Simple4U</title>
-              <meta http-equiv="refresh" content="0; url=/tutor-app/dev/">
-              <link rel="canonical" href="/tutor-app/dev/">
-              <script>location.replace('/tutor-app/dev/' + (location.hash || ''));</script>
+              <title>Simple4U — previews</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                :root { color-scheme: light; font-family: system-ui, sans-serif; }
+                body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4faf7; color: #071714; }
+                main { width: min(28rem, calc(100% - 2rem)); }
+                h1 { margin: 0 0 0.35rem; font-size: 1.75rem; letter-spacing: -0.03em; }
+                p { margin: 0 0 1.25rem; color: #3d5c54; }
+                a { display: block; padding: 0.9rem 1rem; margin: 0.5rem 0; border: 1px solid #cfe3d9; border-radius: 0.75rem; background: #fff; color: inherit; text-decoration: none; font-weight: 600; }
+                a:hover { border-color: #0f3d34; }
+                span { display: block; margin-top: 0.25rem; font-size: 0.8125rem; font-weight: 500; color: #3d5c54; }
+              </style>
             </head>
             <body>
-              <p>Redirecting to <a href="/tutor-app/dev/">Simple4U dev</a>…</p>
+              <main>
+                <h1>Simple4U</h1>
+                <p>Two GitHub Pages previews</p>
+                <a href="/tutor-app/dev/">Classic home<span>Current production UI</span></a>
+                <a href="/tutor-app/design/">Studio home<span>New day-desk dashboard</span></a>
+              </main>
             </body>
           </html>
           EOF
 
-      - name: Publish root redirect
+      - name: Publish root chooser
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: gh-pages-root
