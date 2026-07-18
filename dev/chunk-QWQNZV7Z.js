@@ -1,0 +1,1 @@
+import{b as c}from"./chunk-GBEK7SYO.js";import{Ic as a,T as o,Y as r}from"./chunk-VBB54PN7.js";var n=c("public"),i=class t{http=r(a);getLegal(e){return this.http.get(`${n}/legal/${e}`)}getContact(){return this.http.get(`${n}/contact`)}static \u0275fac=function(l){return new(l||t)};static \u0275prov=o({token:t,factory:t.\u0275fac,providedIn:"root"})};export{i as a};
