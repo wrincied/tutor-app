@@ -2,19 +2,18 @@ import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import type { FinanceSummary, Lesson, Student, UserProfile } from '@interfaces';
+import type { FinanceSummary, Student, UserProfile } from '@interfaces';
 import { environment } from '../../../environments/environment';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { LessonService } from '../../core/services/lesson.service';
 import { StudentService } from '../../core/services/student.service';
 import { UserService } from '../../core/services/user.service';
 import { financeTodayRange } from '../../core/utils/finance-period';
 import { formatMoneyWithCode } from '../../core/utils/format-currency';
 import {
   findNextLesson,
-  lessonsForDay,
+  lessonsFromFinanceBreakdown,
   overdueLessonCount,
   studentsLowBalance,
   type HomeLessonRow,
@@ -32,7 +31,6 @@ const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
 export class HomeComponent implements OnInit {
   private readonly userSvc = inject(UserService);
   private readonly financeSvc = inject(FinanceService);
-  private readonly lessonSvc = inject(LessonService);
   private readonly studentSvc = inject(StudentService);
   readonly i18n = inject(I18nService);
   /** True only for `ng serve --configuration=design` (:4300). */
@@ -170,13 +168,14 @@ export class HomeComponent implements OnInit {
     forkJoin({
       profile: this.userSvc.ensureProfile(),
       summary: this.financeSvc.getSummary({ from: today.from, to: today.to }),
-      lessons: this.lessonSvc.getAll(),
       students: this.studentSvc.getAll(),
     }).subscribe({
-      next: ({ profile, summary, lessons, students }) => {
+      next: ({ profile, summary, students }) => {
         this.profile.set(profile);
         this.summary.set(summary);
-        this.todayLessons.set(lessonsForDay(lessons as Lesson[], students));
+        this.todayLessons.set(
+          lessonsFromFinanceBreakdown(summary.lessonsBreakdown ?? [], students),
+        );
         this.lowBalanceStudents.set(studentsLowBalance(students));
         this.loading.set(false);
       },
