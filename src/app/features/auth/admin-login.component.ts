@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { Auth, GithubAuthProvider, signInWithPopup } from '@angular/fire/auth';
+import { Auth, GithubAuthProvider, signInWithPopup, signOut } from '@angular/fire/auth';
 import type { User } from 'firebase/auth';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
@@ -31,9 +31,12 @@ export class AdminLoginComponent implements OnInit {
     const isGithub = user.providerData.some((p) => p.providerId === 'github.com');
     if (isGithub) {
       void this.finishAdmin(user);
-    } else {
-      this.info.set('Admin requires GitHub sign-in. Sign in with GitHub below.');
+      return;
     }
+    // Google/email session must not stay here — admin is GitHub-only.
+    this.info.set(
+      'Admin requires a separate GitHub sign-in. Your current session will be signed out when you continue.',
+    );
   }
 
   async signInWithGithub(): Promise<void> {
@@ -44,6 +47,10 @@ export class AdminLoginComponent implements OnInit {
     provider.addScope('read:user');
     provider.addScope('user:email');
     try {
+      // Clear Google/email session first so we don't keep the wrong account.
+      if (this.auth.currentUser) {
+        await signOut(this.auth);
+      }
       const cred = await signInWithPopup(this.auth, provider);
       await this.finishAdmin(cred.user);
     } catch (err) {
@@ -51,7 +58,7 @@ export class AdminLoginComponent implements OnInit {
       const code = (err as { code?: string })?.code;
       if (code === 'auth/account-exists-with-different-credential') {
         this.error.set(
-          'This email is already linked to another sign-in method. Use the GitHub account that matches your admin allowlist.',
+          'This email is already linked to another sign-in method. Use the GitHub account on the admin allowlist (UID).',
         );
       } else {
         this.error.set(this.i18n.authUi().oauthErrorGithub);
@@ -63,7 +70,6 @@ export class AdminLoginComponent implements OnInit {
   private async finishAdmin(user: User): Promise<void> {
     this.loading.set(true);
     try {
-      // Bootstrap may repair allowlisted role → super_admin; always use that response.
       const profile = await firstValueFrom(this.authSvc.bootstrapProfile());
 
       const token = await user.getIdTokenResult(true);
