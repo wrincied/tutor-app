@@ -483,6 +483,23 @@ export interface AuthStrings {
   landingHowBody: string;
   landingClosingTitle: string;
   landingClosingCta: string;
+  /** Short nav CTA (Anmelden / Войти). Used by landing-v2 sticky header. */
+  landingNavSignIn: string;
+  landingTrustTitle: string;
+  landingTrustBody: string;
+  landingMockWeek: string;
+  landingMockFinance: string;
+  landingMockIncome: string;
+  landingMockExpenses: string;
+  landingMockNet: string;
+  landingMockStudents: string;
+  landingMockLessonsLeft: string;
+  landingMockPeriodAt: string;
+  landingMockExpenseCoworking: string;
+  landingMockExpenseSoftware: string;
+  landingMockExpenseMaterials: string;
+  landingMockExpenseTransit: string;
+  landingMockSvs: string;
   footerDatenschutz: string;
   footerImpressum: string;
   footerKontakt: string;

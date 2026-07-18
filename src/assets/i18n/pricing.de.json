@@ -1,7 +1,7 @@
 {
   "pricing": {
     "title": "Mehr Zeit für den Unterricht, weniger Verwaltung",
-    "subtitle": "Simple4U automatisiert Planung, Stundenpakete und Finanzen. 14 Tage Pro gratis — ohne Karte.",
+    "subtitle": "Simple4U automatisiert Planung, Unterrichtspakete und Finanzen. 14 Tage Pro gratis — ohne Karte.",
     "toggle_monthly": "Monatlich",
     "toggle_yearly": "Jährlich",
     "save_badge": "20 %+ sparen",
@@ -14,7 +14,7 @@
       "features": [
         "Bis zu 3 aktive Schüler",
         "Manueller Unterrichtskalender",
-        "Einfache Stundenplan-Ansicht"
+        "Einfache Terminplan-Ansicht"
       ]
     },
     "pro_plan": {

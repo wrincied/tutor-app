@@ -1,0 +1,358 @@
+<div class="landing-v2">
+  <div class="landing-v2__atmosphere" aria-hidden="true">
+    <span class="landing-v2__orb landing-v2__orb--a"></span>
+    <span class="landing-v2__orb landing-v2__orb--b"></span>
+    <span class="landing-v2__orb landing-v2__orb--c"></span>
+  </div>
+  <div class="landing-v2__dither" aria-hidden="true"></div>
+
+  <nav class="landing-v2__nav" [attr.aria-label]="i18n.authUi().footerRights">
+    <a class="landing-v2__nav-brand" routerLink="/">Simple4U</a>
+    <div class="landing-v2__nav-actions">
+      <div class="landing-v2__lang" [class.landing-v2__lang--open]="langMenuOpen()">
+        <button
+          type="button"
+          class="landing-v2__lang-trigger"
+          [attr.aria-expanded]="langMenuOpen()"
+          aria-haspopup="listbox"
+          (click)="toggleLangMenu(); $event.stopPropagation()"
+        >
+          <span>{{ currentLangCode() }}</span>
+          <span class="landing-v2__lang-caret" aria-hidden="true"></span>
+        </button>
+        @if (langMenuOpen()) {
+          <ul class="landing-v2__lang-menu" role="listbox" (click)="$event.stopPropagation()">
+            @for (code of i18n.allLangs; track code) {
+              <li role="option" [attr.aria-selected]="isLang(code)">
+                <button
+                  type="button"
+                  class="landing-v2__lang-option"
+                  [class.landing-v2__lang-option--active]="isLang(code)"
+                  (click)="pickLang(code)"
+                >
+                  <span class="landing-v2__lang-code">{{ code.toUpperCase() }}</span>
+                  <span class="landing-v2__lang-name">{{ i18n.labelForLang(code) }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+      <a class="landing-v2__nav-signin" routerLink="/login">{{ i18n.authUi().landingNavSignIn }}</a>
+    </div>
+  </nav>
+
+  <header class="landing-v2__hero">
+    <div class="landing-v2__hero-copy">
+      <p class="landing-v2__brand">Simple4U</p>
+      <h1 class="landing-v2__headline">{{ i18n.authUi().landingHeadline }}</h1>
+      <p class="landing-v2__subtitle">{{ i18n.authUi().landingSubtitle }}</p>
+      <div class="landing-v2__cta-row">
+        <a class="landing-v2__cta" routerLink="/register">{{ i18n.authUi().join }}</a>
+      </div>
+    </div>
+
+    <aside
+      class="landing-v2__demo"
+      role="region"
+      [attr.aria-label]="i18n.authUi().landingFeaturesTitle"
+    >
+      <div class="landing-v2__demo-shell">
+        <div
+          class="landing-v2__demo-viewport"
+          (pointerdown)="onDemoPointerDown($event)"
+          (pointerup)="onDemoPointerUp($event)"
+          (pointercancel)="onDemoPointerCancel()"
+        >
+          <div class="landing-v2__demo-stage">
+            <section
+              class="landing-v2__demo-slide"
+              [class.landing-v2__demo-slide--front]="demoStack(0) === 0"
+              [class.landing-v2__demo-slide--mid]="demoStack(0) === 1"
+              [class.landing-v2__demo-slide--back]="demoStack(0) === 2"
+              [attr.aria-hidden]="demoStack(0) !== 0"
+              (click)="onSideSlideClick(0)"
+            >
+              <div class="landing-v2__demo-chrome" aria-hidden="true">
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-title">Simple4U</span>
+              </div>
+
+              <div class="landing-v2__demo-slide-body">
+                <header class="landing-v2__demo-panel-head">
+                  <p class="landing-v2__demo-label">{{ i18n.authUi().landingMockWeek }}</p>
+                  <p class="landing-v2__demo-date">Mi · 15.07</p>
+                </header>
+
+                <div class="landing-v2__demo-day">
+                  <div class="landing-v2__demo-slot">
+                    <time class="landing-v2__demo-hour">09:00</time>
+                    <article
+                      class="landing-v2__lesson landing-v2__lesson--scheduled"
+                      style="--student: #7eb6d9"
+                    >
+                      <p class="landing-v2__lesson-title">Anna M.</p>
+                      <p class="landing-v2__lesson-meta">60 min · €45</p>
+                      <p class="landing-v2__lesson-status">{{ i18n.calendarUi().statusScheduled }}</p>
+                    </article>
+                  </div>
+
+                  <div class="landing-v2__demo-slot">
+                    <time class="landing-v2__demo-hour">11:30</time>
+                    <article
+                      class="landing-v2__lesson landing-v2__lesson--completed"
+                      style="--student: #9bc4a8"
+                    >
+                      <p class="landing-v2__lesson-title">Max K.</p>
+                      <p class="landing-v2__lesson-meta">45 min · €38</p>
+                      <p class="landing-v2__lesson-status">{{ i18n.calendarUi().statusCompleted }}</p>
+                    </article>
+                  </div>
+
+                  <div class="landing-v2__demo-slot">
+                    <time class="landing-v2__demo-hour">15:00</time>
+                    <article
+                      class="landing-v2__lesson landing-v2__lesson--scheduled"
+                      style="--student: #d4a574"
+                    >
+                      <p class="landing-v2__lesson-title">Sofia R.</p>
+                      <p class="landing-v2__lesson-meta">60 min · €50</p>
+                      <p class="landing-v2__lesson-status">{{ i18n.calendarUi().statusScheduled }}</p>
+                    </article>
+                  </div>
+
+                  <div class="landing-v2__demo-slot">
+                    <time class="landing-v2__demo-hour">17:30</time>
+                    <article
+                      class="landing-v2__lesson landing-v2__lesson--missed"
+                      style="--student: #c9a0d4"
+                    >
+                      <p class="landing-v2__lesson-title">Jonas L.</p>
+                      <p class="landing-v2__lesson-meta">90 min · €70</p>
+                      <p class="landing-v2__lesson-status">{{ i18n.calendarUi().statusMissed }}</p>
+                    </article>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section
+              class="landing-v2__demo-slide"
+              [class.landing-v2__demo-slide--front]="demoStack(1) === 0"
+              [class.landing-v2__demo-slide--mid]="demoStack(1) === 1"
+              [class.landing-v2__demo-slide--back]="demoStack(1) === 2"
+              [attr.aria-hidden]="demoStack(1) !== 0"
+              (click)="onSideSlideClick(1)"
+            >
+              <div class="landing-v2__demo-chrome" aria-hidden="true">
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-title">Simple4U</span>
+              </div>
+
+              <div class="landing-v2__demo-slide-body">
+                <header class="landing-v2__demo-panel-head">
+                  <p class="landing-v2__demo-label">{{ i18n.authUi().landingMockFinance }}</p>
+                  <p class="landing-v2__demo-date">{{ i18n.authUi().landingMockPeriodAt }}</p>
+                </header>
+
+                <div class="landing-v2__kpi-card landing-v2__kpi-card--income">
+                  <span class="landing-v2__kpi-label">{{ i18n.authUi().landingMockIncome }}</span>
+                  <strong class="landing-v2__kpi-value">€ 2 480</strong>
+                  <span class="landing-v2__kpi-split">€ 1 920 / € 560</span>
+                </div>
+
+                <div class="landing-v2__expense-block">
+                  <p class="landing-v2__expense-title">{{ i18n.authUi().landingMockExpenses }}</p>
+                  <ul class="landing-v2__expense-list">
+                    <li>
+                      <span>{{ i18n.authUi().landingMockExpenseCoworking }}</span>
+                      <span>€ 280</span>
+                    </li>
+                    <li>
+                      <span>{{ i18n.authUi().landingMockExpenseSoftware }}</span>
+                      <span>€ 48</span>
+                    </li>
+                    <li>
+                      <span>{{ i18n.authUi().landingMockExpenseMaterials }}</span>
+                      <span>€ 95</span>
+                    </li>
+                    <li>
+                      <span>{{ i18n.authUi().landingMockExpenseTransit }}</span>
+                      <span>€ 187</span>
+                    </li>
+                    <li class="landing-v2__expense-list-total">
+                      <span>{{ i18n.authUi().landingMockExpenses }}</span>
+                      <span>€ 610</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <dl class="landing-v2__tax">
+                  <div>
+                    <dt>{{ i18n.financeUi().grossProfit }}</dt>
+                    <dd>€ 1 870</dd>
+                  </div>
+                  <div>
+                    <dt>{{ i18n.authUi().landingMockSvs }}</dt>
+                    <dd>−€ 502</dd>
+                  </div>
+                  <div>
+                    <dt>{{ i18n.financeUi().incomeTax }}</dt>
+                    <dd>−€ 186</dd>
+                  </div>
+                  <div class="landing-v2__tax-net">
+                    <dt>{{ i18n.financeUi().netProfit }}</dt>
+                    <dd>€ 1 182</dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
+
+            <section
+              class="landing-v2__demo-slide"
+              [class.landing-v2__demo-slide--front]="demoStack(2) === 0"
+              [class.landing-v2__demo-slide--mid]="demoStack(2) === 1"
+              [class.landing-v2__demo-slide--back]="demoStack(2) === 2"
+              [attr.aria-hidden]="demoStack(2) !== 0"
+              (click)="onSideSlideClick(2)"
+            >
+              <div class="landing-v2__demo-chrome" aria-hidden="true">
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-dot"></span>
+                <span class="landing-v2__demo-chrome-title">Simple4U</span>
+              </div>
+
+              <div class="landing-v2__demo-slide-body">
+                <p class="landing-v2__demo-label">{{ i18n.authUi().landingMockStudents }}</p>
+                <ul class="landing-v2__students">
+                  <li class="landing-v2__student">
+                    <span class="landing-v2__student-swatch" style="background: #7eb6d9"></span>
+                    <span class="landing-v2__student-body">
+                      <span class="landing-v2__student-name">Anna M.</span>
+                      <span class="landing-v2__student-meta"
+                        >€45 {{ i18n.studentsUi().perLesson }} · Wien</span
+                      >
+                    </span>
+                    <span class="landing-v2__student-balance"
+                      >2 {{ i18n.authUi().landingMockLessonsLeft }}</span
+                    >
+                  </li>
+                  <li class="landing-v2__student">
+                    <span class="landing-v2__student-swatch" style="background: #9bc4a8"></span>
+                    <span class="landing-v2__student-body">
+                      <span class="landing-v2__student-name">Max K.</span>
+                      <span class="landing-v2__student-meta"
+                        >€38 {{ i18n.studentsUi().perLesson }} · Wien</span
+                      >
+                    </span>
+                    <span class="landing-v2__student-balance"
+                      >0 {{ i18n.authUi().landingMockLessonsLeft }}</span
+                    >
+                  </li>
+                  <li class="landing-v2__student">
+                    <span class="landing-v2__student-swatch" style="background: #d4a574"></span>
+                    <span class="landing-v2__student-body">
+                      <span class="landing-v2__student-name">Sofia R.</span>
+                      <span class="landing-v2__student-meta"
+                        >€50 {{ i18n.studentsUi().perLesson }} · Wien</span
+                      >
+                    </span>
+                    <span class="landing-v2__student-balance"
+                      >5 {{ i18n.authUi().landingMockLessonsLeft }}</span
+                    >
+                  </li>
+                  <li class="landing-v2__student">
+                    <span class="landing-v2__student-swatch" style="background: #c9a0d4"></span>
+                    <span class="landing-v2__student-body">
+                      <span class="landing-v2__student-name">Jonas L.</span>
+                      <span class="landing-v2__student-meta"
+                        >€70 {{ i18n.studentsUi().perLesson }} · Graz</span
+                      >
+                    </span>
+                    <span class="landing-v2__student-balance"
+                      >1 {{ i18n.authUi().landingMockLessonsLeft }}</span
+                    >
+                  </li>
+                </ul>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="landing-v2__demo-pager" role="tablist">
+          @for (index of [0, 1, 2]; track index) {
+            <button
+              type="button"
+              class="landing-v2__demo-pager-dot"
+              role="tab"
+              [class.landing-v2__demo-pager-dot--active]="demoSlide() === index"
+              [attr.aria-selected]="demoSlide() === index"
+              [attr.aria-label]="index + 1"
+              (click)="setDemoSlide(index)"
+            ></button>
+          }
+        </div>
+      </div>
+    </aside>
+  </header>
+
+  <section class="landing-v2__section landing-v2__section--foam" aria-labelledby="landing-v2-features">
+    <h2 id="landing-v2-features" class="landing-v2__section-title">
+      {{ i18n.authUi().landingFeaturesTitle }}
+    </h2>
+
+    <div class="landing-v2__features">
+      <article class="landing-v2__feature" tabindex="0">
+        <p class="landing-v2__feature-index" aria-hidden="true">01</p>
+        <h3 class="landing-v2__feature-title">{{ i18n.authUi().landingFeatureScheduleTitle }}</h3>
+        <p class="landing-v2__feature-body">{{ i18n.authUi().landingFeatureScheduleBody }}</p>
+      </article>
+      <article class="landing-v2__feature" tabindex="0">
+        <p class="landing-v2__feature-index" aria-hidden="true">02</p>
+        <h3 class="landing-v2__feature-title">{{ i18n.authUi().landingFeatureStudentsTitle }}</h3>
+        <p class="landing-v2__feature-body">{{ i18n.authUi().landingFeatureStudentsBody }}</p>
+      </article>
+      <article class="landing-v2__feature" tabindex="0">
+        <p class="landing-v2__feature-index" aria-hidden="true">03</p>
+        <h3 class="landing-v2__feature-title">{{ i18n.authUi().landingFeatureFinanceTitle }}</h3>
+        <p class="landing-v2__feature-body">{{ i18n.authUi().landingFeatureFinanceBody }}</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="landing-v2__section landing-v2__section--ink" aria-labelledby="landing-v2-how">
+    <h2 id="landing-v2-how" class="landing-v2__section-title">
+      {{ i18n.authUi().landingHowTitle }}
+    </h2>
+    <p class="landing-v2__section-copy">{{ i18n.authUi().landingHowBody }}</p>
+  </section>
+
+  <section class="landing-v2__section landing-v2__section--trust" aria-labelledby="landing-v2-trust">
+    <h2 id="landing-v2-trust" class="landing-v2__section-title">
+      {{ i18n.authUi().landingTrustTitle }}
+    </h2>
+    <p class="landing-v2__section-copy">{{ i18n.authUi().landingTrustBody }}</p>
+  </section>
+
+  <section class="landing-v2__closing" aria-labelledby="landing-v2-closing">
+    <h2 id="landing-v2-closing" class="landing-v2__closing-title">
+      {{ i18n.authUi().landingClosingTitle }}
+    </h2>
+    <a class="landing-v2__cta" routerLink="/register">{{ i18n.authUi().landingClosingCta }}</a>
+  </section>
+
+  <footer class="landing-v2__footer">
+    <nav class="landing-v2__footer-nav" [attr.aria-label]="i18n.authUi().footerRights">
+      <a routerLink="/legal/data-processing">{{ i18n.authUi().footerDatenschutz }}</a>
+      <a routerLink="/legal/impressum">{{ i18n.authUi().footerImpressum }}</a>
+      <a [href]="'mailto:' + contactEmail()">{{ i18n.authUi().footerKontakt }}</a>
+      <a routerLink="/legal/cookies">{{ i18n.authUi().footerCookies }}</a>
+    </nav>
+    <p class="landing-v2__footer-copy">{{ i18n.authUi().footerRights }}</p>
+  </footer>
+</div>
