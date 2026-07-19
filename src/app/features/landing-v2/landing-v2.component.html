@@ -198,15 +198,15 @@
                   </div>
                   <div>
                     <dt>{{ i18n.authUi().landingMockSvs }}</dt>
-                    <dd>−€ 502</dd>
+                    <dd>−€ 339</dd>
                   </div>
                   <div>
                     <dt>{{ i18n.financeUi().incomeTax }}</dt>
-                    <dd>−€ 186</dd>
+                    <dd>€ 0</dd>
                   </div>
                   <div class="landing-v2__tax-net">
                     <dt>{{ i18n.financeUi().netProfit }}</dt>
-                    <dd>€ 1 182</dd>
+                    <dd>€ 1 531</dd>
                   </div>
                 </dl>
               </div>
@@ -325,6 +325,91 @@
     </div>
   </section>
 
+  <section class="landing-v2__section landing-v2__section--bot" aria-labelledby="landing-v2-bot">
+    <div class="landing-v2__bot-layout">
+      <div class="landing-v2__bot-copy">
+        <h2 id="landing-v2-bot" class="landing-v2__section-title">
+          {{ i18n.authUi().landingBotTitle }}
+        </h2>
+        <p class="landing-v2__section-copy">{{ i18n.authUi().landingBotBody }}</p>
+      </div>
+
+      <div class="landing-v2__bot-mock" aria-hidden="true">
+        <p class="landing-v2__mock-plaque">{{ i18n.authUi().landingMockComingSoon }}</p>
+
+        <div class="landing-v2__tg">
+          <div class="landing-v2__tg-status-bar">
+            <span>9:41</span>
+            <span class="landing-v2__tg-status-icons"></span>
+          </div>
+
+          <header class="landing-v2__tg-bar">
+            <svg class="landing-v2__tg-icon landing-v2__tg-icon--back" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+              />
+            </svg>
+            <span class="landing-v2__tg-avatar">S</span>
+            <div class="landing-v2__tg-meta">
+              <p class="landing-v2__tg-name">{{ i18n.authUi().landingMockBotHeader }}</p>
+              <p class="landing-v2__tg-status">bot</p>
+            </div>
+            <svg class="landing-v2__tg-icon landing-v2__tg-icon--menu" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="5" r="1.7" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+              <circle cx="12" cy="19" r="1.7" fill="currentColor" />
+            </svg>
+          </header>
+
+          <div class="landing-v2__tg-thread">
+            <p class="landing-v2__tg-day">15 July</p>
+
+            <article class="landing-v2__tg-bubble">
+              <p>
+                {{ i18n.authUi().landingMockBotBalance }}
+                <time>09:12</time>
+              </p>
+            </article>
+            <article class="landing-v2__tg-bubble">
+              <p>
+                {{ i18n.authUi().landingMockBotPayment }}
+                <time>09:14</time>
+              </p>
+            </article>
+            <article class="landing-v2__tg-bubble">
+              <p>
+                {{ i18n.authUi().landingMockBotLessonStart }}
+                <time>11:00</time>
+              </p>
+            </article>
+            <article class="landing-v2__tg-bubble">
+              <p>
+                {{ i18n.authUi().landingMockBotHomework }}
+                <time>12:40</time>
+              </p>
+            </article>
+          </div>
+
+          <div class="landing-v2__tg-composer">
+            <svg class="landing-v2__tg-icon landing-v2__tg-icon--attach" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M16.5 6.5v8.25a4.5 4.5 0 1 1-9 0V6.75a3 3 0 0 1 6 0v7.5a1.5 1.5 0 1 1-3 0V7.5h-1.5v6.75a3 3 0 1 0 6 0V6.75a4.5 4.5 0 1 0-9 0v8a6 6 0 1 0 12 0V6.5h-1.5z"
+              />
+            </svg>
+            <span class="landing-v2__tg-composer-field">Message</span>
+            <span class="landing-v2__tg-composer-send">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#fff" d="M3.4 20.4 21 12 3.4 3.6 3.3 10.1 15 12 3.3 13.9z" />
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="landing-v2__section landing-v2__section--ink" aria-labelledby="landing-v2-how">
     <h2 id="landing-v2-how" class="landing-v2__section-title">
       {{ i18n.authUi().landingHowTitle }}
@@ -332,11 +417,79 @@
     <p class="landing-v2__section-copy">{{ i18n.authUi().landingHowBody }}</p>
   </section>
 
-  <section class="landing-v2__section landing-v2__section--trust" aria-labelledby="landing-v2-trust">
-    <h2 id="landing-v2-trust" class="landing-v2__section-title">
-      {{ i18n.authUi().landingTrustTitle }}
-    </h2>
-    <p class="landing-v2__section-copy">{{ i18n.authUi().landingTrustBody }}</p>
+  <section class="landing-v2__section landing-v2__section--tax" aria-labelledby="landing-v2-tax">
+    <div class="landing-v2__split">
+      <div class="landing-v2__split-copy">
+        <h2 id="landing-v2-tax" class="landing-v2__section-title">
+          {{ i18n.authUi().landingTaxTitle }}
+        </h2>
+        <p class="landing-v2__section-copy">{{ i18n.authUi().landingTaxBody }}</p>
+      </div>
+
+      <div class="landing-v2__tax-mock" aria-hidden="true">
+        <p class="landing-v2__mock-plaque">{{ i18n.authUi().landingMockComingSoon }}</p>
+        <div class="landing-v2__cushion">
+          <div class="landing-v2__cushion-row">
+            <span>{{ i18n.authUi().landingMockTaxGross }}</span>
+            <strong>€ 28 000</strong>
+          </div>
+          <div class="landing-v2__cushion-bar" role="presentation">
+            <span class="landing-v2__cushion-bar-spend"></span>
+            <span class="landing-v2__cushion-bar-freeze"></span>
+          </div>
+          <div class="landing-v2__cushion-split">
+            <div class="landing-v2__cushion-chip landing-v2__cushion-chip--spend">
+              <span>{{ i18n.authUi().landingMockTaxSpendable }}</span>
+              <strong>€ 20 693</strong>
+            </div>
+            <div class="landing-v2__cushion-chip landing-v2__cushion-chip--freeze">
+              <span>{{ i18n.authUi().landingMockTaxFrozen }}</span>
+              <strong>€ 7 307</strong>
+            </div>
+          </div>
+          <ul class="landing-v2__cushion-lines">
+            <li>
+              <span>{{ i18n.authUi().landingMockTaxSvs }}</span>
+              <span>€ 5 074</span>
+            </li>
+            <li>
+              <span>{{ i18n.authUi().landingMockTaxEst }}</span>
+              <span>€ 2 233</span>
+            </li>
+          </ul>
+          <p class="landing-v2__cushion-hint">{{ i18n.authUi().landingMockTaxHint }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-v2__section landing-v2__section--booking" aria-labelledby="landing-v2-booking">
+    <div class="landing-v2__split landing-v2__split--flip">
+      <div class="landing-v2__split-copy">
+        <h2 id="landing-v2-booking" class="landing-v2__section-title">
+          {{ i18n.authUi().landingBookingTitle }}
+        </h2>
+        <p class="landing-v2__section-copy">{{ i18n.authUi().landingBookingBody }}</p>
+      </div>
+
+      <div class="landing-v2__booking-mock" aria-hidden="true">
+        <p class="landing-v2__mock-plaque">{{ i18n.authUi().landingMockComingSoon }}</p>
+        <div class="landing-v2__book">
+          <div class="landing-v2__book-link">
+            <span class="landing-v2__book-link-url">{{ i18n.authUi().landingMockBookingLink }}</span>
+          </div>
+          <p class="landing-v2__book-label">{{ i18n.authUi().landingMockBookingPick }}</p>
+          <ul class="landing-v2__book-slots">
+            <li>{{ i18n.authUi().landingMockBookingSlot1 }}</li>
+            <li class="landing-v2__book-slots-active">
+              {{ i18n.authUi().landingMockBookingSlot2 }}
+              <span>{{ i18n.authUi().landingMockBookingConfirm }}</span>
+            </li>
+            <li>{{ i18n.authUi().landingMockBookingSlot3 }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="landing-v2__closing" aria-labelledby="landing-v2-closing">
