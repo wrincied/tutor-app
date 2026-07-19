@@ -500,6 +500,33 @@ export interface AuthStrings {
   landingMockExpenseMaterials: string;
   landingMockExpenseTransit: string;
   landingMockSvs: string;
+  /** Telegram bot preview section (design landing). */
+  landingBotTitle: string;
+  landingBotBody: string;
+  landingMockComingSoon: string;
+  landingMockBotHeader: string;
+  landingMockBotBalance: string;
+  landingMockBotPayment: string;
+  landingMockBotLessonStart: string;
+  landingMockBotHomework: string;
+  /** Tax cushion (AT) preview. */
+  landingTaxTitle: string;
+  landingTaxBody: string;
+  landingMockTaxGross: string;
+  landingMockTaxFrozen: string;
+  landingMockTaxSpendable: string;
+  landingMockTaxSvs: string;
+  landingMockTaxEst: string;
+  landingMockTaxHint: string;
+  /** Self-booking calendar link preview. */
+  landingBookingTitle: string;
+  landingBookingBody: string;
+  landingMockBookingLink: string;
+  landingMockBookingPick: string;
+  landingMockBookingSlot1: string;
+  landingMockBookingSlot2: string;
+  landingMockBookingSlot3: string;
+  landingMockBookingConfirm: string;
   footerDatenschutz: string;
   footerImpressum: string;
   footerKontakt: string;

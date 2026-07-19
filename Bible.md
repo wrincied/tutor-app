@@ -107,4 +107,68 @@ wrincied.github.io/tutor-app/dev/#/login   ← вход
 
 ---
 
+## Firebase: Hosting vs App Hosting
+
+Два разных продукта Firebase. Конфиг: `firebase.json`. Команды запускают **вручную** (не из GitHub Actions CI выше).
+
+### `firebase deploy --only hosting`
+
+**Что это:** статический хостинг **фронтенда** (Angular SPA).
+
+| | |
+|--|--|
+| Сайт | `simple4u-64822` |
+| URL | https://simple4u-64822.web.app (и `*.firebaseapp.com`) |
+| Папка публикации | `dist/tutor/browser` |
+| Перед деплоем | `predeploy`: `npm run build:hosting` → `production-design` env + `ng build` |
+| SPA | rewrite `**` → `/index.html` |
+
+**Что делает команда:** собирает фронт локально → заливает HTML/JS/CSS на Firebase Hosting. **Backend / API не трогает.**
+
+```bash
+firebase deploy --only hosting
+```
+
+Отличие от GitHub Pages: gh-pages — превью из ветки `dev` (`/tutor-app/dev`); Firebase Hosting — **production-сайт для пользователей**.
+
+### `firebase deploy --only apphosting` (и бэкенды)
+
+**Что это:** Firebase **App Hosting** — деплой **серверных** приложений (Node), не статики.
+
+В `firebase.json` два backend’а:
+
+| `backendId` | `rootDir` | Назначение |
+|-------------|-----------|------------|
+| `tutor-app` | `.` (корень фронт-репо) | App Hosting backend с id `tutor-app` |
+| `tutor-app-backend` | `backend/` | Express API (отдельный backend) |
+
+Типичный production API:
+
+- https://tutor-app-backend--tutorassis.europe-west4.hosted.app
+
+**Примеры:**
+
+```bash
+# оба App Hosting backend’а из firebase.json
+firebase deploy --only apphosting
+
+# только API
+firebase deploy --only apphosting:tutor-app-backend
+
+# только backend id tutor-app
+firebase deploy --only apphosting:tutor-app
+```
+
+**Hosting ≠ App Hosting:**  
+`hosting` = CDN со статикой Angular.  
+`apphosting` = контейнер/рантайм с серверным кодом (API и т.п.).
+
+| Цель | Команда |
+|------|---------|
+| Обновить production-фронт | `firebase deploy --only hosting` |
+| Обновить API (backend) | `firebase deploy --only apphosting:tutor-app-backend` |
+| Превью для команды | merge в `dev` → CI → GitHub Pages `/dev` |
+
+---
+
 *Обновляй этот документ при изменении процессов деплоя или ветвления.*
