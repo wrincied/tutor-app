@@ -132,7 +132,7 @@ export const PRICING_DE: PricingStrings = {
     features: [
       'Bis zu 3 aktive Schüler',
       'Manueller Unterrichtskalender',
-      'Einfache Stundenplan-Ansicht',
+      'Einfache Terminplan-Ansicht',
     ],
   },
   proPlan: {
