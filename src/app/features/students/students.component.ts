@@ -191,6 +191,32 @@ export class StudentsComponent implements OnInit {
     return `${student.rate_per_hour} ${this.i18n.currencyLabel(this.rateCurrencyOf(student))}${rateUnitSuffix(unit, this.t)}`;
   }
 
+  balanceUnitLabel(student: Student | null | undefined): string {
+    return resolveRateUnit(student?.rate_unit) === 'lesson' ? this.t.lessonsShort : this.t.hoursShort;
+  }
+
+  formatStudentBalance(student: Student): string {
+    const value = Number(student.balance_lessons) || 0;
+    const pretty = Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+    return `${pretty} ${this.balanceUnitLabel(student)}`;
+  }
+
+  topupHintLabel(): string {
+    const id = this.topupTargetId();
+    const student = this.students().find((item) => item._id === id);
+    return resolveRateUnit(student?.rate_unit) === 'hour' ? this.t.topupHintHours : this.t.topupHint;
+  }
+
+  topupStep(): number {
+    const id = this.topupTargetId();
+    const student = this.students().find((item) => item._id === id);
+    return resolveRateUnit(student?.rate_unit) === 'hour' ? 0.5 : 1;
+  }
+
+  balanceFieldLabel(): string {
+    return this.rateUnit() === 'hour' ? this.t.balanceHoursField : this.t.balanceLessonsField;
+  }
+
   openCreate() {
     this.formSubmitted.set(false);
     this.formError.set(null);
@@ -519,8 +545,13 @@ export class StudentsComponent implements OnInit {
 
   applyTopup() {
     const id = this.topupTargetId();
-    const n = Math.floor(Number(this.topupLessonsInput));
-    if (!id || n < 1) {
+    const student = this.students().find((item) => item._id === id);
+    const raw = Number(this.topupLessonsInput);
+    const n =
+      resolveRateUnit(student?.rate_unit) === 'hour'
+        ? Math.round(raw * 100) / 100
+        : Math.floor(raw);
+    if (!id || !(n > 0)) {
       return;
     }
     this.svc.topup(id, n).subscribe(() => {

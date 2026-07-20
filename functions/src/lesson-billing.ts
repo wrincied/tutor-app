@@ -3,11 +3,13 @@ export type LessonDoc = {
   billing_processed?: boolean;
   student_id?: string | null;
   tutor?: string | null;
+  lesson_duration?: number | string;
 };
 
 export type StudentDoc = {
   name?: string;
   billing_type?: string;
+  rate_unit?: string;
   balance_lessons?: number | string;
   unpaid_lessons_count?: number | string;
 };
@@ -42,6 +44,19 @@ function normalizeBillingType(raw: unknown): 'package' | 'postpaid' {
     return 'postpaid';
   }
   return 'package';
+}
+
+function normalizeRateUnit(raw: unknown): 'hour' | 'lesson' {
+  return String(raw ?? 'hour').trim().toLowerCase() === 'lesson' ? 'lesson' : 'hour';
+}
+
+function packageDebitAmount(rateUnit: 'hour' | 'lesson', lessonDuration: unknown): number {
+  if (rateUnit === 'lesson') {
+    return 1;
+  }
+  const minutes = Number(lessonDuration);
+  const safe = Number.isFinite(minutes) && minutes > 0 ? minutes : 60;
+  return Math.round((safe / 60) * 100) / 100;
 }
 
 /**
@@ -95,6 +110,8 @@ export async function processLessonTransaction({
 
   const student = studentSnap.data() as StudentDoc;
   const billingType = normalizeBillingType(student.billing_type);
+  const rateUnit = normalizeRateUnit(student.rate_unit);
+  const units = packageDebitAmount(rateUnit, lesson.lesson_duration);
 
   let studentPatch: Record<string, unknown>;
   let amount: number;
@@ -103,14 +120,14 @@ export async function processLessonTransaction({
 
   if (billingType === 'package') {
     const current = Number(student.balance_lessons) || 0;
-    studentPatch = { balance_lessons: current - 1 };
-    amount = -1;
+    studentPatch = { balance_lessons: Math.round((current - units) * 100) / 100 };
+    amount = -units;
     reason = 'lesson_completed_delayed';
     balanceDebited = true;
   } else {
     const current = Number(student.unpaid_lessons_count) || 0;
-    studentPatch = { unpaid_lessons_count: current + 1 };
-    amount = 1;
+    studentPatch = { unpaid_lessons_count: Math.round((current + units) * 100) / 100 };
+    amount = units;
     reason = 'lesson_completed_postpaid';
     balanceDebited = false;
   }
@@ -133,6 +150,7 @@ export async function processLessonTransaction({
   tx.update(lessonRef, {
     billing_processed: true,
     balance_debited: balanceDebited,
+    balance_units_debited: units,
     billing_processed_at: serverTimestamp,
     paidAt: nowIso,
     updatedAt: serverTimestamp,

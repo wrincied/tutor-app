@@ -137,7 +137,14 @@ export class HomeComponent implements OnInit {
   }
 
   lowBalanceLabel(student: Student): string {
-    return this.t.lowBalanceLessonsLeft.replace('{count}', String(student.balance_lessons));
+    const unit =
+      String(student.rate_unit ?? 'hour').toLowerCase() === 'lesson'
+        ? this.i18n.studentsUi().lessonsShort
+        : this.i18n.studentsUi().hoursShort;
+    return this.t.lowBalanceLessonsLeft.replace(
+      '{count}',
+      `${student.balance_lessons} ${unit}`,
+    );
   }
 
   overdueHint(): string {

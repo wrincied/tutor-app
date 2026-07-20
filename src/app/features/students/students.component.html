@@ -46,7 +46,7 @@
                 <span>{{ s.timezone }}</span>
               </span>
               <span class="student-card__balance">
-                {{ s.balance_lessons }} {{ t.lessonsShort }}
+                {{ formatStudentBalance(s) }}
               </span>
             </span>
             @if (s.telegram_user_id) {
@@ -93,7 +93,7 @@
               </div>
 
               <div class="students-grid__col students-grid__col--balance">
-                <span class="students-grid__balance">{{ s.balance_lessons }}</span>
+                <span class="students-grid__balance">{{ formatStudentBalance(s) }}</span>
                 <button type="button" class="btn-link" (click)="openTopup(s._id)">
                   + {{ t.topup }}
                 </button>
@@ -152,8 +152,7 @@
           aria-hidden="true"
         ></span>
         <span>
-          {{ formatStudentRate(student) }} · {{ student.timezone }} · {{ student.balance_lessons }}
-          {{ t.lessonsShort }}
+          {{ formatStudentRate(student) }} · {{ student.timezone }} · {{ formatStudentBalance(student) }}
         </span>
       </p>
       <button type="button" class="quick-actions__btn" (click)="openTopupFromQuick()">
@@ -329,7 +328,7 @@
       </div>
       @if (isPackageBilling()) {
         <div class="field">
-          <label for="st-balance">{{ t.balanceLessonsField }}</label>
+          <label for="st-balance">{{ balanceFieldLabel() }}</label>
           <input
             id="st-balance"
             type="number"
@@ -337,8 +336,8 @@
             (ngModelChange)="balanceLessons.set($event)"
             name="balance_lessons"
             min="0"
-            step="1"
-            inputmode="numeric"
+            [step]="rateUnit() === 'hour' ? 0.5 : 1"
+            inputmode="decimal"
           />
         </div>
       }
@@ -530,14 +529,15 @@
       </div>
       <div class="modal-body">
         <div class="field">
-          <label for="topup-n">{{ t.topupHint }}</label>
+          <label for="topup-n">{{ topupHintLabel() }}</label>
           <input
             id="topup-n"
             type="number"
             [(ngModel)]="topupLessonsInput"
             name="topupLessons"
-            min="1"
-            inputmode="numeric"
+            [min]="topupStep()"
+            [step]="topupStep()"
+            inputmode="decimal"
           />
         </div>
         <div class="modal-actions">

@@ -94,6 +94,57 @@ function createLogger() {
             },
         });
     });
+    (0, node_test_1.it)('debits fractional hours for rate_unit hour', async () => {
+        const updates = [];
+        const sets = [];
+        const tx = {
+            get: async (ref) => {
+                if (ref.id === 'lesson_h') {
+                    return {
+                        exists: true,
+                        data: () => ({
+                            status: 'completed',
+                            billing_processed: false,
+                            student_id: 'student_h',
+                            tutor: 'tutor_h',
+                            lesson_duration: 90,
+                        }),
+                    };
+                }
+                if (ref.id === 'student_h') {
+                    return {
+                        exists: true,
+                        data: () => ({
+                            name: 'Hourly',
+                            billing_type: 'package',
+                            rate_unit: 'hour',
+                            balance_lessons: 10,
+                        }),
+                    };
+                }
+                return { exists: false, data: () => ({}) };
+            },
+            set: (ref, data) => {
+                sets.push({ ref, data });
+            },
+            update: (ref, patch) => {
+                updates.push({ ref, patch });
+            },
+        };
+        const result = await (0, lesson_billing_js_1.processLessonTransaction)({
+            tx,
+            lessonRef: { id: 'lesson_h' },
+            getStudentRef: (id) => ({ id }),
+            getBalanceLogRef: () => ({ id: 'log_h' }),
+            nowIso: '2026-01-04T00:00:00.000Z',
+            serverTimestamp: '__ts__',
+            logger: createLogger(),
+        });
+        strict_1.default.equal(result, 'processed');
+        strict_1.default.equal(sets[0]?.data.amount, -1.5);
+        const studentUpdate = updates.find((item) => item.ref.id === 'student_h');
+        strict_1.default.equal(studentUpdate?.patch.balance_lessons, 8.5);
+    });
     (0, node_test_1.it)('throws when student is missing', async () => {
         const tx = {
             get: async (ref) => {
