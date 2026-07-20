@@ -510,7 +510,11 @@
                         [class.cal-sidebar__balance--last]="isPackageLastBalance(sidebarStudent)"
                       >
                         {{ sidebarStudent.balance_lessons }}
-                        {{ i18n.studentsUi().lessonsShort }}
+                        {{
+                          sidebarStudent.rate_unit === 'lesson'
+                            ? i18n.studentsUi().lessonsShort
+                            : i18n.studentsUi().hoursShort
+                        }}
                         @if (isPackageLastBalance(sidebarStudent)) {
                           <span class="cal-sidebar__last-hint">
                             · {{ i18n.calendarUi().lastLessonHint }}

@@ -1029,6 +1029,8 @@ export interface StudentStrings {
   deleteConfirm: string;
   topupTitle: string;
   topupHint: string;
+  /** Top-up hint when rate_unit is hour */
+  topupHintHours: string;
   topupApply: string;
   /** Подпись поля выбора валюты */
   currency: string;
@@ -1069,6 +1071,7 @@ export interface StudentStrings {
   botUnlinkAlertOk: string;
   quickActionsTitle: string;
   lessonsShort: string;
+  hoursShort: string;
   billingSectionTitle: string;
   billingTypePackage: string;
   billingTypePostpaid: string;
@@ -1076,6 +1079,7 @@ export interface StudentStrings {
   billingInfoPackage: string;
   billingInfoPostpaid: string;
   balanceLessonsField: string;
+  balanceHoursField: string;
   creditLimitField: string;
   activityLogSection: string;
   activityLogEmpty: string;
@@ -1216,11 +1220,12 @@ export interface Student {
   /** Пастельный цвет левой полосы карточки урока в календаре (HSL/hex). */
   color_hex: string;
   balance_lessons: number;
-  /** package — предоплата (balance_lessons); postpaid — постоплата / разовая. */
+  /** package — предоплата (balance_lessons); postpaid — постоплата / разовая.
+   *  При rate_unit=hour в balance_lessons хранятся часы (дробные). */
   billing_type?: StudentBillingType;
-  /** hour — ставка за час; lesson — фиксированная сумма за урок. */
+  /** Единица абонемента/долга и ставки: hour (часы) или lesson (занятия). */
   rate_unit?: StudentRateUnit;
-  /** Лимит долга в уроках (postpaid). */
+  /** Лимит долга в тех же единицах, что rate_unit (postpaid). */
   credit_limit?: number;
   /** Неоплаченные уроки (postpaid, увеличивает воркер). */
   unpaid_lessons_count?: number;
