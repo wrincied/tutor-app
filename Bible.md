@@ -4,6 +4,18 @@
 
 ---
 
+## Репозитории
+
+| Репо | GitHub | Роль |
+|------|--------|------|
+| Frontend | [`tutor-app`](https://github.com/wrincied/tutor-app) | Angular CRM + landing; ветки `dev` / `master` / `gh-pages` |
+| Backend | [`tutor-app-backend`](https://github.com/wrincied/tutor-app-backend) | Express API + Firestore; вложен как `backend/` (gitlink) |
+| Bot | [`tutor-app-bot`](https://github.com/wrincied/tutor-app-bot) | Python Telegram-бот (aiogram) + notify HTTP API; вложен как `bot/` |
+
+Локально клонируй/обновляй nested-репы отдельно (`cd backend`, `cd bot`). Секреты: `backend/.env`, `bot/.env` — в git не коммитить (см. `.gitignore`).
+
+---
+
 ## Git-ветки и CI/CD
 
 В репозитории **три ветки**, у каждой своя роль:
@@ -66,6 +78,7 @@ wrincied.github.io/tutor-app/dev/#/login   ← вход
 | Фронтенд (браузер) | `gh-pages` ветка → GitHub Pages |
 | Исходный код | ветка `dev` в tutor-app |
 | API, база, Stripe | `tutor-app-backend--tutorassis.europe-west4.hosted.app` |
+| Telegram-бот | отдельный всегда-on процесс (`tutor-app-bot`), не gh-pages |
 | Production для пользователей | `simple4u-64822.web.app` |
 
 **Цепочка:** PR → `dev` → CI собирает Angular → кладёт в `gh-pages/dev/` → сайт обновляется.
@@ -169,23 +182,71 @@ firebase deploy --only apphosting:tutor-app
 | Обновить API (backend) | `firebase deploy --only apphosting:tutor-app-backend` |
 | Превью для команды | merge в `dev` → CI → GitHub Pages `/dev` |
 
+На App Hosting backend для Telegram нужны env: `BOT_API_URL`, `BOT_API_SECRET` (тот же секрет, что у бота). Без них invite/notify → `bot_not_configured`.
+
+---
+
+## Оплата ученика (`billing_type` × `rate_unit`)
+
+Две независимые настройки в карточке ученика.
+
+### Как платит (`billing_type`)
+
+| Значение | Смысл |
+|----------|--------|
+| `package` | Абонемент: поле `balance_lessons` = предоплаченный объём |
+| `postpaid` | Постоплата: растёт `unpaid_lessons_count` (долг), есть `credit_limit` |
+
+### В чём считают (`rate_unit`)
+
+Поле `balance_lessons` **не переименовываем**: при `hour` там лежат **часы** (дробные), при `lesson` — **занятия**.
+
+| `rate_unit` | Top-up / баланс | Списание за урок |
+|-------------|-----------------|------------------|
+| `lesson` | целые занятия | всегда **−1** |
+| `hour` | часы (можно 0.5, 1.5…) | **duration ÷ 60** (90 мин → −1.5) |
+
+На уроке пишется `balance_units_debited` — для точного refund. Postpaid долг растёт в тех же единицах.
+
+CRM и бот показывают подписи «занятий» / «ч» по `rate_unit`. Старые балансы при смене единицы **не конвертируем** автоматически.
+
 ---
 
 ## Telegram bot (`bot/`)
 
-Отдельный **Python**-репозиторий [`tutor-app-bot`](https://github.com/wrincied/tutor-app-bot) (свой `.git`, как у `backend/` → `tutor-app-backend`). Уведомления ученику: баланс, оплата, старт урока, домашка, перенос; интерактивное меню.
+Отдельный **Python**-репозиторий [`tutor-app-bot`](https://github.com/wrincied/tutor-app-bot) (свой `.git`, как `backend/` → `tutor-app-backend`).
+
+**Что умеет**
+
+- Deep-link привязка ученика (`telegram_link_token` / invite из CRM)
+- Меню: занятия, оплата, профиль, язык, отвязка (CRM получает unlink-alert)
+- Notify: баланс, оплата, старт урока (−30 мин + meeting link), домашка после complete, перенос урока
+- В сообщениях — **имя репетитора**; баланс/оплата — в единицах `rate_unit`
+
+**Локальный запуск**
 
 ```bash
 cd bot
 python -m venv .venv
 .venv\Scripts\activate   # или source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env     # TELEGRAM_BOT_TOKEN, BOT_API_SECRET, BOT_API URL/secret
-simple4u-bot
+cp .env.example .env
+# TELEGRAM_BOT_TOKEN, BOT_API_SECRET, BOT_USERNAME, BACKEND_URL
+# backend/.env: BOT_API_URL=http://127.0.0.1:8081  BOT_API_SECRET=<тот же>
+python -m simple4u_bot.main
 ```
 
-HTTP API для Express: `POST /v1/notify/...` с заголовком `X-Bot-Secret`. Подробности: `bot/README.md`.
+HTTP API для Express: `POST /v1/notify/...`, `POST /v1/links` с заголовком `X-Bot-Secret`. CRM ↔ bot callbacks: `backend` routes `/api/bot/*`. Worker напоминаний: `backend/src/workers/lessonBotNotify.js` (старт вместе с `server.js`).
+
+**Вне localhost**
+
+Фронт на GitHub Pages **не поднимает бота**. Нужны:
+
+1. Живой backend (App Hosting) с `BOT_API_URL` + `BOT_API_SECRET`
+2. Всегда-on процесс `tutor-app-bot` с публичным URL (или доступный backend’у) + `TELEGRAM_BOT_TOKEN` и тот же секрет
+
+Подробности: `bot/README.md`.
 
 ---
 
-*Обновляй этот документ при изменении процессов деплоя или ветвления.*
+*Обновляй этот документ при изменении процессов деплоя, ветвления, биллинга или бота.*
