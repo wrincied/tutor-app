@@ -40,6 +40,16 @@
   }
 }
 
+.form-error {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.75rem;
+  background: rgb(254 226 226);
+  color: rgb(153 27 27);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
 :host {
   display: flex;
   flex-direction: column;
@@ -309,6 +319,13 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
     color: rgb(3 105 161);
   }
 
+  &--form {
+    display: inline-flex;
+    margin: 0.75rem 0 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+  }
+
   &:hover {
     filter: brightness(0.97);
   }
@@ -408,6 +425,19 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
 
   &--danger {
     color: rgb(185 28 28);
+  }
+
+  &--primary {
+    border-color: var(--accent, #2563eb);
+    background: var(--accent, #2563eb);
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+
+    &:hover {
+      filter: brightness(0.95);
+      background: var(--accent, #2563eb);
+    }
   }
 }
 
@@ -622,4 +652,73 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
   input {
     margin-top: 3px;
   }
+}
+
+.telegram-block {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--nav-border);
+  border-radius: 0.65rem;
+  background: rgb(248 250 252);
+}
+
+.telegram-block__title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.telegram-block__hint,
+.telegram-block__status {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.4;
+}
+
+.telegram-profile {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  dt {
+    color: var(--text-secondary, #64748b);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    text-align: right;
+    word-break: break-all;
+  }
+}
+
+.telegram-invite {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  input {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+
+  &__cta {
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+}
+
+.student-card__bot-badge--linked {
+  background: rgb(187 247 208);
+  color: #14532d;
 }

@@ -51,4 +51,11 @@ backend/.env.*
 backend/serviceAccountKey.json
 .firebase/
 
+# bot secrets (подрепозиторий bot/)
+bot/.env
+bot/.env.*
+!bot/.env.example
+bot/.venv/
+bot/data/
+
 src/environments/environment.ts

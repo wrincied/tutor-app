@@ -80,7 +80,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
 
   // Планшет/ПК: по центру, скролл при длинном контенте
   @media (min-width: $dialog-desktop-min) {
-    max-width: 24rem;
+    max-width: 28rem;
     max-height: min(90dvh, calc(100dvh - 2rem));
     max-height: min(90svh, calc(100svh - 2rem));
     overflow-x: hidden;

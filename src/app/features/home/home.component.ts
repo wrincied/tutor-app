@@ -105,6 +105,13 @@ export class HomeComponent implements OnInit {
   }
 
   lessonTime(iso: string): string {
+    if (!iso) {
+      return '—';
+    }
+    // Date-only YYYY-MM-DD парсится как UTC 00:00 → в AT это 02:00. Не показываем «время».
+    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+      return '—';
+    }
     return new Intl.DateTimeFormat(this.i18n.localeId(), {
       hour: '2-digit',
       minute: '2-digit',

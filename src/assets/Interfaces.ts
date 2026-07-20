@@ -1050,6 +1050,23 @@ export interface StudentStrings {
   botDisableMessage: string;
   botEnableConfirm: string;
   botDisableConfirm: string;
+  /** Invite / linked Telegram profile block */
+  botInviteHint: string;
+  botInviteLinkLabel: string;
+  botInviteButton: string;
+  botCopyLink: string;
+  botLinkCopied: string;
+  botNotLinked: string;
+  botLinkedTitle: string;
+  botTelegramUid: string;
+  botTelegramUsername: string;
+  botTelegramName: string;
+  botSaveToGetLink: string;
+  meetingLinkLabel: string;
+  meetingLinkPlaceholder: string;
+  botUnlinkAlertTitle: string;
+  botUnlinkAlertMessage: string;
+  botUnlinkAlertOk: string;
   quickActionsTitle: string;
   lessonsShort: string;
   billingSectionTitle: string;
@@ -1210,5 +1227,22 @@ export interface Student {
   timezone: string;
   auto_debit_enabled: boolean;
   bot_active: boolean;
+  /** Opaque token for t.me deep link */
+  telegram_link_token?: string | null;
+  /** https://t.me/<bot>?start=<token> */
+  telegram_deep_link?: string | null;
+  telegram_user_id?: string | null;
+  telegram_username?: string | null;
+  telegram_display_name?: string | null;
+  telegram_chat_id?: string | null;
+  telegram_linked_at?: string | null;
+  /** Язык интерфейса Telegram-бота */
+  bot_lang?: 'ru' | 'en' | 'de' | 'kz' | 'uk' | 'by' | null;
+  /** Показать репетитору модалку «ученик отвязал бота» */
+  telegram_unlink_pending?: boolean | null;
+  telegram_unlinked_username?: string | null;
+  telegram_unlinked_at?: string | null;
+  /** Zoom / Meet / custom call URL for lesson notifications */
+  meeting_link?: string | null;
   createdAt: string;
 }
