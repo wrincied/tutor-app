@@ -1,7 +1,11 @@
 <div class="page students-page">
   <div class="page-header">
     <h1>{{ i18n.nav().students }}</h1>
-    <button type="button" class="btn-primary students-page__add students-page__add--header" (click)="openCreate()">
+    <button
+      type="button"
+      class="btn-primary students-page__add students-page__add--header"
+      (click)="openCreate()"
+    >
       {{ t.addButton }}
     </button>
   </div>
@@ -45,8 +49,12 @@
                 {{ s.balance_lessons }} {{ t.lessonsShort }}
               </span>
             </span>
-            @if (s.bot_active) {
-              <span class="student-card__bot-badge" [attr.title]="t.botEnabled">TG</span>
+            @if (s.telegram_user_id) {
+              <span
+                class="student-card__bot-badge student-card__bot-badge--linked"
+                [attr.title]="t.botLinkedTitle"
+                >TG</span
+              >
             }
           </button>
         }
@@ -86,20 +94,24 @@
 
               <div class="students-grid__col students-grid__col--balance">
                 <span class="students-grid__balance">{{ s.balance_lessons }}</span>
-                <button type="button" class="btn-link" (click)="openTopup(s._id)">+ {{ t.topup }}</button>
+                <button type="button" class="btn-link" (click)="openTopup(s._id)">
+                  + {{ t.topup }}
+                </button>
               </div>
 
               <div class="students-grid__col students-grid__col--tz">{{ s.timezone }}</div>
 
               <div class="students-grid__col students-grid__col--bot">
-                <button
-                  type="button"
-                  class="bot-toggle"
-                  [class.bot-toggle--on]="s.bot_active"
-                  (click)="$event.stopPropagation(); requestBotToggle(s)"
-                >
-                  {{ s.bot_active ? t.botEnabled : t.botDisabled }}
-                </button>
+                @if (s.telegram_user_id) {
+                  <button
+                    type="button"
+                    class="bot-toggle"
+                    [class.bot-toggle--on]="s.bot_active"
+                    (click)="$event.stopPropagation(); requestBotToggle(s)"
+                  >
+                    {{ s.bot_active ? t.botEnabled : t.botDisabled }}
+                  </button>
+                }
               </div>
 
               <div class="students-grid__col students-grid__col--actions">
@@ -140,18 +152,32 @@
           aria-hidden="true"
         ></span>
         <span>
-          {{ formatStudentRate(student) }} ·
-          {{ student.timezone }} · {{ student.balance_lessons }} {{ t.lessonsShort }}
+          {{ formatStudentRate(student) }} · {{ student.timezone }} · {{ student.balance_lessons }}
+          {{ t.lessonsShort }}
         </span>
       </p>
       <button type="button" class="quick-actions__btn" (click)="openTopupFromQuick()">
         + {{ t.topup }}
       </button>
-      <button type="button" class="quick-actions__btn" (click)="requestBotToggleFromQuick()">
-        {{ student.bot_active ? t.botDisableConfirm : t.botEnableConfirm }} — {{ t.botNotifications }}
+      @if (student.telegram_user_id) {
+        <button type="button" class="quick-actions__btn" (click)="requestBotToggleFromQuick()">
+          {{ student.bot_active ? t.botDisableConfirm : t.botEnableConfirm }} —
+          {{ t.botNotifications }}
+        </button>
+      }
+      @if (canInviteToBot(student)) {
+        <button type="button" class="quick-actions__btn" (click)="inviteFromQuick()">
+          {{ linkCopied() ? t.botLinkCopied : t.botCopyLink }}
+        </button>
+      }
+      <button type="button" class="quick-actions__btn" (click)="openEdit(student)">
+        {{ t.edit }}
       </button>
-      <button type="button" class="quick-actions__btn" (click)="openEdit(student)">{{ t.edit }}</button>
-      <button type="button" class="quick-actions__btn quick-actions__btn--danger" (click)="openDeleteFromQuick()">
+      <button
+        type="button"
+        class="quick-actions__btn quick-actions__btn--danger"
+        (click)="openDeleteFromQuick()"
+      >
         {{ t.delete }}
       </button>
     </div>
@@ -180,195 +206,262 @@
   (confirm)="onSubmit()"
 >
   <form #studentForm="ngForm" (ngSubmit)="onSubmit(studentForm)" class="student-form" novalidate>
-        <div class="field" [class.field--invalid]="isFieldInvalid('name', studentForm)">
-          <label for="st-name">{{ t.name }}</label>
+    @if (formError(); as err) {
+      <p class="form-error" role="alert">{{ err }}</p>
+    }
+    <div class="field" [class.field--invalid]="isFieldInvalid('name', studentForm)">
+      <label for="st-name">{{ t.name }}</label>
+      <input
+        id="st-name"
+        type="text"
+        [(ngModel)]="form.name"
+        name="name"
+        required
+        autocomplete="name"
+        #nameCtrl="ngModel"
+      />
+    </div>
+    <fieldset class="field rate-unit-section">
+      <legend class="field-legend-with-tip">
+        <span>{{ t.rateUnitTitle }}</span>
+        <app-help-tip [label]="t.rateUnitInfoAria" [text]="t.rateUnitInfo" />
+      </legend>
+      <div class="rate-unit-options" role="radiogroup" [attr.aria-label]="t.rateUnitTitle">
+        <label class="rate-unit-option">
           <input
-            id="st-name"
-            type="text"
-            [(ngModel)]="form.name"
-            name="name"
-            required
-            autocomplete="name"
-            #nameCtrl="ngModel"
+            type="radio"
+            name="rate_unit"
+            value="hour"
+            [checked]="rateUnit() === 'hour'"
+            (change)="setRateUnit('hour')"
+          />
+          <span>{{ t.ratePerHour }}</span>
+        </label>
+        <label class="rate-unit-option">
+          <input
+            type="radio"
+            name="rate_unit"
+            value="lesson"
+            [checked]="rateUnit() === 'lesson'"
+            (change)="setRateUnit('lesson')"
+          />
+          <span>{{ t.ratePerLesson }}</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="field field--rate-row" [class.field--invalid]="isFieldInvalid('rate', studentForm)">
+      <label for="st-rate">{{ rateFieldLabel() }}</label>
+      <div class="rate-row">
+        <input
+          id="st-rate"
+          type="number"
+          [(ngModel)]="form.rate_per_hour"
+          name="rate"
+          required
+          min="1"
+          inputmode="decimal"
+          class="rate-row__amount"
+          #rateCtrl="ngModel"
+        />
+        <div class="field field--nested">
+          <label for="st-currency" class="sr-only">{{ t.currency }}</label>
+          <app-select
+            id="st-currency"
+            class="rate-row__currency"
+            [(ngModel)]="form.rate_currency"
+            name="rate_currency"
+            size="compact"
+            [options]="currencySelectOptions()"
           />
         </div>
-        <fieldset class="field rate-unit-section">
-          <legend class="field-legend-with-tip">
-            <span>{{ t.rateUnitTitle }}</span>
-            <app-help-tip [label]="t.rateUnitInfoAria" [text]="t.rateUnitInfo" />
-          </legend>
-          <div class="rate-unit-options" role="radiogroup" [attr.aria-label]="t.rateUnitTitle">
-            <label class="rate-unit-option">
-              <input
-                type="radio"
-                name="rate_unit"
-                value="hour"
-                [checked]="rateUnit() === 'hour'"
-                (change)="setRateUnit('hour')"
-              />
-              <span>{{ t.ratePerHour }}</span>
-            </label>
-            <label class="rate-unit-option">
-              <input
-                type="radio"
-                name="rate_unit"
-                value="lesson"
-                [checked]="rateUnit() === 'lesson'"
-                (change)="setRateUnit('lesson')"
-              />
-              <span>{{ t.ratePerLesson }}</span>
-            </label>
-          </div>
-        </fieldset>
+      </div>
+    </div>
 
-        <div class="field field--rate-row" [class.field--invalid]="isFieldInvalid('rate', studentForm)">
-          <label for="st-rate">{{ rateFieldLabel() }}</label>
-          <div class="rate-row">
-            <input
-              id="st-rate"
-              type="number"
-              [(ngModel)]="form.rate_per_hour"
-              name="rate"
-              required
-              min="1"
-              inputmode="decimal"
-              class="rate-row__amount"
-              #rateCtrl="ngModel"
-            />
-            <div class="field field--nested">
-              <label for="st-currency" class="sr-only">{{ t.currency }}</label>
-              <app-select
-                id="st-currency"
-                class="rate-row__currency"
-                [(ngModel)]="form.rate_currency"
-                name="rate_currency"
-                size="compact"
-                [options]="currencySelectOptions()"
-              />
-            </div>
-          </div>
+    <div class="field field--color">
+      <label for="st-color">{{ t.calendarColor }}</label>
+      <div class="color-picker-row">
+        <input
+          id="st-color"
+          type="color"
+          class="color-picker-row__input"
+          [value]="formColorPickerHex()"
+          (input)="onFormColorPickerChange($any($event.target).value)"
+          name="color_hex"
+        />
+        <!-- <span class="color-picker-row__value">{{ form.color_hex }}</span> -->
+        <button
+          type="button"
+          class="btn-secondary color-picker-row__random"
+          (click)="randomizeFormColor()"
+        >
+          {{ t.randomColor }}
+        </button>
+      </div>
+    </div>
+
+    <fieldset class="field billing-section">
+      <legend class="field-legend-with-tip">
+        <span>{{ t.billingSectionTitle }}</span>
+        <app-help-tip [label]="t.billingInfoAria" [text]="billingHelpText()" />
+      </legend>
+      <div class="billing-type-options" role="radiogroup" [attr.aria-label]="t.billingSectionTitle">
+        <label class="billing-type-option">
+          <input
+            type="radio"
+            name="billing_type"
+            value="package"
+            [checked]="billingType() === 'package'"
+            (change)="setBillingType('package')"
+          />
+          <span>{{ t.billingTypePackage }}</span>
+        </label>
+        <label class="billing-type-option">
+          <input
+            type="radio"
+            name="billing_type"
+            value="postpaid"
+            [checked]="billingType() === 'postpaid'"
+            (change)="setBillingType('postpaid')"
+          />
+          <span>{{ t.billingTypePostpaid }}</span>
+        </label>
+      </div>
+      @if (isPackageBilling()) {
+        <div class="field">
+          <label for="st-balance">{{ t.balanceLessonsField }}</label>
+          <input
+            id="st-balance"
+            type="number"
+            [ngModel]="balanceLessons()"
+            (ngModelChange)="balanceLessons.set($event)"
+            name="balance_lessons"
+            min="0"
+            step="1"
+            inputmode="numeric"
+          />
         </div>
+      }
+      @if (isPostpaidBilling()) {
+        <div class="field">
+          <label for="st-credit">{{ t.creditLimitField }}</label>
+          <input
+            id="st-credit"
+            type="number"
+            [ngModel]="creditLimit()"
+            (ngModelChange)="creditLimit.set($event)"
+            name="credit_limit"
+            min="0"
+            step="1"
+            inputmode="numeric"
+          />
+        </div>
+      }
+    </fieldset>
 
-        <div class="field field--color">
-          <label for="st-color">{{ t.calendarColor }}</label>
-          <div class="color-picker-row">
+    <div class="field telegram-block">
+      @if (isTelegramLinked()) {
+        <p class="telegram-block__title">{{ t.botLinkedTitle }}</p>
+        <dl class="telegram-profile">
+          <div>
+            <dt>{{ t.botTelegramUid }}</dt>
+            <dd>{{ editTarget()?.telegram_user_id }}</dd>
+          </div>
+          <div>
+            <dt>{{ t.botTelegramUsername }}</dt>
+            <dd>
+              @if (editTarget()?.telegram_username) {
+                &#64;{{ editTarget()?.telegram_username }}
+              } @else {
+                —
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>{{ t.botTelegramName }}</dt>
+            <dd>{{ editTarget()?.telegram_display_name || '—' }}</dd>
+          </div>
+        </dl>
+        <button
+          type="button"
+          class="bot-toggle bot-toggle--form"
+          [class.bot-toggle--on]="editTarget()?.bot_active"
+          (click)="requestBotToggleFromForm()"
+        >
+          {{ t.botNotifications }}:
+          {{ editTarget()?.bot_active ? t.botEnabled : t.botDisabled }}
+        </button>
+      } @else {
+        <p class="telegram-block__hint">{{ t.botInviteHint }}</p>
+        @if (telegramDeepLink()) {
+          <label for="st-tg-link">{{ t.botInviteLinkLabel }}</label>
+          <div class="telegram-invite">
             <input
-              id="st-color"
-              type="color"
-              class="color-picker-row__input"
-              [value]="formColorPickerHex()"
-              (input)="onFormColorPickerChange($any($event.target).value)"
-              name="color_hex"
+              id="st-tg-link"
+              type="text"
+              readonly
+              [value]="telegramDeepLink()"
+              class="input-readonly"
             />
-            <!-- <span class="color-picker-row__value">{{ form.color_hex }}</span> -->
-            <button type="button" class="btn-secondary color-picker-row__random" (click)="randomizeFormColor()">
-              {{ t.randomColor }}
+            <button type="button" class="btn btn--secondary" (click)="copyTelegramInvite()">
+              {{ linkCopied() ? t.botLinkCopied : t.botCopyLink }}
             </button>
           </div>
-        </div>
+        } @else {
+          <p class="telegram-block__status">{{ t.botSaveToGetLink }}</p>
+          <button
+            type="button"
+            class="btn btn--secondary telegram-invite__cta"
+            (click)="inviteStudentToBot()"
+          >
+            {{ t.botInviteButton }}
+          </button>
+        }
+        <p class="telegram-block__status">{{ t.botNotLinked }}</p>
+      }
 
-        <fieldset class="field billing-section">
-          <legend class="field-legend-with-tip">
-            <span>{{ t.billingSectionTitle }}</span>
-            <app-help-tip [label]="t.billingInfoAria" [text]="billingHelpText()" />
-          </legend>
-          <div class="billing-type-options" role="radiogroup" [attr.aria-label]="t.billingSectionTitle">
-            <label class="billing-type-option">
-              <input
-                type="radio"
-                name="billing_type"
-                value="package"
-                [checked]="billingType() === 'package'"
-                (change)="setBillingType('package')"
-              />
-              <span>{{ t.billingTypePackage }}</span>
-            </label>
-            <label class="billing-type-option">
-              <input
-                type="radio"
-                name="billing_type"
-                value="postpaid"
-                [checked]="billingType() === 'postpaid'"
-                (change)="setBillingType('postpaid')"
-              />
-              <span>{{ t.billingTypePostpaid }}</span>
-            </label>
-          </div>
-          @if (isPackageBilling()) {
-            <div class="field">
-              <label for="st-balance">{{ t.balanceLessonsField }}</label>
-              <input
-                id="st-balance"
-                type="number"
-                [ngModel]="balanceLessons()"
-                (ngModelChange)="balanceLessons.set($event)"
-                name="balance_lessons"
-                min="0"
-                step="1"
-                inputmode="numeric"
-              />
-            </div>
-          }
-          @if (isPostpaidBilling()) {
-            <div class="field">
-              <label for="st-credit">{{ t.creditLimitField }}</label>
-              <input
-                id="st-credit"
-                type="number"
-                [ngModel]="creditLimit()"
-                (ngModelChange)="creditLimit.set($event)"
-                name="credit_limit"
-                min="0"
-                step="1"
-                inputmode="numeric"
-              />
-            </div>
-          }
-        </fieldset>
+      <label for="st-meeting">{{ t.meetingLinkLabel }}</label>
+      <input
+        id="st-meeting"
+        type="url"
+        [(ngModel)]="form.meeting_link"
+        name="meeting_link"
+        [placeholder]="t.meetingLinkPlaceholder"
+      />
+    </div>
 
-        <div class="field field--checkbox">
-          <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="form.bot_active" name="bot_active" />
-            <span class="checkbox-label__text">
-              {{ t.botNotifications }}
-              <app-help-tip [label]="t.botInfoAria" [text]="t.botComingSoon" />
-            </span>
-          </label>
-        </div>
+    <div class="field field--checkbox">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [ngModel]="autoTimezone"
+          (ngModelChange)="onAutoTimezoneChange($event)"
+          name="autoTz"
+        />
+        <span>{{ t.autoTimezone }}</span>
+      </label>
+    </div>
 
-        <div class="field field--checkbox">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              [ngModel]="autoTimezone"
-              (ngModelChange)="onAutoTimezoneChange($event)"
-              name="autoTz"
-            />
-            <span>{{ t.autoTimezone }}</span>
-          </label>
-        </div>
-
-        <div class="field">
-          <label for="st-tz">{{ t.timezone }}</label>
-          @if (autoTimezone) {
-            <input
-              id="st-tz"
-              type="text"
-              [value]="form.timezone"
-              readonly
-              class="input-readonly"
-              [attr.name]="'tz-display'"
-            />
-          } @else {
-            <app-select
-              id="st-tz"
-              [(ngModel)]="form.timezone"
-              name="timezone"
-              [options]="timezoneSelectOptionsList()"
-            />
-          }
-        </div>
-
+    <div class="field">
+      <label for="st-tz">{{ t.timezone }}</label>
+      @if (autoTimezone) {
+        <input
+          id="st-tz"
+          type="text"
+          [value]="form.timezone"
+          readonly
+          class="input-readonly"
+          [attr.name]="'tz-display'"
+        />
+      } @else {
+        <app-select
+          id="st-tz"
+          [(ngModel)]="form.timezone"
+          name="timezone"
+          [options]="timezoneSelectOptionsList()"
+        />
+      }
+    </div>
   </form>
 </app-dialog>
 
@@ -387,15 +480,24 @@
     >
       <div class="modal-header">
         <h2 id="del-title">{{ t.delete }}</h2>
-        <button type="button" class="modal-close" (click)="cancelDelete()" [attr.aria-label]="t.close">
+        <button
+          type="button"
+          class="modal-close"
+          (click)="cancelDelete()"
+          [attr.aria-label]="t.close"
+        >
           <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
       <div class="modal-body">
         <p class="confirm-text">{{ t.deleteConfirm }}</p>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="cancelDelete()">{{ t.cancel }}</button>
-          <button type="button" class="btn-primary danger" (click)="confirmDelete()">{{ t.delete }}</button>
+          <button type="button" class="btn-secondary" (click)="cancelDelete()">
+            {{ t.cancel }}
+          </button>
+          <button type="button" class="btn-primary danger" (click)="confirmDelete()">
+            {{ t.delete }}
+          </button>
         </div>
       </div>
     </div>
@@ -417,7 +519,12 @@
     >
       <div class="modal-header">
         <h2>{{ t.topupTitle }}</h2>
-        <button type="button" class="modal-close" (click)="closeTopup()" [attr.aria-label]="t.close">
+        <button
+          type="button"
+          class="modal-close"
+          (click)="closeTopup()"
+          [attr.aria-label]="t.close"
+        >
           <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
         </button>
       </div>
@@ -435,7 +542,9 @@
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" (click)="closeTopup()">{{ t.cancel }}</button>
-          <button type="button" class="btn-primary" (click)="applyTopup()">{{ t.topupApply }}</button>
+          <button type="button" class="btn-primary" (click)="applyTopup()">
+            {{ t.topupApply }}
+          </button>
         </div>
       </div>
     </div>

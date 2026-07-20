@@ -171,4 +171,21 @@ firebase deploy --only apphosting:tutor-app
 
 ---
 
+## Telegram bot (`bot/`)
+
+Отдельный **Python**-репозиторий [`tutor-app-bot`](https://github.com/wrincied/tutor-app-bot) (свой `.git`, как у `backend/` → `tutor-app-backend`). Уведомления ученику: баланс, оплата, старт урока, домашка, перенос; интерактивное меню.
+
+```bash
+cd bot
+python -m venv .venv
+.venv\Scripts\activate   # или source .venv/bin/activate
+pip install -e ".[dev]"
+cp .env.example .env     # TELEGRAM_BOT_TOKEN, BOT_API_SECRET, BOT_API URL/secret
+simple4u-bot
+```
+
+HTTP API для Express: `POST /v1/notify/...` с заголовком `X-Bot-Secret`. Подробности: `bot/README.md`.
+
+---
+
 *Обновляй этот документ при изменении процессов деплоя или ветвления.*
