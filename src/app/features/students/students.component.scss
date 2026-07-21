@@ -525,6 +525,7 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
 
   .btn-primary,
   .btn-secondary {
+    cursor: pointer;
     padding: 8px 18px;
     &:only-child,
     &:first-child:nth-last-child(2) {
@@ -682,7 +683,9 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
   margin: 0;
   display: grid;
   gap: 0.45rem;
-
+  button{
+    cursor: pointer;
+  }
   div {
     display: flex;
     justify-content: space-between;
@@ -702,19 +705,63 @@ $students-grid-cols: minmax(0, 1.3fr) auto minmax(6.5rem, 0.95fr) minmax(5.5rem,
   }
 }
 
+.invite-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.invite-dialog__hint,
+.invite-dialog__status {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.4;
+}
+
+.invite-dialog__error {
+  margin: 0;
+}
+
+.invite-dialog__open {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent, #2563eb);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .telegram-invite {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: center;
 
   input {
     flex: 1 1 12rem;
     min-width: 0;
   }
-
+  button{
+    cursor: pointer;
+    &:hover{
+      text-decoration: underline;
+    }
+  }
   &__cta {
     width: 100%;
     margin-bottom: 0.75rem;
+  }
+}
+
+.telegram-disconnect {
+  margin-top: 0.75rem;
+  cursor: pointer;
+  color: var(--danger);
+  &:hover{
+    text-decoration: underline;
   }
 }
 

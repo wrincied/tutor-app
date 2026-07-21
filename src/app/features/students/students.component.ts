@@ -14,21 +14,8 @@ import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { HelpTipComponent } from '../../shared/help-tip/help-tip.component';
 
-/** IANA: репетитор в AT, ученики в KZ/BY/RU и др. */
-const TIMEZONE_PRESETS: string[] = [
-  'Europe/Vienna',
-  'Europe/Berlin',
-  'Europe/Warsaw',
-  'Europe/Moscow',
-  'Europe/Minsk',
-  'Europe/Kaliningrad',
-  'Asia/Almaty',
-  'Asia/Aqtobe',
-  'Asia/Qyzylorda',
-  'Asia/Atyrau',
-  'Asia/Oral',
-  'UTC',
-];
+/** Fallback IANA when student.timezone is empty (bot/reminders use tutor TZ). */
+const DEFAULT_STUDENT_TIMEZONE = 'Europe/Vienna';
 
 function resolveBillingType(raw?: string): StudentBillingType {
   if (raw === 'postpaid' || raw === 'per_lesson' || raw === 'single') {
@@ -43,14 +30,6 @@ function resolveRateUnit(raw?: string): StudentRateUnit {
 
 function rateUnitSuffix(unit: StudentRateUnit, t: { perHour: string; perLesson: string }): string {
   return unit === 'lesson' ? t.perLesson : t.perHour;
-}
-
-function resolvedBrowserTimezone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
 }
 
 @Component({
@@ -73,7 +52,7 @@ export class StudentsComponent implements OnInit {
     name: '',
     rate_per_hour: 0,
     rate_currency: 'EUR' as RateCurrency,
-    timezone: resolvedBrowserTimezone(),
+    timezone: DEFAULT_STUDENT_TIMEZONE,
     color_hex: generatePastelColor(),
     bot_active: false,
     meeting_link: '',
@@ -91,18 +70,22 @@ export class StudentsComponent implements OnInit {
 
   readonly rateCurrencies = RATE_CURRENCIES;
   readonly skeletonCardSlots = [0, 1, 2, 3, 4, 5];
-  autoTimezone = true;
 
   deleteTargetId = signal<string | null>(null);
   topupTargetId = signal<string | null>(null);
   topupLessonsInput = 1;
   quickActionsStudent = signal<Student | null>(null);
   botToggleConfirm = signal<{ student: Student; nextActive: boolean } | null>(null);
+  disconnectConfirm = signal<Student | null>(null);
+  inviteDialogStudent = signal<Student | null>(null);
+  inviteDialogLoading = signal(false);
+  inviteDialogError = signal<string | null>(null);
   formSubmitted = signal(false);
   savingForm = signal(false);
   linkCopied = signal(false);
   formError = signal<string | null>(null);
   readonly colorToHexForPicker = colorToHexForPicker;
+  readonly inviteDialogLink = computed(() => this.inviteDialogStudent()?.telegram_deep_link ?? '');
 
   private linkCopiedTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -176,6 +159,10 @@ export class StudentsComponent implements OnInit {
     if (quick?._id === updated._id) {
       this.quickActionsStudent.set(updated);
     }
+    const invite = this.inviteDialogStudent();
+    if (invite?._id === updated._id) {
+      this.inviteDialogStudent.set(updated);
+    }
   }
 
   setBillingType(type: StudentBillingType): void {
@@ -221,12 +208,11 @@ export class StudentsComponent implements OnInit {
     this.formSubmitted.set(false);
     this.formError.set(null);
     this.linkCopied.set(false);
-    this.autoTimezone = true;
     this.form = {
       name: '',
       rate_per_hour: 0,
       rate_currency: 'EUR',
-      timezone: resolvedBrowserTimezone(),
+      timezone: DEFAULT_STUDENT_TIMEZONE,
       color_hex: generatePastelColor(),
       bot_active: false,
       meeting_link: '',
@@ -244,12 +230,11 @@ export class StudentsComponent implements OnInit {
     this.formError.set(null);
     this.linkCopied.set(false);
     this.closeQuickActions();
-    this.autoTimezone = false;
     this.form = {
       name: s.name,
       rate_per_hour: s.rate_per_hour,
       rate_currency: s.rate_currency ?? 'EUR',
-      timezone: s.timezone || 'UTC',
+      timezone: s.timezone || DEFAULT_STUDENT_TIMEZONE,
       color_hex: s.color_hex || generatePastelColor(),
       bot_active: Boolean(s.bot_active),
       meeting_link: s.meeting_link || '',
@@ -296,27 +281,11 @@ export class StudentsComponent implements OnInit {
     return Boolean(control?.invalid);
   }
 
-  onAutoTimezoneChange(checked: boolean) {
-    this.autoTimezone = checked;
-    if (checked) {
-      this.form.timezone = resolvedBrowserTimezone();
-    } else if (!TIMEZONE_PRESETS.includes(this.form.timezone)) {
-      this.form.timezone = 'Europe/Moscow';
-    }
-  }
-
   currencySelectOptions(): AppSelectOption[] {
     return RATE_CURRENCIES.map((c) => ({
       value: c,
       label: this.i18n.currencyLabel(c),
     }));
-  }
-
-  timezoneSelectOptionsList(): AppSelectOption[] {
-    const tz = this.form.timezone;
-    const zones =
-      tz && !TIMEZONE_PRESETS.includes(tz) ? [tz, ...TIMEZONE_PRESETS] : [...TIMEZONE_PRESETS];
-    return zones.map((zone) => ({ value: zone, label: zone }));
   }
 
   private studentFormPayload(): Partial<Student> {
@@ -361,10 +330,10 @@ export class StudentsComponent implements OnInit {
     return message || 'Ошибка сохранения';
   }
 
-  private persistStudentForm(opts: { inviteAfter: boolean }): void {
+  private persistStudentForm(opts: { inviteAfter?: boolean; openInviteDialog?: boolean }): void {
     const target = this.editTarget();
     const payload = this.studentFormPayload();
-    if (opts.inviteAfter) {
+    if (opts.inviteAfter || opts.openInviteDialog) {
       payload.bot_active = true;
     }
     this.formError.set(null);
@@ -375,6 +344,12 @@ export class StudentsComponent implements OnInit {
       next: (updated) => {
         this.savingForm.set(false);
         this.patchStudent(updated);
+        if (opts.openInviteDialog) {
+          this.resetFormDialog();
+          this.load();
+          this.openInviteDialog(updated);
+          return;
+        }
         if (opts.inviteAfter) {
           void this.copyInviteLink(updated.telegram_deep_link || '');
         }
@@ -403,9 +378,9 @@ export class StudentsComponent implements OnInit {
     return (student ?? this.editTarget())?.telegram_deep_link || '';
   }
 
-  private async copyInviteLink(link: string): Promise<void> {
+  private async copyInviteLink(link: string): Promise<boolean> {
     if (!link || typeof navigator === 'undefined' || !navigator.clipboard) {
-      return;
+      return false;
     }
     try {
       await navigator.clipboard.writeText(link);
@@ -414,8 +389,9 @@ export class StudentsComponent implements OnInit {
         clearTimeout(this.linkCopiedTimer);
       }
       this.linkCopiedTimer = setTimeout(() => this.linkCopied.set(false), 2000);
+      return true;
     } catch {
-      /* ignore */
+      return false;
     }
   }
 
@@ -425,24 +401,53 @@ export class StudentsComponent implements OnInit {
       await this.copyInviteLink(existing);
       return;
     }
-    // Ссылки ещё нет — сначала получим её, потом скопируем (без открытия в браузере).
     if (student) {
-      this.ensureInviteLink(student, true);
+      this.openInviteDialog(student);
       return;
     }
-    this.ensureInviteLinkFromForm(true);
+    this.ensureInviteLinkFromForm();
   }
 
-  /** Получить/показать invite-ссылку без открытия Telegram в браузере. */
+  /** Открыть диалог с invite-ссылкой (из таблицы, быстрых действий или формы). */
   inviteStudentToBot(student?: Student | null): void {
     if (student) {
-      this.ensureInviteLink(student, true);
+      this.openInviteDialog(student);
       return;
     }
-    this.ensureInviteLinkFromForm(true);
+    this.ensureInviteLinkFromForm();
   }
 
-  private ensureInviteLinkFromForm(copyAfter: boolean): void {
+  openInviteDialog(student: Student): void {
+    if (student.telegram_user_id) {
+      return;
+    }
+    this.inviteDialogError.set(null);
+    this.linkCopied.set(false);
+    this.inviteDialogStudent.set(student);
+    if (!student.telegram_deep_link) {
+      this.loadInviteLink(student);
+    }
+  }
+
+  closeInviteDialog(): void {
+    this.inviteDialogStudent.set(null);
+    this.inviteDialogLoading.set(false);
+    this.inviteDialogError.set(null);
+    this.linkCopied.set(false);
+  }
+
+  async copyInviteFromDialog(): Promise<void> {
+    const link = this.inviteDialogLink();
+    if (!link) {
+      return;
+    }
+    const copied = await this.copyInviteLink(link);
+    if (!copied) {
+      this.inviteDialogError.set(this.t.botInviteLinkFailed);
+    }
+  }
+
+  private ensureInviteLinkFromForm(): void {
     if (this.isTelegramLinked() || this.savingForm()) {
       return;
     }
@@ -450,16 +455,14 @@ export class StudentsComponent implements OnInit {
     this.form.bot_active = true;
 
     const existingLink = this.telegramDeepLink();
-    if (existingLink) {
-      if (copyAfter) {
-        void this.copyInviteLink(existingLink);
-      }
+    const target = this.editTarget();
+    if (existingLink && target) {
+      this.openInviteDialog(target);
       return;
     }
 
-    const target = this.editTarget();
     if (target) {
-      this.ensureInviteLink(target, copyAfter);
+      this.openInviteDialog(target);
       return;
     }
 
@@ -469,52 +472,46 @@ export class StudentsComponent implements OnInit {
       this.formError.set('Сначала заполните имя ученика и сохраните карточку.');
       return;
     }
-    this.persistStudentForm({ inviteAfter: copyAfter });
+    this.persistStudentForm({ openInviteDialog: true });
   }
 
-  private ensureInviteLink(student: Student, copyAfter: boolean): void {
+  private loadInviteLink(student: Student): void {
     if (student.telegram_user_id) {
       return;
     }
     const link = student.telegram_deep_link || '';
     if (link) {
-      if (copyAfter) {
-        void this.copyInviteLink(link);
-      }
       return;
     }
-    this.savingForm.set(true);
-    this.formError.set(null);
+    this.inviteDialogLoading.set(true);
+    this.inviteDialogError.set(null);
     this.svc.update(student._id, { bot_active: true }).subscribe({
       next: (updated) => {
-        this.savingForm.set(false);
+        this.inviteDialogLoading.set(false);
         this.patchStudent(updated);
         if (this.editTarget()?._id === updated._id) {
           this.editTarget.set(updated);
           this.form.bot_active = true;
         }
-        const deepLink = updated.telegram_deep_link || '';
-        if (!deepLink) {
-          this.formError.set('Не удалось получить ссылку. Проверьте, что бот и backend запущены.');
-          return;
-        }
-        if (copyAfter) {
-          void this.copyInviteLink(deepLink);
+        if (!updated.telegram_deep_link) {
+          this.inviteDialogError.set(this.t.botInviteLinkFailed);
         }
       },
       error: (err) => {
-        this.savingForm.set(false);
-        this.formError.set(this.apiErrorMessage(err));
+        this.inviteDialogLoading.set(false);
+        this.inviteDialogError.set(this.apiErrorMessage(err));
       },
     });
   }
+
 
   inviteFromQuick(): void {
     const student = this.quickActionsStudent();
     if (!student) {
       return;
     }
-    this.ensureInviteLink(student, true);
+    this.closeQuickActions();
+    this.openInviteDialog(student);
   }
 
   openQuickActions(student: Student): void {
@@ -657,5 +654,35 @@ export class StudentsComponent implements OnInit {
       return '';
     }
     return pending.nextActive ? this.t.botEnableConfirm : this.t.botDisableConfirm;
+  }
+
+  requestTelegramDisconnect(student?: Student | null): void {
+    const target = student ?? this.editTarget() ?? this.quickActionsStudent();
+    if (!target?.telegram_user_id) {
+      return;
+    }
+    this.disconnectConfirm.set(target);
+  }
+
+  cancelTelegramDisconnect(): void {
+    this.disconnectConfirm.set(null);
+  }
+
+  confirmTelegramDisconnect(): void {
+    const student = this.disconnectConfirm();
+    if (!student) {
+      return;
+    }
+    this.disconnectConfirm.set(null);
+    this.svc.disconnectTelegram(student._id).subscribe({
+      next: (updated) => {
+        this.patchStudent(updated);
+        if (this.editTarget()?._id === updated._id) {
+          this.editTarget.set(updated);
+          this.form.bot_active = false;
+        }
+        this.closeQuickActions();
+      },
+    });
   }
 }

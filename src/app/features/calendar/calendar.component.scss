@@ -1556,49 +1556,26 @@
   }
 }
 
-// ── Lesson modal shell ──────────────────────────────────────
+// ── Lesson form (centered app-dialog) ───────────────────────
 
-:host .modal--lesson {
-  @media (min-width: 768px) {
-    width: min(80vw, 42rem);
-    max-height: 80vh;
+.cal-lesson-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+
+  &__delete {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
   }
 
-  &.modal--lesson-wide {
-    @media (min-width: 768px) {
-      width: min(92vw, 56rem);
-      max-height: min(90dvh, 44rem);
-    }
-  }
-
-  &.modal--lesson-full {
-    @media (max-width: 767px) {
-      height: 100%;
-      max-height: 100dvh;
-      max-height: 100svh;
-      border-radius: 0;
-      box-shadow: none;
-
-      .cal-lesson-form {
-        display: flex;
-        flex: 1 1 auto;
-        flex-direction: column;
-        min-height: 0;
-      }
-
-      .modal-sheet__scroll {
-        flex: 1 1 auto;
-        min-height: 0;
-      }
-
-      .cal-form-actions {
-        flex-shrink: 0;
-        margin: 0;
-        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
-        border-top: 1px solid var(--nav-border);
-        background: var(--nav-bg);
-      }
-    }
+  &__body {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    min-width: 0;
   }
 }
 
@@ -1814,7 +1791,7 @@
   margin-bottom: 1rem;
 
   &--desktop {
-    @media (min-width: 768px) {
+    @media (min-width: 1181px) {
       display: grid;
       grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
       gap: 1.25rem 1.5rem;
@@ -2452,5 +2429,34 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+}
+
+// ── Calendar recurrence modals: portrait + landscape ────────
+
+@media (max-height: 32rem), (orientation: landscape) and (max-height: 36rem) {
+  .modal--recurrence-center {
+    width: min(100%, 28rem);
+    max-width: 28rem;
+    max-height: calc(
+      100dvh - 1rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+    max-height: calc(
+      100svh - 1rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .modal--recurrence.modal--recurrence-page {
+    height: auto;
+    flex: 0 1 auto;
+    width: min(100%, 36rem);
+    max-height: calc(
+      100dvh - 1rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+    max-height: calc(
+      100svh - 1rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+    border-radius: 1rem;
+    box-shadow: 0 12px 32px rgb(15 23 42 / 0.2);
   }
 }

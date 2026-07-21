@@ -42,8 +42,6 @@
               <span class="student-card__name">{{ s.name }}</span>
               <span class="student-card__meta">
                 <span>{{ formatStudentRate(s) }}</span>
-                <span class="student-card__dot" aria-hidden="true">·</span>
-                <span>{{ s.timezone }}</span>
               </span>
               <span class="student-card__balance">
                 {{ formatStudentBalance(s) }}
@@ -66,7 +64,6 @@
           <span class="students-grid__col students-grid__col--color">{{ t.calendarColor }}</span>
           <span class="students-grid__col students-grid__col--rate">{{ t.rateColumn }}</span>
           <span class="students-grid__col students-grid__col--balance">{{ t.balanceLessons }}</span>
-          <span class="students-grid__col students-grid__col--tz">{{ t.timezone }}</span>
           <span class="students-grid__col students-grid__col--bot">{{ t.botNotifications }}</span>
           <span class="students-grid__col students-grid__col--actions"></span>
         </div>
@@ -99,8 +96,6 @@
                 </button>
               </div>
 
-              <div class="students-grid__col students-grid__col--tz">{{ s.timezone }}</div>
-
               <div class="students-grid__col students-grid__col--bot">
                 @if (s.telegram_user_id) {
                   <button
@@ -110,6 +105,14 @@
                     (click)="$event.stopPropagation(); requestBotToggle(s)"
                   >
                     {{ s.bot_active ? t.botEnabled : t.botDisabled }}
+                  </button>
+                } @else if (canInviteToBot(s)) {
+                  <button
+                    type="button"
+                    class="btn-link"
+                    (click)="$event.stopPropagation(); inviteStudentToBot(s)"
+                  >
+                    {{ t.botInviteButton }}
                   </button>
                 }
               </div>
@@ -152,7 +155,7 @@
           aria-hidden="true"
         ></span>
         <span>
-          {{ formatStudentRate(student) }} · {{ student.timezone }} · {{ formatStudentBalance(student) }}
+          {{ formatStudentRate(student) }} · {{ formatStudentBalance(student) }}
         </span>
       </p>
       <button type="button" class="quick-actions__btn" (click)="openTopupFromQuick()">
@@ -163,10 +166,17 @@
           {{ student.bot_active ? t.botDisableConfirm : t.botEnableConfirm }} —
           {{ t.botNotifications }}
         </button>
+        <button
+          type="button"
+          class="quick-actions__btn quick-actions__btn--danger"
+          (click)="requestTelegramDisconnect(student)"
+        >
+          {{ t.botDisconnect }}
+        </button>
       }
       @if (canInviteToBot(student)) {
         <button type="button" class="quick-actions__btn" (click)="inviteFromQuick()">
-          {{ linkCopied() ? t.botLinkCopied : t.botCopyLink }}
+          {{ t.botInviteButton }}
         </button>
       }
       <button type="button" class="quick-actions__btn" (click)="openEdit(student)">
@@ -192,6 +202,52 @@
   (confirm)="confirmBotToggle()"
 >
   <p>{{ botToggleMessage() }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="!!disconnectConfirm()"
+  [title]="t.botDisconnectTitle"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="t.botDisconnectConfirm"
+  (cancel)="cancelTelegramDisconnect()"
+  (confirm)="confirmTelegramDisconnect()"
+>
+  <p>{{ t.botDisconnectMessage }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="!!inviteDialogStudent()"
+  [title]="t.botInviteDialogTitle"
+  [cancelLabel]="t.close"
+  (cancel)="closeInviteDialog()"
+>
+  @if (inviteDialogStudent(); as student) {
+    <div class="invite-dialog">
+      <p class="invite-dialog__hint">{{ t.botInviteHint }}</p>
+      @if (inviteDialogLoading()) {
+        <p class="invite-dialog__status" aria-live="polite">{{ t.saving }}</p>
+      } @else if (inviteDialogError(); as err) {
+        <p class="form-error invite-dialog__error" role="alert">{{ err }}</p>
+      } @else if (inviteDialogLink(); as link) {
+        <label [attr.for]="'invite-link-' + student._id">{{ t.botInviteLinkLabel }}</label>
+        <div class="telegram-invite">
+          <input
+            [id]="'invite-link-' + student._id"
+            type="text"
+            readonly
+            [value]="link"
+            class="input-readonly"
+          />
+          <button type="button" class="btn btn--secondary" (click)="copyInviteFromDialog()">
+            {{ linkCopied() ? t.botLinkCopied : t.botCopyLink }}
+          </button>
+        </div>
+        <!-- <a class="invite-dialog__open" [href]="link" target="_blank" rel="noopener noreferrer">
+          {{ t.botOpenInTelegram }}
+        </a> -->
+      }
+    </div>
+  }
 </app-dialog>
 
 <app-dialog
@@ -390,6 +446,13 @@
           {{ t.botNotifications }}:
           {{ editTarget()?.bot_active ? t.botEnabled : t.botDisabled }}
         </button>
+        <button
+          type="button"
+          class="btn btn--secondary telegram-disconnect"
+          (click)="requestTelegramDisconnect()"
+        >
+          {{ t.botDisconnect }}
+        </button>
       } @else {
         <p class="telegram-block__hint">{{ t.botInviteHint }}</p>
         @if (telegramDeepLink()) {
@@ -427,39 +490,6 @@
         name="meeting_link"
         [placeholder]="t.meetingLinkPlaceholder"
       />
-    </div>
-
-    <div class="field field--checkbox">
-      <label class="checkbox-label">
-        <input
-          type="checkbox"
-          [ngModel]="autoTimezone"
-          (ngModelChange)="onAutoTimezoneChange($event)"
-          name="autoTz"
-        />
-        <span>{{ t.autoTimezone }}</span>
-      </label>
-    </div>
-
-    <div class="field">
-      <label for="st-tz">{{ t.timezone }}</label>
-      @if (autoTimezone) {
-        <input
-          id="st-tz"
-          type="text"
-          [value]="form.timezone"
-          readonly
-          class="input-readonly"
-          [attr.name]="'tz-display'"
-        />
-      } @else {
-        <app-select
-          id="st-tz"
-          [(ngModel)]="form.timezone"
-          name="timezone"
-          [options]="timezoneSelectOptionsList()"
-        />
-      }
     </div>
   </form>
 </app-dialog>

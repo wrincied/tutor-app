@@ -2433,6 +2433,9 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     botInviteHint: 'Отправьте ученику ссылку — после Start в боте здесь появятся его данные Telegram.',
     botInviteLinkLabel: 'Ссылка для подключения',
     botInviteButton: 'Пригласить в бот',
+    botInviteDialogTitle: 'Пригласить в Telegram-бот',
+    botOpenInTelegram: 'Открыть в Telegram',
+    botInviteLinkFailed: 'Не удалось получить ссылку. Проверьте, что бот и backend запущены.',
     botCopyLink: 'Копировать',
     botLinkCopied: 'Скопировано',
     botNotLinked: 'Ещё не подключён',
@@ -2447,6 +2450,11 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     botUnlinkAlertMessage:
       'Ученик {name}{username} отвязал Telegram-бота. Уведомления больше не приходят.',
     botUnlinkAlertOk: 'Понятно',
+    botDisconnect: 'Отвязать Telegram',
+    botDisconnectTitle: 'Отвязать Telegram?',
+    botDisconnectMessage:
+      'Связь с Telegram будет сброшена. Ученик перестанет получать уведомления. Пригласить снова можно новой ссылкой.',
+    botDisconnectConfirm: 'Отвязать',
     quickActionsTitle: 'Быстрые действия',
     lessonsShort: 'занятий',
     hoursShort: 'ч',
@@ -2514,6 +2522,9 @@ const STUDENTS: Record<Lang, StudentStrings> = {
       'Send this link to the student — after they press Start, their Telegram profile appears here.',
     botInviteLinkLabel: 'Invite link',
     botInviteButton: 'Invite to bot',
+    botInviteDialogTitle: 'Invite to Telegram bot',
+    botOpenInTelegram: 'Open in Telegram',
+    botInviteLinkFailed: 'Could not get the invite link. Check that the bot and backend are running.',
     botCopyLink: 'Copy',
     botLinkCopied: 'Copied',
     botNotLinked: 'Not linked yet',
@@ -2528,6 +2539,11 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     botUnlinkAlertMessage:
       'Student {name}{username} unlinked the Telegram bot. Notifications are stopped.',
     botUnlinkAlertOk: 'Got it',
+    botDisconnect: 'Disconnect Telegram',
+    botDisconnectTitle: 'Disconnect Telegram?',
+    botDisconnectMessage:
+      'The Telegram link will be cleared. The student will stop receiving notifications. You can invite them again with a new link.',
+    botDisconnectConfirm: 'Disconnect',
     quickActionsTitle: 'Quick actions',
     lessonsShort: 'lessons',
     hoursShort: 'h',
@@ -2595,6 +2611,10 @@ const STUDENTS: Record<Lang, StudentStrings> = {
       'Sende dem Schüler diesen Link — nach Start im Bot erscheinen hier die Telegram-Daten.',
     botInviteLinkLabel: 'Einladungslink',
     botInviteButton: 'Zum Bot einladen',
+    botInviteDialogTitle: 'Zum Telegram-Bot einladen',
+    botOpenInTelegram: 'In Telegram öffnen',
+    botInviteLinkFailed:
+      'Einladungslink konnte nicht erstellt werden. Prüfe, ob Bot und Backend laufen.',
     botCopyLink: 'Kopieren',
     botLinkCopied: 'Kopiert',
     botNotLinked: 'Noch nicht verbunden',
@@ -2609,6 +2629,11 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     botUnlinkAlertMessage:
       'Schüler {name}{username} hat den Telegram-Bot getrennt. Benachrichtigungen sind gestoppt.',
     botUnlinkAlertOk: 'Verstanden',
+    botDisconnect: 'Telegram trennen',
+    botDisconnectTitle: 'Telegram trennen?',
+    botDisconnectMessage:
+      'Die Telegram-Verbindung wird gelöscht. Der Schüler erhält keine Benachrichtigungen mehr. Erneute Einladung über einen neuen Link möglich.',
+    botDisconnectConfirm: 'Trennen',
     quickActionsTitle: 'Schnellaktionen',
     lessonsShort: 'Einheiten',
     hoursShort: 'Std.',
@@ -2675,6 +2700,9 @@ const STUDENTS: Record<Lang, StudentStrings> = {
       'Оқушыға сілтемені жіберіңіз — Start басқаннан кейін Telegram деректері осында пайда болады.',
     botInviteLinkLabel: 'Қосылу сілтемесі',
     botInviteButton: 'Ботқа шақыру',
+    botInviteDialogTitle: 'Telegram-ботқа шақыру',
+    botOpenInTelegram: 'Telegram-да ашу',
+    botInviteLinkFailed: 'Сілтеме алынбады. Бот пен backend іске қосылғанын тексеріңіз.',
     botCopyLink: 'Көшіру',
     botLinkCopied: 'Көшірілді',
     botNotLinked: 'Әлі қосылмаған',
@@ -2689,6 +2717,11 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     botUnlinkAlertMessage:
       'Оқушы {name}{username} Telegram ботын ажыратты. Хабарламалар тоқтатылды.',
     botUnlinkAlertOk: 'Түсінікті',
+    botDisconnect: 'Telegram ажырату',
+    botDisconnectTitle: 'Telegram ажырату керек пе?',
+    botDisconnectMessage:
+      'Telegram байланысы өшіріледі. Оқушы хабарлама алмайды. Қайта шақыру үшін жаңа сілтеме жіберіңіз.',
+    botDisconnectConfirm: 'Ажырату',
     quickActionsTitle: 'Жылдам әрекеттер',
     lessonsShort: 'сабақ',
     hoursShort: 'сағ',

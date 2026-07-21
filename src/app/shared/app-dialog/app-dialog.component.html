@@ -14,6 +14,7 @@
         [class.app-dialog--error]="variant() === 'error'"
         [class.app-dialog--sheet]="layout() === 'sheet'"
         [class.app-dialog--drawer]="layout() === 'drawer'"
+        [class.app-dialog--wide]="wide()"
         role="alertdialog"
         aria-modal="true"
         [attr.aria-labelledby]="'app-dialog-title'"
@@ -67,7 +68,9 @@
             @if (confirmLabel()) {
               <button
                 type="button"
-                class="app-dialog__btn app-dialog__btn--primary"
+                class="app-dialog__btn"
+                [class.app-dialog__btn--primary]="!confirmDanger()"
+                [class.app-dialog__btn--confirm-danger]="confirmDanger()"
                 (click)="onConfirmClick()"
               >
                 {{ confirmLabel() }}
