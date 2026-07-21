@@ -592,6 +592,9 @@ export const STUDENTS_BY: StudentStrings = {
     'Адпраўце вучню спасылку — пасля Start у боце тут з’явяцца яго даныя Telegram.',
   botInviteLinkLabel: 'Спасылка для падключэння',
   botInviteButton: 'Запрасіць у бот',
+  botInviteDialogTitle: 'Запрасіць у Telegram-бот',
+  botOpenInTelegram: 'Адкрыць у Telegram',
+  botInviteLinkFailed: 'Не атрымалася атрымаць спасылку. Праверце, што бот і backend запущаны.',
   botCopyLink: 'Капіяваць',
   botLinkCopied: 'Скапіявана',
   botNotLinked: 'Яшчэ не падключаны',
@@ -606,6 +609,11 @@ export const STUDENTS_BY: StudentStrings = {
   botUnlinkAlertMessage:
     'Вучань {name}{username} адвязаў Telegram-бота. Апавяшчэнні больш не прыходзяць.',
   botUnlinkAlertOk: 'Зразумела',
+  botDisconnect: 'Адвязаць Telegram',
+  botDisconnectTitle: 'Адвязаць Telegram?',
+  botDisconnectMessage:
+    'Сувязь з Telegram будзе скінута. Вучань перастане атрымліваць апавяшчэнні. Запрасіць зноў можна новай спасылкай.',
+  botDisconnectConfirm: 'Адвязаць',
   quickActionsTitle: 'Хуткія дзеянні',
   lessonsShort: 'заняткаў',
   hoursShort: 'гадз',

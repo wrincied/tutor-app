@@ -85,6 +85,10 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
+              "styles": [
+                "src/styles.scss",
+                "src/styles/design-v2.scss"
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",

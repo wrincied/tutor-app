@@ -7,7 +7,6 @@ import { environment } from '../../../environments/environment';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { StudentService } from '../../core/services/student.service';
 import { UserService } from '../../core/services/user.service';
 import { financeTodayRange } from '../../core/utils/finance-period';
 import { formatMoneyWithCode } from '../../core/utils/format-currency';
@@ -31,9 +30,8 @@ const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
 export class HomeComponent implements OnInit {
   private readonly userSvc = inject(UserService);
   private readonly financeSvc = inject(FinanceService);
-  private readonly studentSvc = inject(StudentService);
   readonly i18n = inject(I18nService);
-  /** True only for `ng serve --configuration=design` (:4300). */
+  /** True for local/dev design UI (`ng serve` on :4200). */
   readonly designMode = (environment as { designMode?: boolean }).designMode === true;
 
 
@@ -181,12 +179,12 @@ export class HomeComponent implements OnInit {
     const today = financeTodayRange();
     forkJoin({
       profile: this.userSvc.ensureProfile(),
-      summary: this.financeSvc.getSummary({ from: today.from, to: today.to }),
-      students: this.studentSvc.getAll(),
+      summary: this.financeSvc.getSummary({ from: today.from, to: today.to, scope: 'home' }),
     }).subscribe({
-      next: ({ profile, summary, students }) => {
+      next: ({ profile, summary }) => {
         this.profile.set(profile);
         this.summary.set(summary);
+        const students = (summary.students ?? []) as Student[];
         this.todayLessons.set(
           lessonsFromFinanceBreakdown(summary.lessonsBreakdown ?? [], students),
         );

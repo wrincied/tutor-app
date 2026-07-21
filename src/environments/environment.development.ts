@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  designMode: false,
+  designMode: true,
   apiUrl: 'http://localhost:3001',
   appUrl: 'http://localhost:4200',
   firebaseConfig: {

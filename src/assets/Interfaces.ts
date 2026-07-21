@@ -997,6 +997,11 @@ export interface FinanceSummary {
   austria: FinanceTaxProjection | null;
   lessonsBreakdown?: FinanceLessonBreakdown[];
   expensesBreakdown?: FinanceExpenseBreakdown[];
+  /** Только при `scope=home` — укороченный список учеников без отдельного GET. */
+  students?: Pick<
+    Student,
+    '_id' | 'name' | 'color_hex' | 'balance_lessons' | 'billing_type' | 'rate_unit'
+  >[];
 }
 
 export interface StudentStrings {
@@ -1056,6 +1061,9 @@ export interface StudentStrings {
   botInviteHint: string;
   botInviteLinkLabel: string;
   botInviteButton: string;
+  botInviteDialogTitle: string;
+  botOpenInTelegram: string;
+  botInviteLinkFailed: string;
   botCopyLink: string;
   botLinkCopied: string;
   botNotLinked: string;
@@ -1069,6 +1077,11 @@ export interface StudentStrings {
   botUnlinkAlertTitle: string;
   botUnlinkAlertMessage: string;
   botUnlinkAlertOk: string;
+  /** Tutor disconnects Telegram link for this student */
+  botDisconnect: string;
+  botDisconnectTitle: string;
+  botDisconnectMessage: string;
+  botDisconnectConfirm: string;
   quickActionsTitle: string;
   lessonsShort: string;
   hoursShort: string;
