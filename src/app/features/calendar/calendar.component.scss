@@ -284,10 +284,10 @@
   margin-bottom: 0.5rem;
   display: flex;
   flex-shrink: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.375rem 0.5rem;
   color: var(--text-primary);
   box-sizing: border-box;
 }
@@ -295,91 +295,132 @@
 .cal-header__start {
   display: flex;
   min-width: 0;
+  flex: 0 1 auto;
   align-items: center;
   gap: 0.5rem;
 }
 
 .cal-status-legend {
   display: flex;
-  flex: 1 1 auto;
-  flex-wrap: wrap;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem 0.85rem;
+  gap: 0.35rem 0.65rem;
   margin: 0;
-  padding: 0 0.25rem;
+  padding: 0;
   list-style: none;
-  font-size: 0.75rem;
-  line-height: 1.2;
+  font-size: 0.6875rem;
+  line-height: 1.15;
   color: var(--text-secondary);
   min-width: 0;
+  max-width: min(28rem, 42%);
+  overflow: hidden;
 }
 
 .cal-status-legend__item {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.cal-status-legend__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .cal-status-legend__swatch {
   display: block;
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 0.875rem;
+  height: 0.875rem;
   flex-shrink: 0;
-  border-radius: 0.375rem;
+  border-radius: 0.25rem;
   border: 2px solid transparent;
   box-sizing: border-box;
-  /* Override absolute lesson-card layout — keep status colors only. */
-  position: static !important;
-  left: auto !important;
-  right: auto !important;
-  top: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  min-height: 0 !important;
-  opacity: 1 !important;
-  text-decoration: none !important;
-  box-shadow: none !important;
-  cursor: default !important;
-  overflow: hidden;
-  pointer-events: none;
 }
 
-.cal-status-legend__swatch.cal-lesson-card--scheduled {
+.cal-status-legend__swatch--scheduled {
   border-color: rgb(14 165 233);
   background: rgb(240 249 255);
 }
 
-.cal-status-legend__swatch.cal-lesson-card--completed {
+.cal-status-legend__swatch--completed {
   border-color: rgb(16 185 129);
   background: rgb(236 253 245);
 }
 
-.cal-status-legend__swatch.cal-lesson-card--missed {
+.cal-status-legend__swatch--missed {
   border-color: rgb(245 158 11);
   background: rgb(255 251 235);
 }
 
-.cal-status-legend__swatch.cal-lesson-card--canceled {
+.cal-status-legend__swatch--canceled {
   border-color: rgb(239 68 68);
   background: rgb(254 242 242);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1180px) {
   .cal-status-legend {
-    order: 3;
-    flex-basis: 100%;
-    justify-content: flex-start;
+    gap: 0.3rem 0.45rem;
+    font-size: 0.625rem;
+    max-width: min(22rem, 36%);
+  }
+
+  .cal-status-legend__swatch {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-width: 1.5px;
+    border-radius: 0.2rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .cal-status-legend {
+    gap: 0.25rem;
+    max-width: none;
+    flex: 0 0 auto;
+  }
+
+  .cal-status-legend__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .cal-status-legend__swatch {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .cal-status-legend {
+    gap: 0.2rem;
+  }
+
+  .cal-status-legend__swatch {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-width: 1.5px;
   }
 }
 
 .cal-header__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: 0.375rem;
+  margin-left: auto;
 }
 
 .cal-header__titles {
