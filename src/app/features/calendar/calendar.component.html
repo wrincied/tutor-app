@@ -49,7 +49,7 @@
         </div>
       </div>
     } @else {
-      @if ((isBottomNavLayout() && modesMenuOpen()) || studentsSidebarOpen()) {
+      @if (modesMenuOpen() || studentsSidebarOpen()) {
         <div
           class="cal-backdrop"
           role="presentation"
@@ -57,159 +57,63 @@
         ></div>
       }
 
-      @if (isBottomNavLayout()) {
-        <aside class="cal-modes-drawer" [class.cal-modes-drawer--open]="modesMenuOpen()">
-          <div class="cal-modes-drawer__head">
-            <h2 class="cal-modes-drawer__title">{{ i18n.calendarUi().modeDrawerTitle }}</h2>
-            <button
-              type="button"
-              class="cal-modes-drawer__close"
-              (click)="modesMenuOpen.set(false)"
-              [attr.aria-label]="i18n.studentsUi().close"
-            >
-              <img src="assets/icons/icon-close.svg" width="20" height="20" alt="" />
-            </button>
-          </div>
-          <nav class="cal-modes-drawer__nav">
-            @for (mode of viewModes; track mode) {
-              <button
-                type="button"
-                class="cal-modes-drawer__item"
-                [class.cal-modes-drawer__item--active]="viewMode() === mode"
-                (click)="setViewMode(mode)"
-              >
-                <span class="cal-modes-drawer__item-num">{{ mode }}</span>
-                <span class="cal-modes-drawer__item-label">{{ viewModeLabel(mode) }}</span>
-              </button>
-            }
-          </nav>
-        </aside>
-      }
-
-      <header class="cal-header">
-        <div class="cal-header__start">
-          @if (isBottomNavLayout()) {
-            <button
-              type="button"
-              class="cal-btn cal-btn--burger"
-              (click)="toggleModesMenu()"
-              [attr.aria-expanded]="modesMenuOpen()"
-              [attr.aria-label]="i18n.calendarUi().modeDrawerTitle"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                aria-hidden="true"
-              >
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-          }
-          <div class="cal-header__titles">
-            @if (!isCompactHeader()) {
-              <h1 class="cal-header__title">{{ i18n.calendarUi().title }}</h1>
-            }
-            <p class="cal-header__period">
-              <span class="cal-header__week">{{ calendarWeekLabel() }}</span>
-              @if (periodRangeLabel(); as range) {
-                <span class="cal-header__range">{{ range }}</span>
-              }
-            </p>
-          </div>
-        </div>
-
-        <ul class="cal-status-legend" [attr.aria-label]="i18n.calendarUi().statusLegendAria">
-          <li class="cal-status-legend__item">
-            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--scheduled" aria-hidden="true"></span>
-            <span>{{ i18n.calendarUi().statusScheduled }}</span>
-          </li>
-          <li class="cal-status-legend__item">
-            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--completed" aria-hidden="true"></span>
-            <span>{{ i18n.calendarUi().statusCompleted }}</span>
-          </li>
-          <li class="cal-status-legend__item">
-            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--missed" aria-hidden="true"></span>
-            <span>{{ i18n.calendarUi().statusMissed }}</span>
-          </li>
-          <li class="cal-status-legend__item">
-            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--canceled" aria-hidden="true"></span>
-            <span>{{ i18n.calendarUi().statusCanceled }}</span>
-          </li>
-        </ul>
-
-        <div class="cal-header__actions">
-          <div class="cal-toolbar">
-            @if (!isCompactHeader()) {
-              <button
-                type="button"
-                class="cal-btn"
-                (click)="navPrev()"
-                [attr.aria-label]="i18n.calendarUi().prev"
-              >
-                ‹
-              </button>
-            }
-            <button
-              type="button"
-              class="cal-btn cal-btn--today"
-              (click)="goToToday()"
-              [attr.aria-label]="i18n.calendarUi().today"
-              [attr.title]="i18n.calendarUi().today"
-            >
-              @if (isCompactHeader()) {
-                <span class="cal-btn-today__frame">{{ todayDayOfMonth() }}</span>
-              } @else {
-                <span class="cal-btn-today__label">{{ i18n.calendarUi().today }}</span>
-              }
-            </button>
-            @if (!isCompactHeader()) {
-              <button
-                type="button"
-                class="cal-btn"
-                (click)="navNext()"
-                [attr.aria-label]="i18n.calendarUi().next"
-              >
-                ›
-              </button>
-            }
-            @if (!isBottomNavLayout()) {
-              <app-select
-                class="cal-toolbar__mode-select"
-                [ngModel]="viewMode()"
-                (ngModelChange)="onViewModeSelect($event)"
-                [options]="viewModeSelectOptions()"
-                [ariaLabel]="i18n.calendarUi().modeDrawerTitle"
-                size="compact"
-                menuPlacement="below"
-              />
-            }
-          </div>
+      <aside class="cal-modes-drawer" [class.cal-modes-drawer--open]="modesMenuOpen()">
+        <div class="cal-modes-drawer__head">
+          <h2 class="cal-modes-drawer__title">{{ i18n.calendarUi().modeDrawerTitle }}</h2>
           <button
             type="button"
-            class="cal-btn cal-btn--students"
-            [class.cal-btn--active]="studentsSidebarOpen()"
-            (click)="toggleStudentsSidebar()"
-            [attr.aria-expanded]="studentsSidebarOpen()"
-            [attr.aria-label]="i18n.calendarUi().students"
-            [attr.title]="i18n.calendarUi().students"
+            class="cal-modes-drawer__close"
+            (click)="modesMenuOpen.set(false)"
+            [attr.aria-label]="i18n.studentsUi().close"
           >
-            <img
-              class="cal-btn__icon"
-              src="assets/icons/icon-students.svg"
-              width="22"
-              height="22"
-              alt=""
-            />
-            <span class="cal-btn__label">{{ i18n.calendarUi().students }}</span>
+            <img src="assets/icons/icon-close.svg" width="20" height="20" alt="" />
           </button>
         </div>
-      </header>
+        <nav class="cal-modes-drawer__nav">
+          @for (mode of viewModes; track mode) {
+            <button
+              type="button"
+              class="cal-modes-drawer__item"
+              [class.cal-modes-drawer__item--active]="viewMode() === mode"
+              (click)="setViewMode(mode)"
+            >
+              <span class="cal-modes-drawer__item-num">{{ mode }}</span>
+              <span class="cal-modes-drawer__item-label">{{ viewModeLabel(mode) }}</span>
+            </button>
+          }
+        </nav>
+      </aside>
+
+      <app-calendar-header
+        [weekLabel]="calendarWeekLabel()"
+        [rangeLabel]="periodRangeLabel()"
+        [title]="i18n.calendarUi().title"
+        [showTitle]="!isCompactHeader()"
+        [todayLabel]="i18n.calendarUi().today"
+        [todayDay]="'' + todayDayOfMonth()"
+        [prevLabel]="i18n.calendarUi().prev"
+        [nextLabel]="i18n.calendarUi().next"
+        [studentsLabel]="i18n.calendarUi().students"
+        [modeDrawerLabel]="i18n.calendarUi().modeDrawerTitle"
+        [statusLegendAria]="i18n.calendarUi().statusLegendAria"
+        [statusScheduled]="i18n.calendarUi().statusScheduled"
+        [statusCompleted]="i18n.calendarUi().statusCompleted"
+        [statusMissed]="i18n.calendarUi().statusMissed"
+        [statusCanceled]="i18n.calendarUi().statusCanceled"
+        [statusCounts]="periodStatusCounts()"
+        [activeStatus]="focusedStatus()"
+        [viewMode]="viewMode()"
+        [viewModeOptions]="headerViewModeOptions()"
+        [modesMenuOpen]="modesMenuOpen()"
+        [studentsSidebarOpen]="studentsSidebarOpen()"
+        (burgerClick)="toggleModesMenu()"
+        (todayClick)="goToToday()"
+        (prevClick)="navPrev()"
+        (nextClick)="navNext()"
+        (studentsClick)="toggleStudentsSidebar()"
+        (viewModeChange)="setViewMode($event)"
+        (statusChipClick)="toggleStatusFilter($event)"
+      />
 
       <div class="cal-layout">
         <section
@@ -279,9 +183,19 @@
                     </div>
                   </div>
                 } @else {
-                  <div class="cal-grid-headers">
-                    <div class="cal-grid-headers__corner"></div>
-                    <div class="cal-grid-headers__scroll">
+                  <div
+                    class="cal-grid-headers"
+                    [style.--cal-day-count]="dayColumnCount()"
+                  >
+                    <div
+                      class="cal-grid-headers__corner cal-grid-headers__corner--start"
+                      aria-hidden="true"
+                    ></div>
+                    <div
+                      class="cal-grid-headers__scroll"
+                      #headersScroll
+                      (scroll)="onGridHorizontalScroll($event)"
+                    >
                       <div
                         class="cal-grid-headers__row"
                         [style.grid-template-columns]="gridTemplateColumns()"
@@ -300,12 +214,18 @@
                         }
                       </div>
                     </div>
+                    <div
+                      class="cal-grid-headers__corner cal-grid-headers__corner--end"
+                      aria-hidden="true"
+                    ></div>
                   </div>
 
                   <div
                     class="cal-grid-scroll"
                     #gridScroll
                     #scrollContainer
+                    [style.--cal-day-count]="dayColumnCount()"
+                    (scroll)="onGridHorizontalScroll($event)"
                     (dragover)="onScrollContainerDragOver($event)"
                   >
                     <div
@@ -366,22 +286,30 @@
                                   [class.cal-lesson-card--canceled]="
                                     draggedLesson()?.status === 'canceled'
                                   "
-                                  [style.border-left-color]="
-                                    getStudentColor(draggedLesson()?.student_id)
-                                  "
                                   [style.top.px]="phantomTopForColumn(col) ?? 0"
                                 >
                                   @if (draggedLesson(); as phantomLesson) {
                                     <p class="cal-lesson-card__title">
-                                      {{
-                                        phantomLesson.student_name ||
-                                          getStudentName(phantomLesson.student_id)
-                                      }}
+                                      <span
+                                        class="cal-lesson-card__student-dot"
+                                        [style.background]="
+                                          getStudentColor(phantomLesson.student_id)
+                                        "
+                                        aria-hidden="true"
+                                      ></span>
+                                      <span class="cal-lesson-card__student-name">
+                                        {{
+                                          phantomLesson.student_name ||
+                                            getStudentName(phantomLesson.student_id)
+                                        }}
+                                      </span>
                                     </p>
-                                    @if (lessonCardUseCompactMeta(phantomLesson)) {
-                                      <p class="cal-lesson-card__meta">
+                                    @if (isBottomNavLayout() || lessonCardUseCompactMeta(phantomLesson)) {
+                                      <p class="cal-lesson-card__sub">
                                         {{ formatLessonRegion(phantomLesson) }}
-                                        · {{ formatLessonSnapshotRate(phantomLesson) }} ·
+                                        · {{ formatLessonSnapshotRate(phantomLesson) }}
+                                      </p>
+                                      <p class="cal-lesson-card__duration">
                                         {{ formatLessonDuration(phantomLesson.lesson_duration) }}
                                       </p>
                                     } @else {
@@ -419,52 +347,31 @@
                                 lesson of lessonsForColumn(col);
                                 track lesson.occurrenceKey ?? lesson._id
                               ) {
-                                <div
-                                  [class]="lessonCardClass(lesson)"
-                                  [class.cal-lesson-card--last-paid]="lesson.isLastPaid"
+                                <app-lesson-card
                                   [style.top.px]="calculateTop(displayScheduledAt(lesson))"
                                   [style.height.px]="calculateHeight(lesson.lesson_duration)"
-                                  [style.border-left-color]="getStudentColor(lesson.student_id)"
-                                  [attr.draggable]="useNativeLessonDrag() ? true : null"
-                                  (dragstart)="onLessonDragStart($event, lesson)"
-                                  (dragend)="onLessonDragEnd()"
-                                  (pointerdown)="onLessonPointerDown($event, lesson)"
-                                  (click)="onLessonCardClick($event, lesson)"
-                                >
-                                  <p class="cal-lesson-card__title">
-                                    {{ getStudentName(lesson.student_id) }}
-                                  </p>
-                                  @if (lessonCardUseCompactMeta(lesson)) {
-                                    <p class="cal-lesson-card__meta">
-                                      {{ formatLessonRegion(lesson) }}
-                                      · {{ formatLessonSnapshotRate(lesson) }} ·
-                                      {{ formatLessonDuration(lesson.lesson_duration) }}
-                                    </p>
-                                  } @else {
-                                    <div class="cal-lesson-card__details">
-                                      <p class="cal-lesson-card__detail">
-                                        <span class="cal-lesson-card__lbl">{{
-                                          i18n.calendarUi().regionLabel
-                                        }}</span>
-                                        <span>{{ formatLessonRegion(lesson) }}</span>
-                                      </p>
-                                      <p class="cal-lesson-card__detail">
-                                        <span class="cal-lesson-card__lbl">{{
-                                          i18n.calendarUi().rateLabel
-                                        }}</span>
-                                        <span>{{ formatLessonSnapshotRate(lesson) }}</span>
-                                      </p>
-                                      <p class="cal-lesson-card__detail">
-                                        <span class="cal-lesson-card__lbl">{{
-                                          i18n.calendarUi().durationLabel
-                                        }}</span>
-                                        <span>{{
-                                          formatLessonDuration(lesson.lesson_duration)
-                                        }}</span>
-                                      </p>
-                                    </div>
-                                  }
-                                </div>
+                                  [status]="lesson.status"
+                                  [studentName]="getStudentName(lesson.student_id)"
+                                  [studentColor]="getStudentColor(lesson.student_id)"
+                                  [compactMeta]="lessonCardUseCompactMeta(lesson)"
+                                  [denseMobile]="isBottomNavLayout()"
+                                  [regionLabel]="i18n.calendarUi().regionLabel"
+                                  [rateLabel]="i18n.calendarUi().rateLabel"
+                                  [durationLabel]="i18n.calendarUi().durationLabel"
+                                  [regionText]="formatLessonRegion(lesson)"
+                                  [rateText]="formatLessonSnapshotRate(lesson)"
+                                  [durationText]="formatLessonDuration(lesson.lesson_duration)"
+                                  [lastPaid]="!!lesson.isLastPaid"
+                                  [dragging]="dragActiveLessonId() === lesson._id"
+                                  [focusActive]="lessonCardFocusActive(lesson)"
+                                  [focusDim]="lessonCardFocusDim(lesson)"
+                                  [routeHighlight]="lessonCardRouteHighlight(lesson)"
+                                  [nativeDraggable]="useNativeLessonDrag()"
+                                  (cardDragStart)="onLessonDragStart($event, lesson)"
+                                  (cardDragEnd)="onLessonDragEnd()"
+                                  (cardPointerDown)="onLessonPointerDown($event, lesson)"
+                                  (cardClick)="onLessonCardClick($event, lesson)"
+                                />
                               }
                             </div>
                           }
@@ -989,118 +896,58 @@
   <p>{{ scheduleConflictMessage() }}</p>
 </app-dialog>
 
-@if (recurrenceModalOpen()) {
-  <div
-    class="modal-overlay modal-overlay--stack-top"
-    [class.modal-overlay--recurrence-center]="recurrenceModalStep() === 'picker'"
-    [class.modal-overlay--sheet]="recurrenceModalStep() === 'details'"
-    [class.modal-overlay--full]="recurrenceModalStep() === 'details'"
-    animate.enter="modal-overlay-out 0.24s ease-out reverse"
-    animate.leave="modal-overlay-out 0.2s ease-in"
-    role="presentation"
-    (click)="onRecurrenceOverlayClick()"
-  >
-    @if (recurrenceModalStep() === 'picker') {
-      <div
-        class="modal modal--recurrence-center"
-        animate.enter="modal-sheet-out-desktop 0.28s cubic-bezier(0.22, 1, 0.36, 1) reverse"
-        animate.leave="modal-sheet-out-desktop 0.22s cubic-bezier(0.22, 1, 0.36, 1)"
-        role="dialog"
-        aria-modal="true"
-        (click)="$event.stopPropagation()"
+<app-dialog
+  [open]="recurrenceModalOpen() && recurrenceModalStep() === 'picker'"
+  stackOnTop
+  [layout]="'center'"
+  [title]="i18n.calendarUi().recurrenceModalTitle"
+  [dismissLabel]="i18n.studentsUi().close"
+  [closeOnOverlay]="true"
+  (cancel)="closeRecurrencePickerFully()"
+  (confirm)="closeRecurrencePickerFully()"
+>
+  <div class="cal-recurrence-pick" role="listbox">
+    @for (opt of recurrenceSegmentOptions(); track opt.value) {
+      <button
+        type="button"
+        class="cal-recurrence-pick__item"
+        role="option"
+        [attr.aria-selected]="recurrenceSegmentActive() === opt.value"
+        [class.cal-recurrence-pick__item--active]="recurrenceSegmentActive() === opt.value"
+        (click)="onMobileRecurrencePresetPick(opt.value)"
       >
-        <div class="modal-header">
-          <h2>{{ i18n.calendarUi().recurrenceModalTitle }}</h2>
-          <button
-            type="button"
-            class="modal-close"
-            (click)="closeRecurrencePickerFully()"
-            [attr.aria-label]="i18n.studentsUi().close"
-          >
-            <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
-          </button>
-        </div>
-
-        <div class="modal-sheet__scroll">
-          <div class="modal-body cal-recurrence-modal">
-            <div class="cal-recurrence-pick" role="listbox">
-              @for (opt of recurrenceSegmentOptions(); track opt.value) {
-                <button
-                  type="button"
-                  class="cal-recurrence-pick__item"
-                  role="option"
-                  [attr.aria-selected]="recurrenceSegmentActive() === opt.value"
-                  [class.cal-recurrence-pick__item--active]="recurrenceSegmentActive() === opt.value"
-                  (click)="onMobileRecurrencePresetPick(opt.value)"
-                >
-                  <span class="cal-recurrence-pick__main">
-                    <img
-                      class="cal-recurrence-pick__icon"
-                      [src]="opt.icon"
-                      width="20"
-                      height="20"
-                      alt=""
-                      aria-hidden="true"
-                    />
-                    <span>{{ opt.label }}</span>
-                  </span>
-                  @if (recurrenceSegmentActive() === opt.value) {
-                    <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
-                  }
-                </button>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-    } @else {
-      <div
-        class="modal modal-sheet modal--recurrence modal--recurrence-page"
-        animate.enter="modal-sheet-out-mobile 0.32s cubic-bezier(0.32, 0.72, 0, 1) reverse"
-        animate.leave="modal-sheet-out-mobile 0.25s cubic-bezier(0.32, 0.72, 0, 1)"
-        role="dialog"
-        aria-modal="true"
-        (click)="$event.stopPropagation()"
-      >
-        <div class="modal-header">
-          <button
-            type="button"
-            class="modal-back"
-            (click)="closeRecurrenceModal()"
-            [attr.aria-label]="i18n.studentsUi().cancel"
-          >
-            ‹
-          </button>
-          <h2>{{ recurrenceSegmentLabel() }}</h2>
-          <button
-            type="button"
-            class="modal-close"
-            (click)="closeRecurrencePickerFully()"
-            [attr.aria-label]="i18n.studentsUi().close"
-          >
-            <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
-          </button>
-        </div>
-
-        <div class="modal-sheet__scroll">
-          <div class="modal-body cal-recurrence-modal">
-            <ng-container *ngTemplateOutlet="recurrenceDetailsTemplate"></ng-container>
-          </div>
-        </div>
-
-        <div class="cal-recurrence-modal__actions">
-          
-          <button type="button" class="btn-link cancel" (click)="closeRecurrenceModal()">
-            {{ i18n.studentsUi().cancel }}
-          </button>
-          <button type="button" class="btn-primary" (click)="applyRecurrenceModal()">
-            {{ i18n.calendarUi().recurrenceApply }}
-          </button>
-        </div>
-      </div>
+        <span class="cal-recurrence-pick__main">
+          <img
+            class="cal-recurrence-pick__icon"
+            [src]="opt.icon"
+            width="20"
+            height="20"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>{{ opt.label }}</span>
+        </span>
+        @if (recurrenceSegmentActive() === opt.value) {
+          <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
+        }
+      </button>
     }
   </div>
-}
+</app-dialog>
+
+<app-dialog
+  [open]="recurrenceModalOpen() && recurrenceModalStep() === 'details'"
+  stackOnTop
+  [layout]="lessonDialogLayout()"
+  [title]="recurrenceSegmentLabel()"
+  [cancelLabel]="i18n.studentsUi().cancel"
+  [confirmLabel]="i18n.calendarUi().recurrenceApply"
+  [closeOnOverlay]="false"
+  (cancel)="closeRecurrenceModal()"
+  (confirm)="applyRecurrenceModal()"
+>
+  <ng-container *ngTemplateOutlet="recurrenceDetailsTemplate"></ng-container>
+</app-dialog>
 
 <ng-template #recurrenceMobileTriggerTemplate>
   <button type="button" class="cal-recurrence-link" (click)="openRecurrenceModal()">

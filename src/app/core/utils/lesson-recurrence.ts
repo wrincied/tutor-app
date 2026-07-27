@@ -237,12 +237,12 @@ export function expandLessonOccurrences(
 ): CalendarLesson[] {
   const recurring = Boolean(lesson.isRecurring || lesson.rrule);
   if (!recurring || !lesson.rrule || !lesson.scheduledAt) {
-    return [lesson];
+    return lessonInRange(lesson, rangeStart, rangeEnd) ? [lesson] : [];
   }
 
   const rule = buildRule(lesson);
   if (!rule) {
-    return [lesson];
+    return lessonInRange(lesson, rangeStart, rangeEnd) ? [lesson] : [];
   }
 
   const anchor = new Date(lesson.scheduledAt);
@@ -271,11 +271,26 @@ export function expandLessonsForRange(
   for (const lesson of lessons) {
     if ((lesson.isRecurring || lesson.rrule) && lesson.rrule) {
       result.push(...expandLessonOccurrences(lesson, rangeStart, rangeEnd));
-    } else if (lesson.scheduledAt) {
+    } else if (lessonInRange(lesson, rangeStart, rangeEnd)) {
       result.push(lesson);
     }
   }
   return result;
+}
+
+function lessonInRange(
+  lesson: Pick<CalendarLesson, 'scheduledAt'>,
+  rangeStart: Date,
+  rangeEnd: Date,
+): boolean {
+  if (!lesson.scheduledAt) {
+    return false;
+  }
+  const at = new Date(lesson.scheduledAt).getTime();
+  if (Number.isNaN(at)) {
+    return false;
+  }
+  return at >= rangeStart.getTime() && at <= rangeEnd.getTime();
 }
 
 /** Все вхождения серии вперёд (для проверки коллизий при сохранении). */

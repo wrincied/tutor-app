@@ -1,17 +1,23 @@
 :root {
   --sidebar-w: 220px;
-  /** Нижний navbar на телефоне */
-  --z-app-navbar: 1100;
-  /** Модалки (форма урока, ученик и т.д.) — выше navbar */
-  --z-app-overlay: 1250;
-  /** app-dialog поверх других модалок (списание с баланса и т.п.) */
-  --z-app-dialog: 1280;
-  /** app-dialog поверх обычных оверлеев */
-  --z-app-dialog-top: 1400;
-  /** Выпадающие списки (базовый слой) */
-  --z-app-dropdown: 1300;
-  /** Select открыт — поверх app-dialog (--z-app-dialog-top) */
-  --z-app-dropdown-top: 1500;
+
+  /**
+   * Z-Index map (SaaS stacking):
+   * 1000 — primary modal backdrop ("Новый урок")
+   * 1010 — primary modal panel
+   * 1100 — nested modal backdrop (recurrence / billing)
+   * 1110 — nested modal panel
+   * 1200 — dropdowns / selects / tooltips
+   */
+  --z-app-navbar: 900;
+  --z-app-overlay: 1000;
+  --z-app-dialog: 1000;
+  --z-app-dialog-panel: 1010;
+  --z-app-dialog-nested-backdrop: 1100;
+  --z-app-dialog-top: 1110;
+  --z-app-dropdown: 1200;
+  --z-app-tooltip: 1200;
+  --z-app-dropdown-top: 1300;
 
   /* Landing / Simple4U brand tokens */
   --ink: #071714;
@@ -24,10 +30,10 @@
   --accent: var(--moss);
   --nav-accent: var(--moss);
 
-  /* Primary CTA: ink fill + lime label (app). Landing hero uses the inverse. */
-  --btn-primary-bg: #071714;
-  --btn-primary-fg: #c6f071;
-  --btn-primary-hover: #0d2a24;
+  /* Primary CTA: deep brand green + white (lesson modal / SaaS actions) */
+  --btn-primary-bg: #052e16;
+  --btn-primary-fg: #ffffff;
+  --btn-primary-hover: #022c22;
 
   --nav-bg: #f4faf7;
   --nav-border: #cfe3d9;
@@ -43,6 +49,17 @@
   --text-main: #fff;
   --font-display: 'Syne', sans-serif;
   --font-body: 'Figtree', sans-serif;
+
+  /* Modal / form surface tokens */
+  --modal-bg: #ffffff;
+  --modal-radius: 20px;
+  --modal-backdrop: rgb(5 46 22 / 0.4);
+  --modal-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+  --input-bg: #f8fafc;
+  --input-border: #e2e8f0;
+  --input-focus-border: #10b981;
+  --input-focus-ring: rgb(16 185 129 / 0.15);
+  --input-icon: #94a3b8;
 }
 
 [data-theme='dark'] {
