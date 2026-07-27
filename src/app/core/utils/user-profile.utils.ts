@@ -27,6 +27,31 @@ export function isTaxModeConfigured(raw: string | null | undefined): boolean {
   return mode !== 'none' && CONFIGURED_TAX_MODES.has(mode);
 }
 
+/** ISO country from tax_mode prefix (e.g. pl-ryczalt → PL). */
+export function countryFromTaxMode(raw: string | null | undefined): string | null {
+  const mode = normalizeTaxMode(raw);
+  if (!isTaxModeConfigured(mode)) {
+    return null;
+  }
+  const prefix = mode.split('-')[0]?.toUpperCase();
+  return prefix?.length === 2 ? prefix : null;
+}
+
+/** Country used for subscription pricing: tax regime overrides onboarding country. */
+export function resolvePricingCountry(
+  taxMode: string | null | undefined,
+  countrySettings: string | null | undefined,
+): string {
+  const fromTax = countryFromTaxMode(taxMode);
+  if (fromTax) {
+    return fromTax;
+  }
+  const code = String(countrySettings ?? 'AT')
+    .trim()
+    .toUpperCase();
+  return code || 'AT';
+}
+
 export function canPurchaseSubscription(profile: UserProfile | null | undefined): boolean {
   if (!profile) {
     return false;

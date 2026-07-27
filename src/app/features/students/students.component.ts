@@ -84,6 +84,10 @@ export class StudentsComponent implements OnInit {
   savingForm = signal(false);
   linkCopied = signal(false);
   formError = signal<string | null>(null);
+  /** После смены ставки — предложить resync снапшотов уроков. */
+  resyncPromptStudentId = signal<string | null>(null);
+  resyncingLessons = signal(false);
+  resyncMessage = signal<string | null>(null);
   readonly colorToHexForPicker = colorToHexForPicker;
   readonly inviteDialogLink = computed(() => this.inviteDialogStudent()?.telegram_deep_link ?? '');
 
@@ -333,10 +337,17 @@ export class StudentsComponent implements OnInit {
   private persistStudentForm(opts: { inviteAfter?: boolean; openInviteDialog?: boolean }): void {
     const target = this.editTarget();
     const payload = this.studentFormPayload();
+    const rateSnapshotChanged =
+      Boolean(target) &&
+      (resolveRateUnit(target!.rate_unit) !== this.rateUnit() ||
+        Number(target!.rate_per_hour) !== Number(this.form.rate_per_hour) ||
+        String(target!.rate_currency) !== String(this.form.rate_currency));
+
     if (opts.inviteAfter || opts.openInviteDialog) {
       payload.bot_active = true;
     }
     this.formError.set(null);
+    this.resyncMessage.set(null);
     this.savingForm.set(true);
     const req = target ? this.svc.update(target._id, payload) : this.svc.create(payload);
 
@@ -355,10 +366,39 @@ export class StudentsComponent implements OnInit {
         }
         this.resetFormDialog();
         this.load();
+        if (rateSnapshotChanged) {
+          this.resyncPromptStudentId.set(updated._id);
+        }
       },
       error: (err) => {
         this.savingForm.set(false);
         this.formError.set(this.apiErrorMessage(err));
+      },
+    });
+  }
+
+  cancelResyncLessons(): void {
+    this.resyncPromptStudentId.set(null);
+  }
+
+  confirmResyncLessons(): void {
+    const id = this.resyncPromptStudentId();
+    if (!id || this.resyncingLessons()) {
+      return;
+    }
+    this.resyncingLessons.set(true);
+    this.resyncMessage.set(null);
+    this.svc.resyncLessonSnapshots(id).subscribe({
+      next: ({ updated }) => {
+        this.resyncingLessons.set(false);
+        this.resyncPromptStudentId.set(null);
+        this.resyncMessage.set(
+          this.t.resyncLessonsDone.replace('{count}', String(updated)),
+        );
+      },
+      error: (err) => {
+        this.resyncingLessons.set(false);
+        this.resyncMessage.set(this.apiErrorMessage(err) || this.t.resyncLessonsError);
       },
     });
   }

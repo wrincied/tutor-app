@@ -210,7 +210,9 @@ export class CalendarComponent implements OnInit {
   studentsLoadError: string | null = null;
   savingLesson = signal(false);
   deletingLesson = signal(false);
+  refreshingSnapshot = signal(false);
   saveLessonError: string | null = null;
+  snapshotRefreshMessage = signal<string | null>(null);
   /** Модалка: слот занят (drag-and-drop или сохранение урока). */
   scheduleConflictMessage = signal<string | null>(null);
   /** Подтверждение переноса перед уведомлением ученика через бота. */
@@ -1669,6 +1671,39 @@ export class CalendarComponent implements OnInit {
     return this.form.student_id !== (editing.student_id ?? '');
   }
 
+  refreshLessonSnapshotFromStudent(): void {
+    const editing = this.editLessonTarget();
+    if (!editing?._id || this.refreshingSnapshot() || this.savingLesson() || this.deletingLesson()) {
+      return;
+    }
+    if (this.editLessonStudentChanged()) {
+      return;
+    }
+    this.refreshingSnapshot.set(true);
+    this.snapshotRefreshMessage.set(null);
+    this.saveLessonError = null;
+    this.lessonsSvc.update(editing._id, { refresh_snapshot: true }).subscribe({
+      next: (updated) => {
+        const normalized = this.normalizeLesson(updated) as CalendarLesson;
+        this.lessons.update((list) =>
+          list.map((l) => (l._id === normalized._id ? normalized : l)),
+        );
+        this.editLessonTarget.set({
+          ...normalized,
+          isLastPaid: editing.isLastPaid,
+          isVirtualOccurrence: editing.isVirtualOccurrence,
+        });
+        this.refreshingSnapshot.set(false);
+        this.snapshotRefreshMessage.set(this.i18n.calendarUi().snapshotRefreshDone);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.refreshingSnapshot.set(false);
+        this.saveLessonError =
+          err?.error?.message ?? err?.message ?? this.i18n.calendarUi().snapshotRefreshError;
+      },
+    });
+  }
+
   selectedStudentForForm(): Student | undefined {
     const id = this.form.student_id?.trim();
     if (!id) {
@@ -2519,6 +2554,7 @@ export class CalendarComponent implements OnInit {
     );
     this.lessonFormStep.set(1);
     this.saveLessonError = null;
+    this.snapshotRefreshMessage.set(null);
     this.studentsLoadError = null;
     this.ensureStudentsLoaded();
     const mins = lesson.lesson_duration;
@@ -2562,6 +2598,8 @@ export class CalendarComponent implements OnInit {
     this.editLessonTarget.set(null);
     this.editingOccurrenceDate.set(null);
     this.deletingLesson.set(false);
+    this.refreshingSnapshot.set(false);
+    this.snapshotRefreshMessage.set(null);
     this.deleteRecurringModalOpen.set(false);
     this.lessonFormStep.set(1);
     this.lessonFormSubmitted.set(false);

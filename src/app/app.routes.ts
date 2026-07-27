@@ -3,6 +3,7 @@ import type { PageTitleKey } from '@interfaces';
 import { environment } from '@environment';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard, emailVerifiedGuard } from './core/guards/auth.guard';
+import { canDeactivateGuard } from './core/guards/can-deactivate.guard';
 import {
   dataConsentGuard,
   onboardingGuard,
@@ -175,6 +176,7 @@ export const routes: Routes = [
               },
               {
                 path: 'profile',
+                canDeactivate: [canDeactivateGuard],
                 loadComponent: () =>
                   import('./features/account/account-profile.component').then(
                     (m) => m.AccountProfileComponent,

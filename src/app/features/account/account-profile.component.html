@@ -127,7 +127,11 @@
       <p class="account-hint">{{ i18n.accountUi().subscriptionManagedByPayment }}</p>
 
       <div class="account-subscription-actions">
-        <a routerLink="/app/pricing" class="btn-secondary account-subscription-actions__pricing">
+        <a
+          routerLink="/app/pricing"
+          class="btn-secondary account-subscription-actions__pricing"
+          (click)="onPricingClick($event)"
+        >
           {{ i18n.nav().pricing }}
         </a>
       </div>
@@ -150,6 +154,10 @@
         />
         <label>{{ i18n.accountUi().taxMode }}</label>
       </div>
+
+      @if (hasUnsavedTaxChange()) {
+        <p class="account-hint account-hint--warn">{{ i18n.accountUi().taxModeUnsavedHint }}</p>
+      }
     </section>
 
     <button type="submit" class="btn-primary account-form__submit" [disabled]="saving()">
@@ -168,4 +176,18 @@
   (confirm)="onTaxModeConfirm()"
 >
   <p>{{ taxModeConfirmMessage() }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="unsavedOpen()"
+  [title]="i18n.accountUi().unsavedTaxTitle"
+  [cancelLabel]="i18n.accountUi().unsavedTaxStay"
+  [confirmLabel]="i18n.accountUi().unsavedTaxLeave"
+  [confirmDanger]="true"
+  layout="center"
+  [closeOnOverlay]="false"
+  (cancel)="onUnsavedStay()"
+  (confirm)="onUnsavedLeave()"
+>
+  <p>{{ i18n.accountUi().unsavedTaxBody }}</p>
 </app-dialog>

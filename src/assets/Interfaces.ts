@@ -442,6 +442,11 @@ export interface AccountStrings {
   taxModeConfirmBody: string;
   taxModeConfirmConfirm: string;
   taxModeConfirmCancel: string;
+  taxModeUnsavedHint: string;
+  unsavedTaxTitle: string;
+  unsavedTaxBody: string;
+  unsavedTaxStay: string;
+  unsavedTaxLeave: string;
   upgradePro: string;
   upgradeTrial: string;
   checkoutLoading: string;
@@ -694,6 +699,10 @@ export interface CalendarStrings {
   snapshotRateLabel: string;
   snapshotWillUpdate: string;
   snapshotWillFix: string;
+  snapshotRefreshAction: string;
+  snapshotRefreshing: string;
+  snapshotRefreshDone: string;
+  snapshotRefreshError: string;
   regionLabel: string;
   rateLabel: string;
   durationLabel: string;
@@ -1025,6 +1034,13 @@ export interface StudentStrings {
   rateUnitInfoAria: string;
   /** Hover/tap explanation for hour vs lesson pricing */
   rateUnitInfo: string;
+  resyncLessonsTitle: string;
+  resyncLessonsBody: string;
+  resyncLessonsConfirm: string;
+  resyncLessonsCancel: string;
+  resyncLessonsRunning: string;
+  resyncLessonsDone: string;
+  resyncLessonsError: string;
   rateColumn: string;
   balanceLessons: string;
   perLesson: string;

@@ -1,8 +1,10 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { switchMap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 import type { SubscriptionStatus, TaxMode, UserProfile } from '@interfaces';
+import type { CanComponentDeactivate } from '../../core/guards/can-deactivate.guard';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserProfileSettingsService } from '../../core/services/user-profile-settings.service';
@@ -24,11 +26,12 @@ import { AppSelectComponent, type AppSelectOption } from '../../shared/app-selec
   templateUrl: './account-profile.component.html',
   styleUrls: ['./account-page-host.scss', './account.component.scss'],
 })
-export class AccountProfileComponent implements OnInit {
+export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
   private readonly userSvc = inject(UserService);
   private readonly authSvc = inject(AuthService);
   private readonly router = inject(Router);
   private readonly profileSettings = inject(UserProfileSettingsService);
+  private readonly unsavedDecision$ = new Subject<boolean>();
 
   readonly i18n = inject(I18nService);
   readonly skeletonFieldSlots = [0, 1, 2, 3];
@@ -40,6 +43,10 @@ export class AccountProfileComponent implements OnInit {
   profile = signal<UserProfile | null>(null);
   taxConfirmOpen = signal(false);
   pendingTaxMode = signal<TaxMode | null>(null);
+  unsavedOpen = signal(false);
+  pendingNavigateUrl = signal<string | null>(null);
+  /** Подтверждённый режим отличается от сохранённого профиля. */
+  hasUnsavedTaxChange = signal(false);
 
   firstName = '';
   lastName = '';
@@ -85,6 +92,15 @@ export class AccountProfileComponent implements OnInit {
     return this.i18n.accountUi().taxModeConfirmBody.replace('{mode}', label);
   });
 
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!this.hasUnsavedTaxChange()) {
+      return;
+    }
+    event.preventDefault();
+    event.returnValue = '';
+  }
+
   ngOnInit(): void {
     this.userSvc.getProfile().subscribe({
       next: (user) => {
@@ -98,11 +114,21 @@ export class AccountProfileComponent implements OnInit {
     });
   }
 
+  canDeactivate(): Observable<boolean> | boolean {
+    if (!this.hasUnsavedTaxChange()) {
+      return true;
+    }
+    this.pendingNavigateUrl.set(null);
+    this.unsavedOpen.set(true);
+    return this.unsavedDecision$.pipe(take(1));
+  }
+
   onTaxModePick(next: string): void {
     const normalized = normalizeTaxMode(next);
     if (!isTaxModeConfigured(normalized)) {
       this.tax_mode = normalized;
       this.taxModeSelectValue = normalized;
+      this.syncUnsavedTaxFlag();
       return;
     }
     if (normalized === normalizeTaxMode(this.tax_mode)) {
@@ -119,6 +145,7 @@ export class AccountProfileComponent implements OnInit {
     if (pending) {
       this.tax_mode = pending;
       this.taxModeSelectValue = pending;
+      this.syncUnsavedTaxFlag();
     }
     this.taxConfirmOpen.set(false);
     this.pendingTaxMode.set(null);
@@ -128,6 +155,53 @@ export class AccountProfileComponent implements OnInit {
     this.taxConfirmOpen.set(false);
     this.pendingTaxMode.set(null);
     this.taxModeSelectValue = String(this.tax_mode);
+  }
+
+  onPricingClick(event: Event): void {
+    if (!this.hasUnsavedTaxChange()) {
+      return;
+    }
+    event.preventDefault();
+    this.pendingNavigateUrl.set('/app/pricing');
+    this.unsavedOpen.set(true);
+  }
+
+  onUnsavedStay(): void {
+    this.unsavedOpen.set(false);
+    this.pendingNavigateUrl.set(null);
+    this.unsavedDecision$.next(false);
+  }
+
+  onUnsavedLeave(): void {
+    const url = this.pendingNavigateUrl();
+    this.unsavedOpen.set(false);
+    this.pendingNavigateUrl.set(null);
+    this.discardTaxChanges();
+    this.unsavedDecision$.next(true);
+    if (url) {
+      void this.router.navigateByUrl(url);
+    }
+  }
+
+  private syncUnsavedTaxFlag(): void {
+    const profile = this.profile();
+    if (!profile) {
+      this.hasUnsavedTaxChange.set(false);
+      return;
+    }
+    this.hasUnsavedTaxChange.set(
+      normalizeTaxMode(this.tax_mode) !== normalizeTaxMode(profile.tax_mode),
+    );
+  }
+
+  private discardTaxChanges(): void {
+    const profile = this.profile();
+    if (!profile) {
+      return;
+    }
+    this.tax_mode = (profile.tax_mode as TaxMode) || 'none';
+    this.taxModeSelectValue = String(this.tax_mode);
+    this.hasUnsavedTaxChange.set(false);
   }
 
   private applyProfile(user: UserProfile): void {
@@ -143,6 +217,7 @@ export class AccountProfileComponent implements OnInit {
     this.tax_mode = (user.tax_mode as TaxMode) || 'none';
     this.taxModeSelectValue = String(this.tax_mode);
     this.subscription_status = (user.subscription_status as SubscriptionStatus) || 'free';
+    this.hasUnsavedTaxChange.set(false);
     this.loading.set(false);
   }
 

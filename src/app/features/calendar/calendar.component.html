@@ -644,6 +644,24 @@
                       <p class="cal-form-preview cal-form-preview--hint">
                         {{ i18n.calendarUi().snapshotWillUpdate }}
                       </p>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-link secondary cal-refresh-snapshot-btn"
+                        [disabled]="savingLesson() || deletingLesson() || refreshingSnapshot()"
+                        (click)="refreshLessonSnapshotFromStudent()"
+                      >
+                        {{
+                          refreshingSnapshot()
+                            ? i18n.calendarUi().snapshotRefreshing
+                            : i18n.calendarUi().snapshotRefreshAction
+                        }}
+                      </button>
+                      @if (snapshotRefreshMessage()) {
+                        <p class="cal-form-preview cal-form-preview--hint" role="status">
+                          {{ snapshotRefreshMessage() }}
+                        </p>
+                      }
                     }
                   </div>
                 </div>
