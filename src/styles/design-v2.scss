@@ -68,6 +68,18 @@ html[data-design='v2'] {
   }
 }
 
+html[data-design='v2'][data-theme='dark'] {
+  --nav-accent: #e7f5ef;
+  --nav-active-bg: color-mix(in srgb, #e7f5ef 12%, #0a1f1b);
+  --accent: #e7f5ef;
+
+  .nav-link.active,
+  .sidebar-btn--account.active,
+  .bottom-link.active {
+    color: var(--nav-accent);
+  }
+}
+
 @keyframes design-v2-enter {
   from {
     opacity: 0;

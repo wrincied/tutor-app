@@ -194,6 +194,15 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     margin-top: 1.25rem;
   }
 
+  &__actions-end {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
   &__btn {
     min-height: 2.75rem;
     min-width: 2.75rem;

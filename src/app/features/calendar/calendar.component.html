@@ -571,26 +571,22 @@
   [wide]="true"
   [closeOnOverlay]="false"
   [title]="editLessonTarget() ? i18n.calendarUi().editLesson : i18n.calendarUi().newLesson"
+  [leadingLabel]="
+    editLessonTarget()
+      ? deletingLesson()
+        ? i18n.calendarUi().deletingLesson
+        : i18n.calendarUi().deleteLesson
+      : null
+  "
+  [leadingDanger]="true"
   [cancelLabel]="i18n.studentsUi().cancel"
   [confirmLabel]="savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save"
+  (leading)="deleteLesson()"
   (cancel)="closeLessonForm()"
   (confirm)="saveLesson()"
 >
   <form class="cal-lesson-form" (ngSubmit)="$event.preventDefault(); saveLesson()" novalidate>
-    @if (editLessonTarget()) {
-      <div class="cal-lesson-form__delete">
-        <button
-          type="button"
-          class="cal-btn-delete"
-          [disabled]="savingLesson() || deletingLesson()"
-          (click)="deleteLesson()"
-        >
-          {{
-            deletingLesson() ? i18n.calendarUi().deletingLesson : i18n.calendarUi().deleteLesson
-          }}
-        </button>
-      </div>
-    }
+
 
     <div class="cal-lesson-form__body">
           @if (studentsLoadError) {
@@ -1054,6 +1050,7 @@
         </div>
 
         <div class="cal-recurrence-modal__actions">
+          
           <button type="button" class="btn-link cancel" (click)="closeRecurrenceModal()">
             {{ i18n.studentsUi().cancel }}
           </button>

@@ -384,6 +384,13 @@ export interface AdminStrings {
   giftingTrial: string;
   giftTrialSuccess: string;
   giftTrialError: string;
+  verifyEmail: string;
+  verifyingEmail: string;
+  verifyEmailSuccess: string;
+  verifyEmailError: string;
+  verifyEmailAlready: string;
+  emailVerifiedBadge: string;
+  emailUnverifiedBadge: string;
   editSubscription: string;
   editSubscriptionTitle: string;
   subscriptionField: string;
