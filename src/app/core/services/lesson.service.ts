@@ -38,7 +38,7 @@ export class LessonService {
     return this.http.post<Lesson>(API, payload);
   }
 
-  /** PUT /api/lessons/:id — снапшот цены только на сервере; при смене student_id переснимается */
+  /** PUT /api/lessons/:id — снапшот цены только на сервере; при смене student_id или refresh_snapshot переснимается */
   update(
     id: string,
     payload: {
@@ -55,6 +55,7 @@ export class LessonService {
       should_deduct_balance?: boolean;
       should_refund_balance?: boolean;
       manual_completion?: boolean;
+      refresh_snapshot?: boolean;
     },
   ) {
     return this.http.put<Lesson>(`${API}/${id}`, payload);

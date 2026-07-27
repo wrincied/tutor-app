@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   canPurchaseSubscription,
+  countryFromTaxMode,
   isTaxModeConfigured,
   normalizeTaxMode,
+  resolvePricingCountry,
   subscriptionStatusLabel,
 } from './user-profile.utils';
 
@@ -45,5 +47,16 @@ describe('user-profile.utils', () => {
   it('subscriptionStatusLabel maps plan', () => {
     const labels = { free: 'Free', pro: 'Pro', trial: 'Trial' };
     expect(subscriptionStatusLabel('pro', labels)).toBe('Pro');
+  });
+
+  it('countryFromTaxMode maps regime prefix to ISO country', () => {
+    expect(countryFromTaxMode('pl-ryczalt')).toBe('PL');
+    expect(countryFromTaxMode('ru-usn')).toBe('RU');
+    expect(countryFromTaxMode('none')).toBeNull();
+  });
+
+  it('resolvePricingCountry prefers tax regime over onboarding country', () => {
+    expect(resolvePricingCountry('pl-ryczalt', 'AT')).toBe('PL');
+    expect(resolvePricingCountry('none', 'DE')).toBe('DE');
   });
 });
