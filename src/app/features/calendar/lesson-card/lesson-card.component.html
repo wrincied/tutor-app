@@ -1,0 +1,29 @@
+<p class="cal-lesson-card__title">
+  <span
+    class="cal-lesson-card__student-dot"
+    [style.background]="studentColor()"
+    aria-hidden="true"
+  ></span>
+  <span class="cal-lesson-card__student-name">{{ studentName() }}</span>
+</p>
+
+@if (compactMeta()) {
+  <p class="cal-lesson-card__meta">
+    {{ regionText() }} · {{ rateText() }} · {{ durationText() }}
+  </p>
+} @else {
+  <div class="cal-lesson-card__details">
+    <p class="cal-lesson-card__detail">
+      <span class="cal-lesson-card__lbl">{{ regionLabel() }}</span>
+      <span>{{ regionText() }}</span>
+    </p>
+    <p class="cal-lesson-card__detail">
+      <span class="cal-lesson-card__lbl">{{ rateLabel() }}</span>
+      <span>{{ rateText() }}</span>
+    </p>
+    <p class="cal-lesson-card__detail">
+      <span class="cal-lesson-card__lbl">{{ durationLabel() }}</span>
+      <span>{{ durationText() }}</span>
+    </p>
+  </div>
+}

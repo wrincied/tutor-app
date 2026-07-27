@@ -22,6 +22,7 @@ import { LessonService } from '../../core/services/lesson.service';
 import { UserProfileSettingsService } from '../../core/services/user-profile-settings.service';
 import { StudentService, type Student } from '../../core/services/student.service';
 import { isPackageStudentWithEmptyBalance, isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
+import { LessonCardComponent } from './lesson-card/lesson-card.component';
 import type { CalendarLesson, Lesson, LessonStatus } from '@interfaces';
 import {
   lessonAmountFromPrice,
@@ -115,7 +116,7 @@ type BillingConfirmState = {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [FormsModule, AppDialogComponent, AppSelectComponent, NgTemplateOutlet],
+  imports: [FormsModule, AppDialogComponent, AppSelectComponent, NgTemplateOutlet, LessonCardComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
  })
@@ -246,17 +247,17 @@ export class CalendarComponent implements OnInit {
   readonly durationPresets: readonly number[] = [30, 45, 60, 90];
   /** Цвета точек статуса — как у карточек урока в сетке. */
   private static readonly STATUS_DOT_COLORS: Record<LessonStatus, string> = {
-    scheduled: '#0c4a6e',
-    completed: '#065f46',
-    missed: '#92400e',
-    canceled: '#991b1b',
+    scheduled: 'rgb(14 165 233)',
+    completed: 'rgb(16 185 129)',
+    missed: 'rgb(245 158 11)',
+    canceled: 'rgb(239 68 68)',
   };
 
   private static readonly STATUS_BADGE_COLORS: Record<LessonStatus, string> = {
-    scheduled: '#0369a1',
-    completed: '#047857',
-    missed: '#b45309',
-    canceled: '#b91c1c',
+    scheduled: 'rgb(14 165 233)',
+    completed: 'rgb(16 185 129)',
+    missed: 'rgb(245 158 11)',
+    canceled: 'rgb(239 68 68)',
   };
 
   viewModeSelectOptions = computed((): AppSelectOption[] =>
@@ -1768,27 +1769,26 @@ export class CalendarComponent implements OnInit {
     return `${fmt.format(start)} — ${fmt.format(end)}`;
   }
 
-  lessonCardClass(lesson: CalendarLesson): Record<string, boolean> {
+  lessonCardFocusActive(lesson: CalendarLesson): boolean {
     const focused = this.focusedStudentId();
-    const dragging = this.dragActiveLessonId() === lesson._id;
     const highlightedId = this.highlightedLessonId();
     const routeHighlight = highlightedId === lesson._id;
-    /** Затемнение с deep-link — только на время моргания; из сайдбара — пока выбран ученик. */
+    return Boolean(
+      routeHighlight || (focused && !highlightedId && lesson.student_id === focused),
+    );
+  }
+
+  lessonCardFocusDim(lesson: CalendarLesson): boolean {
+    const focused = this.focusedStudentId();
+    const highlightedId = this.highlightedLessonId();
+    const routeHighlight = highlightedId === lesson._id;
     const routeDimming = Boolean(highlightedId && !routeHighlight);
     const sidebarDimming = Boolean(!highlightedId && focused && lesson.student_id !== focused);
-    return {
-      'cal-lesson-card': true,
-      'cal-lesson-card--scheduled': lesson.status === 'scheduled',
-      'cal-lesson-card--completed': lesson.status === 'completed',
-      'cal-lesson-card--missed': lesson.status === 'missed',
-      'cal-lesson-card--canceled': lesson.status === 'canceled',
-      'cal-lesson-card--focus-active': Boolean(
-        routeHighlight || (focused && !highlightedId && lesson.student_id === focused),
-      ),
-      'cal-lesson-card--focus-dim': routeDimming || sidebarDimming,
-      'cal-lesson-card--route-highlight': routeHighlight,
-      'cal-lesson-card--dragging': dragging,
-    };
+    return routeDimming || sidebarDimming;
+  }
+
+  lessonCardRouteHighlight(lesson: CalendarLesson): boolean {
+    return this.highlightedLessonId() === lesson._id;
   }
 
   isDayDragTarget(col: Date): boolean {

@@ -366,17 +366,23 @@
                                   [class.cal-lesson-card--canceled]="
                                     draggedLesson()?.status === 'canceled'
                                   "
-                                  [style.border-left-color]="
-                                    getStudentColor(draggedLesson()?.student_id)
-                                  "
                                   [style.top.px]="phantomTopForColumn(col) ?? 0"
                                 >
                                   @if (draggedLesson(); as phantomLesson) {
                                     <p class="cal-lesson-card__title">
-                                      {{
-                                        phantomLesson.student_name ||
-                                          getStudentName(phantomLesson.student_id)
-                                      }}
+                                      <span
+                                        class="cal-lesson-card__student-dot"
+                                        [style.background]="
+                                          getStudentColor(phantomLesson.student_id)
+                                        "
+                                        aria-hidden="true"
+                                      ></span>
+                                      <span class="cal-lesson-card__student-name">
+                                        {{
+                                          phantomLesson.student_name ||
+                                            getStudentName(phantomLesson.student_id)
+                                        }}
+                                      </span>
                                     </p>
                                     @if (lessonCardUseCompactMeta(phantomLesson)) {
                                       <p class="cal-lesson-card__meta">
@@ -419,52 +425,30 @@
                                 lesson of lessonsForColumn(col);
                                 track lesson.occurrenceKey ?? lesson._id
                               ) {
-                                <div
-                                  [class]="lessonCardClass(lesson)"
-                                  [class.cal-lesson-card--last-paid]="lesson.isLastPaid"
+                                <app-lesson-card
                                   [style.top.px]="calculateTop(displayScheduledAt(lesson))"
                                   [style.height.px]="calculateHeight(lesson.lesson_duration)"
-                                  [style.border-left-color]="getStudentColor(lesson.student_id)"
-                                  [attr.draggable]="useNativeLessonDrag() ? true : null"
-                                  (dragstart)="onLessonDragStart($event, lesson)"
-                                  (dragend)="onLessonDragEnd()"
-                                  (pointerdown)="onLessonPointerDown($event, lesson)"
-                                  (click)="onLessonCardClick($event, lesson)"
-                                >
-                                  <p class="cal-lesson-card__title">
-                                    {{ getStudentName(lesson.student_id) }}
-                                  </p>
-                                  @if (lessonCardUseCompactMeta(lesson)) {
-                                    <p class="cal-lesson-card__meta">
-                                      {{ formatLessonRegion(lesson) }}
-                                      · {{ formatLessonSnapshotRate(lesson) }} ·
-                                      {{ formatLessonDuration(lesson.lesson_duration) }}
-                                    </p>
-                                  } @else {
-                                    <div class="cal-lesson-card__details">
-                                      <p class="cal-lesson-card__detail">
-                                        <span class="cal-lesson-card__lbl">{{
-                                          i18n.calendarUi().regionLabel
-                                        }}</span>
-                                        <span>{{ formatLessonRegion(lesson) }}</span>
-                                      </p>
-                                      <p class="cal-lesson-card__detail">
-                                        <span class="cal-lesson-card__lbl">{{
-                                          i18n.calendarUi().rateLabel
-                                        }}</span>
-                                        <span>{{ formatLessonSnapshotRate(lesson) }}</span>
-                                      </p>
-                                      <p class="cal-lesson-card__detail">
-                                        <span class="cal-lesson-card__lbl">{{
-                                          i18n.calendarUi().durationLabel
-                                        }}</span>
-                                        <span>{{
-                                          formatLessonDuration(lesson.lesson_duration)
-                                        }}</span>
-                                      </p>
-                                    </div>
-                                  }
-                                </div>
+                                  [status]="lesson.status"
+                                  [studentName]="getStudentName(lesson.student_id)"
+                                  [studentColor]="getStudentColor(lesson.student_id)"
+                                  [compactMeta]="lessonCardUseCompactMeta(lesson)"
+                                  [regionLabel]="i18n.calendarUi().regionLabel"
+                                  [rateLabel]="i18n.calendarUi().rateLabel"
+                                  [durationLabel]="i18n.calendarUi().durationLabel"
+                                  [regionText]="formatLessonRegion(lesson)"
+                                  [rateText]="formatLessonSnapshotRate(lesson)"
+                                  [durationText]="formatLessonDuration(lesson.lesson_duration)"
+                                  [lastPaid]="!!lesson.isLastPaid"
+                                  [dragging]="dragActiveLessonId() === lesson._id"
+                                  [focusActive]="lessonCardFocusActive(lesson)"
+                                  [focusDim]="lessonCardFocusDim(lesson)"
+                                  [routeHighlight]="lessonCardRouteHighlight(lesson)"
+                                  [nativeDraggable]="useNativeLessonDrag()"
+                                  (cardDragStart)="onLessonDragStart($event, lesson)"
+                                  (cardDragEnd)="onLessonDragEnd()"
+                                  (cardPointerDown)="onLessonPointerDown($event, lesson)"
+                                  (cardClick)="onLessonCardClick($event, lesson)"
+                                />
                               }
                             </div>
                           }
