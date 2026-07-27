@@ -8,6 +8,17 @@ function normalizeBillingType(raw) {
     }
     return 'package';
 }
+function normalizeRateUnit(raw) {
+    return String(raw ?? 'hour').trim().toLowerCase() === 'lesson' ? 'lesson' : 'hour';
+}
+function packageDebitAmount(rateUnit, lessonDuration) {
+    if (rateUnit === 'lesson') {
+        return 1;
+    }
+    const minutes = Number(lessonDuration);
+    const safe = Number.isFinite(minutes) && minutes > 0 ? minutes : 60;
+    return Math.round((safe / 60) * 100) / 100;
+}
 /**
  * Idempotent lesson billing transaction.
  * Returns status for observability.
@@ -46,21 +57,23 @@ async function processLessonTransaction({ tx, lessonRef, getStudentRef, getBalan
     }
     const student = studentSnap.data();
     const billingType = normalizeBillingType(student.billing_type);
+    const rateUnit = normalizeRateUnit(student.rate_unit);
+    const units = packageDebitAmount(rateUnit, lesson.lesson_duration);
     let studentPatch;
     let amount;
     let reason;
     let balanceDebited;
     if (billingType === 'package') {
         const current = Number(student.balance_lessons) || 0;
-        studentPatch = { balance_lessons: current - 1 };
-        amount = -1;
+        studentPatch = { balance_lessons: Math.round((current - units) * 100) / 100 };
+        amount = -units;
         reason = 'lesson_completed_delayed';
         balanceDebited = true;
     }
     else {
         const current = Number(student.unpaid_lessons_count) || 0;
-        studentPatch = { unpaid_lessons_count: current + 1 };
-        amount = 1;
+        studentPatch = { unpaid_lessons_count: Math.round((current + units) * 100) / 100 };
+        amount = units;
         reason = 'lesson_completed_postpaid';
         balanceDebited = false;
     }
@@ -80,6 +93,7 @@ async function processLessonTransaction({ tx, lessonRef, getStudentRef, getBalan
     tx.update(lessonRef, {
         billing_processed: true,
         balance_debited: balanceDebited,
+        balance_units_debited: units,
         billing_processed_at: serverTimestamp,
         paidAt: nowIso,
         updatedAt: serverTimestamp,

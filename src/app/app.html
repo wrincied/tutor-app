@@ -10,3 +10,12 @@
 } @else {
   <router-outlet />
 }
+
+<app-dialog
+  [open]="!!unlinkAlert.alert()"
+  [title]="unlinkDialogTitle()"
+  [dismissLabel]="unlinkDialogOk()"
+  (cancel)="unlinkAlert.dismiss()"
+>
+  <p>{{ unlinkDialogMessage() }}</p>
+</app-dialog>

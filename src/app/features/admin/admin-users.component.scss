@@ -38,6 +38,33 @@
   word-break: break-all;
 }
 
+.admin-email-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.admin-email-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+  &--ok {
+    color: rgb(6 95 70);
+    background: rgb(209 250 229);
+  }
+
+  &--warn {
+    color: rgb(146 64 14);
+    background: rgb(254 243 199);
+  }
+}
+
 .admin-user-detail__stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

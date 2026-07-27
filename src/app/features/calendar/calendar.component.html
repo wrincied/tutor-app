@@ -296,7 +296,7 @@
                     >
                       <div class="cal-time-axis" [style.height.px]="gridHeightPx()">
                         @for (hour of gridHours(); track hour) {
-                          <div class="cal-time-slot" [style.height.px]="hourHeightPx">
+                          <div class="cal-time-slot" [style.height.px]="hourHeightPx()">
                             {{ formatHourLabel(hour) }}
                           </div>
                         }
@@ -329,7 +329,7 @@
                                 </div>
                               }
                               @for (hour of gridHours(); track hour) {
-                                <div class="cal-hour-line" [style.height.px]="hourHeightPx"></div>
+                                <div class="cal-hour-line" [style.height.px]="hourHeightPx()"></div>
                               }
 
                               @if (showPhantomInColumn(col)) {
@@ -510,7 +510,11 @@
                         [class.cal-sidebar__balance--last]="isPackageLastBalance(sidebarStudent)"
                       >
                         {{ sidebarStudent.balance_lessons }}
-                        {{ i18n.studentsUi().lessonsShort }}
+                        {{
+                          sidebarStudent.rate_unit === 'lesson'
+                            ? i18n.studentsUi().lessonsShort
+                            : i18n.studentsUi().hoursShort
+                        }}
                         @if (isPackageLastBalance(sidebarStudent)) {
                           <span class="cal-sidebar__last-hint">
                             · {{ i18n.calendarUi().lastLessonHint }}
@@ -561,43 +565,30 @@
   </div>
 </div>
 
-@if (showLessonForm()) {
-  <div
-    class="modal-overlay modal-overlay--sheet"
-    [class.modal-overlay--full]="isBottomNavLayout()"
-    role="presentation"
-    animate.leave="modal-overlay-leave"
-  >
-    <div
-      class="modal modal-sheet modal--lesson"
-      [class.modal--lesson-wide]="!isBottomNavLayout()"
-      [class.modal--lesson-full]="isBottomNavLayout()"
-      role="dialog"
-      aria-modal="true"
-      animate.leave="modal-sheet-leave"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="modal-header">
-        <h2>
-          @if (editLessonTarget()) {
-            {{ i18n.calendarUi().editLesson }}
-          } @else {
-            {{ i18n.calendarUi().newLesson }}
-          }
-        </h2>
-        <button
-          type="button"
-          class="modal-close"
-          (click)="closeLessonForm()"
-          [attr.aria-label]="i18n.studentsUi().close"
-        >
-          <img src="assets/icons/icon-close.svg" width="24" height="24" alt="" />
-        </button>
-      </div>
+<app-dialog
+  [open]="showLessonForm()"
+  [layout]="lessonDialogLayout()"
+  [wide]="true"
+  [closeOnOverlay]="false"
+  [title]="editLessonTarget() ? i18n.calendarUi().editLesson : i18n.calendarUi().newLesson"
+  [leadingLabel]="
+    editLessonTarget()
+      ? deletingLesson()
+        ? i18n.calendarUi().deletingLesson
+        : i18n.calendarUi().deleteLesson
+      : null
+  "
+  [leadingDanger]="true"
+  [cancelLabel]="i18n.studentsUi().cancel"
+  [confirmLabel]="savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save"
+  (leading)="deleteLesson()"
+  (cancel)="closeLessonForm()"
+  (confirm)="saveLesson()"
+>
+  <form class="cal-lesson-form" (ngSubmit)="$event.preventDefault(); saveLesson()" novalidate>
 
-      <form class="cal-lesson-form" (ngSubmit)="saveLesson()">
-      <div class="modal-sheet__scroll">
-        <div class="modal-body">
+
+    <div class="cal-lesson-form__body">
           @if (studentsLoadError) {
             <p class="cal-form-error">{{ studentsLoadError }}</p>
           }
@@ -605,7 +596,7 @@
           @if (editLessonTarget()) {
             <div
               class="cal-lesson-layout"
-              [class.cal-lesson-layout--desktop]="!isBottomNavLayout()"
+              [class.cal-lesson-layout--desktop]="!useStackedLessonForm()"
             >
               <div class="cal-lesson-layout__main cal-form-fields">
               <div class="cal-form-row">
@@ -693,7 +684,7 @@
                 </div>
               </div>
 
-              @if (isBottomNavLayout()) {
+              @if (useStackedLessonForm()) {
                 <ng-container *ngTemplateOutlet="recurrenceMobileTriggerTemplate"></ng-container>
               }
 
@@ -748,7 +739,7 @@
               }
               </div>
 
-              @if (!isBottomNavLayout()) {
+              @if (!useStackedLessonForm()) {
                 <aside
                   class="cal-lesson-layout__side"
                   [attr.aria-label]="i18n.calendarUi().recurrenceModalTitle"
@@ -764,7 +755,7 @@
           } @else {
             <div
               class="cal-lesson-layout"
-              [class.cal-lesson-layout--desktop]="!isBottomNavLayout()"
+              [class.cal-lesson-layout--desktop]="!useStackedLessonForm()"
             >
               <div class="cal-lesson-layout__main cal-form-fields">
               <div class="cal-form-row">
@@ -838,7 +829,7 @@
                 </div>
               </div>
 
-              @if (isBottomNavLayout()) {
+              @if (useStackedLessonForm()) {
                 <ng-container *ngTemplateOutlet="recurrenceMobileTriggerTemplate"></ng-container>
               }
 
@@ -874,7 +865,7 @@
               </div>
               </div>
 
-              @if (!isBottomNavLayout()) {
+              @if (!useStackedLessonForm()) {
                 <aside
                   class="cal-lesson-layout__side"
                   [attr.aria-label]="i18n.calendarUi().recurrenceModalTitle"
@@ -888,39 +879,9 @@
               <p class="cal-form-error">{{ saveLessonError }}</p>
             }
           }
-        </div>
-      </div>
-
-            <div class="cal-form-actions cal-form-actions--wrap">
-              @if (editLessonTarget()) {
-                <button
-                  type="button"
-                  class="cal-btn-delete"
-                  [disabled]="savingLesson() || deletingLesson()"
-                  (click)="deleteLesson()"
-                >
-                  {{
-                    deletingLesson()
-                      ? i18n.calendarUi().deletingLesson
-                      : i18n.calendarUi().deleteLesson
-                  }}
-                </button>
-              }
-              <button type="button" class="btn-link cancel" (click)="closeLessonForm()">
-                {{ i18n.studentsUi().cancel }}
-              </button>
-              <button
-                type="submit"
-                class="btn-primary"
-                [disabled]="savingLesson() || deletingLesson()"
-              >
-                {{ savingLesson() ? i18n.studentsUi().saving : i18n.studentsUi().save }}
-              </button>
-            </div>
-      </form>
     </div>
-  </div>
-}
+  </form>
+</app-dialog>
 
 <app-dialog
   [open]="!!dragMoveConfirm()"
@@ -1089,6 +1050,7 @@
         </div>
 
         <div class="cal-recurrence-modal__actions">
+          
           <button type="button" class="btn-link cancel" (click)="closeRecurrenceModal()">
             {{ i18n.studentsUi().cancel }}
           </button>
@@ -1352,6 +1314,22 @@
     }
   </div>
 </ng-template>
+
+<app-dialog
+  [open]="deleteLessonConfirmOpen()"
+  stackOnTop
+  [closeOnOverlay]="false"
+  [title]="i18n.calendarUi().deleteLesson"
+  [cancelLabel]="i18n.studentsUi().cancel"
+  [confirmLabel]="
+    deletingLesson() ? i18n.calendarUi().deletingLesson : i18n.calendarUi().deleteLesson
+  "
+  [confirmDanger]="true"
+  (cancel)="closeDeleteLessonConfirm()"
+  (confirm)="confirmDeleteLesson()"
+>
+  <p>{{ i18n.calendarUi().deleteLessonConfirm }}</p>
+</app-dialog>
 
 <app-dialog
   [open]="deleteRecurringModalOpen()"

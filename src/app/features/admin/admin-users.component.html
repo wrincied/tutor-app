@@ -52,7 +52,16 @@
           <article class="admin-data-grid__row admin-users-row" role="listitem">
             <div class="admin-data-grid__cell">
               <span class="admin-data-grid__cell-label">{{ t().tableEmail }}</span>
-              {{ user.email }}
+              <div class="admin-email-cell">
+                <span>{{ user.email }}</span>
+                <span
+                  class="admin-email-badge"
+                  [class.admin-email-badge--ok]="user.email_verified"
+                  [class.admin-email-badge--warn]="!user.email_verified"
+                >
+                  {{ user.email_verified ? t().emailVerifiedBadge : t().emailUnverifiedBadge }}
+                </span>
+              </div>
             </div>
             <div class="admin-data-grid__cell">
               <span class="admin-data-grid__cell-label">{{ t().tableStatus }}</span>
@@ -108,6 +117,18 @@
                 <button type="button" class="btn-secondary" (click)="openEdit(user)">
                   {{ t().editSubscription }}
                 </button>
+                @if (!user.email_verified) {
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    [disabled]="verifyingEmailUserId() === user._id"
+                    (click)="verifyUserEmail(user)"
+                  >
+                    {{
+                      verifyingEmailUserId() === user._id ? t().verifyingEmail : t().verifyEmail
+                    }}
+                  </button>
+                }
                 <button
                   type="button"
                   class="btn-secondary admin-table__gift"
@@ -182,7 +203,28 @@
   } @else if (detail(); as s) {
     <div class="admin-user-detail">
       <p class="admin-user-detail__email">{{ s.user.email }}</p>
-      <p><span [class]="statusClass(s.user.subscription_status)">{{ statusLabel(s.user.subscription_status) }}</span></p>
+      <p>
+        <span [class]="statusClass(s.user.subscription_status)">{{
+          statusLabel(s.user.subscription_status)
+        }}</span>
+        <span
+          class="admin-email-badge"
+          [class.admin-email-badge--ok]="s.user.email_verified"
+          [class.admin-email-badge--warn]="!s.user.email_verified"
+        >
+          {{ s.user.email_verified ? t().emailVerifiedBadge : t().emailUnverifiedBadge }}
+        </span>
+      </p>
+      @if (!s.user.email_verified) {
+        <button
+          type="button"
+          class="btn-secondary"
+          [disabled]="verifyingEmailUserId() === s.user._id"
+          (click)="verifyUserEmail(s.user)"
+        >
+          {{ verifyingEmailUserId() === s.user._id ? t().verifyingEmail : t().verifyEmail }}
+        </button>
+      }
       <dl class="admin-user-detail__stats">
         <div><dt>{{ t().userDetailStudents }}</dt><dd>{{ s.studentsCount }}</dd></div>
         <div><dt>{{ t().userDetailLessons }}</dt><dd>{{ s.lessonsCount }}</dd></div>

@@ -10,6 +10,8 @@ export interface FinancePeriodQuery {
   from?: string;
   to?: string;
   currency?: string;
+  /** Home dashboard: skip expenses/tax, embed students. */
+  scope?: 'home';
 }
 
 export interface ExpensePayload {
@@ -34,6 +36,9 @@ export class FinanceService {
     }
     if (period?.currency) {
       params = params.set('currency', period.currency);
+    }
+    if (period?.scope) {
+      params = params.set('scope', period.scope);
     }
     return this.http.get<FinanceSummary>(`${API}/summary`, { params });
   }

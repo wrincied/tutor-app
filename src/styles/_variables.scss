@@ -32,6 +32,7 @@
   --nav-bg: #f4faf7;
   --nav-border: #cfe3d9;
   --nav-text: #13241f;
+  --danger: #dc2626;
   --nav-hover: #e8f4ef;
   --nav-active-bg: #dff3ea;
   --page-bg: #f4faf7;
@@ -49,7 +50,8 @@
   --nav-border: #1a3a32;
   --nav-text: #e7f5ef;
   --nav-hover: #14332c;
-  --nav-accent: #c6f071;
+  /* Active nav = quiet brand foam, not CTA lime */
+  --nav-accent: #e7f5ef;
   --nav-active-bg: #143d36;
   --page-bg: #071714;
   --text-primary: #e7f5ef;
@@ -58,7 +60,7 @@
   --skeleton-highlight: #0f3d34;
   --ink: #e7f5ef;
   --lime: #c6f071;
-  --accent: #c6f071;
+  --accent: #e7f5ef;
   --line: #1a3a32;
   /* On dark page, primary flips to landing-style lime fill */
   --btn-primary-bg: #c6f071;

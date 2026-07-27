@@ -71,6 +71,10 @@ export class AdminService {
     });
   }
 
+  verifyEmail(userId: string): Observable<AdminSubscriptionResponse> {
+    return this.http.post<AdminSubscriptionResponse>(`${API}/users/${userId}/verify-email`, {});
+  }
+
   getLandingLegal(doc: LegalCmsDocId): Observable<LegalCmsDocument> {
     return this.http.get<LegalCmsDocument>(`${API}/landing/legal/${doc}`);
   }

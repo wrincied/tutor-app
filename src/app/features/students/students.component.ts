@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal, OnInit, ViewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { StudentService, Student } from '../../core/services/student.service';
+import { BotUnlinkAlertService } from '../../core/services/bot-unlink-alert.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType, type StudentRateUnit } from '@interfaces';
 import {
@@ -13,21 +14,8 @@ import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { HelpTipComponent } from '../../shared/help-tip/help-tip.component';
 
-/** IANA: репетитор в AT, ученики в KZ/BY/RU и др. */
-const TIMEZONE_PRESETS: string[] = [
-  'Europe/Vienna',
-  'Europe/Berlin',
-  'Europe/Warsaw',
-  'Europe/Moscow',
-  'Europe/Minsk',
-  'Europe/Kaliningrad',
-  'Asia/Almaty',
-  'Asia/Aqtobe',
-  'Asia/Qyzylorda',
-  'Asia/Atyrau',
-  'Asia/Oral',
-  'UTC',
-];
+/** Fallback IANA when student.timezone is empty (bot/reminders use tutor TZ). */
+const DEFAULT_STUDENT_TIMEZONE = 'Europe/Vienna';
 
 function resolveBillingType(raw?: string): StudentBillingType {
   if (raw === 'postpaid' || raw === 'per_lesson' || raw === 'single') {
@@ -44,14 +32,6 @@ function rateUnitSuffix(unit: StudentRateUnit, t: { perHour: string; perLesson: 
   return unit === 'lesson' ? t.perLesson : t.perHour;
 }
 
-function resolvedBrowserTimezone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-}
-
 @Component({
   selector: 'app-students',
   imports: [FormsModule, AppDialogComponent, AppSelectComponent, HelpTipComponent],
@@ -60,6 +40,7 @@ function resolvedBrowserTimezone(): string {
 })
 export class StudentsComponent implements OnInit {
   private svc = inject(StudentService);
+  private unlinkAlerts = inject(BotUnlinkAlertService);
   @ViewChild('studentForm') studentFormRef?: NgForm;
   students = signal<Student[]>([]);
   loading = signal(true);
@@ -71,9 +52,10 @@ export class StudentsComponent implements OnInit {
     name: '',
     rate_per_hour: 0,
     rate_currency: 'EUR' as RateCurrency,
-    timezone: resolvedBrowserTimezone(),
+    timezone: DEFAULT_STUDENT_TIMEZONE,
     color_hex: generatePastelColor(),
     bot_active: false,
+    meeting_link: '',
   };
 
   billingType = signal<StudentBillingType>('package');
@@ -88,16 +70,24 @@ export class StudentsComponent implements OnInit {
 
   readonly rateCurrencies = RATE_CURRENCIES;
   readonly skeletonCardSlots = [0, 1, 2, 3, 4, 5];
-  autoTimezone = true;
 
   deleteTargetId = signal<string | null>(null);
   topupTargetId = signal<string | null>(null);
   topupLessonsInput = 1;
   quickActionsStudent = signal<Student | null>(null);
   botToggleConfirm = signal<{ student: Student; nextActive: boolean } | null>(null);
+  disconnectConfirm = signal<Student | null>(null);
+  inviteDialogStudent = signal<Student | null>(null);
+  inviteDialogLoading = signal(false);
+  inviteDialogError = signal<string | null>(null);
   formSubmitted = signal(false);
   savingForm = signal(false);
+  linkCopied = signal(false);
+  formError = signal<string | null>(null);
   readonly colorToHexForPicker = colorToHexForPicker;
+  readonly inviteDialogLink = computed(() => this.inviteDialogStudent()?.telegram_deep_link ?? '');
+
+  private linkCopiedTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit() {
     this.load();
@@ -148,6 +138,7 @@ export class StudentsComponent implements OnInit {
     this.svc.getAll().subscribe({
       next: (data) => {
         this.students.set(data);
+        this.unlinkAlerts.ingestStudents(data);
         this.loading.set(false);
       },
       error: () => {
@@ -157,12 +148,20 @@ export class StudentsComponent implements OnInit {
   }
 
   private patchStudent(updated: Student): void {
-    this.students.update((list) =>
-      list.map((item) => (item._id === updated._id ? updated : item)),
-    );
+    this.students.update((list) => {
+      const index = list.findIndex((item) => item._id === updated._id);
+      if (index < 0) {
+        return [updated, ...list];
+      }
+      return list.map((item) => (item._id === updated._id ? updated : item));
+    });
     const quick = this.quickActionsStudent();
     if (quick?._id === updated._id) {
       this.quickActionsStudent.set(updated);
+    }
+    const invite = this.inviteDialogStudent();
+    if (invite?._id === updated._id) {
+      this.inviteDialogStudent.set(updated);
     }
   }
 
@@ -179,16 +178,44 @@ export class StudentsComponent implements OnInit {
     return `${student.rate_per_hour} ${this.i18n.currencyLabel(this.rateCurrencyOf(student))}${rateUnitSuffix(unit, this.t)}`;
   }
 
+  balanceUnitLabel(student: Student | null | undefined): string {
+    return resolveRateUnit(student?.rate_unit) === 'lesson' ? this.t.lessonsShort : this.t.hoursShort;
+  }
+
+  formatStudentBalance(student: Student): string {
+    const value = Number(student.balance_lessons) || 0;
+    const pretty = Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+    return `${pretty} ${this.balanceUnitLabel(student)}`;
+  }
+
+  topupHintLabel(): string {
+    const id = this.topupTargetId();
+    const student = this.students().find((item) => item._id === id);
+    return resolveRateUnit(student?.rate_unit) === 'hour' ? this.t.topupHintHours : this.t.topupHint;
+  }
+
+  topupStep(): number {
+    const id = this.topupTargetId();
+    const student = this.students().find((item) => item._id === id);
+    return resolveRateUnit(student?.rate_unit) === 'hour' ? 0.5 : 1;
+  }
+
+  balanceFieldLabel(): string {
+    return this.rateUnit() === 'hour' ? this.t.balanceHoursField : this.t.balanceLessonsField;
+  }
+
   openCreate() {
     this.formSubmitted.set(false);
-    this.autoTimezone = true;
+    this.formError.set(null);
+    this.linkCopied.set(false);
     this.form = {
       name: '',
       rate_per_hour: 0,
       rate_currency: 'EUR',
-      timezone: resolvedBrowserTimezone(),
+      timezone: DEFAULT_STUDENT_TIMEZONE,
       color_hex: generatePastelColor(),
       bot_active: false,
+      meeting_link: '',
     };
     this.billingType.set('package');
     this.rateUnit.set('hour');
@@ -200,15 +227,17 @@ export class StudentsComponent implements OnInit {
 
   openEdit(s: Student) {
     this.formSubmitted.set(false);
+    this.formError.set(null);
+    this.linkCopied.set(false);
     this.closeQuickActions();
-    this.autoTimezone = false;
     this.form = {
       name: s.name,
       rate_per_hour: s.rate_per_hour,
       rate_currency: s.rate_currency ?? 'EUR',
-      timezone: s.timezone || 'UTC',
+      timezone: s.timezone || DEFAULT_STUDENT_TIMEZONE,
       color_hex: s.color_hex || generatePastelColor(),
       bot_active: Boolean(s.bot_active),
+      meeting_link: s.meeting_link || '',
     };
     this.billingType.set(resolveBillingType(s.billing_type));
     this.rateUnit.set(resolveRateUnit(s.rate_unit));
@@ -222,7 +251,12 @@ export class StudentsComponent implements OnInit {
     if (this.savingForm()) {
       return;
     }
+    this.resetFormDialog();
+  }
+
+  private resetFormDialog(): void {
     this.formSubmitted.set(false);
+    this.formError.set(null);
     this.showForm.set(false);
     this.editTarget.set(null);
   }
@@ -247,15 +281,6 @@ export class StudentsComponent implements OnInit {
     return Boolean(control?.invalid);
   }
 
-  onAutoTimezoneChange(checked: boolean) {
-    this.autoTimezone = checked;
-    if (checked) {
-      this.form.timezone = resolvedBrowserTimezone();
-    } else if (!TIMEZONE_PRESETS.includes(this.form.timezone)) {
-      this.form.timezone = 'Europe/Moscow';
-    }
-  }
-
   currencySelectOptions(): AppSelectOption[] {
     return RATE_CURRENCIES.map((c) => ({
       value: c,
@@ -263,47 +288,230 @@ export class StudentsComponent implements OnInit {
     }));
   }
 
-  timezoneSelectOptionsList(): AppSelectOption[] {
-    const tz = this.form.timezone;
-    const zones =
-      tz && !TIMEZONE_PRESETS.includes(tz) ? [tz, ...TIMEZONE_PRESETS] : [...TIMEZONE_PRESETS];
-    return zones.map((zone) => ({ value: zone, label: zone }));
-  }
-
-  save() {
-    if (this.savingForm()) {
-      return;
-    }
-
-    const target = this.editTarget();
+  private studentFormPayload(): Partial<Student> {
     const billing_type = this.billingType();
-    const payload: Partial<Student> = {
+    return {
       name: this.form.name,
       rate_per_hour: this.form.rate_per_hour,
       rate_currency: this.form.rate_currency,
       timezone: this.form.timezone,
       color_hex: this.form.color_hex,
-      bot_active: this.form.bot_active,
+      meeting_link: this.form.meeting_link.trim() || null,
       billing_type,
       rate_unit: this.rateUnit(),
       ...(billing_type === 'package'
         ? { balance_lessons: this.balanceLessons() }
         : { credit_limit: this.creditLimit() }),
     };
+  }
 
+  save() {
+    if (this.savingForm()) {
+      return;
+    }
+    this.formSubmitted.set(true);
+    const form = this.studentFormRef;
+    if (!form || form.invalid) {
+      return;
+    }
+    this.persistStudentForm({ inviteAfter: false });
+  }
+
+  private apiErrorMessage(err: unknown): string {
+    const message =
+      err &&
+      typeof err === 'object' &&
+      'error' in err &&
+      err.error &&
+      typeof err.error === 'object' &&
+      'message' in err.error
+        ? String((err.error as { message?: unknown }).message || '')
+        : '';
+    return message || 'Ошибка сохранения';
+  }
+
+  private persistStudentForm(opts: { inviteAfter?: boolean; openInviteDialog?: boolean }): void {
+    const target = this.editTarget();
+    const payload = this.studentFormPayload();
+    if (opts.inviteAfter || opts.openInviteDialog) {
+      payload.bot_active = true;
+    }
+    this.formError.set(null);
     this.savingForm.set(true);
     const req = target ? this.svc.update(target._id, payload) : this.svc.create(payload);
 
     req.subscribe({
-      next: () => {
+      next: (updated) => {
         this.savingForm.set(false);
-        this.closeForm();
+        this.patchStudent(updated);
+        if (opts.openInviteDialog) {
+          this.resetFormDialog();
+          this.load();
+          this.openInviteDialog(updated);
+          return;
+        }
+        if (opts.inviteAfter) {
+          void this.copyInviteLink(updated.telegram_deep_link || '');
+        }
+        this.resetFormDialog();
         this.load();
       },
-      error: () => {
+      error: (err) => {
         this.savingForm.set(false);
+        this.formError.set(this.apiErrorMessage(err));
       },
     });
+  }
+
+  isTelegramLinked(student?: Student | null): boolean {
+    return Boolean((student ?? this.editTarget())?.telegram_user_id);
+  }
+
+  canInviteToBot(student?: Student | null): boolean {
+    if (student) {
+      return !student.telegram_user_id;
+    }
+    return !this.editTarget()?.telegram_user_id;
+  }
+
+  telegramDeepLink(student?: Student | null): string {
+    return (student ?? this.editTarget())?.telegram_deep_link || '';
+  }
+
+  private async copyInviteLink(link: string): Promise<boolean> {
+    if (!link || typeof navigator === 'undefined' || !navigator.clipboard) {
+      return false;
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      this.linkCopied.set(true);
+      if (this.linkCopiedTimer) {
+        clearTimeout(this.linkCopiedTimer);
+      }
+      this.linkCopiedTimer = setTimeout(() => this.linkCopied.set(false), 2000);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async copyTelegramInvite(student?: Student | null): Promise<void> {
+    const existing = this.telegramDeepLink(student);
+    if (existing) {
+      await this.copyInviteLink(existing);
+      return;
+    }
+    if (student) {
+      this.openInviteDialog(student);
+      return;
+    }
+    this.ensureInviteLinkFromForm();
+  }
+
+  /** Открыть диалог с invite-ссылкой (из таблицы, быстрых действий или формы). */
+  inviteStudentToBot(student?: Student | null): void {
+    if (student) {
+      this.openInviteDialog(student);
+      return;
+    }
+    this.ensureInviteLinkFromForm();
+  }
+
+  openInviteDialog(student: Student): void {
+    if (student.telegram_user_id) {
+      return;
+    }
+    this.inviteDialogError.set(null);
+    this.linkCopied.set(false);
+    this.inviteDialogStudent.set(student);
+    if (!student.telegram_deep_link) {
+      this.loadInviteLink(student);
+    }
+  }
+
+  closeInviteDialog(): void {
+    this.inviteDialogStudent.set(null);
+    this.inviteDialogLoading.set(false);
+    this.inviteDialogError.set(null);
+    this.linkCopied.set(false);
+  }
+
+  async copyInviteFromDialog(): Promise<void> {
+    const link = this.inviteDialogLink();
+    if (!link) {
+      return;
+    }
+    const copied = await this.copyInviteLink(link);
+    if (!copied) {
+      this.inviteDialogError.set(this.t.botInviteLinkFailed);
+    }
+  }
+
+  private ensureInviteLinkFromForm(): void {
+    if (this.isTelegramLinked() || this.savingForm()) {
+      return;
+    }
+    this.formError.set(null);
+    this.form.bot_active = true;
+
+    const existingLink = this.telegramDeepLink();
+    const target = this.editTarget();
+    if (existingLink && target) {
+      this.openInviteDialog(target);
+      return;
+    }
+
+    if (target) {
+      this.openInviteDialog(target);
+      return;
+    }
+
+    this.formSubmitted.set(true);
+    const form = this.studentFormRef;
+    if (!form || form.invalid || !this.form.name.trim()) {
+      this.formError.set('Сначала заполните имя ученика и сохраните карточку.');
+      return;
+    }
+    this.persistStudentForm({ openInviteDialog: true });
+  }
+
+  private loadInviteLink(student: Student): void {
+    if (student.telegram_user_id) {
+      return;
+    }
+    const link = student.telegram_deep_link || '';
+    if (link) {
+      return;
+    }
+    this.inviteDialogLoading.set(true);
+    this.inviteDialogError.set(null);
+    this.svc.update(student._id, { bot_active: true }).subscribe({
+      next: (updated) => {
+        this.inviteDialogLoading.set(false);
+        this.patchStudent(updated);
+        if (this.editTarget()?._id === updated._id) {
+          this.editTarget.set(updated);
+          this.form.bot_active = true;
+        }
+        if (!updated.telegram_deep_link) {
+          this.inviteDialogError.set(this.t.botInviteLinkFailed);
+        }
+      },
+      error: (err) => {
+        this.inviteDialogLoading.set(false);
+        this.inviteDialogError.set(this.apiErrorMessage(err));
+      },
+    });
+  }
+
+
+  inviteFromQuick(): void {
+    const student = this.quickActionsStudent();
+    if (!student) {
+      return;
+    }
+    this.closeQuickActions();
+    this.openInviteDialog(student);
   }
 
   openQuickActions(student: Student): void {
@@ -334,8 +542,13 @@ export class StudentsComponent implements OnInit {
 
   applyTopup() {
     const id = this.topupTargetId();
-    const n = Math.floor(Number(this.topupLessonsInput));
-    if (!id || n < 1) {
+    const student = this.students().find((item) => item._id === id);
+    const raw = Number(this.topupLessonsInput);
+    const n =
+      resolveRateUnit(student?.rate_unit) === 'hour'
+        ? Math.round(raw * 100) / 100
+        : Math.floor(raw);
+    if (!id || !(n > 0)) {
       return;
     }
     this.svc.topup(id, n).subscribe(() => {
@@ -373,12 +586,23 @@ export class StudentsComponent implements OnInit {
   }
 
   requestBotToggle(student: Student): void {
+    if (!student.telegram_user_id) {
+      return;
+    }
     this.botToggleConfirm.set({ student, nextActive: !student.bot_active });
   }
 
   requestBotToggleFromQuick(): void {
     const student = this.quickActionsStudent();
     if (!student) {
+      return;
+    }
+    this.requestBotToggle(student);
+  }
+
+  requestBotToggleFromForm(): void {
+    const student = this.editTarget();
+    if (!student?.telegram_user_id) {
       return;
     }
     this.requestBotToggle(student);
@@ -397,6 +621,10 @@ export class StudentsComponent implements OnInit {
     this.svc.update(pending.student._id, { bot_active: pending.nextActive }).subscribe({
       next: (updated) => {
         this.patchStudent(updated);
+        if (this.editTarget()?._id === updated._id) {
+          this.editTarget.set(updated);
+          this.form.bot_active = Boolean(updated.bot_active);
+        }
         if (!pending.nextActive) {
           this.closeQuickActions();
         }
@@ -426,5 +654,35 @@ export class StudentsComponent implements OnInit {
       return '';
     }
     return pending.nextActive ? this.t.botEnableConfirm : this.t.botDisableConfirm;
+  }
+
+  requestTelegramDisconnect(student?: Student | null): void {
+    const target = student ?? this.editTarget() ?? this.quickActionsStudent();
+    if (!target?.telegram_user_id) {
+      return;
+    }
+    this.disconnectConfirm.set(target);
+  }
+
+  cancelTelegramDisconnect(): void {
+    this.disconnectConfirm.set(null);
+  }
+
+  confirmTelegramDisconnect(): void {
+    const student = this.disconnectConfirm();
+    if (!student) {
+      return;
+    }
+    this.disconnectConfirm.set(null);
+    this.svc.disconnectTelegram(student._id).subscribe({
+      next: (updated) => {
+        this.patchStudent(updated);
+        if (this.editTarget()?._id === updated._id) {
+          this.editTarget.set(updated);
+          this.form.bot_active = false;
+        }
+        this.closeQuickActions();
+      },
+    });
   }
 }

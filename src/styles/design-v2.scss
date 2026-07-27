@@ -1,4 +1,4 @@
-/* Design preview (:4300) — calm studio shell. Does not affect :4200. */
+/* Design preview — calm studio shell (local :4200 / production-design). */
 
 html[data-design='v2'] {
   --page-bg:
@@ -65,6 +65,18 @@ html[data-design='v2'] {
   .bottom-link.active {
     color: var(--moss, #0f3d34);
     font-weight: 700;
+  }
+}
+
+html[data-design='v2'][data-theme='dark'] {
+  --nav-accent: #e7f5ef;
+  --nav-active-bg: color-mix(in srgb, #e7f5ef 12%, #0a1f1b);
+  --accent: #e7f5ef;
+
+  .nav-link.active,
+  .sidebar-btn--account.active,
+  .bottom-link.active {
+    color: var(--nav-accent);
   }
 }
 

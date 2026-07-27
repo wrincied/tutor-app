@@ -27,6 +27,9 @@ export class StudentService {
   remove(id: string) {
     return this.http.delete(`${API}/${id}`);
   }
+  disconnectTelegram(id: string) {
+    return this.http.post<Student>(`${API}/${id}/telegram-disconnect`, {});
+  }
   topup(id: string, lessons: number) {
     return this.http.post<Student>(`${API}/${id}/topup`, { lessons });
   }

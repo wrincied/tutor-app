@@ -134,16 +134,19 @@ export class CalendarComponent implements OnInit {
   /** Длительность нового урока по умолчанию (1 ч 30 мин). */
   private static readonly DEFAULT_LESSON_DURATION_MIN = 90;
 
-  /** 60px = 1 час; 1px = 1 минута */
-  readonly hourHeightPx = 60;
-  readonly minuteHeightPx = 1;
+  /** Мин. высота часа (ниже — появляется скролл). */
+  private static readonly MIN_HOUR_HEIGHT_PX = 60;
+  /** Высота одного часа: растягивается под доступную высоту viewport. */
+  readonly hourHeightPx = signal(CalendarComponent.MIN_HOUR_HEIGHT_PX);
+  /** 1 минута = hourHeight / 60. */
+  readonly minuteHeightPx = computed(() => this.hourHeightPx() / 60);
   readonly gridHours = computed(() => this.profileSettings.gridHours());
   readonly gridStartHour = computed(() => this.profileSettings.gridStartHour());
   readonly gridEndHour = computed(() => this.profileSettings.gridEndHour());
-  /** Высота сетки: только интервал [start, end) из настроек, 60px = 1 ч. */
+  /** Высота сетки: интервал [start, end) × hourHeightPx. */
   readonly gridHeightPx = computed(() => {
     const span = this.gridEndHour() - this.gridStartHour();
-    return Math.max(1, span) * this.hourHeightPx;
+    return Math.max(1, span) * this.hourHeightPx();
   });
   /** Небольшой отступ под последней линией сетки (в scroll-контейнере). */
   readonly gridBottomPaddingPx = 16;
@@ -164,6 +167,8 @@ export class CalendarComponent implements OnInit {
 
   loadError: string | null = null;
   hasLoaded = signal(false);
+  /** Планшет (iPad и аналоги): одна колонка в модалке урока. */
+  isTabletLayout = signal(false);
   /** Navbar снизу (телефон и планшет landscape). */
   isBottomNavLayout = signal(false);
   /** Планшет/телефон: без стрелок навигации, ≤1023px */
@@ -230,6 +235,7 @@ export class CalendarComponent implements OnInit {
   /** Дата вхождения при редактировании виртуальной карточки (YYYY-MM-DD). */
   editingOccurrenceDate = signal<string | null>(null);
   deleteRecurringModalOpen = signal(false);
+  deleteLessonConfirmOpen = signal(false);
   readonly durationPresets: readonly number[] = [30, 45, 60, 90];
   /** Цвета точек статуса — как у карточек урока в сетке. */
   private static readonly STATUS_DOT_COLORS: Record<LessonStatus, string> = {
@@ -353,7 +359,7 @@ export class CalendarComponent implements OnInit {
     if (offsetMin < 0 || offsetMin > maxOffsetMin) {
       return null;
     }
-    return offsetMin * this.minuteHeightPx;
+    return offsetMin * this.minuteHeightPx();
   });
 
   /** Подпись времени на оси для маркера «сейчас». */
@@ -401,6 +407,15 @@ export class CalendarComponent implements OnInit {
   /** Обновление линии текущего времени раз в минуту. */
   private readonly nowTick = signal(0);
   private nowLineIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  readonly lessonDialogLayout = computed(() =>
+    this.isBottomNavLayout() ? ('sheet' as const) : ('center' as const),
+  );
+
+  /** Одна колонка без двухколоночного wrap (телефон и планшет). */
+  readonly useStackedLessonForm = computed(
+    () => this.isBottomNavLayout() || this.isTabletLayout(),
+  );
 
   /** Уроки с UI-флагом `isLastPaid` для сетки календаря. */
   displayLessons = computed(() =>
@@ -762,6 +777,7 @@ export class CalendarComponent implements OnInit {
         afterNextRender(() => this.scrollGridToNow(), { injector: this.injector });
       }
     });
+    this.bindGridHeightToViewport();
     this.destroyRef.onDestroy(() => {
       if (this.periodTransitionTimer !== null) {
         clearTimeout(this.periodTransitionTimer);
@@ -769,6 +785,40 @@ export class CalendarComponent implements OnInit {
       this.document.documentElement.classList.remove(CALENDAR_MODAL_OPEN_CLASS);
       this.clearPointerListeners();
       this.clearDragUi();
+    });
+  }
+
+  /** Растягивает час сетки, чтобы день заполнял доступную высоту (iPad / высокий экран). */
+  private bindGridHeightToViewport(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    effect((onCleanup) => {
+      const el = this.gridScrollRef()?.nativeElement ?? null;
+      const span = Math.max(1, this.gridEndHour() - this.gridStartHour());
+      this.hasLoaded();
+      if (!el || this.isMonthOverview()) {
+        return;
+      }
+
+      const apply = () => {
+        const available = el.clientHeight - this.gridBottomPaddingPx;
+        if (available < CalendarComponent.MIN_HOUR_HEIGHT_PX) {
+          return;
+        }
+        const next = Math.max(
+          CalendarComponent.MIN_HOUR_HEIGHT_PX,
+          Math.floor(available / span),
+        );
+        if (next !== this.hourHeightPx()) {
+          this.hourHeightPx.set(next);
+        }
+      };
+
+      apply();
+      const ro = new ResizeObserver(() => apply());
+      ro.observe(el);
+      onCleanup(() => ro.disconnect());
     });
   }
 
@@ -793,7 +843,7 @@ export class CalendarComponent implements OnInit {
     }
     const top = this.nowLineTopPx();
     if (top === null) {
-      this.scrollGridToOffset(this.gridStartHour() * 60 * this.minuteHeightPx);
+      this.scrollGridToOffset(this.gridStartHour() * 60 * this.minuteHeightPx());
       return;
     }
     afterNextRender(() => this.applyScrollToNow(), { injector: this.injector });
@@ -911,13 +961,16 @@ export class CalendarComponent implements OnInit {
     }
     const bottomNavMq = window.matchMedia('(max-width: 768px), (max-height: 440px)');
     const compactMq = window.matchMedia('(max-width: 1023px)');
+    const tabletMq = window.matchMedia('(max-width: 1180px)');
     const finePointerMq = window.matchMedia('(hover: hover) and (pointer: fine)');
     const applyViewport = () => {
       const bottomNav = bottomNavMq.matches;
       const compact = compactMq.matches;
+      const tablet = tabletMq.matches;
       this.isBottomNavLayout.set(bottomNav);
       this.isCompactHeader.set(compact);
       this.isNarrowViewport.set(compact);
+      this.isTabletLayout.set(tablet);
       this.useNativeLessonDrag.set(finePointerMq.matches);
       if (!bottomNav) {
         this.modesMenuOpen.set(false);
@@ -926,10 +979,12 @@ export class CalendarComponent implements OnInit {
     applyViewport();
     bottomNavMq.addEventListener('change', applyViewport);
     compactMq.addEventListener('change', applyViewport);
+    tabletMq.addEventListener('change', applyViewport);
     finePointerMq.addEventListener('change', applyViewport);
     this.destroyRef.onDestroy(() => {
       bottomNavMq.removeEventListener('change', applyViewport);
       compactMq.removeEventListener('change', applyViewport);
+      tabletMq.removeEventListener('change', applyViewport);
       finePointerMq.removeEventListener('change', applyViewport);
     });
   }
@@ -983,7 +1038,7 @@ export class CalendarComponent implements OnInit {
     if (Number.isNaN(d.getTime())) {
       return 0;
     }
-    return Math.max(0, this.minutesFromGridStart(d) * this.minuteHeightPx);
+    return Math.max(0, this.minutesFromGridStart(d) * this.minuteHeightPx());
   }
 
   isNonWorkingDay(col: Date): boolean {
@@ -1035,7 +1090,7 @@ export class CalendarComponent implements OnInit {
   }
 
   calculateHeight(duration: number): number {
-    return Math.max(15, duration * this.minuteHeightPx);
+    return Math.max(15, duration * this.minuteHeightPx());
   }
 
   formatHourLabel(hour: number): string {
@@ -2424,8 +2479,8 @@ export class CalendarComponent implements OnInit {
 
   private isoFromDayAndOffset(dayKey: string, offsetYPx: number): string {
     const [y, m, d] = dayKey.split('-').map(Number);
-    const maxMinutes = this.gridHeightPx() - 5;
-    const rawMinutes = Math.max(0, Math.min(maxMinutes, offsetYPx / this.minuteHeightPx));
+    const maxMinutes = Math.max(0, (this.gridEndHour() - this.gridStartHour()) * 60 - 5);
+    const rawMinutes = Math.max(0, Math.min(maxMinutes, offsetYPx / this.minuteHeightPx()));
     const rounded = Math.round(rawMinutes / 15) * 15;
     const totalMinutes = this.gridStartHour() * 60 + rounded;
     const hours = Math.floor(totalMinutes / 60);
@@ -2863,10 +2918,20 @@ export class CalendarComponent implements OnInit {
       this.deleteRecurringModalOpen.set(true);
       return;
     }
-    if (!window.confirm(this.i18n.calendarUi().deleteLessonConfirm)) {
+    this.deleteLessonConfirmOpen.set(true);
+  }
+
+  closeDeleteLessonConfirm(): void {
+    this.deleteLessonConfirmOpen.set(false);
+  }
+
+  confirmDeleteLesson(): void {
+    const id = this.editLessonTarget()?._id;
+    if (!id || this.deletingLesson()) {
       return;
     }
-    this.executeDeleteSeries(target._id);
+    this.deleteLessonConfirmOpen.set(false);
+    this.executeDeleteSeries(id);
   }
 
   closeDeleteRecurringModal(): void {
@@ -2910,10 +2975,7 @@ export class CalendarComponent implements OnInit {
       return;
     }
     this.closeDeleteRecurringModal();
-    if (!window.confirm(this.i18n.calendarUi().deleteLessonConfirm)) {
-      return;
-    }
-    this.executeDeleteSeries(id);
+    this.deleteLessonConfirmOpen.set(true);
   }
 
   private executeDeleteSeries(id: string): void {

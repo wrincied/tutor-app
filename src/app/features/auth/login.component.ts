@@ -2,6 +2,8 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '@angular/fire/auth';
+import { from } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
@@ -89,30 +91,45 @@ export class LoginComponent implements OnInit {
 
   /** Уже залогинен (email/Google) — уводим в app, если открыли /login напрямую. */
   private resumeExistingSession(): void {
-    resolveFirebaseUser(this.firebaseAuth).subscribe({
-      next: (user) => {
-        if (!user) {
-          this.loading.set(false);
-          return;
-        }
-        if (!user.emailVerified) {
-          void this.router.navigate(['/app/verify-email-notice']);
-          this.loading.set(false);
-          return;
-        }
-        this.userSvc.ensureProfile().subscribe({
-          next: (profile) => {
+    resolveFirebaseUser(this.firebaseAuth)
+      .pipe(
+        switchMap((user) => {
+          if (!user) {
+            return from(Promise.resolve(null));
+          }
+          // После /login?verify=success кэш Firebase ещё с emailVerified: false.
+          return from(
+            user.reload().then(async () => {
+              await user.getIdToken(true);
+              return user;
+            }),
+          );
+        }),
+      )
+      .subscribe({
+        next: (user) => {
+          if (!user) {
             this.loading.set(false);
-            this.auth.navigateAfterAuth(profile, user);
-          },
-          error: (err) => {
-            this.error.set(this.profileLoadError(err));
+            return;
+          }
+          if (!user.emailVerified) {
+            void this.router.navigate(['/app/verify-email-notice']);
             this.loading.set(false);
-          },
-        });
-      },
-      error: () => this.loading.set(false),
-    });
+            return;
+          }
+          this.userSvc.ensureProfile().subscribe({
+            next: (profile) => {
+              this.loading.set(false);
+              this.auth.navigateAfterAuth(profile, user);
+            },
+            error: (err) => {
+              this.error.set(this.profileLoadError(err));
+              this.loading.set(false);
+            },
+          });
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   submit() {

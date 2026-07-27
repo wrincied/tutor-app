@@ -32,6 +32,7 @@ export class AdminUsersComponent implements OnInit {
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
   readonly giftingUserId = signal<string | null>(null);
+  readonly verifyingEmailUserId = signal<string | null>(null);
   readonly savingUserId = signal<string | null>(null);
   readonly actionMessage = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
@@ -223,7 +224,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   giftTrial(user: AdminUserRow): void {
-    if (this.giftingUserId() || this.savingUserId()) {
+    if (this.giftingUserId() || this.savingUserId() || this.verifyingEmailUserId()) {
       return;
     }
     this.actionMessage.set(null);
@@ -239,6 +240,36 @@ export class AdminUsersComponent implements OnInit {
       error: () => {
         this.actionError.set(this.t().giftTrialError);
         this.giftingUserId.set(null);
+      },
+    });
+  }
+
+  verifyUserEmail(user: AdminUserRow): void {
+    if (user.email_verified) {
+      this.actionMessage.set(this.t().verifyEmailAlready);
+      this.actionError.set(null);
+      return;
+    }
+    if (this.verifyingEmailUserId() || this.giftingUserId() || this.savingUserId()) {
+      return;
+    }
+    this.actionMessage.set(null);
+    this.actionError.set(null);
+    this.verifyingEmailUserId.set(user._id);
+
+    this.adminSvc.verifyEmail(user._id).subscribe({
+      next: (res) => {
+        this.applyUserUpdate(res.user);
+        const detail = this.detail();
+        if (detail?.user._id === res.user._id) {
+          this.detail.set({ ...detail, user: { ...detail.user, ...res.user } });
+        }
+        this.actionMessage.set(this.t().verifyEmailSuccess);
+        this.verifyingEmailUserId.set(null);
+      },
+      error: () => {
+        this.actionError.set(this.t().verifyEmailError);
+        this.verifyingEmailUserId.set(null);
       },
     });
   }

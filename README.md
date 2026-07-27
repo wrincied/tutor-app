@@ -165,11 +165,11 @@ cd backend && npm run dev
 
 # Terminal 2 — frontend
 npm start
-# → http://localhost:4200 (current app UI)
+# → http://localhost:4200 (design UI: Home + shell v2)
 
-# Optional — design preview (Home + shell v2 only; does not change :4200)
+# Alias — same design UI on :4200
 npm run start:design
-# → http://localhost:4300
+# → http://localhost:4200
 ```
 
 ### 4. Build and test
@@ -220,8 +220,8 @@ Suggested screens for a live demo:
 
 | Command | Description |
 |---------|-------------|
-| `npm start` | `ng serve` — current app UI on :4200 |
-| `npm run start:design` | Design preview (Home + shell v2) on :4300 |
+| `npm start` | `ng serve` — design UI (Home + shell v2) on :4200 |
+| `npm run start:design` | Same design UI on :4200 (alias) |
 | `npm run build` | Production build |
 | `npm test` | Vitest unit tests |
 | `ng generate component …` | Angular CLI scaffolding |

@@ -47,6 +47,22 @@
   }
 }
 
+.account-setting__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-muted, #64748b);
+}
+
+.account-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  user-select: none;
+}
+
 .account-setting__label {
   margin: 0;
   font-size: 0.8125rem;

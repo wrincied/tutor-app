@@ -384,6 +384,13 @@ export interface AdminStrings {
   giftingTrial: string;
   giftTrialSuccess: string;
   giftTrialError: string;
+  verifyEmail: string;
+  verifyingEmail: string;
+  verifyEmailSuccess: string;
+  verifyEmailError: string;
+  verifyEmailAlready: string;
+  emailVerifiedBadge: string;
+  emailUnverifiedBadge: string;
   editSubscription: string;
   editSubscriptionTitle: string;
   subscriptionField: string;
@@ -997,6 +1004,11 @@ export interface FinanceSummary {
   austria: FinanceTaxProjection | null;
   lessonsBreakdown?: FinanceLessonBreakdown[];
   expensesBreakdown?: FinanceExpenseBreakdown[];
+  /** Только при `scope=home` — укороченный список учеников без отдельного GET. */
+  students?: Pick<
+    Student,
+    '_id' | 'name' | 'color_hex' | 'balance_lessons' | 'billing_type' | 'rate_unit'
+  >[];
 }
 
 export interface StudentStrings {
@@ -1029,6 +1041,8 @@ export interface StudentStrings {
   deleteConfirm: string;
   topupTitle: string;
   topupHint: string;
+  /** Top-up hint when rate_unit is hour */
+  topupHintHours: string;
   topupApply: string;
   /** Подпись поля выбора валюты */
   currency: string;
@@ -1050,8 +1064,34 @@ export interface StudentStrings {
   botDisableMessage: string;
   botEnableConfirm: string;
   botDisableConfirm: string;
+  /** Invite / linked Telegram profile block */
+  botInviteHint: string;
+  botInviteLinkLabel: string;
+  botInviteButton: string;
+  botInviteDialogTitle: string;
+  botOpenInTelegram: string;
+  botInviteLinkFailed: string;
+  botCopyLink: string;
+  botLinkCopied: string;
+  botNotLinked: string;
+  botLinkedTitle: string;
+  botTelegramUid: string;
+  botTelegramUsername: string;
+  botTelegramName: string;
+  botSaveToGetLink: string;
+  meetingLinkLabel: string;
+  meetingLinkPlaceholder: string;
+  botUnlinkAlertTitle: string;
+  botUnlinkAlertMessage: string;
+  botUnlinkAlertOk: string;
+  /** Tutor disconnects Telegram link for this student */
+  botDisconnect: string;
+  botDisconnectTitle: string;
+  botDisconnectMessage: string;
+  botDisconnectConfirm: string;
   quickActionsTitle: string;
   lessonsShort: string;
+  hoursShort: string;
   billingSectionTitle: string;
   billingTypePackage: string;
   billingTypePostpaid: string;
@@ -1059,6 +1099,7 @@ export interface StudentStrings {
   billingInfoPackage: string;
   billingInfoPostpaid: string;
   balanceLessonsField: string;
+  balanceHoursField: string;
   creditLimitField: string;
   activityLogSection: string;
   activityLogEmpty: string;
@@ -1199,16 +1240,34 @@ export interface Student {
   /** Пастельный цвет левой полосы карточки урока в календаре (HSL/hex). */
   color_hex: string;
   balance_lessons: number;
-  /** package — предоплата (balance_lessons); postpaid — постоплата / разовая. */
+  /** package — предоплата (balance_lessons); postpaid — постоплата / разовая.
+   *  При rate_unit=hour в balance_lessons хранятся часы (дробные). */
   billing_type?: StudentBillingType;
-  /** hour — ставка за час; lesson — фиксированная сумма за урок. */
+  /** Единица абонемента/долга и ставки: hour (часы) или lesson (занятия). */
   rate_unit?: StudentRateUnit;
-  /** Лимит долга в уроках (postpaid). */
+  /** Лимит долга в тех же единицах, что rate_unit (postpaid). */
   credit_limit?: number;
   /** Неоплаченные уроки (postpaid, увеличивает воркер). */
   unpaid_lessons_count?: number;
   timezone: string;
   auto_debit_enabled: boolean;
   bot_active: boolean;
+  /** Opaque token for t.me deep link */
+  telegram_link_token?: string | null;
+  /** https://t.me/<bot>?start=<token> */
+  telegram_deep_link?: string | null;
+  telegram_user_id?: string | null;
+  telegram_username?: string | null;
+  telegram_display_name?: string | null;
+  telegram_chat_id?: string | null;
+  telegram_linked_at?: string | null;
+  /** Язык интерфейса Telegram-бота */
+  bot_lang?: 'ru' | 'en' | 'de' | 'kz' | 'uk' | 'by' | null;
+  /** Показать репетитору модалку «ученик отвязал бота» */
+  telegram_unlink_pending?: boolean | null;
+  telegram_unlinked_username?: string | null;
+  telegram_unlinked_at?: string | null;
+  /** Zoom / Meet / custom call URL for lesson notifications */
+  meeting_link?: string | null;
   createdAt: string;
 }
