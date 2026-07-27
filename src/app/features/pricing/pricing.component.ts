@@ -9,6 +9,7 @@ import { UserService } from '../../core/services/user.service';
 import {
   canPurchaseSubscription,
   isTaxModeConfigured,
+  resolvePricingCountry,
   subscriptionStatusLabel,
 } from '../../core/utils/user-profile.utils';
 import {
@@ -56,11 +57,9 @@ export class PricingComponent implements OnInit, OnDestroy {
   isTrial = computed(() => this.subscriptionStatus() === 'trial');
 
   pricing = computed(() => {
-    const fromApi = this.profile()?.subscription_pricing;
-    if (fromApi) {
-      return fromApi;
-    }
-    return getSubscriptionPricing(this.profile()?.country_settings ?? 'AT');
+    const profile = this.profile();
+    const country = resolvePricingCountry(profile?.tax_mode, profile?.country_settings);
+    return getSubscriptionPricing(country);
   });
 
   proPriceLabel = computed(() => {

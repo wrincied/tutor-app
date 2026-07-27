@@ -24,6 +24,10 @@ export class StudentService {
   update(id: string, data: Partial<Student>) {
     return this.http.put<Student>(`${API}/${id}`, data);
   }
+  /** POST /api/students/:id/resync-lesson-snapshots — переснять ставку на всех уроках. */
+  resyncLessonSnapshots(id: string) {
+    return this.http.post<{ updated: number }>(`${API}/${id}/resync-lesson-snapshots`, {});
+  }
   remove(id: string) {
     return this.http.delete(`${API}/${id}`);
   }

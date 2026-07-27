@@ -5,6 +5,12 @@
   flex-grow: 1;
 }
 
+.students-page__success {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--moss, #0f3d34);
+}
+
 .students-page__footer {
   flex-shrink: 0;
   margin-top: auto;

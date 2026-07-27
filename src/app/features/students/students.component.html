@@ -10,6 +10,10 @@
     </button>
   </div>
 
+  @if (resyncMessage(); as msg) {
+    <p class="students-page__success" role="status">{{ msg }}</p>
+  }
+
   @if (loading()) {
     <div class="skeleton-page" role="status" aria-busy="true" [attr.aria-label]="t.loading">
       <span class="sr-only">{{ t.loading }}</span>
@@ -580,3 +584,16 @@
     </div>
   </div>
 }
+
+<app-dialog
+  [open]="resyncPromptStudentId() !== null"
+  [title]="t.resyncLessonsTitle"
+  [cancelLabel]="t.resyncLessonsCancel"
+  [confirmLabel]="resyncingLessons() ? t.resyncLessonsRunning : t.resyncLessonsConfirm"
+  layout="center"
+  [closeOnOverlay]="false"
+  (cancel)="cancelResyncLessons()"
+  (confirm)="confirmResyncLessons()"
+>
+  <p>{{ t.resyncLessonsBody }}</p>
+</app-dialog>
