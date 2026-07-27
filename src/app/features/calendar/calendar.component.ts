@@ -16,12 +16,12 @@ import { NgTemplateOutlet } from '@angular/common';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CalendarLessonDisplayService } from '../../core/services/calendar-lesson-display.service';
 import { LessonService } from '../../core/services/lesson.service';
 import { UserProfileSettingsService } from '../../core/services/user-profile-settings.service';
 import { StudentService, type Student } from '../../core/services/student.service';
-import { isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
+import { isPackageStudentWithEmptyBalance, isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
 import type { CalendarLesson, Lesson, LessonStatus } from '@interfaces';
 import {
   lessonAmountFromPrice,
@@ -122,6 +122,7 @@ type BillingConfirmState = {
 export class CalendarComponent implements OnInit {
   private readonly lessonsSvc = inject(LessonService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly studentSvc = inject(StudentService);
   private readonly lessonDisplay = inject(CalendarLessonDisplayService);
   readonly profileSettings = inject(UserProfileSettingsService);
@@ -180,6 +181,10 @@ export class CalendarComponent implements OnInit {
   studentsSidebarOpen = signal(false);
   studentsSidebarQuery = signal('');
   focusedStudentId = signal<string | null>(null);
+  /** Урок, на который пришли с home/finance — краткая подсветка. */
+  highlightedLessonId = signal<string | null>(null);
+  private routeHighlightClearTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingRouteLessonFocus = false;
   lessonFormStep = signal<1 | 2>(1);
   lessonFormSubmitted = signal(false);
   scheduledAtLocal = signal('');
@@ -784,6 +789,9 @@ export class CalendarComponent implements OnInit {
       if (this.periodTransitionTimer !== null) {
         clearTimeout(this.periodTransitionTimer);
       }
+      if (this.routeHighlightClearTimer !== null) {
+        clearTimeout(this.routeHighlightClearTimer);
+      }
       this.document.documentElement.classList.remove(CALENDAR_MODAL_OPEN_CLASS);
       this.clearPointerListeners();
       this.clearDragUi();
@@ -842,6 +850,16 @@ export class CalendarComponent implements OnInit {
   private scrollGridToNow(): void {
     if (!isPlatformBrowser(this.platformId) || this.isMonthOverview()) {
       return;
+    }
+    const highlightId = this.highlightedLessonId();
+    if (highlightId) {
+      const match = this.lessonsForColumn(this.currentDate()).find(
+        (lesson) => lesson._id === highlightId,
+      );
+      if (match?.scheduledAt) {
+        this.scrollGridToOffset(this.calculateTop(this.displayScheduledAt(match)));
+        return;
+      }
     }
     const top = this.nowLineTopPx();
     if (top === null) {
@@ -1234,6 +1252,7 @@ export class CalendarComponent implements OnInit {
   clearStudentFocus(): void {
     this.focusedStudentId.set(null);
     this.studentsSidebarQuery.set('');
+    this.clearLessonRouteHighlight();
   }
 
   studentInitials(name: string): string {
@@ -1253,6 +1272,10 @@ export class CalendarComponent implements OnInit {
 
   isPackageLastBalance(student: Student): boolean {
     return isPackageStudentWithLastBalance(student);
+  }
+
+  isPackageEmptyBalance(student: Student): boolean {
+    return isPackageStudentWithEmptyBalance(student);
   }
 
   getStudentColor(studentId: string | null | undefined): string {
@@ -1733,14 +1756,22 @@ export class CalendarComponent implements OnInit {
   lessonCardClass(lesson: CalendarLesson): Record<string, boolean> {
     const focused = this.focusedStudentId();
     const dragging = this.dragActiveLessonId() === lesson._id;
+    const highlightedId = this.highlightedLessonId();
+    const routeHighlight = highlightedId === lesson._id;
+    /** Затемнение с deep-link — только на время моргания; из сайдбара — пока выбран ученик. */
+    const routeDimming = Boolean(highlightedId && !routeHighlight);
+    const sidebarDimming = Boolean(!highlightedId && focused && lesson.student_id !== focused);
     return {
       'cal-lesson-card': true,
       'cal-lesson-card--scheduled': lesson.status === 'scheduled',
       'cal-lesson-card--completed': lesson.status === 'completed',
       'cal-lesson-card--missed': lesson.status === 'missed',
       'cal-lesson-card--canceled': lesson.status === 'canceled',
-      'cal-lesson-card--focus-active': Boolean(focused && lesson.student_id === focused),
-      'cal-lesson-card--focus-dim': Boolean(focused && lesson.student_id !== focused),
+      'cal-lesson-card--focus-active': Boolean(
+        routeHighlight || (focused && !highlightedId && lesson.student_id === focused),
+      ),
+      'cal-lesson-card--focus-dim': routeDimming || sidebarDimming,
+      'cal-lesson-card--route-highlight': routeHighlight,
       'cal-lesson-card--dragging': dragging,
     };
   }
@@ -2637,16 +2668,88 @@ export class CalendarComponent implements OnInit {
   }
 
   private applyDateFromRoute(): void {
-    const dateParam = this.route.snapshot.queryParamMap.get('date');
-    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    const params = this.route.snapshot.queryParamMap;
+    const dateParam = params.get('date');
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      const target = new Date(`${dateParam}T12:00:00`);
+      if (!Number.isNaN(target.getTime())) {
+        this.currentDate.set(this.startOfLocalDay(target));
+        this.viewMode.set('1');
+      }
+    }
+
+    const studentId = params.get('student')?.trim() || null;
+    const lessonId = params.get('lesson')?.trim() || null;
+    if (studentId) {
+      this.focusedStudentId.set(studentId);
+    }
+    if (lessonId) {
+      this.highlightedLessonId.set(lessonId);
+      this.pendingRouteLessonFocus = true;
+    }
+    if (studentId || lessonId) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { student: null, lesson: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+  }
+
+  private clearLessonRouteHighlight(): void {
+    if (this.routeHighlightClearTimer !== null) {
+      clearTimeout(this.routeHighlightClearTimer);
+      this.routeHighlightClearTimer = null;
+    }
+    this.highlightedLessonId.set(null);
+    this.pendingRouteLessonFocus = false;
+  }
+
+  private applyLessonFocusFromRoute(): void {
+    if (!this.pendingRouteLessonFocus) {
+      this.scrollGridToNow();
       return;
     }
-    const target = new Date(`${dateParam}T12:00:00`);
-    if (Number.isNaN(target.getTime())) {
+    this.pendingRouteLessonFocus = false;
+    const lessonId = this.highlightedLessonId();
+    if (!lessonId) {
+      this.scrollGridToNow();
       return;
     }
-    this.currentDate.set(this.startOfLocalDay(target));
-    this.viewMode.set('1');
+
+    const dateKey = this.dayKey(this.currentDate());
+    const inView = this.lessonsForColumn(this.currentDate());
+    const match =
+      inView.find((lesson) => lesson._id === lessonId) ??
+      this.lessons().find(
+        (lesson) =>
+          lesson._id === lessonId &&
+          lesson.scheduledAt &&
+          this.dayKey(new Date(lesson.scheduledAt)) === dateKey,
+      ) ??
+      this.lessons().find((lesson) => lesson._id === lessonId);
+
+    if (match?.scheduledAt) {
+      afterNextRender(
+        () => this.scrollGridToOffset(this.calculateTop(this.displayScheduledAt(match))),
+        { injector: this.injector },
+      );
+    } else {
+      this.scrollGridToNow();
+    }
+
+    if (this.routeHighlightClearTimer !== null) {
+      clearTimeout(this.routeHighlightClearTimer);
+    }
+    this.routeHighlightClearTimer = setTimeout(() => {
+      this.routeHighlightClearTimer = null;
+      if (this.highlightedLessonId() === lessonId) {
+        this.highlightedLessonId.set(null);
+      }
+      // Фокус ученика с deep-link тоже снимаем — иначе затемнение осталось бы.
+      this.focusedStudentId.set(null);
+    }, 4500);
   }
 
   private loadLessons(): void {
@@ -2657,7 +2760,7 @@ export class CalendarComponent implements OnInit {
         );
         this.loadError = null;
         this.hasLoaded.set(true);
-        this.scrollGridToNow();
+        this.applyLessonFocusFromRoute();
       },
       error: (err) => {
         this.loadError =

@@ -1,5 +1,7 @@
-import { Component, computed, inject, signal, OnInit, ViewChild } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, ViewChild, afterNextRender, Injector, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService, Student } from '../../core/services/student.service';
 import { BotUnlinkAlertService } from '../../core/services/bot-unlink-alert.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -41,11 +43,18 @@ function rateUnitSuffix(unit: StudentRateUnit, t: { perHour: string; perLesson: 
 export class StudentsComponent implements OnInit {
   private svc = inject(StudentService);
   private unlinkAlerts = inject(BotUnlinkAlertService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
+  private readonly platformId = inject(PLATFORM_ID);
   @ViewChild('studentForm') studentFormRef?: NgForm;
   students = signal<Student[]>([]);
   loading = signal(true);
   showForm = signal(false);
   editTarget = signal<Student | null>(null);
+  /** Ученик, на которого пришли с главной — краткая подсветка. */
+  highlightedStudentId = signal<string | null>(null);
+  private highlightClearTimer: ReturnType<typeof setTimeout> | null = null;
   i18n = inject(I18nService);
 
   form = {
@@ -144,11 +153,55 @@ export class StudentsComponent implements OnInit {
         this.students.set(data);
         this.unlinkAlerts.ingestStudents(data);
         this.loading.set(false);
+        this.applyStudentFromRoute();
       },
       error: () => {
         this.loading.set(false);
       },
     });
+  }
+
+  isStudentHighlighted(studentId: string): boolean {
+    return this.highlightedStudentId() === studentId;
+  }
+
+  private applyStudentFromRoute(): void {
+    const studentId = this.route.snapshot.queryParamMap.get('student')?.trim();
+    if (!studentId) {
+      return;
+    }
+    const student = this.students().find((item) => item._id === studentId);
+    if (!student) {
+      return;
+    }
+
+    this.highlightedStudentId.set(studentId);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { student: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+
+    if (isPlatformBrowser(this.platformId)) {
+      afterNextRender(
+        () => {
+          const el = document.querySelector<HTMLElement>(`[data-student-id="${studentId}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        },
+        { injector: this.injector },
+      );
+    }
+
+    if (this.highlightClearTimer !== null) {
+      clearTimeout(this.highlightClearTimer);
+    }
+    this.highlightClearTimer = setTimeout(() => {
+      this.highlightClearTimer = null;
+      if (this.highlightedStudentId() === studentId) {
+        this.highlightedStudentId.set(null);
+      }
+    }, 4500);
   }
 
   private patchStudent(updated: Student): void {
@@ -187,7 +240,8 @@ export class StudentsComponent implements OnInit {
   }
 
   formatStudentBalance(student: Student): string {
-    const value = Number(student.balance_lessons) || 0;
+    const raw = Number(student.balance_lessons);
+    const value = Number.isFinite(raw) ? raw : 0;
     const pretty = Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
     return `${pretty} ${this.balanceUnitLabel(student)}`;
   }
@@ -206,6 +260,15 @@ export class StudentsComponent implements OnInit {
 
   balanceFieldLabel(): string {
     return this.rateUnit() === 'hour' ? this.t.balanceHoursField : this.t.balanceLessonsField;
+  }
+
+  onBalanceLessonsChange(raw: number | string | null): void {
+    if (raw === '' || raw === null || raw === undefined) {
+      this.balanceLessons.set(0);
+      return;
+    }
+    const n = Number(raw);
+    this.balanceLessons.set(Number.isFinite(n) ? n : 0);
   }
 
   openCreate() {
@@ -245,7 +308,7 @@ export class StudentsComponent implements OnInit {
     };
     this.billingType.set(resolveBillingType(s.billing_type));
     this.rateUnit.set(resolveRateUnit(s.rate_unit));
-    this.balanceLessons.set(Number(s.balance_lessons) || 0);
+    this.balanceLessons.set(Number.isFinite(Number(s.balance_lessons)) ? Number(s.balance_lessons) : 0);
     this.creditLimit.set(Number(s.credit_limit) || 0);
     this.editTarget.set(s);
     this.showForm.set(true);

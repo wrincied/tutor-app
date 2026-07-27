@@ -26,7 +26,10 @@ export class ActivityLogPanelComponent {
   strings = input.required<ActivityLogStrings>();
   reloadTrigger = input(0);
   limit = input(50);
+  /** Не дергать API, пока пользователь не откроет журнал. */
+  lazy = input(true);
 
+  expanded = signal(false);
   loading = signal(false);
   error = signal<string | null>(null);
   entries = signal<ActivityLogEntry[]>([]);
@@ -36,8 +39,22 @@ export class ActivityLogPanelComponent {
       this.category();
       this.reloadTrigger();
       this.limit();
-      this.load();
+      if (!this.lazy()) {
+        this.load();
+        return;
+      }
+      if (this.expanded()) {
+        this.load();
+      }
     });
+  }
+
+  onDetailsToggle(event: Event): void {
+    const el = event.currentTarget as HTMLDetailsElement;
+    if (!(el instanceof HTMLDetailsElement)) {
+      return;
+    }
+    this.expanded.set(el.open);
   }
 
   entryTitle(entry: ActivityLogEntry): string {

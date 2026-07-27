@@ -220,3 +220,18 @@ textarea.app-input,
   cursor: default;
   background: var(--nav-hover);
 }
+
+.field-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.field-hint--warn {
+  color: rgb(180 83 9);
+}
+
+.dark .field-hint--warn {
+  color: rgb(251 191 36);
+}

@@ -4,10 +4,45 @@
   border-top: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
 }
 
+.activity-log__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+.activity-log__chevron {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--text-muted, #666);
+  border-bottom: 2px solid var(--text-muted, #666);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+.activity-log[open] .activity-log__chevron {
+  transform: rotate(-135deg);
+  margin-top: 0.25rem;
+}
+
 .activity-log__title {
-  margin: 0 0 1rem;
+  margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
+}
+
+.activity-log__summary + .activity-log__hint,
+.activity-log__summary + .activity-log__error,
+.activity-log__summary + .activity-log__list {
+  margin-top: 1rem;
 }
 
 .activity-log__hint {
