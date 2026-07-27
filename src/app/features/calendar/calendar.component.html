@@ -125,21 +125,21 @@
         </div>
 
         <ul class="cal-status-legend" [attr.aria-label]="i18n.calendarUi().statusLegendAria">
-          <li class="cal-status-legend__item">
-            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--scheduled" aria-hidden="true"></span>
-            <span>{{ i18n.calendarUi().statusScheduled }}</span>
+          <li class="cal-status-legend__item" [attr.title]="i18n.calendarUi().statusScheduled">
+            <span class="cal-status-legend__swatch cal-status-legend__swatch--scheduled" aria-hidden="true"></span>
+            <span class="cal-status-legend__label">{{ i18n.calendarUi().statusScheduled }}</span>
           </li>
-          <li class="cal-status-legend__item">
-            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--completed" aria-hidden="true"></span>
-            <span>{{ i18n.calendarUi().statusCompleted }}</span>
+          <li class="cal-status-legend__item" [attr.title]="i18n.calendarUi().statusCompleted">
+            <span class="cal-status-legend__swatch cal-status-legend__swatch--completed" aria-hidden="true"></span>
+            <span class="cal-status-legend__label">{{ i18n.calendarUi().statusCompleted }}</span>
           </li>
-          <li class="cal-status-legend__item">
-            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--missed" aria-hidden="true"></span>
-            <span>{{ i18n.calendarUi().statusMissed }}</span>
+          <li class="cal-status-legend__item" [attr.title]="i18n.calendarUi().statusMissed">
+            <span class="cal-status-legend__swatch cal-status-legend__swatch--missed" aria-hidden="true"></span>
+            <span class="cal-status-legend__label">{{ i18n.calendarUi().statusMissed }}</span>
           </li>
-          <li class="cal-status-legend__item">
-            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--canceled" aria-hidden="true"></span>
-            <span>{{ i18n.calendarUi().statusCanceled }}</span>
+          <li class="cal-status-legend__item" [attr.title]="i18n.calendarUi().statusCanceled">
+            <span class="cal-status-legend__swatch cal-status-legend__swatch--canceled" aria-hidden="true"></span>
+            <span class="cal-status-legend__label">{{ i18n.calendarUi().statusCanceled }}</span>
           </li>
         </ul>
 
