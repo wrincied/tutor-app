@@ -40,51 +40,64 @@
         </div>
 
         @if (
+          leadingLabel() ||
           cancelLabel() ||
           secondaryLabel() ||
           confirmLabel() ||
           (dismissLabel() && !confirmLabel() && !cancelLabel() && !secondaryLabel())
         ) {
           <div class="app-dialog__actions">
-            @if (cancelLabel()) {
+            @if (leadingLabel()) {
               <button
                 type="button"
                 class="app-dialog__btn app-dialog__btn--secondary"
-                [class.app-dialog__btn--danger]="cancelDanger()"
-                (click)="onCancelClick()"
+                [class.app-dialog__btn--danger]="leadingDanger()"
+                (click)="onLeadingClick()"
               >
-                {{ cancelLabel() }}
+                {{ leadingLabel() }}
               </button>
             }
-            @if (secondaryLabel()) {
-              <button
-                type="button"
-                class="app-dialog__btn app-dialog__btn--neutral"
-                (click)="onSecondaryClick()"
-              >
-                {{ secondaryLabel() }}
-              </button>
-            }
-            @if (confirmLabel()) {
-              <button
-                type="button"
-                class="app-dialog__btn"
-                [class.app-dialog__btn--primary]="!confirmDanger()"
-                [class.app-dialog__btn--confirm-danger]="confirmDanger()"
-                (click)="onConfirmClick()"
-              >
-                {{ confirmLabel() }}
-              </button>
-            }
-            @if (dismissLabel() && !confirmLabel() && !cancelLabel()) {
-              <button
-                type="button"
-                class="app-dialog__btn app-dialog__btn--primary"
-                (click)="onDismiss()"
-              >
-                {{ dismissLabel() }}
-              </button>
-            }
+            <div class="app-dialog__actions-end">
+              @if (cancelLabel()) {
+                <button
+                  type="button"
+                  class="app-dialog__btn app-dialog__btn--secondary"
+                  [class.app-dialog__btn--danger]="cancelDanger()"
+                  (click)="onCancelClick()"
+                >
+                  {{ cancelLabel() }}
+                </button>
+              }
+              @if (secondaryLabel()) {
+                <button
+                  type="button"
+                  class="app-dialog__btn app-dialog__btn--neutral"
+                  (click)="onSecondaryClick()"
+                >
+                  {{ secondaryLabel() }}
+                </button>
+              }
+              @if (confirmLabel()) {
+                <button
+                  type="button"
+                  class="app-dialog__btn"
+                  [class.app-dialog__btn--primary]="!confirmDanger()"
+                  [class.app-dialog__btn--confirm-danger]="confirmDanger()"
+                  (click)="onConfirmClick()"
+                >
+                  {{ confirmLabel() }}
+                </button>
+              }
+              @if (dismissLabel() && !confirmLabel() && !cancelLabel()) {
+                <button
+                  type="button"
+                  class="app-dialog__btn app-dialog__btn--primary"
+                  (click)="onDismiss()"
+                >
+                  {{ dismissLabel() }}
+                </button>
+              }
+            </div>
           </div>
         }
       </div>

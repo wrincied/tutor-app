@@ -34,6 +34,8 @@ describe('emailVerifiedGuard', () => {
   let userMock: {
     emailVerified: boolean;
     reload: ReturnType<typeof vi.fn>;
+    getIdToken: ReturnType<typeof vi.fn>;
+    providerData: { providerId: string }[];
   };
 
   // Angular TestBed требует однократной инициализации окружения для unit-тестов.
@@ -47,6 +49,8 @@ describe('emailVerifiedGuard', () => {
     userMock = {
       emailVerified: false,
       reload: vi.fn(() => Promise.resolve()),
+      getIdToken: vi.fn(() => Promise.resolve('token')),
+      providerData: [{ providerId: 'password' }],
     };
     authMock = {};
 
@@ -81,6 +85,7 @@ describe('emailVerifiedGuard', () => {
     const result = await firstValueFrom(result$);
 
     expect(userMock.reload).toHaveBeenCalled();
+    expect(userMock.getIdToken).toHaveBeenCalledWith(true);
     expect(result).toBe(true);
   });
 });

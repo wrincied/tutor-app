@@ -57,6 +57,9 @@ export class AppDialogComponent implements OnDestroy {
   cancelLabel = input<string | null>(null);
   /** Красная кнопка отмены (как btn-link.danger). */
   cancelDanger = input(false, { transform: booleanAttribute });
+  /** Левая кнопка в actions (например «Удалить»), отдельно от cancel/confirm. */
+  leadingLabel = input<string | null>(null);
+  leadingDanger = input(false, { transform: booleanAttribute });
   confirmLabel = input<string | null>(null);
   /** Красная кнопка подтверждения (удаление и т.п.). */
   confirmDanger = input(false, { transform: booleanAttribute });
@@ -71,6 +74,7 @@ export class AppDialogComponent implements OnDestroy {
   readonly cancelled = output<void>({ alias: 'cancel' });
   readonly secondaryAction = output<void>({ alias: 'secondary' });
   readonly confirmed = output<void>({ alias: 'confirm' });
+  readonly leadingAction = output<void>({ alias: 'leading' });
 
   constructor() {
     effect(() => {
@@ -99,6 +103,10 @@ export class AppDialogComponent implements OnDestroy {
 
   onCancelClick(): void {
     this.cancelled.emit();
+  }
+
+  onLeadingClick(): void {
+    this.leadingAction.emit();
   }
 
   onSecondaryClick(): void {

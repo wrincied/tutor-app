@@ -219,19 +219,29 @@ export class AuthService {
     if (!user) {
       return from(Promise.resolve(null));
     }
-    return this.fromAuth(() => user.reload()).pipe(map(() => this.auth.currentUser));
+    // После клика по письму локальный user ещё со старым emailVerified —
+    // reload + force token refresh, иначе API видит email_verified: false в JWT.
+    return this.fromAuth(() => user.reload()).pipe(
+      switchMap(() => {
+        const fresh = this.auth.currentUser;
+        if (!fresh) {
+          return of(null);
+        }
+        return this.fromAuth(() => fresh.getIdToken(true)).pipe(map(() => this.auth.currentUser));
+      }),
+    );
   }
 
   bootstrapProfile(): Observable<UserProfile> {
     return this.http.post<UserProfile>(`${API}/auth/bootstrap`, {});
   }
 
-  async getIdToken(): Promise<string | null> {
+  async getIdToken(forceRefresh = false): Promise<string | null> {
     const user = this.auth.currentUser;
     if (!user) {
       return null;
     }
-    return user.getIdToken();
+    return user.getIdToken(forceRefresh);
   }
 
   updateEmailWithGoogleReauth(newEmail: string): Observable<User | null> {
