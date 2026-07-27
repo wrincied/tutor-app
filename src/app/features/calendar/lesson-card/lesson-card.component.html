@@ -7,7 +7,16 @@
   <span class="cal-lesson-card__student-name">{{ studentName() }}</span>
 </p>
 
-@if (compactMeta()) {
+@if (denseMobile()) {
+  <p class="cal-lesson-card__sub">
+    {{ regionText() }}
+    @if (regionText() && rateText()) {
+      <span aria-hidden="true"> · </span>
+    }
+    {{ rateText() }}
+  </p>
+  <p class="cal-lesson-card__duration">{{ durationText() }}</p>
+} @else if (compactMeta()) {
   <p class="cal-lesson-card__meta">
     {{ regionText() }} · {{ rateText() }} · {{ durationText() }}
   </p>

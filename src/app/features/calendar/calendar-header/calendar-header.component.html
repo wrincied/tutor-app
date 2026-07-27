@@ -1,0 +1,198 @@
+<header class="cal-header">
+  <div class="cal-header__top">
+    <!-- Title group -->
+    <div class="cal-header__lead">
+      <button
+        type="button"
+        class="cal-icon-btn"
+        (click)="burgerClick.emit()"
+        [attr.aria-expanded]="modesMenuOpen()"
+        [attr.aria-label]="modeDrawerLabel()"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <line x1="4" y1="7" x2="20" y2="7" />
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <line x1="4" y1="17" x2="20" y2="17" />
+        </svg>
+      </button>
+
+      <div class="cal-header__titles">
+        @if (showTitle() && title()) {
+          <h1 class="cal-header__title">{{ title() }}</h1>
+        }
+        <p class="cal-header__period">
+          <span class="cal-header__week">{{ weekLabel() }}</span>
+          @if (rangeLabel(); as range) {
+            <span class="cal-header__period-sep" aria-hidden="true">•</span>
+            <span class="cal-header__range">{{ range }}</span>
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Controls cluster -->
+    <div class="cal-header__controls">
+      <div class="cal-header__nav" aria-label="period navigation">
+        <div class="cal-seg">
+          <button
+            type="button"
+            class="cal-seg__btn cal-seg__btn--arrow"
+            (click)="prevClick.emit()"
+            [attr.aria-label]="prevLabel()"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="cal-seg__btn cal-seg__btn--today"
+            (click)="todayClick.emit()"
+            [attr.aria-label]="todayLabel()"
+            [attr.title]="todayLabel()"
+          >
+            <span class="cal-seg__today-text">{{ todayLabel() }}</span>
+            <span class="cal-seg__day">{{ todayDay() }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="cal-seg__btn cal-seg__btn--arrow"
+            (click)="nextClick.emit()"
+            [attr.aria-label]="nextLabel()"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="cal-header__divider" aria-hidden="true"></div>
+
+      <div class="cal-mode-seg" role="group" [attr.aria-label]="modeDrawerLabel()">
+        @for (opt of viewModeOptions(); track opt.value) {
+          <button
+            type="button"
+            class="cal-mode-seg__btn"
+            [class.cal-mode-seg__btn--active]="viewMode() === opt.value"
+            (click)="selectViewMode(opt.value)"
+            [attr.aria-pressed]="viewMode() === opt.value"
+            [attr.title]="opt.label"
+          >
+            <span class="cal-mode-seg__short">{{ modeShortLabel(opt.value) }}</span>
+            <span class="cal-mode-seg__text">{{ opt.label }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="cal-header__divider cal-header__divider--after-modes" aria-hidden="true"></div>
+
+      <ul class="cal-status-pills" [attr.aria-label]="statusLegendAria()">
+        @for (chip of statusChips(); track chip.key) {
+          <li>
+            <button
+              type="button"
+              class="cal-status-pill"
+              [class.cal-status-pill--empty]="chip.empty"
+              [class.cal-status-pill--active]="chip.active"
+              [attr.data-status]="chip.key"
+              [attr.aria-pressed]="chip.active"
+              [attr.title]="chip.label + ': ' + chip.count"
+              (click)="onStatusChipClick(chip.key)"
+            >
+              <span class="cal-status-pill__dot" aria-hidden="true"></span>
+              <span class="cal-status-pill__label">{{ chip.label }}</span>
+              <span class="cal-status-pill__count">{{ chip.count }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+
+      <div class="cal-header__divider" aria-hidden="true"></div>
+
+      <button
+        type="button"
+        class="cal-action-btn"
+        [class.cal-action-btn--active]="studentsSidebarOpen()"
+        (click)="studentsClick.emit()"
+        [attr.aria-expanded]="studentsSidebarOpen()"
+        [attr.aria-label]="studentsLabel()"
+        [attr.title]="studentsLabel()"
+      >
+        <img
+          class="cal-action-btn__icon"
+          src="assets/icons/icon-students.svg"
+          width="18"
+          height="18"
+          alt=""
+        />
+        <span class="cal-action-btn__label">{{ studentsLabel() }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile tier 2 -->
+  <div class="cal-header__bottom">
+    <button
+      type="button"
+      class="cal-today-ghost"
+      (click)="todayClick.emit()"
+      [attr.aria-label]="todayLabel()"
+      [attr.title]="todayLabel()"
+    >
+      <span class="cal-today-ghost__day">{{ todayDay() }}</span>
+    </button>
+
+    <ul class="cal-status-compact" [attr.aria-label]="statusLegendAria()">
+      @for (chip of statusChips(); track chip.key) {
+        <li>
+          <button
+            type="button"
+            class="cal-status-compact__item"
+            [class.cal-status-compact__item--empty]="chip.empty"
+            [class.cal-status-compact__item--active]="chip.active"
+            [attr.data-status]="chip.key"
+            [attr.aria-pressed]="chip.active"
+            [attr.title]="chip.label + ': ' + chip.count"
+            (click)="onStatusChipClick(chip.key)"
+          >
+            <span class="cal-status-compact__dot" aria-hidden="true"></span>
+            <span class="cal-status-compact__count">{{ chip.count }}</span>
+            <span class="cal-status-compact__sr">{{ chip.label }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+</header>

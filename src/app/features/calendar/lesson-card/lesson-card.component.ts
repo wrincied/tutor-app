@@ -67,6 +67,8 @@ export class LessonCardComponent {
   readonly studentName = input.required<string>();
   readonly studentColor = input('rgb(148 163 184)');
   readonly compactMeta = input(false);
+  /** Мобильная плотность: без подписей «Регион/Ставка/Длит.». */
+  readonly denseMobile = input(false);
   readonly regionLabel = input('');
   readonly rateLabel = input('');
   readonly durationLabel = input('');

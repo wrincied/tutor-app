@@ -23,6 +23,7 @@ import { UserProfileSettingsService } from '../../core/services/user-profile-set
 import { StudentService, type Student } from '../../core/services/student.service';
 import { isPackageStudentWithEmptyBalance, isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
 import { LessonCardComponent } from './lesson-card/lesson-card.component';
+import { CalendarHeaderComponent } from './calendar-header/calendar-header.component';
 import type { CalendarLesson, Lesson, LessonStatus } from '@interfaces';
 import {
   lessonAmountFromPrice,
@@ -116,7 +117,14 @@ type BillingConfirmState = {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [FormsModule, AppDialogComponent, AppSelectComponent, NgTemplateOutlet, LessonCardComponent],
+  imports: [
+    FormsModule,
+    AppDialogComponent,
+    AppSelectComponent,
+    NgTemplateOutlet,
+    LessonCardComponent,
+    CalendarHeaderComponent,
+  ],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
  })
@@ -131,6 +139,7 @@ export class CalendarComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
+  private readonly hostEl = inject(ElementRef<HTMLElement>);
   readonly i18n = inject(I18nService);
 
   /** Длительность нового урока по умолчанию (1 ч 30 мин). */
@@ -182,6 +191,8 @@ export class CalendarComponent implements OnInit {
   studentsSidebarOpen = signal(false);
   studentsSidebarQuery = signal('');
   focusedStudentId = signal<string | null>(null);
+  /** Фильтр сетки по статусу из чипов шапки (toggle). */
+  focusedStatus = signal<LessonStatus | null>(null);
   /** Урок, на который пришли с home/finance — краткая подсветка. */
   highlightedLessonId = signal<string | null>(null);
   private routeHighlightClearTimer: ReturnType<typeof setTimeout> | null = null;
@@ -267,6 +278,14 @@ export class CalendarComponent implements OnInit {
     })),
   );
 
+  /** Опции segmented-переключателя вида для app-calendar-header. */
+  headerViewModeOptions = computed(() =>
+    this.viewModes.map((mode) => ({
+      value: mode,
+      label: this.viewModeLabel(mode),
+    })),
+  );
+
   lessonStatusSelectOptions = computed((): AppSelectOption[] => {
     const t = this.i18n.calendarUi();
     const statuses: LessonStatus[] = ['scheduled', 'completed', 'missed', 'canceled'];
@@ -344,8 +363,12 @@ export class CalendarComponent implements OnInit {
 
   gridTemplateColumns = computed(() => {
     const count = this.columns().length;
-    return count > 0 ? `repeat(${count}, minmax(0, 1fr))` : 'none';
+    // Min width comes from CSS `--cal-day-col-min` (0 on mobile, 110px on desktop).
+    return count > 0 ? `repeat(${count}, minmax(var(--cal-day-col-min, 0px), 1fr))` : 'none';
   });
+
+  /** Число колонок для CSS `--cal-day-count` (min-width сетки). */
+  dayColumnCount = computed(() => this.columns().length);
 
   /** Число сегодняшнего дня для кнопки «сегодня». */
   todayDayOfMonth = computed(() => new Date().getDate());
@@ -744,6 +767,41 @@ export class CalendarComponent implements OnInit {
     return map;
   });
 
+  /** Счётчики статусов строго по урокам видимого диапазона (signals → gridLessons). */
+  periodStatusCounts = computed(() => {
+    const counts = { scheduled: 0, completed: 0, missed: 0, canceled: 0 };
+    const lessons = this.lessonsInActiveScope();
+    for (const lesson of lessons) {
+      const status = lesson.status;
+      if (status in counts) {
+        counts[status as keyof typeof counts] += 1;
+      }
+    }
+    return counts;
+  });
+
+  /**
+   * Уроки активного scope: для дня/3/7 — колонки сетки;
+   * для месяца — только дни текущего месяца (без «хвостов» соседних).
+   */
+  private lessonsInActiveScope = computed((): CalendarLesson[] => {
+    const all = this.gridLessons();
+    if (!this.isMonthOverview()) {
+      return all;
+    }
+    const inMonthKeys = new Set(
+      this.monthOverviewCells()
+        .filter((cell) => cell.inMonth)
+        .map((cell) => this.dayKey(cell.date)),
+    );
+    return all.filter((lesson) => {
+      if (!lesson.scheduledAt) {
+        return false;
+      }
+      return inMonthKeys.has(this.dayKey(new Date(lesson.scheduledAt)));
+    });
+  });
+
   private readonly studentCurrencyById = computed(() => {
     const m = new Map<string, string>();
     for (const s of this.students()) {
@@ -762,11 +820,14 @@ export class CalendarComponent implements OnInit {
 
   private readonly gridScrollRef = viewChild<ElementRef<HTMLElement>>('gridScroll');
   private readonly scrollContainerRef = viewChild<ElementRef<HTMLElement>>('scrollContainer');
+  private readonly headersScrollRef = viewChild<ElementRef<HTMLElement>>('headersScroll');
+  private syncingGridScroll = false;
 
   /** Любая модалка календаря — navbar снизу уходит под оверлей. */
   private readonly calendarModalOpen = computed(
     () =>
       this.showLessonForm() ||
+      this.recurrenceModalOpen() ||
       this.dragMoveConfirm() !== null ||
       this.billingConfirm() !== null ||
       this.scheduleConflictMessage() !== null,
@@ -813,6 +874,7 @@ export class CalendarComponent implements OnInit {
       }
 
       const apply = () => {
+        this.syncHeaderScrollbarGutter(el);
         const padding = this.gridBottomPaddingPx;
         let available = el.clientHeight - padding;
         // Пока flex-цепочка не собралась, clientHeight ≈ контент (min hours) —
@@ -848,8 +910,15 @@ export class CalendarComponent implements OnInit {
     });
   }
 
+  /** Ширина правого corner в шапке = gutter вертикального scrollbar сетки. */
+  private syncHeaderScrollbarGutter(scrollEl: HTMLElement): void {
+    const gutter = Math.max(0, scrollEl.offsetWidth - scrollEl.clientWidth);
+    this.hostEl.nativeElement.style.setProperty('--cal-scrollbar-gutter', `${gutter}px`);
+  }
+
   ngOnInit(): void {
     this.initViewportMediaQueries();
+    this.applyMobileDefaultViewMode();
     this.initNowLineClock();
     this.applyDateFromRoute();
     this.profileSettings.loadProfile().subscribe();
@@ -860,6 +929,40 @@ export class CalendarComponent implements OnInit {
         /* optional */
       },
     });
+  }
+
+  /** На узких экранах по умолчанию 3 дня вместо сжатой недели. */
+  private applyMobileDefaultViewMode(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    if (
+      window.matchMedia('(max-width: 768px), (max-height: 440px)').matches &&
+      this.viewMode() === '7'
+    ) {
+      this.viewMode.set('3');
+    }
+  }
+
+  /** Синхронизация горизонтального скролла шапки дней и тела сетки. */
+  onGridHorizontalScroll(event: Event): void {
+    if (this.syncingGridScroll) {
+      return;
+    }
+    const source = event.target as HTMLElement;
+    const headers = this.headersScrollRef()?.nativeElement;
+    const grid = this.gridScrollRef()?.nativeElement;
+    if (!headers || !grid) {
+      return;
+    }
+    this.syncingGridScroll = true;
+    const left = source.scrollLeft;
+    if (source === grid && headers.scrollLeft !== left) {
+      headers.scrollLeft = left;
+    } else if (source === headers && grid.scrollLeft !== left) {
+      grid.scrollLeft = left;
+    }
+    this.syncingGridScroll = false;
   }
 
   /** Прокрутка к текущему часу (если день на экране) или к утру. */
@@ -1008,9 +1111,6 @@ export class CalendarComponent implements OnInit {
       this.isNarrowViewport.set(compact);
       this.isTabletLayout.set(tablet);
       this.useNativeLessonDrag.set(finePointerMq.matches);
-      if (!bottomNav) {
-        this.modesMenuOpen.set(false);
-      }
     };
     applyViewport();
     bottomNavMq.addEventListener('change', applyViewport);
@@ -1154,6 +1254,11 @@ export class CalendarComponent implements OnInit {
     ) {
       return;
     }
+    // Горизонтальный скролл колонок важнее свайпа периода.
+    const scrollHost = target.closest('.cal-grid-scroll') as HTMLElement | null;
+    if (scrollHost && scrollHost.scrollWidth > scrollHost.clientWidth + 2) {
+      return;
+    }
     this.periodSwipeStart = {
       x: event.touches[0].clientX,
       y: event.touches[0].clientY,
@@ -1261,6 +1366,7 @@ export class CalendarComponent implements OnInit {
   }
 
   selectSidebarStudent(studentId: string): void {
+    this.focusedStatus.set(null);
     this.focusedStudentId.set(studentId);
     this.studentsSidebarOpen.set(false);
   }
@@ -1269,6 +1375,17 @@ export class CalendarComponent implements OnInit {
     this.focusedStudentId.set(null);
     this.studentsSidebarQuery.set('');
     this.clearLessonRouteHighlight();
+  }
+
+  /** Клик по чипу статуса в шапке — локальный фильтр карточек (повторный клик снимает). */
+  toggleStatusFilter(status: LessonStatus): void {
+    this.focusedStudentId.set(null);
+    this.focusedStatus.update((current) => (current === status ? null : status));
+    this.clearLessonRouteHighlight();
+  }
+
+  clearStatusFilter(): void {
+    this.focusedStatus.set(null);
   }
 
   studentInitials(name: string): string {
@@ -1771,20 +1888,27 @@ export class CalendarComponent implements OnInit {
 
   lessonCardFocusActive(lesson: CalendarLesson): boolean {
     const focused = this.focusedStudentId();
+    const statusFilter = this.focusedStatus();
     const highlightedId = this.highlightedLessonId();
     const routeHighlight = highlightedId === lesson._id;
-    return Boolean(
-      routeHighlight || (focused && !highlightedId && lesson.student_id === focused),
+    const studentActive = Boolean(focused && !highlightedId && lesson.student_id === focused);
+    const statusActive = Boolean(
+      statusFilter && !highlightedId && lesson.status === statusFilter,
     );
+    return Boolean(routeHighlight || studentActive || statusActive);
   }
 
   lessonCardFocusDim(lesson: CalendarLesson): boolean {
     const focused = this.focusedStudentId();
+    const statusFilter = this.focusedStatus();
     const highlightedId = this.highlightedLessonId();
     const routeHighlight = highlightedId === lesson._id;
     const routeDimming = Boolean(highlightedId && !routeHighlight);
     const sidebarDimming = Boolean(!highlightedId && focused && lesson.student_id !== focused);
-    return routeDimming || sidebarDimming;
+    const statusDimming = Boolean(
+      !highlightedId && statusFilter && lesson.status !== statusFilter,
+    );
+    return routeDimming || sidebarDimming || statusDimming;
   }
 
   lessonCardRouteHighlight(lesson: CalendarLesson): boolean {

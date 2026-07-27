@@ -94,6 +94,11 @@
   border-radius: 50%;
   background: var(--student-color);
   box-shadow: 0 0 0 1px rgb(15 23 42 / 0.08);
+
+  @media (max-width: 767.98px) {
+    width: 6px;
+    height: 6px;
+  }
 }
 
 .cal-lesson-card__student-name {
@@ -110,7 +115,9 @@
   text-decoration: none;
 }
 
-.cal-lesson-card__meta {
+.cal-lesson-card__meta,
+.cal-lesson-card__sub,
+.cal-lesson-card__duration {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -118,6 +125,17 @@
   opacity: 0.85;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
+}
+
+.cal-lesson-card__sub {
+  margin-top: 0.0625rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.cal-lesson-card__duration {
+  opacity: 0.75;
+  font-weight: 500;
 }
 
 .cal-lesson-card__details {
