@@ -17,6 +17,7 @@ import {
   studentsLowBalance,
   type HomeLessonRow,
 } from '../../core/utils/home-dashboard';
+import { dayKey } from '../../core/utils/lesson-recurrence';
 
 const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
 
@@ -147,6 +148,25 @@ export class HomeComponent implements OnInit {
 
   overdueHint(): string {
     return this.t.overdueLessonsHint.replace('{count}', String(this.overdueCount()));
+  }
+
+  /** Deep-link: день + ученик + урок — календарь подсветит цель. */
+  calendarLessonQuery(row: HomeLessonRow): Record<string, string> {
+    const query: Record<string, string> = {};
+    if (row.lesson.scheduledAt) {
+      query['date'] = dayKey(new Date(row.lesson.scheduledAt));
+    }
+    if (row.lesson._id) {
+      query['lesson'] = row.lesson._id;
+    }
+    if (row.lesson.student_id) {
+      query['student'] = row.lesson.student_id;
+    }
+    return query;
+  }
+
+  studentQuery(student: Student): { student: string } {
+    return { student: student._id };
   }
 
   isLessonOverdue(row: HomeLessonRow): boolean {

@@ -748,6 +748,7 @@ export interface CalendarStrings {
   statusCompleted: string;
   statusMissed: string;
   statusCanceled: string;
+  statusLegendAria: string;
   durationHourShort: string;
   durationMinShort: string;
   durationOneHour: string;
@@ -1116,6 +1117,7 @@ export interface StudentStrings {
   billingInfoPostpaid: string;
   balanceLessonsField: string;
   balanceHoursField: string;
+  balanceNegativeHint: string;
   creditLimitField: string;
   activityLogSection: string;
   activityLogEmpty: string;

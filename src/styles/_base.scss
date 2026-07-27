@@ -51,7 +51,8 @@ body {
     padding: 16px;
   }
 
-  &:has(> app-calendar) {
+  /* app-calendar живёт внутри .app-page-host, не как прямой потомок */
+  &:has(app-calendar) {
     display: flex;
     flex-direction: column;
     height: 100dvh;
@@ -62,17 +63,8 @@ body {
     overflow: hidden;
     padding: 0;
 
-    > app-calendar {
-      display: flex;
-      flex: 1 1 0;
-      flex-direction: column;
-      min-height: 0;
-      width: 100%;
-      overflow: hidden;
-    }
-
     @media (max-width: 768px), (max-height: 440px) {
-      padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
       height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
       height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px));
       max-height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
@@ -95,6 +87,7 @@ app-navbar {
   height: 100%;
   overflow: hidden;
   touch-action: none;
+  border-radius: 12px;
 
   > router-outlet {
     display: contents;
@@ -207,8 +200,8 @@ html.app-select-dropdown-open {
 }
 
 @media (max-width: 1023px) {
-  html:has(.app-content > app-calendar),
-  html:has(.app-content > app-calendar) body {
+  html:has(.app-content app-calendar),
+  html:has(.app-content app-calendar) body {
     overflow: hidden;
     overscroll-behavior: none;
   }

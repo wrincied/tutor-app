@@ -3,14 +3,14 @@
 @mixin app-input-surface {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--nav-border);
-  border-radius: 6px;
+  border: 1px solid var(--input-border, #e2e8f0);
+  border-radius: 8px;
   padding: 8px 12px;
   min-height: 2.5rem;
   font-size: 14px;
   font-family: inherit;
   line-height: 1.4;
-  background: var(--page-bg);
+  background: var(--input-bg, #f8fafc);
   color: var(--text-primary);
   outline: none;
   transition:
@@ -23,19 +23,20 @@
   }
 
   &:hover:not(:disabled):not(:read-only) {
-    border-color: var(--text-secondary);
+    border-color: #cbd5e1;
   }
 
   &:focus {
-    border-color: var(--nav-accent);
-    box-shadow: 0 0 0 1px var(--nav-accent);
+    background: #ffffff;
+    border-color: var(--input-focus-border, #10b981);
+    box-shadow: 0 0 0 3px var(--input-focus-ring, rgb(16 185 129 / 0.15));
   }
 
   &:disabled,
   &:read-only {
     opacity: 0.85;
     cursor: not-allowed;
-    background: var(--nav-hover);
+    background: #f1f5f9;
   }
 }
 
@@ -54,7 +55,8 @@
     margin-left: 0.125rem;
     padding: 0.25rem;
     border-radius: 4px;
-    opacity: 0.72;
+    opacity: 0.85;
+    filter: invert(62%) sepia(8%) saturate(450%) hue-rotate(176deg);
     transition:
       opacity 0.15s ease,
       background-color 0.15s ease;
@@ -219,4 +221,19 @@ textarea.app-input,
   @include app-input-surface;
   cursor: default;
   background: var(--nav-hover);
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.field-hint--warn {
+  color: rgb(180 83 9);
+}
+
+.dark .field-hint--warn {
+  color: rgb(251 191 36);
 }

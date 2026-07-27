@@ -119,11 +119,15 @@ export async function processLessonTransaction({
   let balanceDebited: boolean;
 
   if (billingType === 'package') {
-    const current = Number(student.balance_lessons) || 0;
-    studentPatch = { balance_lessons: Math.round((current - units) * 100) / 100 };
-    amount = -units;
+    const currentRaw = Number(student.balance_lessons);
+    const current = Number.isFinite(currentRaw) ? currentRaw : 0;
+    const available = Math.max(0, current);
+    const actualDebit = Math.round(Math.min(units, available) * 100) / 100;
+    const next = Math.round((current - actualDebit) * 100) / 100;
+    studentPatch = actualDebit > 0 ? { balance_lessons: next } : {};
+    amount = -actualDebit;
     reason = 'lesson_completed_delayed';
-    balanceDebited = true;
+    balanceDebited = actualDebit > 0;
   } else {
     const current = Number(student.unpaid_lessons_count) || 0;
     studentPatch = { unpaid_lessons_count: Math.round((current + units) * 100) / 100 };
@@ -137,24 +141,30 @@ export async function processLessonTransaction({
     updatedAt: serverTimestamp,
   });
 
-  const logRef = getBalanceLogRef();
-  tx.set(logRef, {
-    tutor: lesson.tutor ?? null,
-    studentId: lesson.student_id,
-    lessonId: lessonRef.id,
-    amount,
-    reason,
-    createdAt: serverTimestamp,
-  });
+  if (amount !== 0) {
+    const logRef = getBalanceLogRef();
+    tx.set(logRef, {
+      tutor: lesson.tutor ?? null,
+      studentId: lesson.student_id,
+      lessonId: lessonRef.id,
+      amount,
+      reason,
+      createdAt: serverTimestamp,
+    });
+  }
 
-  tx.update(lessonRef, {
+  const lessonPatch: Record<string, unknown> = {
     billing_processed: true,
     balance_debited: balanceDebited,
-    balance_units_debited: units,
     billing_processed_at: serverTimestamp,
     paidAt: nowIso,
     updatedAt: serverTimestamp,
-  });
+  };
+  if (balanceDebited || billingType !== 'package') {
+    lessonPatch.balance_units_debited = Math.abs(amount) || units;
+  }
+
+  tx.update(lessonRef, lessonPatch);
 
   return 'processed';
 }

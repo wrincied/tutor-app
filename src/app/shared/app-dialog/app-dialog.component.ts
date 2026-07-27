@@ -68,7 +68,7 @@ export class AppDialogComponent implements OnDestroy {
   /** Средняя кнопка между «Отмена» и основным подтверждением (три действия). */
   secondaryLabel = input<string | null>(null);
   closeOnOverlay = input(true, { transform: booleanAttribute });
-  /** Поверх select-backdrop (z-index 1300). */
+  /** Поверх родительской app-dialog (nested backdrop 1100 / panel 1110). */
   stackOnTop = input(false, { transform: booleanAttribute });
 
   readonly cancelled = output<void>({ alias: 'cancel' });

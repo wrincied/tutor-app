@@ -20,6 +20,7 @@ html[data-design='v2'] {
   }
 
   .app-page-host {
+    /* Только opacity — transform ломает %/flex высоту сетки календаря. */
     animation: design-v2-enter 0.35s ease-out both;
   }
 
@@ -83,10 +84,8 @@ html[data-design='v2'][data-theme='dark'] {
 @keyframes design-v2-enter {
   from {
     opacity: 0;
-    transform: translateY(5px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }

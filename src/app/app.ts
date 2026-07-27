@@ -52,7 +52,7 @@ export class App {
         }
       });
 
-    interval(20000)
+    interval(120000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         if (this.showNavbar()) {
