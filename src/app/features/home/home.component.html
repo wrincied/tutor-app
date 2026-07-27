@@ -24,7 +24,11 @@
         <section class="home-studio__focus" aria-labelledby="home-next-lesson">
           <p id="home-next-lesson" class="home-studio__eyebrow">{{ t.nextLessonTitle }}</p>
           @if (nextLesson(); as row) {
-            <a routerLink="/app/calendar" class="home-studio__focus-link">
+            <a
+              routerLink="/app/calendar"
+              [queryParams]="calendarLessonQuery(row)"
+              class="home-studio__focus-link"
+            >
               <span class="home-studio__clock">{{ lessonTime(row.lesson.scheduledAt) }}</span>
               <span class="home-studio__focus-copy">
                 <span class="home-studio__focus-name">{{ row.studentName }}</span>
@@ -67,6 +71,7 @@
                 <li>
                   <a
                     routerLink="/app/calendar"
+                    [queryParams]="calendarLessonQuery(row)"
                     class="home-studio__item"
                     [class.home-studio__item--overdue]="isLessonOverdue(row)"
                   >
@@ -93,7 +98,11 @@
             <ul class="home-studio__aside-list">
               @for (student of lowBalanceStudents(); track student._id) {
                 <li>
-                  <a routerLink="/app/students" class="home-studio__aside-link">
+                  <a
+                    routerLink="/app/students"
+                    [queryParams]="studentQuery(student)"
+                    class="home-studio__aside-link"
+                  >
                     <span>{{ student.name }}</span>
                     <span>{{ lowBalanceLabel(student) }}</span>
                   </a>
@@ -157,7 +166,11 @@
         <section class="home-panel home-panel--next" aria-labelledby="home-next-lesson">
           <h2 id="home-next-lesson" class="home-panel__title">{{ t.nextLessonTitle }}</h2>
           @if (nextLesson(); as row) {
-            <a routerLink="/app/calendar" class="home-next">
+            <a
+              routerLink="/app/calendar"
+              [queryParams]="calendarLessonQuery(row)"
+              class="home-next"
+            >
               <span class="home-next__time">{{ lessonTime(row.lesson.scheduledAt) }}</span>
               <span class="home-next__meta">
                 <span class="home-next__name">{{ row.studentName }}</span>
@@ -185,6 +198,7 @@
                 <li>
                   <a
                     routerLink="/app/calendar"
+                    [queryParams]="calendarLessonQuery(row)"
                     class="home-agenda__item"
                     [class.home-agenda__item--overdue]="isLessonOverdue(row)"
                   >
@@ -209,7 +223,11 @@
             <ul class="home-balance">
               @for (student of lowBalanceStudents(); track student._id) {
                 <li>
-                  <a routerLink="/app/students" class="home-balance__item">
+                  <a
+                    routerLink="/app/students"
+                    [queryParams]="studentQuery(student)"
+                    class="home-balance__item"
+                  >
                     <span class="home-balance__name">{{ student.name }}</span>
                     <span class="home-balance__count">{{ lowBalanceLabel(student) }}</span>
                   </a>

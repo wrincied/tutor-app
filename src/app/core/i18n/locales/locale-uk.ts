@@ -403,6 +403,7 @@ export const CALENDAR_UK: CalendarStrings = {
   statusCompleted: 'Проведено',
   statusMissed: 'Пропущено',
   statusCanceled: 'Скасовано',
+  statusLegendAria: 'Статуси уроків',
   durationHourShort: 'год',
   durationMinShort: 'хв',
   durationOneHour: '1 год',
@@ -645,6 +646,8 @@ export const STUDENTS_UK: StudentStrings = {
     'Післяоплата: після уроку борг +1 заняття або години (тривалість÷60).',
   balanceLessonsField: 'Залишилось занять на балансі',
   balanceHoursField: 'Залишилось годин на балансі',
+  balanceNegativeHint:
+    'Баланс від’ємний: уроки йшли після вичерпання пакета. Можна зберегти й поповнити баланс.',
   creditLimitField: 'Ліміт боргу',
   activityLogSection: 'Історія змін',
   activityLogEmpty: 'Поки немає змін по учнях.',

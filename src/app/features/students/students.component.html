@@ -36,7 +36,14 @@
     <div class="students-list">
       <div class="students-cards" role="list">
         @for (s of students(); track s._id) {
-          <button type="button" class="student-card" role="listitem" (click)="openQuickActions(s)">
+          <button
+            type="button"
+            class="student-card"
+            role="listitem"
+            [attr.data-student-id]="s._id"
+            [class.student-card--highlight]="isStudentHighlighted(s._id)"
+            (click)="openQuickActions(s)"
+          >
             <span
               class="student-card__color"
               [style.background-color]="studentColor(s)"
@@ -74,7 +81,12 @@
 
         <div class="students-grid__body" role="list">
           @for (s of students(); track s._id) {
-            <article class="students-grid__row" role="listitem">
+            <article
+              class="students-grid__row"
+              role="listitem"
+              [attr.data-student-id]="s._id"
+              [class.students-grid__row--highlight]="isStudentHighlighted(s._id)"
+            >
               <div class="students-grid__col students-grid__col--name">
                 <span class="students-grid__name">{{ s.name }}</span>
               </div>
@@ -393,12 +405,14 @@
             id="st-balance"
             type="number"
             [ngModel]="balanceLessons()"
-            (ngModelChange)="balanceLessons.set($event)"
+            (ngModelChange)="onBalanceLessonsChange($event)"
             name="balance_lessons"
-            min="0"
             [step]="rateUnit() === 'hour' ? 0.5 : 1"
             inputmode="decimal"
           />
+          @if (balanceLessons() < 0) {
+            <p class="field-hint field-hint--warn">{{ t.balanceNegativeHint }}</p>
+          }
         </div>
       }
       @if (isPostpaidBilling()) {

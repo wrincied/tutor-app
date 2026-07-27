@@ -9,6 +9,15 @@ export function isPackageStudentWithLastBalance(student: Student): boolean {
   return Number(student.balance_lessons) === 1;
 }
 
+/** Ученик на абонементе с нулевым (или отрицательным) балансом. */
+export function isPackageStudentWithEmptyBalance(student: Student): boolean {
+  const billingType = String(student.billing_type ?? 'package');
+  if (billingType !== 'package') {
+    return false;
+  }
+  return Number(student.balance_lessons) <= 0;
+}
+
 export function isLessonBillingProcessed(lesson: Lesson): boolean {
   if (lesson.billing_processed !== undefined) {
     return Boolean(lesson.billing_processed);

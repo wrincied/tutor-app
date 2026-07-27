@@ -124,6 +124,25 @@
           </div>
         </div>
 
+        <ul class="cal-status-legend" [attr.aria-label]="i18n.calendarUi().statusLegendAria">
+          <li class="cal-status-legend__item">
+            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--scheduled" aria-hidden="true"></span>
+            <span>{{ i18n.calendarUi().statusScheduled }}</span>
+          </li>
+          <li class="cal-status-legend__item">
+            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--completed" aria-hidden="true"></span>
+            <span>{{ i18n.calendarUi().statusCompleted }}</span>
+          </li>
+          <li class="cal-status-legend__item">
+            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--missed" aria-hidden="true"></span>
+            <span>{{ i18n.calendarUi().statusMissed }}</span>
+          </li>
+          <li class="cal-status-legend__item">
+            <span class="cal-status-legend__swatch cal-lesson-card cal-lesson-card--canceled" aria-hidden="true"></span>
+            <span>{{ i18n.calendarUi().statusCanceled }}</span>
+          </li>
+        </ul>
+
         <div class="cal-header__actions">
           <div class="cal-toolbar">
             @if (!isCompactHeader()) {
@@ -490,6 +509,7 @@
                   type="button"
                   class="cal-sidebar__item-btn"
                   [class.cal-sidebar__item-btn--active]="focusedStudentId() === sidebarStudent._id"
+                  [class.cal-sidebar__item-btn--empty-balance]="isPackageEmptyBalance(sidebarStudent)"
                   [style.border-left-color]="
                     focusedStudentId() === sidebarStudent._id
                       ? getStudentColor(sidebarStudent._id)
@@ -508,6 +528,7 @@
                       <span
                         class="cal-sidebar__balance"
                         [class.cal-sidebar__balance--last]="isPackageLastBalance(sidebarStudent)"
+                        [class.cal-sidebar__balance--empty]="isPackageEmptyBalance(sidebarStudent)"
                       >
                         {{ sidebarStudent.balance_lessons }}
                         {{
