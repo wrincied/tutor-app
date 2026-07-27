@@ -812,7 +812,17 @@ export class CalendarComponent implements OnInit {
       }
 
       const apply = () => {
-        const available = el.clientHeight - this.gridBottomPaddingPx;
+        const padding = this.gridBottomPaddingPx;
+        let available = el.clientHeight - padding;
+        // Пока flex-цепочка не собралась, clientHeight ≈ контент (min hours) —
+        // берём высоту родителя секции, иначе час залипает на MIN и не растягивается.
+        if (available <= CalendarComponent.MIN_HOUR_HEIGHT_PX * span) {
+          const section = el.closest('.cal-grid-section') as HTMLElement | null;
+          const parentH = section?.clientHeight ?? el.parentElement?.clientHeight ?? 0;
+          if (parentH > available + padding) {
+            available = parentH - padding;
+          }
+        }
         if (available < CalendarComponent.MIN_HOUR_HEIGHT_PX) {
           return;
         }
@@ -826,8 +836,13 @@ export class CalendarComponent implements OnInit {
       };
 
       apply();
+      requestAnimationFrame(() => apply());
       const ro = new ResizeObserver(() => apply());
       ro.observe(el);
+      const section = el.closest('.cal-grid-section');
+      if (section) {
+        ro.observe(section);
+      }
       onCleanup(() => ro.disconnect());
     });
   }
