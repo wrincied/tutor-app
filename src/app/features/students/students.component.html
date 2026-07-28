@@ -43,61 +43,62 @@
     <p class="hint">{{ t.emptyState }}</p>
   } @else {
     <div class="students-list">
-      <div class="students-cards" role="list">
-        @for (s of students(); track s._id) {
-          <button
-            type="button"
-            class="student-card"
-            role="listitem"
-            [attr.data-student-id]="s._id"
-            [class.student-card--highlight]="isStudentHighlighted(s._id)"
-            (click)="openQuickActions(s)"
-          >
-            <span
-              class="student-card__color"
-              [style.background-color]="studentColor(s)"
-              aria-hidden="true"
-            ></span>
-            <span class="student-card__body">
-              <span class="student-card__name">{{ s.name }}</span>
-              <span class="student-card__meta">
-                <span>{{ formatStudentRate(s) }}</span>
-              </span>
-              <span class="student-card__balance">
-                {{ formatStudentBalance(s) }}
-              </span>
-            </span>
-            <app-telegram-cell
-              class="student-card__tg"
-              [student]="s"
-              [compact]="true"
-              [labels]="telegramCellLabelsFor(s)"
-              (bindClick)="inviteStudentToBot($event)"
-              (configureClick)="openTelegramSettings($event)"
-            />
-          </button>
-        }
-      </div>
-
-      <div class="students-grid">
-        <div class="students-grid__head">
-          <span class="students-grid__col students-grid__col--name">{{ t.name }}</span>
-          <span class="students-grid__col students-grid__col--color">{{ t.calendarColor }}</span>
-          <span class="students-grid__col students-grid__col--rate">{{ t.rateColumn }}</span>
-          <span class="students-grid__col students-grid__col--paid">{{ t.totalPaidColumn }}</span>
-          <span class="students-grid__col students-grid__col--balance">{{ t.balanceLessons }}</span>
-          <span class="students-grid__col students-grid__col--bot">{{ t.botNotifications }}</span>
-          <span class="students-grid__col students-grid__col--actions"></span>
-        </div>
-
-        <div class="students-grid__body" role="list">
+      @if (!desktopLayout()) {
+        <div class="students-cards" role="list">
           @for (s of students(); track s._id) {
-            <article
-              class="students-grid__row"
+            <button
+              type="button"
+              class="student-card"
               role="listitem"
               [attr.data-student-id]="s._id"
-              [class.students-grid__row--highlight]="isStudentHighlighted(s._id)"
+              [class.student-card--highlight]="isStudentHighlighted(s._id)"
+              (click)="openQuickActions(s)"
             >
+              <span
+                class="student-card__color"
+                [style.background-color]="studentColor(s)"
+                aria-hidden="true"
+              ></span>
+              <span class="student-card__body">
+                <span class="student-card__name">{{ s.name }}</span>
+                <span class="student-card__meta">
+                  <span>{{ formatStudentRate(s) }}</span>
+                </span>
+                <span class="student-card__balance">
+                  {{ formatStudentBalance(s) }}
+                </span>
+              </span>
+              <app-telegram-cell
+                class="student-card__tg"
+                [student]="s"
+                [compact]="true"
+                [labels]="telegramCellLabels()"
+                (bindClick)="inviteStudentToBot($event)"
+                (configureClick)="openTelegramSettings($event)"
+              />
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="students-grid">
+          <div class="students-grid__head">
+            <span class="students-grid__col students-grid__col--name">{{ t.name }}</span>
+            <span class="students-grid__col students-grid__col--color">{{ t.calendarColor }}</span>
+            <span class="students-grid__col students-grid__col--rate">{{ t.rateColumn }}</span>
+            <span class="students-grid__col students-grid__col--paid">{{ t.totalPaidColumn }}</span>
+            <span class="students-grid__col students-grid__col--balance">{{ t.balanceLessons }}</span>
+            <span class="students-grid__col students-grid__col--bot">{{ t.botNotifications }}</span>
+            <span class="students-grid__col students-grid__col--actions"></span>
+          </div>
+
+          <div class="students-grid__body" role="list">
+            @for (s of students(); track s._id) {
+              <article
+                class="students-grid__row"
+                role="listitem"
+                [attr.data-student-id]="s._id"
+                [class.students-grid__row--highlight]="isStudentHighlighted(s._id)"
+              >
               <div class="students-grid__col students-grid__col--name">
                 <span class="students-grid__name">{{ s.name }}</span>
               </div>
@@ -137,7 +138,7 @@
               <div class="students-grid__col students-grid__col--bot">
                 <app-telegram-cell
                   [student]="s"
-                  [labels]="telegramCellLabelsFor(s)"
+                  [labels]="telegramCellLabels()"
                   (bindClick)="inviteStudentToBot($event)"
                   (configureClick)="openTelegramSettings($event)"
                 />
@@ -154,7 +155,8 @@
             </article>
           }
         </div>
-      </div>
+        </div>
+      }
     </div>
   }
 

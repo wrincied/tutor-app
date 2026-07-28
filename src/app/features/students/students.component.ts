@@ -1,7 +1,9 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy, ViewChild, afterNextRender, Injector, PLATFORM_ID } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, ViewChild, afterNextRender, Injector, PLATFORM_ID, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { fromEvent } from 'rxjs';
 import { StudentService, Student } from '../../core/services/student.service';
 import { BotUnlinkAlertService } from '../../core/services/bot-unlink-alert.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -30,6 +32,7 @@ import { TelegramCellComponent } from './telegram-cell/telegram-cell.component';
 
 /** Fallback IANA when student.timezone is empty (bot/reminders use tutor TZ). */
 const DEFAULT_STUDENT_TIMEZONE = 'Europe/Vienna';
+const STUDENTS_DESKTOP_MQ = '(min-width: 1200px)';
 
 function resolveBillingType(raw?: string): StudentBillingType {
   if (raw === 'postpaid' || raw === 'per_lesson' || raw === 'single') {
@@ -59,9 +62,12 @@ export class StudentsComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
   @ViewChild('studentForm') studentFormRef?: NgForm;
   students = signal<Student[]>([]);
   loading = signal(true);
+  /** Desktop table vs mobile cards — only one list in DOM. */
+  desktopLayout = signal(false);
   showForm = signal(false);
   editTarget = signal<Student | null>(null);
   /** Ученик, на которого пришли с главной — краткая подсветка. */
@@ -151,6 +157,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit() {
+    this.bindDesktopLayoutMq();
     this.load();
   }
 
@@ -167,8 +174,51 @@ export class StudentsComponent implements OnInit, OnDestroy {
     }
   }
 
+  private bindDesktopLayoutMq(): void {
+    if (!isPlatformBrowser(this.platformId) || typeof window.matchMedia !== 'function') {
+      return;
+    }
+    const mq = window.matchMedia(STUDENTS_DESKTOP_MQ);
+    const sync = () => this.desktopLayout.set(mq.matches);
+    sync();
+    fromEvent(mq, 'change')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => sync());
+  }
+
   get t() {
     return this.i18n.studentsUi();
+  }
+
+  readonly telegramCellLabels = computed(() => {
+    const t = this.i18n.studentsUi();
+    return {
+      connected: t.tgConnected,
+      notConnected: t.tgNotConnected,
+      error: t.tgError,
+      paused: t.tgPaused,
+      bind: t.tgBind,
+      openChat: t.tgOpenChat,
+      connectedTooltip: t.tgConnectedTooltip,
+      notConnectedTooltip: t.tgNotConnectedTooltip,
+      errorUnknown: t.tgErrorUnknown,
+      errorBotBlocked: t.tgErrorBotBlocked,
+      errorChatNotFound: t.tgErrorChatNotFound,
+      errorUserDeactivated: t.tgErrorUserDeactivated,
+    };
+  });
+
+  telegramErrorTooltip(student: Student): string {
+    switch (student.telegram_delivery_error) {
+      case 'BOT_BLOCKED':
+        return this.t.tgErrorBotBlocked;
+      case 'CHAT_NOT_FOUND':
+        return this.t.tgErrorChatNotFound;
+      case 'USER_DEACTIVATED':
+        return this.t.tgErrorUserDeactivated;
+      default:
+        return this.t.tgErrorUnknown;
+    }
   }
 
   billingHelpText(): string {
@@ -377,41 +427,6 @@ export class StudentsComponent implements OnInit, OnDestroy {
     return resolveRateUnit(student?.rate_unit) === 'hour'
       ? this.t.topupUnitsLabelHours
       : this.t.topupUnitsLabel;
-  }
-
-  telegramCellLabels() {
-    const t = this.t;
-    return {
-      connected: t.tgConnected,
-      notConnected: t.tgNotConnected,
-      error: t.tgError,
-      paused: t.tgPaused,
-      bind: t.tgBind,
-      openChat: t.tgOpenChat,
-      connectedTooltip: t.tgConnectedTooltip,
-      notConnectedTooltip: t.tgNotConnectedTooltip,
-      errorTooltip: t.tgErrorUnknown,
-    };
-  }
-
-  telegramErrorTooltip(student: Student): string {
-    switch (student.telegram_delivery_error) {
-      case 'BOT_BLOCKED':
-        return this.t.tgErrorBotBlocked;
-      case 'CHAT_NOT_FOUND':
-        return this.t.tgErrorChatNotFound;
-      case 'USER_DEACTIVATED':
-        return this.t.tgErrorUserDeactivated;
-      default:
-        return this.t.tgErrorUnknown;
-    }
-  }
-
-  telegramCellLabelsFor(student: Student) {
-    return {
-      ...this.telegramCellLabels(),
-      errorTooltip: this.telegramErrorTooltip(student),
-    };
   }
 
   reminderOffsetOptions(): AppSelectOption[] {

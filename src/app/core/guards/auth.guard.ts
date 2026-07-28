@@ -8,6 +8,9 @@ import type { User } from 'firebase/auth';
 import { resolveFirebaseUser } from '../utils/resolve-firebase-user';
 import { UserService } from '../services/user.service';
 
+/** Session: skip reload+force token after first successful verified check per UID. */
+const verifiedUidSession = new Set<string>();
+
 export const authGuard: CanActivateFn = () => {
   const auth = inject(Auth);
   const router = inject(Router);
@@ -22,7 +25,12 @@ function isGithubUser(user: { providerData: { providerId: string }[] }): boolean
 }
 
 function refreshIdToken(user: User) {
-  return from(user.getIdToken(true)).pipe(map(() => true as const));
+  return from(user.getIdToken(true)).pipe(
+    map(() => {
+      verifiedUidSession.add(user.uid);
+      return true as const;
+    }),
+  );
 }
 
 export const emailVerifiedGuard: CanActivateFn = () => {
@@ -34,6 +42,11 @@ export const emailVerifiedGuard: CanActivateFn = () => {
     switchMap((user) => {
       if (!user) {
         return of(router.createUrlTree(['/login']));
+      }
+
+      // Already verified this session — skip Firebase reload + force token refresh.
+      if (user.emailVerified && verifiedUidSession.has(user.uid)) {
+        return of(true);
       }
 
       return from(user.reload()).pipe(

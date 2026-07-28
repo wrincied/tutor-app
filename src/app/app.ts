@@ -47,9 +47,15 @@ export class App {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => {
-        if (this.showNavbar()) {
-          this.unlinkAlert.refreshFromApi();
+        if (!this.showNavbar()) {
+          return;
         }
+        const path = this.router.url.split('?')[0];
+        // Students page already loads GET /students and calls ingestStudents.
+        if (path === '/app/students') {
+          return;
+        }
+        this.unlinkAlert.refreshFromApi();
       });
 
     interval(120000)

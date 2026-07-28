@@ -53,7 +53,10 @@ export class TelegramCellComponent {
     openChat: string;
     connectedTooltip: string;
     notConnectedTooltip: string;
-    errorTooltip: string;
+    errorUnknown: string;
+    errorBotBlocked: string;
+    errorChatNotFound: string;
+    errorUserDeactivated: string;
   }>();
   readonly compact = input(false);
 
@@ -82,9 +85,23 @@ export class TelegramCellComponent {
       return labels.notConnectedTooltip;
     }
     if (state === 'error') {
-      return labels.errorTooltip;
+      return this.errorTooltip();
     }
     return labels.paused;
+  }
+
+  private errorTooltip(): string {
+    const labels = this.labels();
+    switch (this.student().telegram_delivery_error) {
+      case 'BOT_BLOCKED':
+        return labels.errorBotBlocked;
+      case 'CHAT_NOT_FOUND':
+        return labels.errorChatNotFound;
+      case 'USER_DEACTIVATED':
+        return labels.errorUserDeactivated;
+      default:
+        return labels.errorUnknown;
+    }
   }
 
   onPrimaryClick(event: Event): void {
