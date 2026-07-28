@@ -17,7 +17,7 @@ import {
   studentsLowBalance,
   type HomeLessonRow,
 } from '../../core/utils/home-dashboard';
-import { dayKey } from '../../core/utils/lesson-recurrence';
+import { dayKey } from '../../core/utils/day-key';
 
 const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
 

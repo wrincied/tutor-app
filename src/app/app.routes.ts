@@ -197,5 +197,16 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: '' },
+  {
+    path: 'not-found',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+    data: { title: 'notFound' satisfies PageTitleKey },
+  },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+    data: { title: 'notFound' satisfies PageTitleKey },
+  },
 ];

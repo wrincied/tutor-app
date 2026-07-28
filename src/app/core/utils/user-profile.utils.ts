@@ -7,6 +7,7 @@ const CONFIGURED_TAX_MODES = new Set<string>([
   'ru-usn',
   'ru-ip',
   'by-ip',
+  'by-self-employed',
   'kz-ip',
   'ua-fop3',
 ]);
@@ -80,6 +81,7 @@ export const SETUP_TAX_MODES: TaxMode[] = [
   'ru-usn',
   'ru-ip',
   'by-ip',
+  'by-self-employed',
   'kz-ip',
   'ua-fop3',
 ];

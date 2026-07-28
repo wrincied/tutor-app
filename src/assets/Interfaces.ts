@@ -86,7 +86,8 @@ export type PageTitleKey =
   | 'admin'
   | 'adminUsers'
   | 'adminSettings'
-  | 'adminLanding';
+  | 'adminLanding'
+  | 'notFound';
 
 export type PageTitleStrings = Record<PageTitleKey, string>;
 
@@ -127,6 +128,7 @@ export type TaxMode =
   | 'ru-usn'
   | 'ru-ip'
   | 'by-ip'
+  | 'by-self-employed'
   | 'kz-ip'
   | 'ua-fop3'
   | 'none';
@@ -556,6 +558,9 @@ export interface AuthStrings {
   createAccount: string;
   creating: string;
   backHome: string;
+  notFoundTitle: string;
+  notFoundBody: string;
+  notFoundGoApp: string;
   hasAccount: string;
   noAccount: string;
   wrongCredentials: string;
@@ -734,6 +739,8 @@ export interface CalendarStrings {
   billingBodyAfterDeduct: string;
   billingDeduct: string;
   billingKeep: string;
+  billingKeepHint: string;
+  billingConfirm: string;
   billingMissedTitle: string;
   billingCanceledTitle: string;
   billingRefundTitle: string;
@@ -788,7 +795,9 @@ export interface CalendarStrings {
   recurrenceUntilHint: string;
   deleteRecurringTitle: string;
   deleteRecurringOccurrence: string;
+  deleteRecurringOccurrenceHint: string;
   deleteRecurringSeries: string;
+  deleteRecurringSeriesHint: string;
   weekdayMon: string;
   weekdayTue: string;
   weekdayWed: string;
@@ -800,6 +809,24 @@ export interface CalendarStrings {
   monthMoreLessons: string;
   /** Колонка вне рабочих дней. */
   dayOffLabel: string;
+  /** Вкладки мобильной формы урока. */
+  lessonFormTabData: string;
+  lessonFormTabOccupancy: string;
+  /** Хронология занятости. */
+  occupancyPickDate: string;
+  occupancyEmpty: string;
+  /** Предупреждение о долге при нулевом балансе. */
+  debtWarning: string;
+  /** Чекбокс уведомления в Telegram. */
+  lessonTelegramNotify: string;
+  /** Слот нового урока в хронологии. */
+  newLessonSlotLabel: string;
+  /** Конфликт времени в хронологии. */
+  timeSlotBusy: string;
+  telegramStatusConnected: string;
+  telegramStatusDisconnected: string;
+  telegramStatusPaused: string;
+  telegramStatusError: string;
 }
 
 export interface HomeStrings {
@@ -1049,6 +1076,8 @@ export interface StudentStrings {
   timezone: string;
   edit: string;
   delete: string;
+  /** Confirm dialog title for deleting a student */
+  deleteStudentTitle: string;
   topup: string;
   cancel: string;
   save: string;
@@ -1106,6 +1135,71 @@ export interface StudentStrings {
   botDisconnectTitle: string;
   botDisconnectMessage: string;
   botDisconnectConfirm: string;
+  /** Column: last top-up amount + date */
+  totalPaidColumn: string;
+  lastPaidMeta: string;
+  lastPaidEmpty: string;
+  topupAmountLabel: string;
+  topupUnitsLabel: string;
+  topupUnitsLabelHours: string;
+  topupDateLabel: string;
+  topupSendReceipt: string;
+  topupPrimaryCta: string;
+  balanceAdjustTitle: string;
+  balanceAdjustCurrent: string;
+  balanceAdjustNew: string;
+  balanceAdjustReason: string;
+  balanceAdjustReasonNoShow: string;
+  balanceAdjustReasonBonus: string;
+  balanceAdjustReasonTypo: string;
+  balanceAdjustNotify: string;
+  balanceAdjustTooltip: string;
+  tgNotifySkipped: string;
+  tgStatusDisconnected: string;
+  tgStatusConfigure: string;
+  tgStatusBind: string;
+  tgConnected: string;
+  tgNotConnected: string;
+  tgError: string;
+  tgPaused: string;
+  tgBind: string;
+  tgOpenChat: string;
+  tgConnectedTooltip: string;
+  tgNotConnectedTooltip: string;
+  tgErrorBotBlocked: string;
+  tgErrorChatNotFound: string;
+  tgErrorUserDeactivated: string;
+  tgErrorUnknown: string;
+  tgLinkTitle: string;
+  tgWaitingActivation: string;
+  tgLinkedSuccess: string;
+  tgQrLabel: string;
+  tgManualChatId: string;
+  tgManualChatIdHint: string;
+  tgManualChatIdSubmit: string;
+  tgSettingsTitle: string;
+  tgActiveAccount: string;
+  tgLinkedAt: string;
+  tgTriggersTitle: string;
+  tgTriggerReminder: string;
+  tgTriggerLowBalance: string;
+  tgTriggerPayment: string;
+  tgReminder15m: string;
+  tgReminder1h: string;
+  tgReminder2h: string;
+  tgReminder24h: string;
+  tgLowBalanceThreshold: string;
+  tgRoutingTitle: string;
+  tgRoutingStudent: string;
+  tgRoutingTutor: string;
+  tgRoutingBoth: string;
+  tgNeedsLinkHint: string;
+  tgTopupReceiptSkipped: string;
+  tgIsMinor: string;
+  tgParentAccount: string;
+  tgBindParent: string;
+  tgRoutingParent: string;
+  tgConfigure: string;
   quickActionsTitle: string;
   lessonsShort: string;
   hoursShort: string;
@@ -1217,6 +1311,8 @@ export interface Lesson {
   reminder_sent: boolean;
   /** Урок уже списан с balance_lessons ученика. */
   balance_debited?: boolean;
+  /** Сколько единиц баланса списали за этот урок. */
+  balance_units_debited?: number;
   /** Списание/буфер 30 мин обработан (true = с баланса уже списано). */
   billing_processed?: boolean;
   /** Время перевода в completed (старт 30-минутного буфера). */
@@ -1249,6 +1345,36 @@ export interface CalendarLesson extends Lesson {
   isVirtualOccurrence?: boolean;
 }
 
+/** Автоматические Telegram-триггеры и маршрутизация получателей. */
+export interface StudentTelegramNotificationSettings {
+  lesson_reminder_enabled: boolean;
+  lesson_reminder_offset_minutes: 15 | 60 | 120 | 1440;
+  low_balance_enabled: boolean;
+  low_balance_threshold: number;
+  payment_receipt_enabled: boolean;
+  routing: 'student' | 'tutor' | 'both';
+  /** Для несовершеннолетних: multi-select получателей. */
+  routing_targets?: Array<'student' | 'parent' | 'tutor'>;
+}
+
+export type TelegramDeliveryStatus = 'ok' | 'error' | null;
+export type TelegramDeliveryError =
+  | 'BOT_BLOCKED'
+  | 'CHAT_NOT_FOUND'
+  | 'USER_DEACTIVATED'
+  | 'UNKNOWN'
+  | null;
+
+export type StudentBalanceAdjustReason = 'no_show' | 'bonus' | 'typo';
+
+/** Последнее финансовое пополнение (не ручная корректировка баланса). */
+export interface StudentLastTopup {
+  amount_money: number;
+  currency: RateCurrency;
+  units: number;
+  at: string;
+}
+
 export interface Student {
   _id: string;
   name: string;
@@ -1258,6 +1384,10 @@ export interface Student {
   /** Пастельный цвет левой полосы карточки урока в календаре (HSL/hex). */
   color_hex: string;
   balance_lessons: number;
+  /** Суммарно внесено через top-up (в единицах rate_unit). */
+  total_topup_units?: number;
+  /** Последняя оплата через «+ Пополнить». */
+  last_topup?: StudentLastTopup | null;
   /** package — предоплата (balance_lessons); postpaid — постоплата / разовая.
    *  При rate_unit=hour в balance_lessons хранятся часы (дробные). */
   billing_type?: StudentBillingType;
@@ -1285,6 +1415,14 @@ export interface Student {
   telegram_unlink_pending?: boolean | null;
   telegram_unlinked_username?: string | null;
   telegram_unlinked_at?: string | null;
+  telegram_delivery_status?: TelegramDeliveryStatus;
+  telegram_delivery_error?: TelegramDeliveryError;
+  telegram_notification_settings?: StudentTelegramNotificationSettings | null;
+  /** Несовершеннолетний — UI до 2 Chat ID (ученик + родитель). */
+  is_minor?: boolean;
+  telegram_parent_chat_id?: string | null;
+  telegram_parent_username?: string | null;
+  telegram_parent_linked_at?: string | null;
   /** Zoom / Meet / custom call URL for lesson notifications */
   meeting_link?: string | null;
   createdAt: string;

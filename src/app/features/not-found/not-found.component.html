@@ -1,0 +1,22 @@
+<section class="not-found" aria-labelledby="not-found-title">
+  <div class="not-found__atmosphere" aria-hidden="true">
+    <span class="not-found__orb not-found__orb--a"></span>
+    <span class="not-found__orb not-found__orb--b"></span>
+    <span class="not-found__grain"></span>
+  </div>
+
+  <div class="not-found__stage">
+    <p class="not-found__brand">Simple4U</p>
+    <p class="not-found__code" aria-hidden="true">404</p>
+    <h1 id="not-found-title" class="not-found__title">{{ i18n.authUi().notFoundTitle }}</h1>
+    <p class="not-found__body">{{ i18n.authUi().notFoundBody }}</p>
+    <div class="not-found__actions">
+      <a class="not-found__cta" [routerLink]="primaryLink()">{{ primaryLabel() }}</a>
+      @if (loggedIn()) {
+        <a class="not-found__link" routerLink="/">{{ i18n.authUi().backHome }}</a>
+      } @else {
+        <a class="not-found__link" routerLink="/login">{{ i18n.authUi().login }}</a>
+      }
+    </div>
+  </div>
+</section>

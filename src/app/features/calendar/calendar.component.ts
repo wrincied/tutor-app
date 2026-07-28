@@ -24,6 +24,8 @@ import { StudentService, type Student } from '../../core/services/student.servic
 import { isPackageStudentWithEmptyBalance, isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
 import { LessonCardComponent } from './lesson-card/lesson-card.component';
 import { CalendarHeaderComponent } from './calendar-header/calendar-header.component';
+import { telegramCellState } from '../students/telegram-cell/telegram-cell.component';
+import { environment } from '../../../environments/environment';
 import type { CalendarLesson, Lesson, LessonStatus } from '@interfaces';
 import {
   lessonAmountFromPrice,
@@ -60,6 +62,20 @@ const PERIOD_EXIT_MS = 200;
 const PERIOD_ENTER_MS = 300;
 
 export type CalendarViewMode = '1' | '3' | '7' | '30';
+
+type LessonFormMobileTab = 'form' | 'occupancy';
+
+interface LessonOccupancySlot {
+  id: string;
+  kind: 'existing' | 'draft';
+  status: LessonStatus;
+  studentColor: string;
+  startMs: number;
+  endMs: number;
+  timeLabel: string;
+  studentName: string;
+  conflict: boolean;
+}
 
 interface LessonDragGhost {
   x: number;
@@ -113,6 +129,8 @@ type BillingConfirmState = {
   payload: LessonSavePayload;
   editing: Lesson | null;
   chargeStatus?: LessonStatus;
+  /** Выбор в модалке списания (mode === 'charge'). */
+  chargeChoice?: 'deduct' | 'keep';
 };
 @Component({
   selector: 'app-calendar',
@@ -180,10 +198,18 @@ export class CalendarComponent implements OnInit {
   hasLoaded = signal(false);
   /** Планшет (iPad и аналоги): одна колонка в модалке урока. */
   isTabletLayout = signal(false);
+  /** Мобильная форма урока: вкладки вместо двух колонок (<640px). */
+  lessonFormUseTabs = signal(false);
+  lessonFormMobileTab = signal<LessonFormMobileTab>('form');
+  lessonTelegramNotify = signal(true);
   /** Navbar снизу (телефон и планшет landscape). */
   isBottomNavLayout = signal(false);
   /** Планшет/телефон: без стрелок навигации, ≤1023px */
   isCompactHeader = signal(false);
+  /** Телефон + неделя: 7 колонок на ширину экрана (как Google Calendar). */
+  isWeekFitLayout = computed(
+    () => this.viewMode() === '7' && this.isBottomNavLayout() && !this.isMonthOverview(),
+  );
   isNarrowViewport = signal(true);
   /** HTML5 dragstart/dragover — только на десктопе с точным указателем. */
   useNativeLessonDrag = signal(false);
@@ -254,6 +280,8 @@ export class CalendarComponent implements OnInit {
   /** Дата вхождения при редактировании виртуальной карточки (YYYY-MM-DD). */
   editingOccurrenceDate = signal<string | null>(null);
   deleteRecurringModalOpen = signal(false);
+  /** Объём удаления: только вхождение или вся серия. */
+  deleteRecurringScope = signal<'single' | 'series'>('single');
   deleteLessonConfirmOpen = signal(false);
   readonly durationPresets: readonly number[] = [30, 45, 60, 90];
   /** Цвета точек статуса — как у карточек урока в сетке. */
@@ -303,8 +331,128 @@ export class CalendarComponent implements OnInit {
   });
 
   studentSelectOptions = computed((): AppSelectOption[] =>
-    this.students().map((s) => ({ value: s._id, label: s.name })),
+    this.students().map((s) => ({
+      value: s._id,
+      label: this.formatStudentSelectLabel(s),
+    })),
   );
+
+  readonly lessonFormScheduledAt = computed((): string | null => {
+    this.scheduledAtLocal();
+    this.showLessonForm();
+    const local = this.scheduledAtLocal()?.trim();
+    if (local) {
+      const parsed = new Date(local);
+      return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+    }
+    const fallback = this.form.scheduledAt?.trim();
+    return fallback || null;
+  });
+
+  readonly lessonFormHasConflict = computed(() => {
+    const scheduledAt = this.lessonFormScheduledAt();
+    const excludeId = this.editLessonTarget()?._id ?? null;
+    return this.hasScheduleConflict(scheduledAt, this.duration(), excludeId, this.form.status);
+  });
+
+  readonly lessonFormSaveBlocked = computed(
+    () => this.savingLesson() || this.lessonFormHasConflict(),
+  );
+
+  readonly lessonOccupancyDayLabel = computed(() => {
+    const raw = this.lessonFormScheduledAt();
+    if (!raw) {
+      return this.i18n.calendarUi().occupancyPickDate;
+    }
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) {
+      return this.i18n.calendarUi().occupancyPickDate;
+    }
+    return date.toLocaleDateString(this.i18n.localeId(), {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+  });
+
+  readonly lessonFormOccupancySlots = computed((): LessonOccupancySlot[] => {
+    const raw = this.lessonFormScheduledAt();
+    if (!raw) {
+      return [];
+    }
+    const day = new Date(raw);
+    if (Number.isNaN(day.getTime())) {
+      return [];
+    }
+
+    const excludeId = this.editLessonTarget()?._id ?? null;
+    const editingOccurrenceAt = this.editLessonTarget()?.scheduledAt ?? null;
+    const slots: LessonOccupancySlot[] = [];
+
+    for (const lesson of this.lessonsForOccupancyDay(day)) {
+      if (!lesson.scheduledAt) {
+        continue;
+      }
+      if (
+        excludeId &&
+        lesson._id === excludeId &&
+        (!editingOccurrenceAt || lesson.scheduledAt === editingOccurrenceAt)
+      ) {
+        continue;
+      }
+      const interval = this.lessonInterval(lesson.scheduledAt, lesson.lesson_duration);
+      if (!interval) {
+        continue;
+      }
+      const student = this.students().find((s) => s._id === lesson.student_id);
+      slots.push({
+        id: `lesson-${lesson._id}-${lesson.scheduledAt}`,
+        kind: 'existing',
+        status: lesson.status,
+        studentColor: this.getStudentColor(lesson.student_id),
+        startMs: interval.start,
+        endMs: interval.end,
+        timeLabel: this.formatOccupancyTimeRange(interval.start, interval.end),
+        studentName: student?.name?.trim() || '—',
+        conflict: false,
+      });
+    }
+
+    if (this.form.status === 'scheduled') {
+      const draftInterval = this.lessonInterval(raw, this.duration());
+      if (draftInterval) {
+        const student = this.selectedStudentForForm();
+        let conflict = false;
+        for (const slot of slots) {
+          if (
+            this.intervalsOverlap(draftInterval, { start: slot.startMs, end: slot.endMs })
+          ) {
+            conflict = true;
+            break;
+          }
+        }
+        slots.push({
+          id: 'draft',
+          kind: 'draft',
+          status: 'scheduled',
+          studentColor: student?.color_hex || DEFAULT_STUDENT_BORDER_COLOR,
+          startMs: draftInterval.start,
+          endMs: draftInterval.end,
+          timeLabel: this.formatOccupancyTimeRange(draftInterval.start, draftInterval.end),
+          studentName:
+            student?.name?.trim() || this.i18n.calendarUi().newLessonSlotLabel,
+          conflict,
+        });
+      }
+    }
+
+    return slots.sort((a, b) => a.startMs - b.startMs);
+  });
+
+  readonly canLessonFormTelegramNotify = computed(() => {
+    const student = this.selectedStudentForForm();
+    return student ? telegramCellState(student) === 'connected' : false;
+  });
 
   weekdayLabels = computed(() => this.i18n.weekdayShortLabels());
 
@@ -363,7 +511,7 @@ export class CalendarComponent implements OnInit {
 
   gridTemplateColumns = computed(() => {
     const count = this.columns().length;
-    // Min width comes from CSS `--cal-day-col-min` (0 on mobile, 110px on desktop).
+    // Min width from CSS `--cal-day-col-min` (110px phone day/3-day; 0 week-fit & desktop).
     return count > 0 ? `repeat(${count}, minmax(var(--cal-day-col-min, 0px), 1fr))` : 'none';
   });
 
@@ -874,7 +1022,7 @@ export class CalendarComponent implements OnInit {
       }
 
       const apply = () => {
-        this.syncHeaderScrollbarGutter(el);
+        this.syncHeaderDaysAreaWidth(el);
         const padding = this.gridBottomPaddingPx;
         let available = el.clientHeight - padding;
         // Пока flex-цепочка не собралась, clientHeight ≈ контент (min hours) —
@@ -906,14 +1054,25 @@ export class CalendarComponent implements OnInit {
       if (section) {
         ro.observe(section);
       }
+      const days = el.querySelector('.cal-days-scroll');
+      if (days) {
+        ro.observe(days);
+      }
       onCleanup(() => ro.disconnect());
     });
   }
 
-  /** Ширина правого corner в шапке = gutter вертикального scrollbar сетки. */
-  private syncHeaderScrollbarGutter(scrollEl: HTMLElement): void {
-    const gutter = Math.max(0, scrollEl.offsetWidth - scrollEl.clientWidth);
-    this.hostEl.nativeElement.style.setProperty('--cal-scrollbar-gutter', `${gutter}px`);
+  /** Правый spacer шапки забирает остаток; ширина дней = `.cal-days-scroll`, не scrollbar. */
+  private syncHeaderDaysAreaWidth(scrollEl: HTMLElement): void {
+    const days = scrollEl.querySelector('.cal-days-scroll') as HTMLElement | null;
+    if (!days) {
+      return;
+    }
+    const width = days.getBoundingClientRect().width;
+    if (!Number.isFinite(width) || width <= 0) {
+      return;
+    }
+    this.hostEl.nativeElement.style.setProperty('--cal-days-area-width', `${width}px`);
   }
 
   ngOnInit(): void {
@@ -1084,13 +1243,22 @@ export class CalendarComponent implements OnInit {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    this.nowLineIntervalId = setInterval(() => {
-      this.nowTick.update((n) => n + 1);
-    }, 60_000);
+    const tick = () => this.nowTick.update((n) => n + 1);
+    tick();
+    // 15s: линия заметно ползёт; visibilitychange — после троттлинга фона.
+    this.nowLineIntervalId = setInterval(tick, 15_000);
+    const onVisibility = () => {
+      if (this.document.visibilityState === 'visible') {
+        tick();
+      }
+    };
+    this.document.addEventListener('visibilitychange', onVisibility);
     this.destroyRef.onDestroy(() => {
       if (this.nowLineIntervalId !== null) {
         clearInterval(this.nowLineIntervalId);
+        this.nowLineIntervalId = null;
       }
+      this.document.removeEventListener('visibilitychange', onVisibility);
     });
   }
 
@@ -1101,6 +1269,7 @@ export class CalendarComponent implements OnInit {
     const bottomNavMq = window.matchMedia('(max-width: 768px), (max-height: 440px)');
     const compactMq = window.matchMedia('(max-width: 1023px)');
     const tabletMq = window.matchMedia('(max-width: 1180px)');
+    const lessonFormTabsMq = window.matchMedia('(max-width: 639px)');
     const finePointerMq = window.matchMedia('(hover: hover) and (pointer: fine)');
     const applyViewport = () => {
       const bottomNav = bottomNavMq.matches;
@@ -1110,17 +1279,20 @@ export class CalendarComponent implements OnInit {
       this.isCompactHeader.set(compact);
       this.isNarrowViewport.set(compact);
       this.isTabletLayout.set(tablet);
+      this.lessonFormUseTabs.set(lessonFormTabsMq.matches);
       this.useNativeLessonDrag.set(finePointerMq.matches);
     };
     applyViewport();
     bottomNavMq.addEventListener('change', applyViewport);
     compactMq.addEventListener('change', applyViewport);
     tabletMq.addEventListener('change', applyViewport);
+    lessonFormTabsMq.addEventListener('change', applyViewport);
     finePointerMq.addEventListener('change', applyViewport);
     this.destroyRef.onDestroy(() => {
       bottomNavMq.removeEventListener('change', applyViewport);
       compactMq.removeEventListener('change', applyViewport);
       tabletMq.removeEventListener('change', applyViewport);
+      lessonFormTabsMq.removeEventListener('change', applyViewport);
       finePointerMq.removeEventListener('change', applyViewport);
     });
   }
@@ -1163,6 +1335,14 @@ export class CalendarComponent implements OnInit {
 
   lessonsForColumn(col: Date): CalendarLesson[] {
     return this.lessonsByDay().get(this.dayKey(col)) ?? [];
+  }
+
+  /** Уроки выбранного дня для хронологии занятости (включая RRULE вне видимой сетки). */
+  private lessonsForOccupancyDay(day: Date): CalendarLesson[] {
+    const start = this.startOfLocalDay(day);
+    const end = new Date(start);
+    end.setHours(23, 59, 59, 999);
+    return expandLessonsForRange(this.displayLessons(), start, end);
   }
 
   displayScheduledAt(lesson: Lesson): string {
@@ -1222,7 +1402,13 @@ export class CalendarComponent implements OnInit {
   }
 
   private minutesFromGridStart(date: Date): number {
-    return date.getHours() * 60 + date.getMinutes() - this.gridStartHour() * 60;
+    return (
+      date.getHours() * 60 +
+      date.getMinutes() +
+      date.getSeconds() / 60 +
+      date.getMilliseconds() / 60_000 -
+      this.gridStartHour() * 60
+    );
   }
 
   calculateHeight(duration: number): number {
@@ -1240,6 +1426,20 @@ export class CalendarComponent implements OnInit {
       return `${shortDay} ${col.getDate()}`;
     }
     return `${weekday} ${col.getDate()}`;
+  }
+
+  /** Одна буква/короткий день для Google-style week header на телефоне. */
+  formatWeekdayLetter(col: Date): string {
+    const weekday = this.dateWeekdayFmt().format(col).replace(/\./g, '').trim();
+    if (!weekday) {
+      return '';
+    }
+    // RU/UK/BY often "пн"/"Пн" — берём первую букву; EN "Mon" — две.
+    const lower = weekday.toLocaleLowerCase(this.i18n.localeId());
+    if (/^[a-z]/i.test(weekday)) {
+      return weekday.length > 2 ? weekday.slice(0, 2) : weekday;
+    }
+    return lower.slice(0, 1).toLocaleUpperCase(this.i18n.localeId());
   }
 
   onPeriodSwipeStart(event: TouchEvent): void {
@@ -1868,6 +2068,90 @@ export class CalendarComponent implements OnInit {
     return this.students().find((s) => s._id === id);
   }
 
+  showLessonFormDebtWarning(student: Student): boolean {
+    return isPackageStudentWithEmptyBalance(student);
+  }
+
+  formatStudentBalanceLabel(student: Student): string {
+    const raw = Number(student.balance_lessons);
+    const value = Number.isFinite(raw) ? raw : 0;
+    const pretty = Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+    const unit =
+      String(student.rate_unit ?? '').toLowerCase() === 'lesson'
+        ? this.i18n.studentsUi().lessonsShort
+        : this.i18n.studentsUi().hoursShort;
+    return `${pretty} ${unit}`;
+  }
+
+  formatStudentSelectLabel(student: Student): string {
+    const name = student.name?.trim() || '—';
+    const rate = this.formatStudentSelectRate(student);
+    return `${name} · ${rate}`;
+  }
+
+  /** Базовая ставка для label в select: сумма + /час или /урок. */
+  formatStudentSelectRate(student: Student): string {
+    const priceMode = normalizeLessonPriceMode(null, student.rate_unit);
+    const formatted = new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: student.rate_currency || 'EUR',
+      maximumFractionDigits: 0,
+    }).format(Number(student.rate_per_hour));
+    const unit =
+      priceMode === 'fixed'
+        ? this.i18n.studentsUi().perLesson
+        : this.i18n.studentsUi().perHour;
+    return `${formatted}${unit}`;
+  }
+
+  lessonFormStudentMetaRate(student: Student): string {
+    const editing = this.editLessonTarget();
+    if (
+      editing &&
+      editing.student_id === student._id &&
+      this.lessonHasSnapshotRate(editing) &&
+      !this.editLessonStudentChanged()
+    ) {
+      return this.formatLessonSnapshotRateLabel(editing);
+    }
+    return this.formatStudentRatePreview(student);
+  }
+
+  formatStudentTelegramShort(student: Student): string {
+    const t = this.i18n.calendarUi();
+    switch (telegramCellState(student)) {
+      case 'connected':
+        return t.telegramStatusConnected;
+      case 'paused':
+        return t.telegramStatusPaused;
+      case 'error':
+        return t.telegramStatusError;
+      default:
+        return t.telegramStatusDisconnected;
+    }
+  }
+
+  formatOccupancyTimeRange(startMs: number, endMs: number): string {
+    const fmt = new Intl.DateTimeFormat(this.i18n.localeId(), {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return `${fmt.format(new Date(startMs))}–${fmt.format(new Date(endMs))}`;
+  }
+
+  setLessonFormMobileTab(tab: LessonFormMobileTab): void {
+    this.lessonFormMobileTab.set(tab);
+  }
+
+  onLessonFormStudentChange(): void {
+    if (!this.canLessonFormTelegramNotify()) {
+      this.lessonTelegramNotify.set(false);
+    } else {
+      this.lessonTelegramNotify.set(true);
+    }
+  }
+
   getSchedulePreviewText(): string | null {
     const raw = this.form.scheduledAt?.trim();
     if (!raw) {
@@ -2285,19 +2569,19 @@ export class CalendarComponent implements OnInit {
     const pending = this.billingConfirm();
     const t = this.i18n.calendarUi();
     if (!pending) {
-      return t.billingDeduct;
+      return t.billingConfirm;
     }
     if (pending.mode === 'refund' || pending.mode === 'refund-only') {
       return t.billingRefundConfirm;
     }
-    return pending.chargeStatus === 'canceled' ? t.billingKeep : t.billingDeduct;
+    return t.billingConfirm;
   }
 
   billingDialogSecondaryLabel(): string | null {
     const pending = this.billingConfirm();
     const t = this.i18n.calendarUi();
     if (!pending) {
-      return t.billingKeep;
+      return null;
     }
     if (pending.mode === 'refund-only') {
       return null;
@@ -2305,7 +2589,16 @@ export class CalendarComponent implements OnInit {
     if (pending.mode === 'refund') {
       return t.billingRefundKeep;
     }
-    return pending.chargeStatus === 'canceled' ? t.billingDeduct : t.billingKeep;
+    // Charge: choice is via radio-cards; no secondary action.
+    return null;
+  }
+
+  setBillingChargeChoice(choice: 'deduct' | 'keep'): void {
+    const pending = this.billingConfirm();
+    if (!pending || pending.mode !== 'charge') {
+      return;
+    }
+    this.billingConfirm.set({ ...pending, chargeChoice: choice });
   }
 
   billingConfirmBalanceAfterDeduct(): number {
@@ -2315,7 +2608,8 @@ export class CalendarComponent implements OnInit {
     }
     const student = this.students().find((s) => s._id === pending.payload.student_id);
     const balance = Number(student?.balance_lessons ?? 0);
-    return Math.max(0, balance - 1);
+    const units = this.billingDebitUnits(student, pending.payload.lesson_duration);
+    return Math.round((balance - units) * 100) / 100;
   }
 
   billingConfirmBalanceAfterRefund(): number {
@@ -2324,7 +2618,34 @@ export class CalendarComponent implements OnInit {
       return 0;
     }
     const student = this.students().find((s) => s._id === pending.payload.student_id);
-    return Number(student?.balance_lessons ?? 0) + 1;
+    const balance = Number(student?.balance_lessons ?? 0);
+    const units = this.billingDebitUnits(
+      student,
+      pending.payload.lesson_duration ?? pending.editing?.lesson_duration,
+    );
+    return Math.round((balance + units) * 100) / 100;
+  }
+
+  private billingDebitUnits(
+    student: { rate_unit?: string | null } | undefined,
+    durationMinutes: number | undefined,
+  ): number {
+    const unit = String(student?.rate_unit ?? 'hour').toLowerCase();
+    if (unit === 'lesson') {
+      return 1;
+    }
+    const minutes = Number(durationMinutes);
+    const safe = Number.isFinite(minutes) && minutes > 0 ? minutes : 60;
+    return Math.round((safe / 60) * 100) / 100;
+  }
+
+  billingBalanceUnitLabel(): string {
+    const pending = this.billingConfirm();
+    const student = this.students().find((s) => s._id === pending?.payload.student_id);
+    const unit = String(student?.rate_unit ?? 'hour').toLowerCase();
+    return unit === 'lesson'
+      ? this.i18n.studentsUi().lessonsShort
+      : this.i18n.studentsUi().hoursShort;
   }
 
   canRefundLessonBalance(): boolean {
@@ -2705,6 +3026,8 @@ export class CalendarComponent implements OnInit {
     this.scheduledAtLocal.set(local.toISOString().slice(0, 16));
     this.saveLessonError = null;
     this.studentsLoadError = null;
+    this.lessonFormMobileTab.set('form');
+    this.lessonTelegramNotify.set(true);
     this.showLessonForm.set(true);
     this.ensureStudentsLoaded();
   }
@@ -2747,6 +3070,8 @@ export class CalendarComponent implements OnInit {
       new Date(lesson.scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000,
     );
     this.scheduledAtLocal.set(local.toISOString().slice(0, 16));
+    this.lessonFormMobileTab.set('form');
+    this.onLessonFormStudentChange();
     this.showLessonForm.set(true);
   }
 
@@ -2773,6 +3098,8 @@ export class CalendarComponent implements OnInit {
     this.deleteRecurringModalOpen.set(false);
     this.lessonFormStep.set(1);
     this.lessonFormSubmitted.set(false);
+    this.lessonFormMobileTab.set('form');
+    this.lessonTelegramNotify.set(true);
   }
 
   private resetLessonForm(): void {
@@ -2798,8 +3125,21 @@ export class CalendarComponent implements OnInit {
   }
 
   private refreshStudentsList(): void {
-    this.studentSvc.getAll().subscribe({
-      next: (list) => this.students.set(list),
+    this.studentSvc.getAll({ force: true }).subscribe({
+      next: (list) => {
+        if (!environment.production) {
+          console.log(
+            '[billing] students refreshed',
+            list.map((s) => ({
+              id: s._id,
+              name: s.name,
+              balance_lessons: s.balance_lessons,
+              billing_type: s.billing_type,
+            })),
+          );
+        }
+        this.students.set(list);
+      },
       error: () => {
         /* keep previous list */
       },
@@ -3001,6 +3341,7 @@ export class CalendarComponent implements OnInit {
         payload: basePayload,
         editing: editing ?? null,
         chargeStatus: this.form.status,
+        chargeChoice: 'deduct',
       });
       return;
     }
@@ -3033,10 +3374,28 @@ export class CalendarComponent implements OnInit {
     this.billingConfirm.set(null);
     const previousStatus = pending.editing?.status;
     if (pending.mode === 'refund' || pending.mode === 'refund-only') {
+      if (!environment.production) {
+        console.log('[billing] confirm refund', {
+          mode: pending.mode,
+          previousStatus,
+          studentId: pending.payload.student_id,
+        });
+      }
       this.persistLesson(pending.payload, pending.editing, false, pending, previousStatus, true);
       return;
     }
-    const shouldDeduct = pending.chargeStatus !== 'canceled';
+    const shouldDeduct = pending.chargeChoice !== 'keep';
+    if (!environment.production) {
+      console.log('[billing] confirm charge', {
+        chargeChoice: pending.chargeChoice ?? 'deduct',
+        shouldDeduct,
+        chargeStatus: pending.chargeStatus,
+        previousStatus,
+        studentId: pending.payload.student_id,
+        occurrence_status: pending.payload.occurrence_status,
+        status: pending.payload.status,
+      });
+    }
     this.persistLesson(pending.payload, pending.editing, shouldDeduct, pending, previousStatus, false);
   }
 
@@ -3049,11 +3408,6 @@ export class CalendarComponent implements OnInit {
     const previousStatus = pending.editing?.status;
     if (pending.mode === 'refund') {
       this.persistLesson(pending.payload, pending.editing, false, pending, previousStatus, false);
-      return;
-    }
-    if (pending.mode === 'charge') {
-      const shouldDeduct = pending.chargeStatus === 'canceled';
-      this.persistLesson(pending.payload, pending.editing, shouldDeduct, pending, previousStatus, false);
     }
   }
 
@@ -3130,9 +3484,36 @@ export class CalendarComponent implements OnInit {
       shouldRefund,
     );
 
+    if (!environment.production) {
+      const student = this.students().find((s) => s._id === body.student_id);
+      console.log('[billing] persistLesson request', {
+        lessonId: editing?._id ?? '(create)',
+        previousStatus,
+        shouldDeduct,
+        shouldRefund,
+        should_deduct_balance: body.should_deduct_balance,
+        should_refund_balance: body.should_refund_balance,
+        status: body.status,
+        occurrence_status: body.occurrence_status,
+        occurrence_date: body.occurrence_date,
+        studentBalanceBefore: student?.balance_lessons,
+        studentBillingType: student?.billing_type,
+        studentRateUnit: student?.rate_unit,
+      });
+    }
+
     if (editing) {
       this.lessonsSvc.update(editing._id, body).subscribe({
         next: (updated) => {
+          if (!environment.production) {
+            console.log('[billing] persistLesson response', {
+              lessonId: updated._id,
+              status: updated.status,
+              balance_debited: updated.balance_debited,
+              billing_processed: updated.billing_processed,
+              balance_units_debited: updated.balance_units_debited,
+            });
+          }
           this.lessons.update((list) =>
             list.map((l) => (l._id === updated._id ? this.normalizeLesson(updated) : l)),
           );
@@ -3141,6 +3522,9 @@ export class CalendarComponent implements OnInit {
           this.closeLessonForm();
         },
         error: (err: HttpErrorResponse) => {
+          if (!environment.production) {
+            console.error('[billing] persistLesson error', err.status, err.error);
+          }
           this.savingLesson.set(false);
           this.restoreBillingOnSaveError(billingRestore);
           this.handleLessonSaveError(err);
@@ -3195,6 +3579,7 @@ export class CalendarComponent implements OnInit {
       return;
     }
     if (target.isRecurring) {
+      this.deleteRecurringScope.set('single');
       this.deleteRecurringModalOpen.set(true);
       return;
     }
@@ -3216,6 +3601,18 @@ export class CalendarComponent implements OnInit {
 
   closeDeleteRecurringModal(): void {
     this.deleteRecurringModalOpen.set(false);
+  }
+
+  setDeleteRecurringScope(scope: 'single' | 'series'): void {
+    this.deleteRecurringScope.set(scope);
+  }
+
+  confirmDeleteRecurring(): void {
+    if (this.deleteRecurringScope() === 'series') {
+      this.confirmDeleteRecurringSeries();
+      return;
+    }
+    this.confirmDeleteRecurringOccurrence();
   }
 
   confirmDeleteRecurringOccurrence(): void {

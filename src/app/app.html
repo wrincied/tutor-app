@@ -13,6 +13,7 @@
 
 <app-dialog
   [open]="!!unlinkAlert.alert()"
+  size="sm"
   [title]="unlinkDialogTitle()"
   [dismissLabel]="unlinkDialogOk()"
   (cancel)="unlinkAlert.dismiss()"

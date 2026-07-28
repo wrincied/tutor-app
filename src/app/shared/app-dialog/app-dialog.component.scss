@@ -16,8 +16,8 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     /* Nested over primary lesson dialog (portaled to body). */
     z-index: var(--z-app-dialog-nested-backdrop, 1100);
     background: rgb(0 0 0 / 0.25);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
   display: flex;
   overscroll-behavior: contain;
@@ -91,9 +91,9 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     transform-origin: bottom center;
   }
 
-  // Планшет/ПК: по центру
+  // Планшет/ПК: по центру (ширина — size tokens)
   @media (min-width: $dialog-desktop-min) {
-    max-width: 28rem;
+    max-width: var(--dialog-w-md, 35rem);
     max-height: min(90dvh, calc(100dvh - 2rem));
     max-height: min(90svh, calc(100svh - 2rem));
     overflow: hidden;
@@ -104,15 +104,66 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     transform: translateY(0) scale(1);
   }
 
-  &--wide {
+  &--size-sm {
     @media (min-width: $dialog-desktop-min) {
-      // Portrait: ось X меньше — компактнее
-      max-width: min(36rem, calc(100vw - 2rem));
+      max-width: var(--dialog-w-sm, 30rem);
+      padding: 1rem 1.25rem 1.25rem;
+    }
+  }
+
+  &--size-md {
+    @media (min-width: $dialog-desktop-min) {
+      max-width: var(--dialog-w-md, 35rem);
+    }
+  }
+
+  &--size-lg {
+    @media (min-width: $dialog-desktop-min) {
+      max-width: min(var(--dialog-w-lg, 40rem), calc(100vw - 2rem));
     }
 
     @media (min-width: $dialog-desktop-min) and (orientation: landscape) {
-      // Landscape: ось X больше — шире
       max-width: min(50rem, calc(100vw - 2rem));
+    }
+  }
+
+  &--size-lesson {
+    @media (min-width: $dialog-desktop-min) {
+      max-width: min(var(--dialog-w-lesson, 42.5rem), calc(100vw - 2rem));
+    }
+
+    .app-dialog__header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .app-dialog__icon {
+      flex-shrink: 0;
+      margin-bottom: 0;
+    }
+
+    .app-dialog__title {
+      margin-bottom: 0;
+    }
+
+    .app-dialog__body {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+  }
+
+  // Mobile bottom sheet: size never clamps width
+  @media (max-width: $dialog-mobile-max) {
+    &--size-sm,
+    &--size-md,
+    &--size-lg,
+    &--size-lesson {
+      max-width: 100%;
     }
   }
 
@@ -149,6 +200,24 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     }
   }
 
+  &__handle {
+    display: none;
+    flex-shrink: 0;
+    justify-content: center;
+    padding: 0.25rem 0 0.75rem;
+
+    @media (max-width: $dialog-mobile-max) {
+      display: flex;
+    }
+  }
+
+  &__handle-bar {
+    width: 2.5rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--nav-border, #d1d5db);
+  }
+
   &__icon {
     display: flex;
     width: 2.5rem;
@@ -160,12 +229,58 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     background: rgb(241 245 249);
   }
 
+  &__header {
+    display: block;
+
+    &--with-close {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin: 20px 0;
+    }
+  }
+
   &__title {
+    flex: 1 1 auto;
+    min-width: 0;
     flex-shrink: 0;
     margin: 0 0 0.75rem;
     font-size: 1.125rem;
     font-weight: 600;
     line-height: 1.3;
+  }
+
+  &__header--with-close .app-dialog__title {
+    margin-bottom: 0;
+  }
+
+  &__close {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin: -0.25rem -0.35rem -0.25rem 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--nav-accent, #0f3d34);
+      outline-offset: 2px;
+    }
   }
 
   &__body {
@@ -216,13 +331,17 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
   }
 
   &__btn {
-    min-height: 2.75rem;
+    min-height: 3rem;
     min-width: 2.75rem;
     border-radius: 8px;
     padding: 8px 18px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
+
+    @media (min-width: $dialog-desktop-min) {
+      min-height: 2.75rem;
+    }
 
     &--secondary {
       border: 1px solid #e2e8f0;
@@ -272,24 +391,34 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
       &:active {
         transform: translateY(1px);
       }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
     }
 
     &--confirm-danger {
       color: #fff;
-      background: #b91c1c;
+      background: #dc2626;
       border: none;
 
-      &:hover {
-        background: #991b1b;
+      &:hover:not(:disabled) {
+        background: #b91c1c;
       }
 
-      &:active {
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      &:active:not(:disabled) {
         transform: translateY(1px);
       }
     }
   }
 
-  // Desktop slide-over (телефон остаётся bottom sheet из базовых стилей выше)
+  // Desktop slide-over
   &--drawer {
     @media (min-width: $dialog-desktop-min) {
       display: flex;

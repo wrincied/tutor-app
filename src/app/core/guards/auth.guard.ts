@@ -8,12 +8,21 @@ import type { User } from 'firebase/auth';
 import { resolveFirebaseUser } from '../utils/resolve-firebase-user';
 import { UserService } from '../services/user.service';
 
-export const authGuard: CanActivateFn = () => {
+/** Session: skip reload+force token after first successful verified check per UID. */
+const verifiedUidSession = new Set<string>();
+
+function loginTree(router: Router, returnUrl?: string) {
+  return router.createUrlTree(['/login'], {
+    queryParams: returnUrl ? { returnUrl } : undefined,
+  });
+}
+
+export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(Auth);
   const router = inject(Router);
 
   return resolveFirebaseUser(auth).pipe(
-    map((user) => (user ? true : router.createUrlTree(['/login']))),
+    map((user) => (user ? true : loginTree(router, state.url))),
   );
 };
 
@@ -22,10 +31,15 @@ function isGithubUser(user: { providerData: { providerId: string }[] }): boolean
 }
 
 function refreshIdToken(user: User) {
-  return from(user.getIdToken(true)).pipe(map(() => true as const));
+  return from(user.getIdToken(true)).pipe(
+    map(() => {
+      verifiedUidSession.add(user.uid);
+      return true as const;
+    }),
+  );
 }
 
-export const emailVerifiedGuard: CanActivateFn = () => {
+export const emailVerifiedGuard: CanActivateFn = (_route, state) => {
   const auth = inject(Auth);
   const router = inject(Router);
   const userService = inject(UserService);
@@ -33,7 +47,12 @@ export const emailVerifiedGuard: CanActivateFn = () => {
   return resolveFirebaseUser(auth).pipe(
     switchMap((user) => {
       if (!user) {
-        return of(router.createUrlTree(['/login']));
+        return of(loginTree(router, state.url));
+      }
+
+      // Already verified this session — skip Firebase reload + force token refresh.
+      if (user.emailVerified && verifiedUidSession.has(user.uid)) {
+        return of(true);
       }
 
       return from(user.reload()).pipe(
