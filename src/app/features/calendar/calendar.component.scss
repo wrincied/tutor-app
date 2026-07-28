@@ -1540,7 +1540,8 @@
   color: rgb(127 96 0);
 }
 
-.cal-billing {
+.cal-billing,
+.cal-recurrence-delete {
   --cb-gap: 0.625rem;
   --cb-radius: 0.75rem;
   --cb-border: #e2e8f0;
@@ -1647,18 +1648,6 @@
       font-weight: 600;
       color: var(--cb-title);
     }
-  }
-}
-
-.cal-billing-balance-hint {
-  margin-top: 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--text-secondary);
-
-  strong {
-    font-weight: 600;
-    color: var(--nav-accent);
   }
 }
 
@@ -2909,87 +2898,6 @@
   &:focus-visible {
     outline: 2px solid var(--nav-accent);
     outline-offset: 2px;
-  }
-}
-
-.cal-recurrence-delete {
-  --crd-gap: 0.625rem;
-  --crd-radius: 0.75rem;
-  --crd-border: #e2e8f0;
-  --crd-border-active: #fecaca;
-  --crd-bg: #fff;
-  --crd-bg-hover: #f8fafc;
-  --crd-bg-active: #fef2f2;
-  --crd-title: #0f172a;
-  --crd-hint: #64748b;
-  --crd-accent: #dc2626;
-  --crd-transition: 0.15s ease;
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--crd-gap);
-
-  &__card {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    margin: 0;
-    padding: 0.875rem 1rem;
-    border: 1px solid var(--crd-border);
-    border-radius: var(--crd-radius);
-    background: var(--crd-bg);
-    cursor: pointer;
-    transition:
-      background-color var(--crd-transition),
-      border-color var(--crd-transition),
-      box-shadow var(--crd-transition);
-
-    &:hover {
-      background: var(--crd-bg-hover);
-    }
-
-    &:has(input:checked),
-    &--active {
-      background: var(--crd-bg-active);
-      border-color: var(--crd-border-active);
-      box-shadow: inset 0 0 0 1px var(--crd-border-active);
-    }
-
-    &:has(input:focus-visible) {
-      outline: 2px solid var(--crd-accent);
-      outline-offset: 2px;
-    }
-  }
-
-  &__radio {
-    flex-shrink: 0;
-    width: 1.125rem;
-    height: 1.125rem;
-    margin: 0.125rem 0 0;
-    accent-color: var(--crd-accent);
-    cursor: pointer;
-  }
-
-  &__card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    min-width: 0;
-  }
-
-  &__card-title {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    line-height: 1.35;
-    color: var(--crd-title);
-  }
-
-  &__card-hint {
-    font-size: 0.8125rem;
-    font-weight: 400;
-    line-height: 1.45;
-    color: var(--crd-hint);
   }
 }
 
