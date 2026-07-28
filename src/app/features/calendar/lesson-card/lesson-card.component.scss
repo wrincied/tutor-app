@@ -33,6 +33,29 @@
   }
 }
 
+:host.cal-lesson-card--week-fit {
+  left: 1px;
+  right: 1px;
+  padding: 0.1rem 0.15rem;
+  border-left-width: 3px;
+  border-radius: 0.25rem;
+  font-size: 9px;
+
+  .cal-lesson-card__student-dot {
+    display: none;
+  }
+
+  .cal-lesson-card__title {
+    margin: 0;
+  }
+
+  .cal-lesson-card__student-name {
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+}
+
 :host.cal-lesson-card--canceled {
   opacity: 0.7;
 }

@@ -25,6 +25,7 @@ import { isPackageStudentWithEmptyBalance, isPackageStudentWithLastBalance } fro
 import { LessonCardComponent } from './lesson-card/lesson-card.component';
 import { CalendarHeaderComponent } from './calendar-header/calendar-header.component';
 import { telegramCellState } from '../students/telegram-cell/telegram-cell.component';
+import { environment } from '../../../environments/environment';
 import type { CalendarLesson, Lesson, LessonStatus } from '@interfaces';
 import {
   lessonAmountFromPrice,
@@ -128,6 +129,8 @@ type BillingConfirmState = {
   payload: LessonSavePayload;
   editing: Lesson | null;
   chargeStatus?: LessonStatus;
+  /** Выбор в модалке списания (mode === 'charge'). */
+  chargeChoice?: 'deduct' | 'keep';
 };
 @Component({
   selector: 'app-calendar',
@@ -203,6 +206,10 @@ export class CalendarComponent implements OnInit {
   isBottomNavLayout = signal(false);
   /** Планшет/телефон: без стрелок навигации, ≤1023px */
   isCompactHeader = signal(false);
+  /** Телефон + неделя: 7 колонок на ширину экрана (как Google Calendar). */
+  isWeekFitLayout = computed(
+    () => this.viewMode() === '7' && this.isBottomNavLayout() && !this.isMonthOverview(),
+  );
   isNarrowViewport = signal(true);
   /** HTML5 dragstart/dragover — только на десктопе с точным указателем. */
   useNativeLessonDrag = signal(false);
@@ -504,7 +511,7 @@ export class CalendarComponent implements OnInit {
 
   gridTemplateColumns = computed(() => {
     const count = this.columns().length;
-    // Min width comes from CSS `--cal-day-col-min` (0 on mobile, 110px on desktop).
+    // Min width from CSS `--cal-day-col-min` (110px phone day/3-day; 0 week-fit & desktop).
     return count > 0 ? `repeat(${count}, minmax(var(--cal-day-col-min, 0px), 1fr))` : 'none';
   });
 
@@ -1419,6 +1426,20 @@ export class CalendarComponent implements OnInit {
       return `${shortDay} ${col.getDate()}`;
     }
     return `${weekday} ${col.getDate()}`;
+  }
+
+  /** Одна буква/короткий день для Google-style week header на телефоне. */
+  formatWeekdayLetter(col: Date): string {
+    const weekday = this.dateWeekdayFmt().format(col).replace(/\./g, '').trim();
+    if (!weekday) {
+      return '';
+    }
+    // RU/UK/BY often "пн"/"Пн" — берём первую букву; EN "Mon" — две.
+    const lower = weekday.toLocaleLowerCase(this.i18n.localeId());
+    if (/^[a-z]/i.test(weekday)) {
+      return weekday.length > 2 ? weekday.slice(0, 2) : weekday;
+    }
+    return lower.slice(0, 1).toLocaleUpperCase(this.i18n.localeId());
   }
 
   onPeriodSwipeStart(event: TouchEvent): void {
@@ -2548,19 +2569,19 @@ export class CalendarComponent implements OnInit {
     const pending = this.billingConfirm();
     const t = this.i18n.calendarUi();
     if (!pending) {
-      return t.billingDeduct;
+      return t.billingConfirm;
     }
     if (pending.mode === 'refund' || pending.mode === 'refund-only') {
       return t.billingRefundConfirm;
     }
-    return pending.chargeStatus === 'canceled' ? t.billingKeep : t.billingDeduct;
+    return t.billingConfirm;
   }
 
   billingDialogSecondaryLabel(): string | null {
     const pending = this.billingConfirm();
     const t = this.i18n.calendarUi();
     if (!pending) {
-      return t.billingKeep;
+      return null;
     }
     if (pending.mode === 'refund-only') {
       return null;
@@ -2568,7 +2589,16 @@ export class CalendarComponent implements OnInit {
     if (pending.mode === 'refund') {
       return t.billingRefundKeep;
     }
-    return pending.chargeStatus === 'canceled' ? t.billingDeduct : t.billingKeep;
+    // Charge: choice is via radio-cards; no secondary action.
+    return null;
+  }
+
+  setBillingChargeChoice(choice: 'deduct' | 'keep'): void {
+    const pending = this.billingConfirm();
+    if (!pending || pending.mode !== 'charge') {
+      return;
+    }
+    this.billingConfirm.set({ ...pending, chargeChoice: choice });
   }
 
   billingConfirmBalanceAfterDeduct(): number {
@@ -2578,7 +2608,8 @@ export class CalendarComponent implements OnInit {
     }
     const student = this.students().find((s) => s._id === pending.payload.student_id);
     const balance = Number(student?.balance_lessons ?? 0);
-    return Math.max(0, balance - 1);
+    const units = this.billingDebitUnits(student, pending.payload.lesson_duration);
+    return Math.round((balance - units) * 100) / 100;
   }
 
   billingConfirmBalanceAfterRefund(): number {
@@ -2587,7 +2618,34 @@ export class CalendarComponent implements OnInit {
       return 0;
     }
     const student = this.students().find((s) => s._id === pending.payload.student_id);
-    return Number(student?.balance_lessons ?? 0) + 1;
+    const balance = Number(student?.balance_lessons ?? 0);
+    const units = this.billingDebitUnits(
+      student,
+      pending.payload.lesson_duration ?? pending.editing?.lesson_duration,
+    );
+    return Math.round((balance + units) * 100) / 100;
+  }
+
+  private billingDebitUnits(
+    student: { rate_unit?: string | null } | undefined,
+    durationMinutes: number | undefined,
+  ): number {
+    const unit = String(student?.rate_unit ?? 'hour').toLowerCase();
+    if (unit === 'lesson') {
+      return 1;
+    }
+    const minutes = Number(durationMinutes);
+    const safe = Number.isFinite(minutes) && minutes > 0 ? minutes : 60;
+    return Math.round((safe / 60) * 100) / 100;
+  }
+
+  billingBalanceUnitLabel(): string {
+    const pending = this.billingConfirm();
+    const student = this.students().find((s) => s._id === pending?.payload.student_id);
+    const unit = String(student?.rate_unit ?? 'hour').toLowerCase();
+    return unit === 'lesson'
+      ? this.i18n.studentsUi().lessonsShort
+      : this.i18n.studentsUi().hoursShort;
   }
 
   canRefundLessonBalance(): boolean {
@@ -3067,8 +3125,21 @@ export class CalendarComponent implements OnInit {
   }
 
   private refreshStudentsList(): void {
-    this.studentSvc.getAll().subscribe({
-      next: (list) => this.students.set(list),
+    this.studentSvc.getAll({ force: true }).subscribe({
+      next: (list) => {
+        if (!environment.production) {
+          console.log(
+            '[billing] students refreshed',
+            list.map((s) => ({
+              id: s._id,
+              name: s.name,
+              balance_lessons: s.balance_lessons,
+              billing_type: s.billing_type,
+            })),
+          );
+        }
+        this.students.set(list);
+      },
       error: () => {
         /* keep previous list */
       },
@@ -3270,6 +3341,7 @@ export class CalendarComponent implements OnInit {
         payload: basePayload,
         editing: editing ?? null,
         chargeStatus: this.form.status,
+        chargeChoice: 'deduct',
       });
       return;
     }
@@ -3302,10 +3374,28 @@ export class CalendarComponent implements OnInit {
     this.billingConfirm.set(null);
     const previousStatus = pending.editing?.status;
     if (pending.mode === 'refund' || pending.mode === 'refund-only') {
+      if (!environment.production) {
+        console.log('[billing] confirm refund', {
+          mode: pending.mode,
+          previousStatus,
+          studentId: pending.payload.student_id,
+        });
+      }
       this.persistLesson(pending.payload, pending.editing, false, pending, previousStatus, true);
       return;
     }
-    const shouldDeduct = pending.chargeStatus !== 'canceled';
+    const shouldDeduct = pending.chargeChoice !== 'keep';
+    if (!environment.production) {
+      console.log('[billing] confirm charge', {
+        chargeChoice: pending.chargeChoice ?? 'deduct',
+        shouldDeduct,
+        chargeStatus: pending.chargeStatus,
+        previousStatus,
+        studentId: pending.payload.student_id,
+        occurrence_status: pending.payload.occurrence_status,
+        status: pending.payload.status,
+      });
+    }
     this.persistLesson(pending.payload, pending.editing, shouldDeduct, pending, previousStatus, false);
   }
 
@@ -3318,11 +3408,6 @@ export class CalendarComponent implements OnInit {
     const previousStatus = pending.editing?.status;
     if (pending.mode === 'refund') {
       this.persistLesson(pending.payload, pending.editing, false, pending, previousStatus, false);
-      return;
-    }
-    if (pending.mode === 'charge') {
-      const shouldDeduct = pending.chargeStatus === 'canceled';
-      this.persistLesson(pending.payload, pending.editing, shouldDeduct, pending, previousStatus, false);
     }
   }
 
@@ -3399,9 +3484,36 @@ export class CalendarComponent implements OnInit {
       shouldRefund,
     );
 
+    if (!environment.production) {
+      const student = this.students().find((s) => s._id === body.student_id);
+      console.log('[billing] persistLesson request', {
+        lessonId: editing?._id ?? '(create)',
+        previousStatus,
+        shouldDeduct,
+        shouldRefund,
+        should_deduct_balance: body.should_deduct_balance,
+        should_refund_balance: body.should_refund_balance,
+        status: body.status,
+        occurrence_status: body.occurrence_status,
+        occurrence_date: body.occurrence_date,
+        studentBalanceBefore: student?.balance_lessons,
+        studentBillingType: student?.billing_type,
+        studentRateUnit: student?.rate_unit,
+      });
+    }
+
     if (editing) {
       this.lessonsSvc.update(editing._id, body).subscribe({
         next: (updated) => {
+          if (!environment.production) {
+            console.log('[billing] persistLesson response', {
+              lessonId: updated._id,
+              status: updated.status,
+              balance_debited: updated.balance_debited,
+              billing_processed: updated.billing_processed,
+              balance_units_debited: updated.balance_units_debited,
+            });
+          }
           this.lessons.update((list) =>
             list.map((l) => (l._id === updated._id ? this.normalizeLesson(updated) : l)),
           );
@@ -3410,6 +3522,9 @@ export class CalendarComponent implements OnInit {
           this.closeLessonForm();
         },
         error: (err: HttpErrorResponse) => {
+          if (!environment.production) {
+            console.error('[billing] persistLesson error', err.status, err.error);
+          }
           this.savingLesson.set(false);
           this.restoreBillingOnSaveError(billingRestore);
           this.handleLessonSaveError(err);

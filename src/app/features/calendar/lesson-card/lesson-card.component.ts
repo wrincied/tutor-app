@@ -51,6 +51,7 @@ const STATUS_THEME: Record<
     '[class.cal-lesson-card--focus-active]': 'focusActive()',
     '[class.cal-lesson-card--focus-dim]': 'focusDim()',
     '[class.cal-lesson-card--route-highlight]': 'routeHighlight()',
+    '[class.cal-lesson-card--week-fit]': 'weekFit()',
     '[style.--status-accent]': 'theme().accent',
     '[style.--status-tint]': 'theme().tint',
     '[style.--status-ink]': 'theme().ink',
@@ -69,6 +70,8 @@ export class LessonCardComponent {
   readonly compactMeta = input(false);
   /** Мобильная плотность: без подписей «Регион/Ставка/Длит.». */
   readonly denseMobile = input(false);
+  /** Узкие колонки недели на телефоне: только имя. */
+  readonly weekFit = input(false);
   readonly regionLabel = input('');
   readonly rateLabel = input('');
   readonly durationLabel = input('');

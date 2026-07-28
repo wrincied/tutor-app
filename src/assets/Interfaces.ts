@@ -128,6 +128,7 @@ export type TaxMode =
   | 'ru-usn'
   | 'ru-ip'
   | 'by-ip'
+  | 'by-self-employed'
   | 'kz-ip'
   | 'ua-fop3'
   | 'none';
@@ -738,6 +739,8 @@ export interface CalendarStrings {
   billingBodyAfterDeduct: string;
   billingDeduct: string;
   billingKeep: string;
+  billingKeepHint: string;
+  billingConfirm: string;
   billingMissedTitle: string;
   billingCanceledTitle: string;
   billingRefundTitle: string;
@@ -1308,6 +1311,8 @@ export interface Lesson {
   reminder_sent: boolean;
   /** Урок уже списан с balance_lessons ученика. */
   balance_debited?: boolean;
+  /** Сколько единиц баланса списали за этот урок. */
+  balance_units_debited?: number;
   /** Списание/буфер 30 мин обработан (true = с баланса уже списано). */
   billing_processed?: boolean;
   /** Время перевода в completed (старт 30-минутного буфера). */
