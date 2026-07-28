@@ -61,21 +61,10 @@
               ></span>
               <span class="student-card__body">
                 <span class="student-card__name">{{ s.name }}</span>
-                <span class="student-card__meta">
-                  <span>{{ formatStudentRate(s) }}</span>
-                </span>
-                <span class="student-card__balance">
-                  {{ formatStudentBalance(s) }}
-                </span>
+                <span class="student-card__meta">{{ formatStudentRate(s) }}</span>
+                <span class="student-card__balance">{{ formatStudentBalance(s) }}</span>
+                <span class="student-card__paid">{{ formatLastPaid(s) }}</span>
               </span>
-              <app-telegram-cell
-                class="student-card__tg"
-                [student]="s"
-                [compact]="true"
-                [labels]="telegramCellLabels()"
-                (bindClick)="inviteStudentToBot($event)"
-                (configureClick)="openTelegramSettings($event)"
-              />
             </button>
           }
         </div>

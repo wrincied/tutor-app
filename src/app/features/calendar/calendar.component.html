@@ -119,6 +119,7 @@
         <section
           class="cal-grid-section"
           [class.cal-grid-section--month]="isMonthOverview()"
+          [class.cal-grid-section--week-fit]="isWeekFitLayout()"
           (touchstart)="onPeriodSwipeStart($event)"
           (touchend)="onPeriodSwipeEnd($event)"
         >
@@ -206,10 +207,18 @@
                             class="cal-day-header"
                             [class.cal-day-header--today]="isToday(col)"
                             [class.cal-day-header--off]="isNonWorkingDay(col)"
+                            [class.cal-day-header--stacked]="isWeekFitLayout()"
                             [attr.aria-label]="formatColumnHeader(col)"
                             (click)="openDayView(col); $event.stopPropagation()"
                           >
-                            {{ formatColumnHeader(col) }}
+                            @if (isWeekFitLayout()) {
+                              <span class="cal-day-header__weekday">{{
+                                formatWeekdayLetter(col)
+                              }}</span>
+                              <span class="cal-day-header__date">{{ col.getDate() }}</span>
+                            } @else {
+                              {{ formatColumnHeader(col) }}
+                            }
                           </button>
                         }
                       </div>
@@ -355,6 +364,7 @@
                                   [studentColor]="getStudentColor(lesson.student_id)"
                                   [compactMeta]="lessonCardUseCompactMeta(lesson)"
                                   [denseMobile]="isBottomNavLayout()"
+                                  [weekFit]="isWeekFitLayout()"
                                   [regionLabel]="i18n.calendarUi().regionLabel"
                                   [rateLabel]="i18n.calendarUi().rateLabel"
                                   [durationLabel]="i18n.calendarUi().durationLabel"
@@ -752,37 +762,79 @@
   [open]="!!billingConfirm()"
   size="sm"
   stackOnTop
+  [showClose]="true"
+  [closeAriaLabel]="i18n.studentsUi().close"
   [closeOnOverlay]="false"
   [title]="billingDialogTitle()"
   [cancelLabel]="i18n.studentsUi().cancel"
   [secondaryLabel]="billingDialogSecondaryLabel()"
   [confirmLabel]="billingDialogConfirmLabel()"
+  [confirmDanger]="billingConfirm()?.mode === 'charge' && billingConfirm()?.chargeChoice !== 'keep'"
   (cancel)="cancelBillingConfirm()"
   (secondary)="onBillingSecondary()"
   (confirm)="onBillingConfirm()"
 >
   @if (billingConfirm()?.mode === 'refund' || billingConfirm()?.mode === 'refund-only') {
-    <p>
-      {{ i18n.calendarUi().billingRefundBodyBefore }}
-      <strong>{{ billingConfirmStudentName() }}</strong
-      >{{ i18n.calendarUi().billingRefundBodyMiddle }}
-    </p>
-    <p class="cal-billing-balance-hint">
-      {{ i18n.calendarUi().billingRefundBodyAfter }}
-      <strong>{{ billingConfirmBalanceAfterRefund() }}</strong>
-      {{ i18n.studentsUi().lessonsShort }}
-    </p>
-  } @else {
-    <p>
-      {{ i18n.calendarUi().billingBodyBefore }}
-      <strong>{{ billingConfirmStudentName() }}</strong
-      >{{ i18n.calendarUi().billingBodyMiddle }}
-    </p>
-    <p class="cal-billing-balance-hint">
-      {{ i18n.calendarUi().billingBodyAfterDeduct }}
-      <strong>{{ billingConfirmBalanceAfterDeduct() }}</strong>
-      {{ i18n.studentsUi().lessonsShort }}
-    </p>
+    <div class="cal-billing">
+      <p class="cal-billing__lead">
+        {{ i18n.calendarUi().billingRefundBodyBefore }}
+        <strong>{{ billingConfirmStudentName() }}</strong
+        >{{ i18n.calendarUi().billingRefundBodyMiddle }}
+      </p>
+      <p class="cal-billing__hint">
+        {{ i18n.calendarUi().billingRefundBodyAfter }}
+        <strong>{{ billingConfirmBalanceAfterRefund() }}</strong>
+        {{ billingBalanceUnitLabel() }}
+      </p>
+    </div>
+  } @else if (billingConfirm(); as billing) {
+    <div class="cal-billing" role="radiogroup" [attr.aria-label]="billingDialogTitle()">
+      <p class="cal-billing__lead">
+        {{ i18n.calendarUi().billingBodyBefore }}
+        <strong>{{ billingConfirmStudentName() }}</strong
+        >{{ i18n.calendarUi().billingBodyMiddle }}
+      </p>
+
+      <label
+        class="cal-billing__card"
+        [class.cal-billing__card--active]="billing.chargeChoice !== 'keep'"
+      >
+        <input
+          type="radio"
+          class="cal-billing__radio"
+          name="billing-charge-choice"
+          value="deduct"
+          [checked]="billing.chargeChoice !== 'keep'"
+          (change)="setBillingChargeChoice('deduct')"
+        />
+        <span class="cal-billing__card-body">
+          <span class="cal-billing__card-title">{{ i18n.calendarUi().billingDeduct }}</span>
+          <span class="cal-billing__card-hint">
+            {{ i18n.calendarUi().billingBodyAfterDeduct }}
+            <strong>{{ billingConfirmBalanceAfterDeduct() }}</strong>
+            {{ billingBalanceUnitLabel() }}
+          </span>
+        </span>
+      </label>
+
+      <label
+        class="cal-billing__card"
+        [class.cal-billing__card--active]="billing.chargeChoice === 'keep'"
+      >
+        <input
+          type="radio"
+          class="cal-billing__radio"
+          name="billing-charge-choice"
+          value="keep"
+          [checked]="billing.chargeChoice === 'keep'"
+          (change)="setBillingChargeChoice('keep')"
+        />
+        <span class="cal-billing__card-body">
+          <span class="cal-billing__card-title">{{ i18n.calendarUi().billingKeep }}</span>
+          <span class="cal-billing__card-hint">{{ i18n.calendarUi().billingKeepHint }}</span>
+        </span>
+      </label>
+    </div>
   }
 </app-dialog>
 

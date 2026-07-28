@@ -106,7 +106,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
 
   &--size-sm {
     @media (min-width: $dialog-desktop-min) {
-      max-width: var(--dialog-w-sm, 25rem);
+      max-width: var(--dialog-w-sm, 30rem);
       padding: 1rem 1.25rem 1.25rem;
     }
   }

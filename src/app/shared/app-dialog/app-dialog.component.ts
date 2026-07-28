@@ -53,7 +53,7 @@ export class AppDialogComponent implements OnDestroy {
   /** `drawer` — телефон: bottom sheet; ≥768px: slide-over справа. */
   layout = input<'center' | 'sheet' | 'drawer'>('center');
   /**
-   * Desktop width for center/sheet: sm 400 / md 560 / lg ~640+.
+   * Desktop width for center/sheet: sm 480 / md 560 / lg ~640+.
    * Ignored for drawer width. On &lt;768px always full-bleed bottom sheet.
    */
   size = input<AppDialogSize>('md');

@@ -601,6 +601,11 @@
     display: none;
   }
 
+  /* Mode switch is the segment control — burger is phone-only. */
+  .cal-icon-btn {
+    display: none;
+  }
+
   .cal-header__controls {
     display: inline-flex;
   }

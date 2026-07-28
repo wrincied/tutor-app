@@ -7,32 +7,34 @@
   <span class="cal-lesson-card__student-name">{{ studentName() }}</span>
 </p>
 
-@if (denseMobile()) {
-  <p class="cal-lesson-card__sub">
-    {{ regionText() }}
-    @if (regionText() && rateText()) {
-      <span aria-hidden="true"> · </span>
-    }
-    {{ rateText() }}
-  </p>
-  <p class="cal-lesson-card__duration">{{ durationText() }}</p>
-} @else if (compactMeta()) {
-  <p class="cal-lesson-card__meta">
-    {{ regionText() }} · {{ rateText() }} · {{ durationText() }}
-  </p>
-} @else {
-  <div class="cal-lesson-card__details">
-    <p class="cal-lesson-card__detail">
-      <span class="cal-lesson-card__lbl">{{ regionLabel() }}</span>
-      <span>{{ regionText() }}</span>
+@if (!weekFit()) {
+  @if (denseMobile()) {
+    <p class="cal-lesson-card__sub">
+      {{ regionText() }}
+      @if (regionText() && rateText()) {
+        <span aria-hidden="true"> · </span>
+      }
+      {{ rateText() }}
     </p>
-    <p class="cal-lesson-card__detail">
-      <span class="cal-lesson-card__lbl">{{ rateLabel() }}</span>
-      <span>{{ rateText() }}</span>
+    <p class="cal-lesson-card__duration">{{ durationText() }}</p>
+  } @else if (compactMeta()) {
+    <p class="cal-lesson-card__meta">
+      {{ regionText() }} · {{ rateText() }} · {{ durationText() }}
     </p>
-    <p class="cal-lesson-card__detail">
-      <span class="cal-lesson-card__lbl">{{ durationLabel() }}</span>
-      <span>{{ durationText() }}</span>
-    </p>
-  </div>
+  } @else {
+    <div class="cal-lesson-card__details">
+      <p class="cal-lesson-card__detail">
+        <span class="cal-lesson-card__lbl">{{ regionLabel() }}</span>
+        <span>{{ regionText() }}</span>
+      </p>
+      <p class="cal-lesson-card__detail">
+        <span class="cal-lesson-card__lbl">{{ rateLabel() }}</span>
+        <span>{{ rateText() }}</span>
+      </p>
+      <p class="cal-lesson-card__detail">
+        <span class="cal-lesson-card__lbl">{{ durationLabel() }}</span>
+        <span>{{ durationText() }}</span>
+      </p>
+    </div>
+  }
 }
