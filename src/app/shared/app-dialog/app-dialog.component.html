@@ -14,7 +14,10 @@
         [class.app-dialog--error]="variant() === 'error'"
         [class.app-dialog--sheet]="layout() === 'sheet'"
         [class.app-dialog--drawer]="layout() === 'drawer'"
-        [class.app-dialog--wide]="wide()"
+        [class.app-dialog--size-sm]="effectiveSize() === 'sm'"
+        [class.app-dialog--size-md]="effectiveSize() === 'md'"
+        [class.app-dialog--size-lg]="effectiveSize() === 'lg'"
+        [class.app-dialog--size-lesson]="effectiveSize() === 'lesson'"
         role="alertdialog"
         aria-modal="true"
         [attr.aria-labelledby]="'app-dialog-title'"
@@ -27,13 +30,52 @@
         "
         (click)="$event.stopPropagation()"
       >
-        @if (iconSrc(); as src) {
-          <div class="app-dialog__icon" aria-hidden="true">
-            <img [src]="src" width="24" height="24" alt="" />
+        @if (showHandle()) {
+          <div class="app-dialog__handle" aria-hidden="true">
+            <span class="app-dialog__handle-bar"></span>
           </div>
         }
 
-        <h2 id="app-dialog-title" class="app-dialog__title">{{ title() }}</h2>
+        @if (iconSrc() || !hideTitle() || showClose()) {
+          <div class="app-dialog__header" [class.app-dialog__header--with-close]="showClose()">
+            @if (iconSrc(); as src) {
+              <div class="app-dialog__icon" aria-hidden="true">
+                <img [src]="src" width="24" height="24" alt="" />
+              </div>
+            }
+
+            @if (!hideTitle()) {
+              <h2 id="app-dialog-title" class="app-dialog__title">{{ title() }}</h2>
+            } @else {
+              <span id="app-dialog-title" class="sr-only">{{ title() }}</span>
+            }
+
+            @if (showClose()) {
+              <button
+                type="button"
+                class="app-dialog__close"
+                [attr.aria-label]="closeAriaLabel()"
+                (click)="onCloseClick()"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            }
+          </div>
+        } @else {
+          <span id="app-dialog-title" class="sr-only">{{ title() }}</span>
+        }
 
         <div class="app-dialog__body">
           <ng-content />
@@ -83,6 +125,7 @@
                   class="app-dialog__btn"
                   [class.app-dialog__btn--primary]="!confirmDanger()"
                   [class.app-dialog__btn--confirm-danger]="confirmDanger()"
+                  [disabled]="confirmDisabled()"
                   (click)="onConfirmClick()"
                 >
                   {{ confirmLabel() }}

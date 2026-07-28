@@ -1,12 +1,29 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import type { Student } from '@interfaces';
+import type {
+  Student,
+  StudentBalanceAdjustReason,
+  StudentTelegramNotificationSettings,
+} from '@interfaces';
 
 export type { Student } from '@interfaces';
 
 import { apiUrl } from '../config/api-url';
 
 const API = apiUrl('/students');
+
+export type StudentTopupPayload = {
+  lessons: number;
+  money_amount?: number;
+  paid_at?: string;
+  send_receipt?: boolean;
+};
+
+export type StudentBalanceAdjustPayload = {
+  balance_lessons: number;
+  reason: StudentBalanceAdjustReason;
+  notify_telegram?: boolean;
+};
 
 @Injectable({ providedIn: 'root' })
 export class StudentService {
@@ -34,7 +51,22 @@ export class StudentService {
   disconnectTelegram(id: string) {
     return this.http.post<Student>(`${API}/${id}/telegram-disconnect`, {});
   }
-  topup(id: string, lessons: number) {
-    return this.http.post<Student>(`${API}/${id}/topup`, { lessons });
+  linkTelegramManual(id: string, chatId: string, role: 'student' | 'parent' = 'student') {
+    return this.http.post<Student>(`${API}/${id}/telegram-link-manual`, {
+      chat_id: chatId,
+      role,
+    });
+  }
+  saveTelegramSettings(id: string, settings: StudentTelegramNotificationSettings) {
+    return this.http.put<Student>(`${API}/${id}/telegram-settings`, settings);
+  }
+  topup(id: string, payload: StudentTopupPayload) {
+    return this.http.post<Student & { telegram_receipt_sent?: boolean }>(`${API}/${id}/topup`, payload);
+  }
+  adjustBalance(id: string, payload: StudentBalanceAdjustPayload) {
+    return this.http.post<Student & { telegram_notified?: boolean }>(
+      `${API}/${id}/balance-adjust`,
+      payload,
+    );
   }
 }

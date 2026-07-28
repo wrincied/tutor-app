@@ -103,6 +103,7 @@
 
 <app-dialog
   [open]="resetModalOpen()"
+  size="md"
   [title]="i18n.authUi().resetPasswordModalTitle"
   [cancelLabel]="resetModalSuccess() ? null : i18n.authUi().cancel"
   [confirmLabel]="resetModalSuccess() ? null : i18n.authUi().resetPasswordSend"

@@ -21,6 +21,7 @@ import { APP_OVERLAY_LAYER_OPEN } from '../../core/constants/overlay-layer';
 import { purgeStaleOverlayLayers } from '../../core/utils/purge-stale-overlay-layers';
 
 export type AppDialogVariant = 'default' | 'error';
+export type AppDialogSize = 'sm' | 'md' | 'lg' | 'lesson';
 
 @Component({
   selector: 'app-dialog',
@@ -51,7 +52,12 @@ export class AppDialogComponent implements OnDestroy {
   variant = input<AppDialogVariant>('default');
   /** `drawer` — телефон: bottom sheet; ≥768px: slide-over справа. */
   layout = input<'center' | 'sheet' | 'drawer'>('center');
-  /** Шире обычного (форма урока и т.п.). */
+  /**
+   * Desktop width for center/sheet: sm 400 / md 560 / lg ~640+.
+   * Ignored for drawer width. On &lt;768px always full-bleed bottom sheet.
+   */
+  size = input<AppDialogSize>('md');
+  /** @deprecated Prefer size="lg". Kept as alias. */
   wide = input(false, { transform: booleanAttribute });
   iconSrc = input<string | null>(null);
   cancelLabel = input<string | null>(null);
@@ -63,6 +69,8 @@ export class AppDialogComponent implements OnDestroy {
   confirmLabel = input<string | null>(null);
   /** Красная кнопка подтверждения (удаление и т.п.). */
   confirmDanger = input(false, { transform: booleanAttribute });
+  /** Блокирует кнопку подтверждения (например конфликт расписания). */
+  confirmDisabled = input(false, { transform: booleanAttribute });
   /** Одна кнопка (например «Понятно») — если нет confirm/cancel. */
   dismissLabel = input<string | null>(null);
   /** Средняя кнопка между «Отмена» и основным подтверждением (три действия). */
@@ -70,11 +78,27 @@ export class AppDialogComponent implements OnDestroy {
   closeOnOverlay = input(true, { transform: booleanAttribute });
   /** Поверх родительской app-dialog (nested backdrop 1100 / panel 1110). */
   stackOnTop = input(false, { transform: booleanAttribute });
+  /** Скрыть стандартный title (кастомный header в content). */
+  hideTitle = input(false, { transform: booleanAttribute });
+  /** Drag-handle для sheet (мобильный bottom sheet). */
+  showHandle = input(false, { transform: booleanAttribute });
+  /** Кнопка × в шапке (закрывает через cancel). */
+  showClose = input(false, { transform: booleanAttribute });
+  /** aria-label для кнопки закрытия. */
+  closeAriaLabel = input('Close');
 
   readonly cancelled = output<void>({ alias: 'cancel' });
   readonly secondaryAction = output<void>({ alias: 'secondary' });
   readonly confirmed = output<void>({ alias: 'confirm' });
   readonly leadingAction = output<void>({ alias: 'leading' });
+
+  /** wide=true → lg for backward compatibility. */
+  effectiveSize(): AppDialogSize {
+    if (this.wide()) {
+      return 'lg';
+    }
+    return this.size();
+  }
 
   constructor() {
     effect(() => {
@@ -83,15 +107,21 @@ export class AppDialogComponent implements OnDestroy {
         purgeStaleOverlayLayers(this.document);
         this.document.dispatchEvent(new CustomEvent(APP_OVERLAY_LAYER_OPEN));
         this.syncPortal();
+        this.bindEscape();
       } else if (this.bodyOutlet?.hasAttached()) {
+        this.unbindEscape();
         this.scheduleDetachPortal();
       }
     });
 
-    this.destroyRef.onDestroy(() => this.destroyPortal());
+    this.destroyRef.onDestroy(() => {
+      this.unbindEscape();
+      this.destroyPortal();
+    });
   }
 
   ngOnDestroy(): void {
+    this.unbindEscape();
     this.destroyPortal();
   }
 
@@ -102,6 +132,10 @@ export class AppDialogComponent implements OnDestroy {
   }
 
   onCancelClick(): void {
+    this.cancelled.emit();
+  }
+
+  onCloseClick(): void {
     this.cancelled.emit();
   }
 
@@ -119,6 +153,27 @@ export class AppDialogComponent implements OnDestroy {
 
   onDismiss(): void {
     this.cancelled.emit();
+  }
+
+  private readonly onEscapeKey = (event: KeyboardEvent): void => {
+    if (event.key !== 'Escape' || !this.open()) {
+      return;
+    }
+    // Только диалоги, которые можно закрыть overlay/крестиком (не «жёсткие» формы).
+    if (!this.closeOnOverlay() && !this.showClose()) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.cancelled.emit();
+  };
+
+  private bindEscape(): void {
+    this.document.addEventListener('keydown', this.onEscapeKey, true);
+  }
+
+  private unbindEscape(): void {
+    this.document.removeEventListener('keydown', this.onEscapeKey, true);
   }
 
   private syncPortal(): void {

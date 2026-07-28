@@ -1,20 +1,32 @@
-import { Component, computed, inject, signal, OnInit, ViewChild, afterNextRender, Injector, PLATFORM_ID } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, ViewChild, afterNextRender, Injector, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService, Student } from '../../core/services/student.service';
 import { BotUnlinkAlertService } from '../../core/services/bot-unlink-alert.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { RATE_CURRENCIES, type RateCurrency, type StudentBillingType, type StudentRateUnit } from '@interfaces';
+import {
+  RATE_CURRENCIES,
+  type RateCurrency,
+  type StudentBalanceAdjustReason,
+  type StudentBillingType,
+  type StudentRateUnit,
+  type StudentTelegramNotificationSettings,
+} from '@interfaces';
 import {
   colorToHexForPicker,
   DEFAULT_STUDENT_BORDER_COLOR,
   generatePastelColor,
   hexToStoredColor,
 } from '../../core/utils/pastel-color';
+import {
+  DEFAULT_TELEGRAM_SETTINGS,
+  normalizeTelegramSettings,
+} from '../../core/utils/telegram-notification-settings';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { HelpTipComponent } from '../../shared/help-tip/help-tip.component';
+import { TelegramCellComponent } from './telegram-cell/telegram-cell.component';
 
 /** Fallback IANA when student.timezone is empty (bot/reminders use tutor TZ). */
 const DEFAULT_STUDENT_TIMEZONE = 'Europe/Vienna';
@@ -36,11 +48,11 @@ function rateUnitSuffix(unit: StudentRateUnit, t: { perHour: string; perLesson: 
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, AppDialogComponent, AppSelectComponent, HelpTipComponent],
+  imports: [FormsModule, AppDialogComponent, AppSelectComponent, HelpTipComponent, TelegramCellComponent],
   templateUrl: './students.component.html',
   styleUrl: './students.component.scss',
 })
-export class StudentsComponent implements OnInit {
+export class StudentsComponent implements OnInit, OnDestroy {
   private svc = inject(StudentService);
   private unlinkAlerts = inject(BotUnlinkAlertService);
   private readonly route = inject(ActivatedRoute);
@@ -82,13 +94,30 @@ export class StudentsComponent implements OnInit {
 
   deleteTargetId = signal<string | null>(null);
   topupTargetId = signal<string | null>(null);
-  topupLessonsInput = 1;
+  topupMoney = signal(0);
+  topupUnits = signal(1);
+  topupPaidAt = signal('');
+  topupSendReceipt = signal(false);
+  topupAmountSource = signal<'money' | 'units'>('units');
+  adjustTarget = signal<Student | null>(null);
+  adjustNextBalance = signal(0);
+  adjustReason = signal<StudentBalanceAdjustReason>('typo');
+  adjustNotify = signal(false);
+  adjustSaving = signal(false);
   quickActionsStudent = signal<Student | null>(null);
   botToggleConfirm = signal<{ student: Student; nextActive: boolean } | null>(null);
   disconnectConfirm = signal<Student | null>(null);
   inviteDialogStudent = signal<Student | null>(null);
   inviteDialogLoading = signal(false);
   inviteDialogError = signal<string | null>(null);
+  inviteLinkedSuccess = signal(false);
+  showManualChatId = signal(false);
+  manualChatId = signal('');
+  settingsStudent = signal<Student | null>(null);
+  settingsDraft = signal<StudentTelegramNotificationSettings>({ ...DEFAULT_TELEGRAM_SETTINGS });
+  settingsSaving = signal(false);
+  settingsIsMinor = signal(false);
+  toastMessage = signal<string | null>(null);
   formSubmitted = signal(false);
   savingForm = signal(false);
   linkCopied = signal(false);
@@ -99,11 +128,43 @@ export class StudentsComponent implements OnInit {
   resyncMessage = signal<string | null>(null);
   readonly colorToHexForPicker = colorToHexForPicker;
   readonly inviteDialogLink = computed(() => this.inviteDialogStudent()?.telegram_deep_link ?? '');
+  readonly inviteQrSrc = computed(() => {
+    const link = this.inviteDialogLink();
+    if (!link) {
+      return '';
+    }
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`;
+  });
+  readonly telegramTogglesDisabled = computed(() => {
+    const student = this.settingsStudent() ?? this.editTarget();
+    if (!student?.telegram_user_id && !student?.telegram_chat_id) {
+      return true;
+    }
+    if (student.telegram_delivery_status === 'error') {
+      return true;
+    }
+    return false;
+  });
 
   private linkCopiedTimer: ReturnType<typeof setTimeout> | null = null;
+  private invitePollTimer: ReturnType<typeof setInterval> | null = null;
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit() {
     this.load();
+  }
+
+  ngOnDestroy(): void {
+    this.stopInvitePolling();
+    if (this.linkCopiedTimer) {
+      clearTimeout(this.linkCopiedTimer);
+    }
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    if (this.highlightClearTimer !== null) {
+      clearTimeout(this.highlightClearTimer);
+    }
   }
 
   get t() {
@@ -220,6 +281,10 @@ export class StudentsComponent implements OnInit {
     if (invite?._id === updated._id) {
       this.inviteDialogStudent.set(updated);
     }
+    const settings = this.settingsStudent();
+    if (settings?._id === updated._id) {
+      this.settingsStudent.set(updated);
+    }
   }
 
   setBillingType(type: StudentBillingType): void {
@@ -246,16 +311,180 @@ export class StudentsComponent implements OnInit {
     return `${pretty} ${this.balanceUnitLabel(student)}`;
   }
 
-  topupHintLabel(): string {
+  formatLastPaid(student: Student): string {
+    const last = student.last_topup;
+    if (!last || !(Number(last.amount_money) >= 0) || !last.at) {
+      // Fallback for older records that only have cumulative top-up units.
+      if (!last && Number(student.total_topup_units) > 0) {
+        const units = Number(student.total_topup_units);
+        const rate = Number(student.rate_per_hour) || 0;
+        const currency = this.i18n.currencyLabel(this.rateCurrencyOf(student));
+        if (rate > 0) {
+          const money = Math.round(rate * units * 100) / 100;
+          return `+${money} ${currency}`;
+        }
+      }
+      return this.t.lastPaidEmpty;
+    }
+    const money = Number(last.amount_money);
+    const pretty = Number.isInteger(money) ? String(money) : String(Math.round(money * 100) / 100);
+    const currency = this.i18n.currencyLabel(last.currency || this.rateCurrencyOf(student));
+    return `+${pretty} ${currency} (${this.formatPaidShortDate(last.at)})`;
+  }
+
+  formatPaidShortDate(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '—';
+    }
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const now = new Date();
+    if (date.getFullYear() !== now.getFullYear()) {
+      return `${dd}.${mm}.${String(date.getFullYear()).slice(-2)}`;
+    }
+    return `${dd}.${mm}`;
+  }
+
+  quickActionsMeta(student: Student): string {
+    const last = this.formatLastPaid(student);
+    return `${this.formatStudentRate(student)} · ${this.formatStudentBalance(student)} · ${this.t.lastPaidMeta}: ${last}`;
+  }
+
+  canNotifyTelegram(student: Student | null | undefined): boolean {
+    if (!student) {
+      return false;
+    }
+    if (!student.telegram_user_id && !student.telegram_chat_id) {
+      return false;
+    }
+    if (!student.bot_active) {
+      return false;
+    }
+    if (student.telegram_delivery_status === 'error') {
+      return false;
+    }
+    return true;
+  }
+
+  topupStudent(): Student | null {
     const id = this.topupTargetId();
-    const student = this.students().find((item) => item._id === id);
-    return resolveRateUnit(student?.rate_unit) === 'hour' ? this.t.topupHintHours : this.t.topupHint;
+    return this.students().find((item) => item._id === id) ?? null;
+  }
+
+  topupUnitsLabel(): string {
+    const student = this.topupStudent();
+    return resolveRateUnit(student?.rate_unit) === 'hour'
+      ? this.t.topupUnitsLabelHours
+      : this.t.topupUnitsLabel;
+  }
+
+  telegramCellLabels() {
+    const t = this.t;
+    return {
+      connected: t.tgConnected,
+      notConnected: t.tgNotConnected,
+      error: t.tgError,
+      paused: t.tgPaused,
+      bind: t.tgBind,
+      openChat: t.tgOpenChat,
+      connectedTooltip: t.tgConnectedTooltip,
+      notConnectedTooltip: t.tgNotConnectedTooltip,
+      errorTooltip: t.tgErrorUnknown,
+    };
+  }
+
+  telegramErrorTooltip(student: Student): string {
+    switch (student.telegram_delivery_error) {
+      case 'BOT_BLOCKED':
+        return this.t.tgErrorBotBlocked;
+      case 'CHAT_NOT_FOUND':
+        return this.t.tgErrorChatNotFound;
+      case 'USER_DEACTIVATED':
+        return this.t.tgErrorUserDeactivated;
+      default:
+        return this.t.tgErrorUnknown;
+    }
+  }
+
+  telegramCellLabelsFor(student: Student) {
+    return {
+      ...this.telegramCellLabels(),
+      errorTooltip: this.telegramErrorTooltip(student),
+    };
+  }
+
+  reminderOffsetOptions(): AppSelectOption[] {
+    return [
+      { value: '15', label: this.t.tgReminder15m },
+      { value: '60', label: this.t.tgReminder1h },
+      { value: '120', label: this.t.tgReminder2h },
+      { value: '1440', label: this.t.tgReminder24h },
+    ];
+  }
+
+  reminderOffsetValue(): string {
+    return String(this.settingsDraft().lesson_reminder_offset_minutes);
+  }
+
+  formatLinkedAt(value?: string | null): string {
+    if (!value) {
+      return '—';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '—';
+    }
+    return date.toLocaleString();
+  }
+
+  showToast(message: string): void {
+    this.toastMessage.set(message);
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    this.toastTimer = setTimeout(() => {
+      this.toastTimer = null;
+      this.toastMessage.set(null);
+    }, 5000);
+  }
+
+  dismissToast(): void {
+    this.toastMessage.set(null);
+  }
+
+  topupHintLabel(): string {
+    return this.topupUnitsLabel();
   }
 
   topupStep(): number {
-    const id = this.topupTargetId();
-    const student = this.students().find((item) => item._id === id);
+    const student = this.topupStudent();
     return resolveRateUnit(student?.rate_unit) === 'hour' ? 0.5 : 1;
+  }
+
+  resolveAdjustStep(student: Student): number {
+    return resolveRateUnit(student.rate_unit) === 'hour' ? 0.5 : 1;
+  }
+
+  private todayInputDate(): string {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private roundMoney(value: number): number {
+    return Math.round(value * 100) / 100;
+  }
+
+  private normalizeTopupUnits(raw: number, student: Student | null): number {
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return 0;
+    }
+    return resolveRateUnit(student?.rate_unit) === 'hour'
+      ? Math.round(raw * 100) / 100
+      : Math.floor(raw);
   }
 
   balanceFieldLabel(): string {
@@ -467,14 +696,12 @@ export class StudentsComponent implements OnInit {
   }
 
   isTelegramLinked(student?: Student | null): boolean {
-    return Boolean((student ?? this.editTarget())?.telegram_user_id);
+    const target = student ?? this.editTarget();
+    return Boolean(target?.telegram_user_id || target?.telegram_chat_id);
   }
 
   canInviteToBot(student?: Student | null): boolean {
-    if (student) {
-      return !student.telegram_user_id;
-    }
-    return !this.editTarget()?.telegram_user_id;
+    return !this.isTelegramLinked(student);
   }
 
   telegramDeepLink(student?: Student | null): string {
@@ -521,22 +748,175 @@ export class StudentsComponent implements OnInit {
   }
 
   openInviteDialog(student: Student): void {
-    if (student.telegram_user_id) {
+    if (this.isTelegramLinked(student)) {
+      this.openTelegramSettings(student);
       return;
     }
     this.inviteDialogError.set(null);
+    this.inviteLinkedSuccess.set(false);
+    this.showManualChatId.set(false);
+    this.manualChatId.set('');
     this.linkCopied.set(false);
     this.inviteDialogStudent.set(student);
+    this.startInvitePolling(student._id);
     if (!student.telegram_deep_link) {
       this.loadInviteLink(student);
     }
   }
 
   closeInviteDialog(): void {
+    this.stopInvitePolling();
     this.inviteDialogStudent.set(null);
     this.inviteDialogLoading.set(false);
     this.inviteDialogError.set(null);
+    this.inviteLinkedSuccess.set(false);
+    this.showManualChatId.set(false);
+    this.manualChatId.set('');
     this.linkCopied.set(false);
+  }
+
+  private startInvitePolling(studentId: string): void {
+    this.stopInvitePolling();
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.invitePollTimer = setInterval(() => {
+      this.svc.getOne(studentId).subscribe({
+        next: (updated) => {
+          this.patchStudent(updated);
+          if (updated.telegram_user_id || updated.telegram_chat_id) {
+            this.inviteLinkedSuccess.set(true);
+            this.inviteDialogStudent.set(updated);
+            this.stopInvitePolling();
+            setTimeout(() => {
+              if (this.inviteDialogStudent()?._id === updated._id) {
+                this.closeInviteDialog();
+                this.openTelegramSettings(updated);
+              }
+            }, 1200);
+          }
+        },
+      });
+    }, 3000);
+  }
+
+  private stopInvitePolling(): void {
+    if (this.invitePollTimer) {
+      clearInterval(this.invitePollTimer);
+      this.invitePollTimer = null;
+    }
+  }
+
+  toggleManualChatId(): void {
+    this.showManualChatId.update((v) => !v);
+  }
+
+  submitManualChatId(): void {
+    const student = this.inviteDialogStudent();
+    const chatId = this.manualChatId().trim();
+    if (!student || !chatId) {
+      return;
+    }
+    this.inviteDialogLoading.set(true);
+    this.inviteDialogError.set(null);
+    this.svc.linkTelegramManual(student._id, chatId, 'student').subscribe({
+      next: (updated) => {
+        this.inviteDialogLoading.set(false);
+        this.patchStudent(updated);
+        this.inviteLinkedSuccess.set(true);
+        this.stopInvitePolling();
+        setTimeout(() => {
+          this.closeInviteDialog();
+          this.openTelegramSettings(updated);
+        }, 800);
+      },
+      error: (err) => {
+        this.inviteDialogLoading.set(false);
+        this.inviteDialogError.set(this.apiErrorMessage(err));
+      },
+    });
+  }
+
+  submitParentChatId(): void {
+    const student = this.settingsStudent();
+    const chatId = this.manualChatId().trim();
+    if (!student || !chatId) {
+      return;
+    }
+    this.settingsSaving.set(true);
+    this.svc.linkTelegramManual(student._id, chatId, 'parent').subscribe({
+      next: (updated) => {
+        this.settingsSaving.set(false);
+        this.manualChatId.set('');
+        this.patchStudent(updated);
+        this.settingsStudent.set(updated);
+        this.settingsIsMinor.set(true);
+      },
+      error: (err) => {
+        this.settingsSaving.set(false);
+        this.showToast(this.apiErrorMessage(err));
+      },
+    });
+  }
+
+  openTelegramSettings(student: Student): void {
+    this.closeQuickActions();
+    this.manualChatId.set('');
+    this.settingsStudent.set(student);
+    this.settingsDraft.set(normalizeTelegramSettings(student.telegram_notification_settings));
+    this.settingsIsMinor.set(Boolean(student.is_minor));
+  }
+
+  closeTelegramSettings(): void {
+    if (this.settingsSaving()) {
+      return;
+    }
+    this.settingsStudent.set(null);
+  }
+
+  updateSettingsDraft(patch: Partial<StudentTelegramNotificationSettings>): void {
+    this.settingsDraft.update((current) => normalizeTelegramSettings({ ...current, ...patch }));
+  }
+
+  setReminderOffset(value: string): void {
+    const n = Number(value);
+    if (n === 15 || n === 60 || n === 120 || n === 1440) {
+      this.updateSettingsDraft({ lesson_reminder_offset_minutes: n });
+    }
+  }
+
+  saveTelegramSettings(): void {
+    const student = this.settingsStudent();
+    if (!student || this.settingsSaving()) {
+      return;
+    }
+    this.settingsSaving.set(true);
+    const settings = normalizeTelegramSettings(this.settingsDraft());
+    this.svc
+      .update(student._id, {
+        telegram_notification_settings: settings,
+        is_minor: this.settingsIsMinor(),
+      })
+      .subscribe({
+        next: (updated) => {
+          this.settingsSaving.set(false);
+          this.patchStudent(updated);
+          this.settingsStudent.set(updated);
+          this.closeTelegramSettings();
+        },
+        error: (err) => {
+          this.settingsSaving.set(false);
+          this.showToast(this.apiErrorMessage(err));
+        },
+      });
+  }
+
+  requestDisconnectFromSettings(): void {
+    const student = this.settingsStudent();
+    if (!student) {
+      return;
+    }
+    this.requestTelegramDisconnect(student);
   }
 
   async copyInviteFromDialog(): Promise<void> {
@@ -579,7 +959,7 @@ export class StudentsComponent implements OnInit {
   }
 
   private loadInviteLink(student: Student): void {
-    if (student.telegram_user_id) {
+    if (this.isTelegramLinked(student)) {
       return;
     }
     const link = student.telegram_deep_link || '';
@@ -626,7 +1006,15 @@ export class StudentsComponent implements OnInit {
   }
 
   openTopup(id: string) {
-    this.topupLessonsInput = 1;
+    const student = this.students().find((item) => item._id === id) ?? null;
+    const step = resolveRateUnit(student?.rate_unit) === 'hour' ? 0.5 : 1;
+    const rate = Number(student?.rate_per_hour) || 0;
+    this.topupUnits.set(step);
+    this.topupMoney.set(rate > 0 ? this.roundMoney(rate * step) : 0);
+    this.topupPaidAt.set(this.todayInputDate());
+    this.topupAmountSource.set('units');
+    const settings = normalizeTelegramSettings(student?.telegram_notification_settings);
+    this.topupSendReceipt.set(settings.payment_receipt_enabled && this.canNotifyTelegram(student));
     this.topupTargetId.set(id);
   }
 
@@ -643,21 +1031,106 @@ export class StudentsComponent implements OnInit {
     this.topupTargetId.set(null);
   }
 
+  onTopupMoneyChange(raw: number | string): void {
+    const student = this.topupStudent();
+    const money = Number(raw);
+    this.topupMoney.set(Number.isFinite(money) ? money : 0);
+    this.topupAmountSource.set('money');
+    const rate = Number(student?.rate_per_hour) || 0;
+    if (rate > 0 && Number.isFinite(money) && money > 0) {
+      this.topupUnits.set(this.normalizeTopupUnits(money / rate, student));
+    }
+  }
+
+  onTopupUnitsChange(raw: number | string): void {
+    const student = this.topupStudent();
+    const units = this.normalizeTopupUnits(Number(raw), student);
+    this.topupUnits.set(units);
+    this.topupAmountSource.set('units');
+    const rate = Number(student?.rate_per_hour) || 0;
+    if (rate > 0 && units > 0) {
+      this.topupMoney.set(this.roundMoney(rate * units));
+    }
+  }
+
   applyTopup() {
     const id = this.topupTargetId();
-    const student = this.students().find((item) => item._id === id);
-    const raw = Number(this.topupLessonsInput);
-    const n =
-      resolveRateUnit(student?.rate_unit) === 'hour'
-        ? Math.round(raw * 100) / 100
-        : Math.floor(raw);
+    const student = this.topupStudent();
+    const n = this.normalizeTopupUnits(this.topupUnits(), student);
     if (!id || !(n > 0)) {
       return;
     }
-    this.svc.topup(id, n).subscribe(() => {
-      this.closeTopup();
-      this.load();
-    });
+    const wantsReceipt = this.topupSendReceipt();
+    this.svc
+      .topup(id, {
+        lessons: n,
+        money_amount: this.topupMoney(),
+        paid_at: this.topupPaidAt() || undefined,
+        send_receipt: wantsReceipt,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.closeTopup();
+          this.patchStudent(updated);
+          if (wantsReceipt && !updated.telegram_receipt_sent) {
+            this.showToast(this.t.tgNotifySkipped);
+          }
+        },
+        error: (err) => {
+          this.showToast(this.apiErrorMessage(err));
+        },
+      });
+  }
+
+  openBalanceAdjust(student: Student, event?: Event): void {
+    event?.stopPropagation();
+    this.closeQuickActions();
+    this.adjustTarget.set(student);
+    this.adjustNextBalance.set(Number(student.balance_lessons) || 0);
+    this.adjustReason.set('typo');
+    this.adjustNotify.set(false);
+  }
+
+  closeBalanceAdjust(): void {
+    if (this.adjustSaving()) {
+      return;
+    }
+    this.adjustTarget.set(null);
+  }
+
+  applyBalanceAdjust(): void {
+    const student = this.adjustTarget();
+    if (!student || this.adjustSaving()) {
+      return;
+    }
+    const raw = Number(this.adjustNextBalance());
+    if (!Number.isFinite(raw)) {
+      return;
+    }
+    const balance =
+      resolveRateUnit(student.rate_unit) === 'hour' ? Math.round(raw * 100) / 100 : Math.trunc(raw);
+    const wantsNotify = this.adjustNotify();
+    this.adjustSaving.set(true);
+    this.svc
+      .adjustBalance(student._id, {
+        balance_lessons: balance,
+        reason: this.adjustReason(),
+        notify_telegram: wantsNotify,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.adjustSaving.set(false);
+          this.patchStudent(updated);
+          this.closeBalanceAdjust();
+          if (wantsNotify && !updated.telegram_notified) {
+            this.showToast(this.t.tgNotifySkipped);
+          }
+        },
+        error: (err) => {
+          this.adjustSaving.set(false);
+          this.showToast(this.apiErrorMessage(err));
+        },
+      });
   }
 
   openDeleteConfirm(id: string) {
@@ -677,6 +1150,13 @@ export class StudentsComponent implements OnInit {
     this.deleteTargetId.set(null);
   }
 
+  deleteConfirmMessage(): string {
+    const id = this.deleteTargetId();
+    const student = this.students().find((item) => item._id === id);
+    const name = student?.name?.trim() || '—';
+    return this.t.deleteConfirm.replace('{name}', name);
+  }
+
   confirmDelete() {
     const id = this.deleteTargetId();
     if (!id) {
@@ -689,7 +1169,7 @@ export class StudentsComponent implements OnInit {
   }
 
   requestBotToggle(student: Student): void {
-    if (!student.telegram_user_id) {
+    if (!this.isTelegramLinked(student)) {
       return;
     }
     this.botToggleConfirm.set({ student, nextActive: !student.bot_active });
@@ -705,7 +1185,7 @@ export class StudentsComponent implements OnInit {
 
   requestBotToggleFromForm(): void {
     const student = this.editTarget();
-    if (!student?.telegram_user_id) {
+    if (!student || !this.isTelegramLinked(student)) {
       return;
     }
     this.requestBotToggle(student);
@@ -760,8 +1240,8 @@ export class StudentsComponent implements OnInit {
   }
 
   requestTelegramDisconnect(student?: Student | null): void {
-    const target = student ?? this.editTarget() ?? this.quickActionsStudent();
-    if (!target?.telegram_user_id) {
+    const target = student ?? this.editTarget() ?? this.quickActionsStudent() ?? this.settingsStudent();
+    if (!target || !this.isTelegramLinked(target)) {
       return;
     }
     this.disconnectConfirm.set(target);
@@ -783,6 +1263,10 @@ export class StudentsComponent implements OnInit {
         if (this.editTarget()?._id === updated._id) {
           this.editTarget.set(updated);
           this.form.bot_active = false;
+        }
+        if (this.settingsStudent()?._id === updated._id) {
+          this.settingsStudent.set(updated);
+          this.closeTelegramSettings();
         }
         this.closeQuickActions();
       },
