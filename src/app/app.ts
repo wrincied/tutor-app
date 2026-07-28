@@ -68,11 +68,23 @@ export class App {
   }
 
   showNavbar(): boolean {
+    if (this.isStandaloneNotFound()) {
+      return false;
+    }
     const path = this.router.url.split('?')[0];
     if (!this.auth.isLoggedIn() || !path.startsWith('/app')) {
       return false;
     }
     return path !== '/app/onboarding' && path !== '/app/verify-email-notice';
+  }
+
+  /** 404 lives outside the app shell (no navbar / page-host chrome). */
+  private isStandaloneNotFound(): boolean {
+    let route = this.router.routerState.root;
+    while (route.firstChild) {
+      route = route.firstChild;
+    }
+    return route.snapshot.data['title'] === 'notFound';
   }
 
   unlinkDialogTitle(): string {

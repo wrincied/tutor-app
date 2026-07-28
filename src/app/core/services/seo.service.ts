@@ -25,6 +25,7 @@ const PAGE_TITLE_KEYS = new Set<PageTitleKey>([
   'accountProfile',
   'accountAdministration',
   'admin',
+  'notFound',
 ]);
 
 @Injectable({ providedIn: 'root' })

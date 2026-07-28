@@ -86,7 +86,8 @@ export type PageTitleKey =
   | 'admin'
   | 'adminUsers'
   | 'adminSettings'
-  | 'adminLanding';
+  | 'adminLanding'
+  | 'notFound';
 
 export type PageTitleStrings = Record<PageTitleKey, string>;
 
@@ -556,6 +557,9 @@ export interface AuthStrings {
   createAccount: string;
   creating: string;
   backHome: string;
+  notFoundTitle: string;
+  notFoundBody: string;
+  notFoundGoApp: string;
   hasAccount: string;
   noAccount: string;
   wrongCredentials: string;

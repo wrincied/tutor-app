@@ -192,6 +192,9 @@ export const AUTH_BY: AuthStrings = {
   createAccount: 'Стварыць акаўнт',
   creating: 'Ствараем...',
   backHome: 'На галоўную',
+  notFoundTitle: 'Старонка не знойдзена',
+  notFoundBody: 'Такога адрасу няма. Праверце спасылку або вярніцеся ў кабінет.',
+  notFoundGoApp: 'У кабінет',
   hasAccount: 'Ужо ёсць акаўнт',
   noAccount: 'Стварыць акаўнт',
   wrongCredentials: 'Няправільны email або пароль',
@@ -800,6 +803,7 @@ export const PAGE_TITLE_BY: PageTitleStrings = {
   adminLanding: 'Landing | Simple4U',
   legalImpressum: 'Impressum | Simple4U',
   adminLogin: 'Admin | Simple4U',
+  notFound: '404 | Simple4U',
 };
 
 export const TAX_MODE_LABELS_BY: Record<TaxMode, string> = {

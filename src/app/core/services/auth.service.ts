@@ -195,10 +195,15 @@ export class AuthService {
   }
 
   navigateAfterAuth(profile: UserProfile, user: User): void {
-    const path = postAuthPath(profile, user.emailVerified === true);
-    const queryParams =
-      profile.data_consent_accepted === false ? { consent: 'declined' } : undefined;
-    void this.router.navigate([path], { queryParams });
+    const tree = this.router.parseUrl(this.router.url);
+    const returnUrl =
+      typeof tree.queryParams['returnUrl'] === 'string' ? tree.queryParams['returnUrl'] : null;
+    const path = postAuthPath(profile, user.emailVerified === true, returnUrl);
+    if (profile.data_consent_accepted === false) {
+      void this.router.navigate(['/login'], { queryParams: { consent: 'declined' } });
+      return;
+    }
+    void this.router.navigateByUrl(path);
   }
 
   /** Вызываем bootstrap для создания/синхронизации профиля на бэкенде Node.js */

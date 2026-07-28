@@ -192,6 +192,9 @@ export const AUTH_UK: AuthStrings = {
   createAccount: 'Створити акаунт',
   creating: 'Створюємо...',
   backHome: 'На головну',
+  notFoundTitle: 'Сторінку не знайдено',
+  notFoundBody: 'Такої адреси немає. Перевірте посилання або поверніться до кабінету.',
+  notFoundGoApp: 'До кабінету',
   hasAccount: 'Уже є акаунт',
   noAccount: 'Створити акаунт',
   wrongCredentials: 'Невірний email або пароль',
@@ -799,6 +802,7 @@ export const PAGE_TITLE_UK: PageTitleStrings = {
   adminLanding: 'Landing | Simple4U',
   legalImpressum: 'Impressum | Simple4U',
   adminLogin: 'Admin | Simple4U',
+  notFound: '404 | Simple4U',
 };
 
 export const TAX_MODE_LABELS_UK: Record<TaxMode, string> = {
