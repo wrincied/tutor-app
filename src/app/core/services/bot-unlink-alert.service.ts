@@ -38,7 +38,7 @@ export class BotUnlinkAlertService {
       return;
     }
     this.checking = true;
-    this.students.getAll().subscribe({
+    this.students.getAll({ force: true }).subscribe({
       next: (list) => {
         this.checking = false;
         this.ingestStudents(list);

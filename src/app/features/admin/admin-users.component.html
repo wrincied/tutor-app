@@ -157,6 +157,7 @@
 
 <app-dialog
   [open]="editOpen()"
+  size="md"
   [title]="t().editSubscriptionTitle"
   [confirmLabel]="savingUserId() ? t().savingSubscription : t().saveSubscription"
   [cancelLabel]="t().cancelEdit"
@@ -192,6 +193,7 @@
 
 <app-dialog
   [open]="detailOpen()"
+  size="md"
   [title]="t().userDetailTitle"
   [dismissLabel]="t().cancelEdit"
   (cancel)="closeUserDetail()"

@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { Lesson, Student } from '@interfaces';
 import {
   findNextLesson,
-  lessonsForDay,
   lessonsFromFinanceBreakdown,
   overdueLessonCount,
   studentsLowBalance,
 } from './home-dashboard';
+import { lessonsForDay } from './home-dashboard-lessons';
 
 describe('home-dashboard', () => {
   const students: Student[] = [

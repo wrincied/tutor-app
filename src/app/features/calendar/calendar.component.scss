@@ -4,7 +4,7 @@
   --cal-day-col-min: 110px;
   --cal-grid-height: 780px;
   --cal-grid-bottom-air: 1rem;
-  --cal-scrollbar-gutter: 0px;
+  --cal-days-area-width: auto;
 
   display: flex;
   flex-direction: column;
@@ -16,7 +16,7 @@
   box-sizing: border-box;
 
   @media (min-width: 768px) {
-    --cal-time-axis-w: 60px;
+    --cal-time-axis-w: 50px;
     --cal-day-col-min: 0px;
   }
 }
@@ -762,15 +762,20 @@
     border-right: 1px solid var(--nav-border);
   }
 
+  /* Забирает место вертикального scrollbar; не задаёт ширину колонок дней. */
   &--end {
-    width: var(--cal-scrollbar-gutter, 0px);
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
   }
 }
 
 .cal-grid-headers__scroll {
   display: flex;
+  flex: 0 0 auto;
+  width: var(--cal-days-area-width, auto);
+  max-width: 100%;
   min-width: 0;
-  flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -1556,15 +1561,419 @@
 .cal-lesson-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-height: 0;
   min-width: 0;
+  gap: 0.75rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   &__body {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     flex-wrap: nowrap;
-    gap: 0.25rem;
+    gap: 0.75rem;
     min-width: 0;
+  }
+}
+
+.cal-lesson-form-v2 {
+  color: #374151;
+
+  // Neutral controls (no green page tint inside lesson modal).
+  app-select .app-select__trigger {
+    background: #fff;
+    border-color: #d1d5db;
+
+    &:hover:not(:disabled) {
+      border-color: #9ca3af;
+      background: #fafafa;
+    }
+  }
+
+  .app-input,
+  textarea {
+    background: #fff;
+    border-color: #d1d5db;
+  }
+
+  &__label-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  &__field-icon {
+    flex-shrink: 0;
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    opacity: 0.72;
+  }
+
+  &__balance-row {
+    display: flex;
+    justify-content: flex-end;
+    // margin: -0.25rem 0 0;
+  }
+
+  &__balance-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: #fafafa;
+    border: 1px solid #d1d5db;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #111827;
+    white-space: nowrap;
+  }
+
+  &__tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    padding: 0.2rem;
+    border-radius: 0.5rem;
+    background: #fafafa;
+    border: 1px solid #d1d5db;
+  }
+
+  &__tab {
+    min-height: 2.25rem;
+    border: 0;
+    border-radius: 0.375rem;
+    background: transparent;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+
+    &--active {
+      background: #fff;
+      color: #111827;
+      box-shadow: 0 1px 2px rgb(17 24 39 / 0.08);
+    }
+  }
+
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+
+    &--desktop {
+      @media (min-width: 640px) {
+        display: grid;
+        grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+        gap: 1rem 1.25rem;
+        align-items: stretch;
+
+        > .cal-lesson-form-v2__main,
+        > .cal-lesson-form-v2__occupancy-wrap {
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-gutter: stable;
+        }
+      }
+    }
+
+    // Keep both tab panels in the same cell so height stays max(form, occupancy).
+    &--tabs {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+
+      > .cal-lesson-form-v2__main,
+      > .cal-lesson-form-v2__occupancy-wrap {
+        grid-area: 1 / 1;
+        min-width: 0;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-gutter: stable;
+      }
+    }
+  }
+
+  &__panel--hidden {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  &__occupancy-wrap {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    min-width: 0;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+
+    label,
+    &-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #374151;
+    }
+  }
+
+  &__student-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: -0.35rem 0 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  &__meta-snapshot {
+    font-weight: 600;
+    color: #374151;
+  }
+
+  &__balance-chip {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: #fafafa;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  &__debt-warning {
+    margin: 0;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(180 83 9 / 0.35);
+    background: rgb(180 83 9 / 0.08);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #b45309;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  &__recurrence-details {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  &__recurrence,
+  &__field--status {
+    app-select .app-select__trigger {
+      background: #fff;
+      border-color: #d1d5db;
+    }
+  }
+
+  &__checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: #374151;
+    cursor: pointer;
+
+    input {
+      margin-top: 0.15rem;
+      accent-color: #111827;
+    }
+
+    input:disabled + span {
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+  }
+
+  &__occupancy {
+    min-width: 0;
+    padding: 1rem 0 1rem 1rem;
+    border-left: 1px solid #d1d5db;
+  }
+
+  &__occupancy-title {
+    margin: 0 0 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.35;
+    text-transform: capitalize;
+  }
+
+  &__occupancy-empty {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  &__occupancy-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.625rem 0.75rem 0.625rem 0.875rem;
+    border: none;
+    background: #fff;
+    box-shadow: 0 1px 4px rgb(15 23 42 / 0.08);
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: #d1d5db;
+    }
+
+    &--draft {
+      background: #fafafa;
+      box-shadow: 0 2px 8px rgb(17 24 39 / 0.1);
+
+      &::before {
+        background: #111827;
+      }
+
+      .cal-lesson-form-v2__slot-name {
+        color: #111827;
+      }
+    }
+
+    &--conflict {
+      background: rgb(254 242 242);
+      box-shadow: 0 2px 8px rgb(220 38 38 / 0.14);
+
+      &::before {
+        background: #dc2626;
+      }
+    }
+
+    &--scheduled {
+      box-shadow: 0 8px 4px rgb(15 23 42 / 0.08);
+
+      &::before {
+        background: rgb(59 130 246);
+      }
+    }
+
+    &--completed {
+      box-shadow: 0 2px 8px rgb(16 185 129 / 0.12);
+
+      &::before {
+        background: rgb(16 185 129);
+      }
+    }
+
+    &--missed {
+      box-shadow: 0 2px 8px rgb(245 158 11 / 0.12);
+
+      &::before {
+        background: rgb(245 158 11);
+      }
+    }
+
+    &--canceled {
+      opacity: 0.92;
+      box-shadow: 0 2px 8px rgb(239 68 68 / 0.1);
+
+      &::before {
+        background: rgb(239 68 68);
+      }
+
+      .cal-lesson-form-v2__slot-name {
+        color: #6b7280;
+        text-decoration: line-through;
+        text-decoration-color: rgb(239 68 68 / 0.45);
+      }
+    }
+  }
+
+  &__slot-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding-left: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__slot-student-dot {
+    flex: 0 0 auto;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.75);
+  }
+
+  &__slot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem 0.5rem;
+    padding-left: 0.35rem;
+  }
+
+  &__slot-time {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: #6b7280;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__slot-error {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    background: rgb(254 226 226);
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #dc2626;
+    white-space: nowrap;
   }
 }
 
@@ -1869,8 +2278,7 @@
       box-shadow 0.15s ease;
 
     &:hover {
-      color: var(--text-main);
-      background: var(--nav-accent);
+      background: #e2e8f0;
     }
 
     &--with-icon {
@@ -1882,7 +2290,11 @@
     &--active {
       color: #fff;
       background: var(--nav-accent);
-      // box-shadow: 0 2px 8px rgb(5 150 105 / 0.28);
+
+      &:hover {
+        background: var(--nav-accent);
+        color: #fff;
+      }
     }
   }
 
@@ -2018,6 +2430,11 @@
     background: #052e16;
     color: #ffffff;
     box-shadow: none;
+
+    &:hover {
+      background: #052e16;
+      color: #ffffff;
+    }
   }
 }
 
@@ -2344,7 +2761,7 @@
   padding: 0;
   border: 1px solid var(--nav-border);
   border-radius: 50%;
-  background: var(--nav-bg);
+  background: var(--input-bg);
   color: var(--text-secondary);
   font-size: 0.6875rem;
   font-weight: 700;
@@ -2358,17 +2775,21 @@
     box-shadow 0.2s ease;
 
   &:hover {
-    border-color: var(--nav-accent);
-    background: var(--nav-accent);
-    color: var(--text-main);
+    background: #e2e8f0;
+    color: var(--text-secondary);
   }
 
   &--active {
     border-color: var(--nav-accent);
     background: var(--nav-accent);
     color: #fff;
-    box-shadow: 0 2px 8px rgb(5 150 105 / 0.35);
     transform: scale(1.06);
+
+    &:hover {
+      border-color: var(--nav-accent);
+      background: var(--nav-accent);
+      color: #fff;
+    }
   }
 
   &:focus-visible {
@@ -2378,14 +2799,84 @@
 }
 
 .cal-recurrence-delete {
+  --crd-gap: 0.625rem;
+  --crd-radius: 0.75rem;
+  --crd-border: #e2e8f0;
+  --crd-border-active: #fecaca;
+  --crd-bg: #fff;
+  --crd-bg-hover: #f8fafc;
+  --crd-bg-active: #fef2f2;
+  --crd-title: #0f172a;
+  --crd-hint: #64748b;
+  --crd-accent: #dc2626;
+  --crd-transition: 0.15s ease;
+
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-}
+  gap: var(--crd-gap);
 
-.cal-recurrence-delete__btn {
-  width: 100%;
-  justify-content: center;
+  &__card {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--crd-border);
+    border-radius: var(--crd-radius);
+    background: var(--crd-bg);
+    cursor: pointer;
+    transition:
+      background-color var(--crd-transition),
+      border-color var(--crd-transition),
+      box-shadow var(--crd-transition);
+
+    &:hover {
+      background: var(--crd-bg-hover);
+    }
+
+    &:has(input:checked),
+    &--active {
+      background: var(--crd-bg-active);
+      border-color: var(--crd-border-active);
+      box-shadow: inset 0 0 0 1px var(--crd-border-active);
+    }
+
+    &:has(input:focus-visible) {
+      outline: 2px solid var(--crd-accent);
+      outline-offset: 2px;
+    }
+  }
+
+  &__radio {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0.125rem 0 0;
+    accent-color: var(--crd-accent);
+    cursor: pointer;
+  }
+
+  &__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  &__card-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--crd-title);
+  }
+
+  &__card-hint {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--crd-hint);
+  }
 }
 
 .cal-form-actions {

@@ -1,5 +1,8 @@
 import { RRule, type Weekday } from 'rrule';
 import type { CalendarLesson, Lesson } from '@interfaces';
+import { dayKey } from './day-key';
+
+export { dayKey } from './day-key';
 
 export const RRULE_WEEKDAY_CODES = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const;
 export type RruleWeekdayCode = (typeof RRULE_WEEKDAY_CODES)[number];
@@ -148,13 +151,6 @@ function endOfLocalDay(date: Date): Date {
   const end = new Date(date);
   end.setHours(23, 59, 59, 999);
   return end;
-}
-
-export function dayKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
 }
 
 function buildRule(

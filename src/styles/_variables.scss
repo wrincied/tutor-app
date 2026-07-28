@@ -60,6 +60,21 @@
   --input-focus-border: #10b981;
   --input-focus-ring: rgb(16 185 129 / 0.15);
   --input-icon: #94a3b8;
+
+  /* Telegram notification status badges */
+  --tg-badge-connected-bg: #dff3ea;
+  --tg-badge-connected-fg: #0f3d34;
+  --tg-badge-connected-border: #cfe3d9;
+  --tg-badge-neutral-bg: #f1f3f4;
+  --tg-badge-neutral-fg: #5f746c;
+  --tg-badge-error-bg: #fce8e6;
+  --tg-badge-error-fg: #c5221f;
+
+  /* app-dialog desktop widths (size=sm|md|lg) */
+  --dialog-w-sm: 25rem; /* 400px */
+  --dialog-w-md: 35rem; /* 560px */
+  --dialog-w-lg: 40rem; /* 640px */
+  --dialog-w-lesson: 50rem; /* 800px */
 }
 
 [data-theme='dark'] {

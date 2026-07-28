@@ -326,6 +326,7 @@
 
 <app-dialog
   [open]="expenseFormOpen()"
+  size="md"
   [closeOnOverlay]="false"
   [title]="expenseEditTarget() ? t.editExpense : t.addExpense"
   [cancelLabel]="t.cancel"
@@ -381,10 +382,12 @@
 
 <app-dialog
   [open]="expenseDeleteId() !== null"
+  size="sm"
   [title]="t.deleteExpense"
   [cancelLabel]="t.cancel"
   [confirmLabel]="t.deleteExpense"
   variant="error"
+  [confirmDanger]="true"
   (cancel)="cancelDeleteExpense()"
   (confirm)="deleteExpense()"
 >
