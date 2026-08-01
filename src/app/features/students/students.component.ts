@@ -119,6 +119,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
   inviteLinkedSuccess = signal(false);
   showManualChatId = signal(false);
   manualChatId = signal('');
+  manualChatConsent = signal(false);
   settingsStudent = signal<Student | null>(null);
   settingsDraft = signal<StudentTelegramNotificationSettings>({ ...DEFAULT_TELEGRAM_SETTINGS });
   settingsSaving = signal(false);
@@ -771,6 +772,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.inviteLinkedSuccess.set(false);
     this.showManualChatId.set(false);
     this.manualChatId.set('');
+    this.manualChatConsent.set(false);
     this.linkCopied.set(false);
     this.inviteDialogStudent.set(student);
     this.startInvitePolling(student._id);
@@ -787,6 +789,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.inviteLinkedSuccess.set(false);
     this.showManualChatId.set(false);
     this.manualChatId.set('');
+    this.manualChatConsent.set(false);
     this.linkCopied.set(false);
   }
 
@@ -829,54 +832,60 @@ export class StudentsComponent implements OnInit, OnDestroy {
   submitManualChatId(): void {
     const student = this.inviteDialogStudent();
     const chatId = this.manualChatId().trim();
-    if (!student || !chatId) {
+    if (!student || !chatId || !this.manualChatConsent()) {
       return;
     }
     this.inviteDialogLoading.set(true);
     this.inviteDialogError.set(null);
-    this.svc.linkTelegramManual(student._id, chatId, 'student').subscribe({
-      next: (updated) => {
-        this.inviteDialogLoading.set(false);
-        this.patchStudent(updated);
-        this.inviteLinkedSuccess.set(true);
-        this.stopInvitePolling();
-        setTimeout(() => {
-          this.closeInviteDialog();
-          this.openTelegramSettings(updated);
-        }, 800);
-      },
-      error: (err) => {
-        this.inviteDialogLoading.set(false);
-        this.inviteDialogError.set(this.apiErrorMessage(err));
-      },
-    });
+    this.svc
+      .linkTelegramManual(student._id, chatId, 'student', { confirmRecipientConsent: true })
+      .subscribe({
+        next: (updated) => {
+          this.inviteDialogLoading.set(false);
+          this.patchStudent(updated);
+          this.inviteLinkedSuccess.set(true);
+          this.stopInvitePolling();
+          setTimeout(() => {
+            this.closeInviteDialog();
+            this.openTelegramSettings(updated);
+          }, 800);
+        },
+        error: (err) => {
+          this.inviteDialogLoading.set(false);
+          this.inviteDialogError.set(this.apiErrorMessage(err));
+        },
+      });
   }
 
   submitParentChatId(): void {
     const student = this.settingsStudent();
     const chatId = this.manualChatId().trim();
-    if (!student || !chatId) {
+    if (!student || !chatId || !this.manualChatConsent()) {
       return;
     }
     this.settingsSaving.set(true);
-    this.svc.linkTelegramManual(student._id, chatId, 'parent').subscribe({
-      next: (updated) => {
-        this.settingsSaving.set(false);
-        this.manualChatId.set('');
-        this.patchStudent(updated);
-        this.settingsStudent.set(updated);
-        this.settingsIsMinor.set(true);
-      },
-      error: (err) => {
-        this.settingsSaving.set(false);
-        this.showToast(this.apiErrorMessage(err));
-      },
-    });
+    this.svc
+      .linkTelegramManual(student._id, chatId, 'parent', { confirmRecipientConsent: true })
+      .subscribe({
+        next: (updated) => {
+          this.settingsSaving.set(false);
+          this.manualChatId.set('');
+          this.manualChatConsent.set(false);
+          this.patchStudent(updated);
+          this.settingsStudent.set(updated);
+          this.settingsIsMinor.set(true);
+        },
+        error: (err) => {
+          this.settingsSaving.set(false);
+          this.showToast(this.apiErrorMessage(err));
+        },
+      });
   }
 
   openTelegramSettings(student: Student): void {
     this.closeQuickActions();
     this.manualChatId.set('');
+    this.manualChatConsent.set(false);
     this.settingsStudent.set(student);
     this.settingsDraft.set(normalizeTelegramSettings(student.telegram_notification_settings));
     this.settingsIsMinor.set(Boolean(student.is_minor));

@@ -1177,6 +1177,7 @@ export interface StudentStrings {
   tgManualChatId: string;
   tgManualChatIdHint: string;
   tgManualChatIdSubmit: string;
+  tgManualChatConsent: string;
   tgSettingsTitle: string;
   tgActiveAccount: string;
   tgLinkedAt: string;

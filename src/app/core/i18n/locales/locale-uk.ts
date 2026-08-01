@@ -695,6 +695,7 @@ export const STUDENTS_UK: StudentStrings = {
   tgManualChatId: 'Ввести Chat ID вручну',
   tgManualChatIdHint: 'Лише якщо учень не може відсканувати QR',
   tgManualChatIdSubmit: 'Прив’язати Chat ID',
+  tgManualChatConsent: 'Отримувач погодився отримувати повідомлення від бота',
   tgSettingsTitle: 'Налаштування сповіщень',
   tgActiveAccount: 'Активний акаунт',
   tgLinkedAt: 'Прив’язано',

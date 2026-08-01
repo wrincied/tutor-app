@@ -311,7 +311,20 @@
               [attr.aria-label]="t.tgManualChatId"
               placeholder="123456789"
             />
-            <button type="button" class="btn btn--secondary" (click)="submitManualChatId()">
+            <label class="invite-dialog__consent">
+              <input
+                type="checkbox"
+                [checked]="manualChatConsent()"
+                (change)="manualChatConsent.set($any($event.target).checked)"
+              />
+              <span>{{ t.tgManualChatConsent }}</span>
+            </label>
+            <button
+              type="button"
+              class="btn btn--secondary"
+              [disabled]="!manualChatConsent() || !manualChatId().trim()"
+              (click)="submitManualChatId()"
+            >
               {{ t.tgManualChatIdSubmit }}
             </button>
           </div>
@@ -494,7 +507,20 @@
                   [attr.aria-label]="t.tgManualChatId"
                   placeholder="123456789"
                 />
-                <button type="button" class="btn btn--secondary" (click)="submitParentChatId()">
+                <label class="invite-dialog__consent">
+                  <input
+                    type="checkbox"
+                    [checked]="manualChatConsent()"
+                    (change)="manualChatConsent.set($any($event.target).checked)"
+                  />
+                  <span>{{ t.tgManualChatConsent }}</span>
+                </label>
+                <button
+                  type="button"
+                  class="btn btn--secondary"
+                  [disabled]="!manualChatConsent() || !manualChatId().trim() || settingsSaving()"
+                  (click)="submitParentChatId()"
+                >
                   {{ t.tgBindParent }}
                 </button>
               </div>
