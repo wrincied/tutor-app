@@ -1216,10 +1216,10 @@ const AUTH: Record<Lang, AuthStrings> = {
 };
 
 const LEGAL_COMMON: Record<Lang, LegalCommonStrings> = {
-  ru: { back: 'Назад', lastUpdated: 'Последнее обновление: май 2026' },
-  en: { back: 'Back', lastUpdated: 'Last updated: May 2026' },
-  de: { back: 'Zurück', lastUpdated: 'Zuletzt aktualisiert: Mai 2026' },
-  kz: { back: 'Артқа', lastUpdated: 'Соңғы жаңарту: 2026 мамыр' },
+  ru: { back: 'Назад', lastUpdated: 'Последнее обновление: август 2026' },
+  en: { back: 'Back', lastUpdated: 'Last updated: August 2026' },
+  de: { back: 'Zurück', lastUpdated: 'Zuletzt aktualisiert: August 2026' },
+  kz: { back: 'Артқа', lastUpdated: 'Соңғы жаңарту: 2026 тамыз' },
   uk: LEGAL_COMMON_UK,
   by: LEGAL_COMMON_BY,
 };
@@ -1227,84 +1227,87 @@ const LEGAL_COMMON: Record<Lang, LegalCommonStrings> = {
 const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
   ru: {
     ...LEGAL_COMMON.ru,
-    title: 'Политика обработки персональных данных',
+    title: 'Политика обработки персональных данных (Datenschutzerklärung)',
     intro:
-      'Настоящая политика описывает, какие данные Simple4U обрабатывает, зачем это нужно и какие у вас есть права.',
-    section1Title: 'Кто обрабатывает данные',
+      'Мы обрабатываем персональные данные на основании DSGVO/TKG. Ниже — краткое резюме; полный немецкий текст отдаётся через CMS.',
+    section1Title: 'Ответственный (Verantwortlicher)',
     section1Body:
-      'Оператором является владелец сервиса Simple4U. Контакт для вопросов по данным: email, указанный в вашем аккаунте.',
-    section2Title: 'Какие данные мы собираем',
+      'Оператор Simple4U. Контакт: support@simple4u.com. Реквизиты: см. Impressum ([Firmenname], [Anschrift], [Telefon]).',
+    section2Title: 'Какие данные мы обрабатываем',
     section2Body:
-      'Email и имя для аккаунта; данные об учениках, уроках, ставках и финансах, которые вы вводите; технические данные (сессия, язык интерфейса, журнал ошибок).',
-    section3Title: 'Цели обработки',
+      'IP и технические данные; email и имя аккаунта; данные об учениках, уроках и финансах; Stripe при оплате; Telegram chat ID при привязке; cookies/аналитика.',
+    section3Title: 'Цели и правовые основания',
     section3Body:
-      'Предоставление функций расписания, учёта учеников и финансовой аналитики; безопасность и поддержка; выполнение договорных обязательств по подписке.',
-    section4Title: 'Правовые основания',
+      'CRM (договор, Art. 6 Abs. 1 lit. b); безопасность сайта (законный интерес, lit. f); подписка через Stripe; аналитика/маркетинг — при согласии (lit. a), где требует TKG.',
+    section4Title: 'Получатели, сроки, третьи страны',
     section4Body:
-      'Обработка основана на вашем согласии при регистрации, исполнении договора (пользование сервисом) и законных интересах (безопасность, улучшение продукта).',
-    section5Title: 'Ваши права',
+      'Firebase/Google, Stripe, при необходимости Telegram, хостинг в EU. Передача в США — EU-US Data Privacy Framework / SCC. Хранение: пока есть аккаунт; платежи — по налоговым срокам.',
+    section5Title: 'Ваши права и жалоба',
     section5Body:
-      'Вы можете запросить доступ, исправление или удаление данных, отозвать согласие и ограничить обработку. Для этого напишите в поддержку через email аккаунта.',
+      'Доступ, исправление, удаление, ограничение, переносимость, возражение, отзыв согласия — support@simple4u.com. Жалоба: надзорный орган (AT: Datenschutzbehörde, dsb.gv.at). Art. 22 нет.',
   },
   en: {
     ...LEGAL_COMMON.en,
-    title: 'Personal data processing policy',
+    title: 'Personal data processing policy (Datenschutzerklärung)',
     intro:
-      'This policy explains what data Simple4U processes, why we need it, and what rights you have.',
-    section1Title: 'Who processes your data',
+      'We process personal data under the GDPR and TKG. Short summary below; the full German policy is served via CMS.',
+    section1Title: 'Controller (Verantwortlicher)',
     section1Body:
-      'The controller is the operator of Simple4U. For data requests, use the email on your account.',
-    section2Title: 'What we collect',
+      'Operator of Simple4U. Contact: support@simple4u.com. Legal details: see Impressum ([Firmenname], [Anschrift], [Telefon]).',
+    section2Title: 'What data we process',
     section2Body:
-      'Email and name for your account; student, lesson, rate, and finance data you enter; technical data (session, UI language, error logs).',
-    section3Title: 'Purposes',
+      'IP and technical visit data; account email and name; student, lesson and finance data you enter; Stripe payment data; Telegram chat ID if linked; cookies/analytics.',
+    section3Title: 'Purposes and legal bases',
     section3Body:
-      'To provide scheduling, student management, and finance features; security and support; subscription contract performance.',
-    section4Title: 'Legal bases',
+      'CRM features (contract, Art. 6(1)(b)); site security (legitimate interest, (f)); subscriptions via Stripe; analytics/marketing only with consent ((a)) where required by TKG.',
+    section4Title: 'Recipients, retention, third countries',
     section4Body:
-      'Consent at registration, contract performance (using the service), and legitimate interests (security, product improvement).',
-    section5Title: 'Your rights',
+      'Firebase/Google, Stripe, Telegram if used, EU hosting. US transfers may rely on the EU-US Data Privacy Framework / SCCs. Retention: while the account exists; payments per tax rules.',
+    section5Title: 'Your rights and complaints',
     section5Body:
-      'You may request access, correction, or deletion, withdraw consent, or restrict processing via your account email.',
+      'Access, rectification, erasure, restriction, portability, objection, withdraw consent — support@simple4u.com. Complaint to a supervisory authority (AT: dsb.gv.at). No Art. 22 automated decisions.',
   },
   de: {
     ...LEGAL_COMMON.de,
-    title: 'Richtlinie zur Verarbeitung personenbezogener Daten',
+    title: 'Datenschutzerklärung',
     intro:
-      'Diese Richtlinie beschreibt, welche Daten Simple4U verarbeitet, warum und welche Rechte Sie haben.',
+      'Wir verarbeiten personenbezogene Daten auf Grundlage von DSGVO und TKG. Kurzfassung; der vollständige Text wird über CMS / Server-Default ausgeliefert.',
     section1Title: 'Verantwortlicher',
     section1Body:
-      'Verantwortlich ist der Betreiber von Simple4U. Für Anfragen nutzen Sie die E-Mail Ihres Kontos.',
-    section2Title: 'Welche Daten',
+      'Betreiber von Simple4U. E-Mail: support@simple4u.com. Anschrift/Firma: siehe Impressum ([Firmenname], [Anschrift], [Telefon]).',
+    section2Title: 'Welche Daten wir verarbeiten',
     section2Body:
-      'E-Mail und Name; von Ihnen eingegebene Schüler-, Unterrichts- und Finanzdaten; technische Daten (Sitzung, Sprache, Fehlerprotokolle).',
-    section3Title: 'Zwecke',
+      'IP und technische Verbindungsdaten; Konto-E-Mail und Name; Schüler-, Unterrichts- und Finanzdaten; Zahlungsdaten über Stripe; Telegram-Chat-ID bei Verknüpfung; Cookies/Analytics.',
+    section3Title: 'Zwecke und Rechtsgrundlagen',
     section3Body:
-      'Bereitstellung von Kalender, Schülerverwaltung und Finanzen; Sicherheit und Support; Vertragserfüllung beim Abo.',
-    section4Title: 'Rechtsgrundlagen',
+      'CRM-Funktionen (Vertrag, Art. 6 Abs. 1 lit. b); Sicherheit (berechtigtes Interesse, lit. f); Abo über Stripe; Analyse/Marketing nur mit Einwilligung (lit. a), soweit TKG dies verlangt.',
+    section4Title: 'Empfänger, Speicherdauer, Drittland',
     section4Body:
-      'Einwilligung bei der Registrierung, Vertragserfüllung und berechtigte Interessen (Sicherheit, Produktverbesserung).',
-    section5Title: 'Ihre Rechte',
+      'Firebase/Google, Stripe, ggf. Telegram, Hosting in der EU. Übermittlungen in die USA ggf. über EU-US Data Privacy Framework / SCC. Speicherung: solange das Konto besteht; Zahlungsdaten nach steuerlichen Fristen.',
+    section5Title: 'Ihre Rechte und Beschwerde',
     section5Body:
-      'Auskunft, Berichtigung, Löschung, Widerruf der Einwilligung und Einschränkung der Verarbeitung per Konto-E-Mail.',
+      'Auskunft, Berichtigung, Löschung, Einschränkung, Portabilität, Widerspruch, Widerruf — support@simple4u.com. Beschwerde bei einer Aufsichtsbehörde (AT: Datenschutzbehörde, dsb.gv.at). Keine automatisierte Entscheidung nach Art. 22 DSGVO.',
   },
   kz: {
     ...LEGAL_COMMON.kz,
-    title: 'Жеке деректерді өңдеу саясаты',
+    title: 'Жеке деректерді өңдеу саясаты (Datenschutzerklärung)',
     intro:
-      'Бұл саясат Simple4U қандай деректерді өңдейтінін, не үшін және қандай құқықтарыңыз барын түсіндіреді.',
-    section1Title: 'Кім өңдейді',
-    section1Body: 'Оператор — Simple4U иесі. Сұрақтар үшін аккаунт email-ін пайдаланыңыз.',
+      'Біз деректерді DSGVO/TKG негізінде өңдейміз. Қысқаша түйіндеме; толық неміс мәтіні CMS арқылы беріледі.',
+    section1Title: 'Жауапты тұлға (Verantwortlicher)',
+    section1Body:
+      'Simple4U операторы. Байланыс: support@simple4u.com. Заңды деректемелер: Impressum ([Firmenname], [Anschrift], [Telefon]).',
     section2Title: 'Қандай деректер',
     section2Body:
-      'Email және аты; енгізілген оқушы, сабақ, баға және қаржы деректері; техникалық деректер (сессия, тіл, қателер журналы).',
-    section3Title: 'Мақсаттар',
-    section3Body: 'Кесте, оқушылар және қаржы функциялары; қауіпсіздік және қолдау; жазылым шарты.',
-    section4Title: 'Құқықтық негіздер',
+      'IP және техникалық деректер; аккаунт email/аты; оқушы, сабақ, қаржы деректері; Stripe; Telegram chat ID; cookies/аналитика.',
+    section3Title: 'Мақсаттар мен құқықтық негіздер',
+    section3Body:
+      'CRM (шарт); қауіпсіздік (заңды мүдде); жазылым/Stripe; аналитика/маркетинг — келісім бойынша (TKG).',
+    section4Title: 'Алушылар, мерзім, үшінші елдер',
     section4Body:
-      'Тіркелудегі келісім, шартты орындау және заңды мүдделер (қауіпсіздік, өнімді жақсарту).',
-    section5Title: 'Құқықтарыңыз',
-    section5Body: 'Қол жеткізу, түзету, жою, келісімді кері алу — аккаунт email арқылы.',
+      'Firebase/Google, Stripe, Telegram (қажет болса), EU хостинг. АҚШ — DPF/SCC. Сақтау: аккаунт бар кезде; төлемдер — салық мерзімі.',
+    section5Title: 'Құқықтарыңыз және шағым',
+    section5Body:
+      'Қол жеткізу, түзету, жою — support@simple4u.com. Шағым: қадағалау органы (AT: dsb.gv.at). Art. 22 жоқ.',
   },
   uk: LEGAL_DATA_UK,
   by: LEGAL_DATA_BY,

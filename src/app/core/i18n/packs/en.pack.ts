@@ -290,27 +290,27 @@ export const LOCALE_PACK = {
   },
   legal: {
   "back": "Back",
-  "lastUpdated": "Last updated: May 2026"
+  "lastUpdated": "Last updated: August 2026"
 },
   legalData: {
   "back": "Back",
-  "lastUpdated": "Last updated: May 2026",
-  "title": "Personal data processing policy",
-  "intro": "This policy explains what data Simple4U processes, why we need it, and what rights you have.",
-  "section1Title": "Who processes your data",
-  "section1Body": "The controller is the operator of Simple4U. For data requests, use the email on your account.",
-  "section2Title": "What we collect",
-  "section2Body": "Email and name for your account; student, lesson, rate, and finance data you enter; technical data (session, UI language, error logs).",
-  "section3Title": "Purposes",
-  "section3Body": "To provide scheduling, student management, and finance features; security and support; subscription contract performance.",
-  "section4Title": "Legal bases",
-  "section4Body": "Consent at registration, contract performance (using the service), and legitimate interests (security, product improvement).",
-  "section5Title": "Your rights",
-  "section5Body": "You may request access, correction, or deletion, withdraw consent, or restrict processing via your account email."
+  "lastUpdated": "Last updated: August 2026",
+  "title": "Personal data processing policy (Datenschutzerklärung)",
+  "intro": "We process personal data under the GDPR and TKG. Short summary below; the full German policy is served via CMS.",
+  "section1Title": "Controller (Verantwortlicher)",
+  "section1Body": "Operator of Simple4U. Contact: support@simple4u.com. Legal details: see Impressum ([Firmenname], [Anschrift], [Telefon]).",
+  "section2Title": "What data we process",
+  "section2Body": "IP and technical visit data; account email and name; student, lesson and finance data you enter; Stripe payment data; Telegram chat ID if linked; cookies/analytics.",
+  "section3Title": "Purposes and legal bases",
+  "section3Body": "CRM features (contract, Art. 6(1)(b)); site security (legitimate interest, (f)); subscriptions via Stripe; analytics/marketing only with consent ((a)) where required by TKG.",
+  "section4Title": "Recipients, retention, third countries",
+  "section4Body": "Firebase/Google, Stripe, Telegram if used, EU hosting. US transfers may rely on the EU-US Data Privacy Framework / SCCs. Retention: while the account exists; payments per tax rules.",
+  "section5Title": "Your rights and complaints",
+  "section5Body": "Access, rectification, erasure, restriction, portability, objection, withdraw consent — support@simple4u.com. Complaint to a supervisory authority (AT: dsb.gv.at). No Art. 22 automated decisions."
 },
   legalCookies: {
   "back": "Back",
-  "lastUpdated": "Last updated: May 2026",
+  "lastUpdated": "Last updated: August 2026",
   "title": "Cookie policy",
   "intro": "Cookies are small browser files. We use them to run the service and, with your consent, for marketing.",
   "section1Title": "Strictly necessary cookies",

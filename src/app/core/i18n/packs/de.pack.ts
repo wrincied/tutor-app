@@ -293,27 +293,27 @@ export const LOCALE_PACK = {
   },
   legal: {
   "back": "Zurück",
-  "lastUpdated": "Zuletzt aktualisiert: Mai 2026"
+  "lastUpdated": "Zuletzt aktualisiert: August 2026"
 },
   legalData: {
   "back": "Zurück",
-  "lastUpdated": "Zuletzt aktualisiert: Mai 2026",
-  "title": "Richtlinie zur Verarbeitung personenbezogener Daten",
-  "intro": "Diese Richtlinie beschreibt, welche Daten Simple4U verarbeitet, warum und welche Rechte Sie haben.",
+  "lastUpdated": "Zuletzt aktualisiert: August 2026",
+  "title": "Datenschutzerklärung",
+  "intro": "Wir verarbeiten personenbezogene Daten auf Grundlage von DSGVO und TKG. Kurzfassung; der vollständige Text wird über CMS / Server-Default ausgeliefert.",
   "section1Title": "Verantwortlicher",
-  "section1Body": "Verantwortlich ist der Betreiber von Simple4U. Für Anfragen nutzen Sie die E-Mail Ihres Kontos.",
-  "section2Title": "Welche Daten",
-  "section2Body": "E-Mail und Name; von Ihnen eingegebene Schüler-, Unterrichts- und Finanzdaten; technische Daten (Sitzung, Sprache, Fehlerprotokolle).",
-  "section3Title": "Zwecke",
-  "section3Body": "Bereitstellung von Kalender, Schülerverwaltung und Finanzen; Sicherheit und Support; Vertragserfüllung beim Abo.",
-  "section4Title": "Rechtsgrundlagen",
-  "section4Body": "Einwilligung bei der Registrierung, Vertragserfüllung und berechtigte Interessen (Sicherheit, Produktverbesserung).",
-  "section5Title": "Ihre Rechte",
-  "section5Body": "Auskunft, Berichtigung, Löschung, Widerruf der Einwilligung und Einschränkung der Verarbeitung per Konto-E-Mail."
+  "section1Body": "Betreiber von Simple4U. E-Mail: support@simple4u.com. Anschrift/Firma: siehe Impressum ([Firmenname], [Anschrift], [Telefon]).",
+  "section2Title": "Welche Daten wir verarbeiten",
+  "section2Body": "IP und technische Verbindungsdaten; Konto-E-Mail und Name; Schüler-, Unterrichts- und Finanzdaten; Zahlungsdaten über Stripe; Telegram-Chat-ID bei Verknüpfung; Cookies/Analytics.",
+  "section3Title": "Zwecke und Rechtsgrundlagen",
+  "section3Body": "CRM-Funktionen (Vertrag, Art. 6 Abs. 1 lit. b); Sicherheit (berechtigtes Interesse, lit. f); Abo über Stripe; Analyse/Marketing nur mit Einwilligung (lit. a), soweit TKG dies verlangt.",
+  "section4Title": "Empfänger, Speicherdauer, Drittland",
+  "section4Body": "Firebase/Google, Stripe, ggf. Telegram, Hosting in der EU. Übermittlungen in die USA ggf. über EU-US Data Privacy Framework / SCC. Speicherung: solange das Konto besteht; Zahlungsdaten nach steuerlichen Fristen.",
+  "section5Title": "Ihre Rechte und Beschwerde",
+  "section5Body": "Auskunft, Berichtigung, Löschung, Einschränkung, Portabilität, Widerspruch, Widerruf — support@simple4u.com. Beschwerde bei einer Aufsichtsbehörde (AT: Datenschutzbehörde, dsb.gv.at). Keine automatisierte Entscheidung nach Art. 22 DSGVO."
 },
   legalCookies: {
   "back": "Zurück",
-  "lastUpdated": "Zuletzt aktualisiert: Mai 2026",
+  "lastUpdated": "Zuletzt aktualisiert: August 2026",
   "title": "Cookie-Richtlinie",
   "intro": "Cookies sind kleine Dateien im Browser. Wir nutzen sie für den Betrieb und mit Ihrer Einwilligung für Marketing.",
   "section1Title": "Notwendige Cookies",
