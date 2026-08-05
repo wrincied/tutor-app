@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Auth, authState } from '@angular/fire/auth';
 import { Observable, tap, shareReplay } from 'rxjs';
 import type {
   Student,
@@ -29,14 +30,28 @@ export type StudentBalanceAdjustPayload = {
 @Injectable({ providedIn: 'root' })
 export class StudentService {
   private http = inject(HttpClient);
+  private readonly fireAuth = inject(Auth);
   /** Shared list response until invalidated (dedupes concurrent + sequential callers). */
   private listShared$: Observable<Student[]> | null = null;
+  private cachedUid: string | null = null;
+
+  constructor() {
+    authState(this.fireAuth).subscribe((user) => {
+      const uid = user?.uid ?? null;
+      if (uid !== this.cachedUid) {
+        this.invalidateListCache();
+        this.cachedUid = uid;
+      }
+    });
+  }
 
   getAll(options?: { force?: boolean }): Observable<Student[]> {
-    if (options?.force) {
+    const uid = this.fireAuth.currentUser?.uid ?? null;
+    if (options?.force || (this.listShared$ && this.cachedUid !== uid)) {
       this.invalidateListCache();
     }
     if (!this.listShared$) {
+      this.cachedUid = uid;
       this.listShared$ = this.http.get<Student[]>(API).pipe(
         shareReplay({ bufferSize: 1, refCount: false }),
       );
@@ -44,7 +59,7 @@ export class StudentService {
     return this.listShared$;
   }
 
-  /** Drop shared list so the next getAll hits the network. */
+  /** Drop shared list so the next getAll hits the network (logout / account switch). */
   invalidateListCache(): void {
     this.listShared$ = null;
   }
@@ -70,11 +85,17 @@ export class StudentService {
       .post<Student>(`${API}/${id}/telegram-disconnect`, {})
       .pipe(tap(() => this.invalidateListCache()));
   }
-  linkTelegramManual(id: string, chatId: string, role: 'student' | 'parent' = 'student') {
+  linkTelegramManual(
+    id: string,
+    chatId: string,
+    role: 'student' | 'parent' = 'student',
+    options?: { confirmRecipientConsent?: boolean },
+  ) {
     return this.http
       .post<Student>(`${API}/${id}/telegram-link-manual`, {
         chat_id: chatId,
         role,
+        confirm_recipient_consent: options?.confirmRecipientConsent === true,
       })
       .pipe(tap(() => this.invalidateListCache()));
   }
