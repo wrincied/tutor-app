@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewEncapsulation,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
@@ -15,6 +22,8 @@ export type LegalDocumentId = 'data-processing' | 'cookies' | 'impressum';
   imports: [],
   templateUrl: './legal-document.component.html',
   styleUrl: './legal-document.component.scss',
+  // CMS body is [innerHTML]; emulated encapsulation never matches those nodes.
+  encapsulation: ViewEncapsulation.None,
 })
 export class LegalDocumentComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
