@@ -560,6 +560,13 @@
   --chip-accent: var(--status-canceled-accent);
   --chip-tint: var(--status-canceled-tint);
 }
+/* -------------------------------- */
+@media (max-width: 1450px) {
+  .cal-header__divider {
+    display: none;
+  }
+}
+/* -------------------------------- */
 
 /* —— Mobile (< 768 / short height) —— */
 @media (max-width: 767.98px), (max-height: 440px) {
@@ -569,6 +576,12 @@
 
   .cal-header__bottom {
     display: flex;
+    width: 100%;
+  }
+
+  .cal-status-compact {
+    flex: 0 0 auto;
+    margin-left: auto;
   }
 
   .cal-header__top {
@@ -699,6 +712,13 @@
     padding: 0 12px;
   }
 
+  .cal-header__divider {
+    margin: 0 12px;
+  }
+}
+
+/* Students button: text label only from 1211px (icon-only until then) */
+@media (min-width: 1450px) and (min-height: 441px) {
   .cal-action-btn__label {
     display: inline;
   }
@@ -709,13 +729,9 @@
     border: 1px solid var(--cal-header-border);
     background: #fff;
   }
-
-  .cal-header__divider {
-    margin: 0 12px;
-  }
 }
 
-@media (min-width: 1280px) and (min-height: 441px) {
+@media (min-width:1310px) and (min-height: 441px) {
   .cal-status-pill__label {
     display: inline;
   }

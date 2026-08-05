@@ -20,6 +20,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:backend": "npm test --prefix backend",
+    "i18n:split": "node scripts/split-i18n-packs.mjs",
     "serve:ssr:tutor": "node dist/tutor/server/server.mjs"
   },
   "prettier": {

@@ -164,7 +164,7 @@ export class CalendarComponent implements OnInit {
   private static readonly DEFAULT_LESSON_DURATION_MIN = 90;
 
   /** Мин. высота часа (ниже — появляется скролл). */
-  private static readonly MIN_HOUR_HEIGHT_PX = 60;
+  private static readonly MIN_HOUR_HEIGHT_PX = 65;
   /** Высота одного часа: растягивается под доступную высоту viewport. */
   readonly hourHeightPx = signal(CalendarComponent.MIN_HOUR_HEIGHT_PX);
   /** 1 минута = hourHeight / 60. */
