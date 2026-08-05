@@ -294,7 +294,7 @@ export const LEGAL_DATA_BY: LegalDataProcessingStrings = {
     'Мы апрацоўваем персанальныя даныя на падставе DSGVO/TKG. Ніжэй кароткі выклад; поўны нямецкі тэкст аддаецца праз CMS.',
   section1Title: 'Адказны (Verantwortlicher)',
   section1Body:
-    'Аператар Simple4U. Кантакт: support@simple4u.com. Рэквізіты: гл. Impressum ([Firmenname], [Anschrift], [Telefon]).',
+    'Аператар Simple4U: Arsen Mileuski, Köflacher Gasse 9, 2.218, 8020 Graz, Österreich. Тэлефон: +43 664 93290516. E-Mail: support@simple4u.com. Таксама гл. Impressum.',
   section2Title: 'Якія даныя мы апрацоўваем',
   section2Body:
     'IP і тэхнічныя даныя; email і імя акаўнта; даныя пра вучняў, урокі і фінансы; Stripe пры аплаце; Telegram chat ID пры прывязцы; cookies/аналітыка.',
@@ -313,19 +313,19 @@ export const LEGAL_COOKIES_BY: LegalCookiesStrings = {
   ...LEGAL_COMMON_BY,
   title: 'Палітыка выкарыстання cookies',
   intro:
-    'Cookies — невялікія файлы ў браўзеры. Мы выкарыстоўваем іх для працы сэрвісу і, з вашай згоды, для маркетынгу.',
-  section1Title: 'Абавязковыя cookies',
+    'Гэта палітыка тлумачыць, як Simple4U выкарыстоўвае cookies і падобныя тэхналогіі (напрыклад localStorage). Дадаткова дзейнічае Datenschutzerklärung.',
+  section1Title: 'Тэхнічна неабходнае захоўванне',
   section1Body:
-    'Патрэбныя для ўваходу, сесіі і бяспекі. Без іх сэрвіс не працуе. Выключыць іх немагчыма.',
-  section2Title: 'Аналітыка і паляпшэнне прадукту',
+    'Уваход і сесія (Firebase Authentication), бяспека, мова, тэма і статус згоды на маркетынгавыя cookies. Падставы: Art. 6 Abs. 1 lit. b і/або lit. f DSGVO і § 165 Abs. 3 TKG 2021. Без гэтага сэрвіс не працуе.',
+  section2Title: 'Аналітыка / паляпшэнне прадукту',
   section2Body:
-    'Дапамагаюць зразумець, як выкарыстоўваецца праграма (напрыклад, якія экраны адкрываюць часцей). Даныя абезасаблены, дзе гэта магчыма.',
+    'Пры выкарыстанні (напрыклад Google Firebase Analytics) апрацоўваюцца псеўданімізаваныя даныя пра выкарыстанне. Правайдэр: Google. Магчымая перадача ў трэція краіны. Калі TKG патрабуе згоду — аналітыка толькі пасля «Прыняць».',
   section3Title: 'Маркетынгавыя cookies',
   section3Body:
-    'Выкарыстоўваюцца толькі калі вы націснулі «Прыняць» у паведамленні. Дазваляюць паказваць рэлевантныя прапановы і вымяраць эфектыўнасць рэкламы.',
-  section4Title: 'Як кіраваць cookies',
+    'Ставяцца толькі калі вы націснулі «Прыняць» падчас онбордынгу (Art. 6 Abs. 1 lit. a DSGVO). Мэта: інфармацыя пра Simple4U. Згоду можна адклікаць у любы час.',
+  section4Title: 'Кіраванне і дадатковая інфармацыя',
   section4Body:
-    'Вы можаце прыняць або адхіліць маркетынгавыя cookies падчас онбордынгу. Таксама налады даступныя ў браўзеры.',
+    'Прыняць або адхіліць — падчас онбордынгу. Таксама можна выдаліць cookies у браўзеры. Пытанні: support@simple4u.com. Падрабязней: Datenschutzerklärung (/legal/data-processing) і Impressum (/legal/impressum).',
 };
 
 export const CALENDAR_BY: CalendarStrings = {

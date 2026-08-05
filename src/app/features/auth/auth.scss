@@ -81,13 +81,32 @@
 }
 
 .auth-split__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
   font-family: 'Syne', sans-serif;
   font-size: 1.65rem;
   font-weight: 800;
+  line-height: 1;
   letter-spacing: -0.03em;
   color: var(--ink);
   text-decoration: none;
   width: fit-content;
+}
+
+.auth-split__brand-mark {
+  display: block;
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.65rem;
+  object-fit: contain;
+}
+
+.auth-split__brand > span {
+  line-height: 1;
+  padding-top: 0.05em; /* Syne optical align with mark */
 }
 
 .auth-split__tabs {

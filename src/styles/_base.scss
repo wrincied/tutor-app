@@ -218,3 +218,17 @@ html.app-select-dropdown-open {
     transition: none !important;
   }
 }
+
+/* Public routes (landing/auth): overlay skeleton while lazy landing loads */
+.app-public-host {
+  position: relative;
+  min-height: 100dvh;
+  min-height: 100svh;
+}
+
+.app-public-skel {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: auto;
+}
