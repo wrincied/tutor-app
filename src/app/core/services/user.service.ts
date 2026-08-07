@@ -5,6 +5,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { catchError, shareReplay, switchMap, tap } from 'rxjs/operators';
 import type {
   UserProfile,
+  UserVacationSettings,
   UserWorkingHoursSettings,
   UserWorkspaceSettings,
 } from '@interfaces';
@@ -24,6 +25,7 @@ export interface UpdateProfilePayload {
   tax_mode?: string;
   workspace?: UserWorkspaceSettings;
   workingHours?: UserWorkingHoursSettings;
+  vacation?: UserVacationSettings;
 }
 
 export interface UpdateMarketingCookiesPayload {

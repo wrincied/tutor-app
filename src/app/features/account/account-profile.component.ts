@@ -6,6 +6,7 @@ import { switchMap, take } from 'rxjs/operators';
 import type { SubscriptionStatus, TaxMode, UserProfile } from '@interfaces';
 import type { CanComponentDeactivate } from '../../core/guards/can-deactivate.guard';
 import { AuthService } from '../../core/services/auth.service';
+import { BillingService } from '../../core/services/billing.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserProfileSettingsService } from '../../core/services/user-profile-settings.service';
 import { UserService } from '../../core/services/user.service';
@@ -16,19 +17,22 @@ import {
   SETUP_TAX_MODES,
   subscriptionStatusLabel,
 } from '../../core/utils/user-profile.utils';
+import { resolveAccountAuthError } from '../../core/utils/auth-errors';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+import { ActivityLogPanelComponent } from '../../shared/activity-log-panel/activity-log-panel.component';
 
 @Component({
   selector: 'app-account-profile',
   standalone: true,
-  imports: [FormsModule, AppSelectComponent, RouterLink, AppDialogComponent],
+  imports: [FormsModule, AppSelectComponent, RouterLink, AppDialogComponent, ActivityLogPanelComponent],
   templateUrl: './account-profile.component.html',
   styleUrls: ['./account-page-host.scss', './account.component.scss'],
 })
 export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
   private readonly userSvc = inject(UserService);
   private readonly authSvc = inject(AuthService);
+  private readonly billingSvc = inject(BillingService);
   private readonly router = inject(Router);
   private readonly profileSettings = inject(UserProfileSettingsService);
   private readonly unsavedDecision$ = new Subject<boolean>();
@@ -47,6 +51,8 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
   pendingNavigateUrl = signal<string | null>(null);
   /** Подтверждённый режим отличается от сохранённого профиля. */
   hasUnsavedTaxChange = signal(false);
+  cancelConfirmOpen = signal(false);
+  billingActionLoading = signal(false);
 
   firstName = '';
   lastName = '';
@@ -65,7 +71,9 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
   });
 
   canBuySubscription = computed(() => canPurchaseSubscription(this.profile()));
+  /** Только если у Firebase есть password-провайдер (не Google-only). */
   showPasswordSection = computed(() => this.authSvc.canChangePassword());
+  isGoogleOnlyAuth = computed(() => this.authSvc.isGoogleOnlyAuth());
 
   subscriptionLabel = computed(() => {
     const t = this.i18n.accountUi();
@@ -75,6 +83,28 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
       trial: t.subscriptionTrial,
     });
   });
+
+  isPaidPlan = computed(() => {
+    const status = this.subscription_status;
+    return status === 'pro' || status === 'trial';
+  });
+
+  cancelScheduled = computed(() => this.profile()?.cancel_at_period_end === true);
+
+  cancelScheduledHint = computed(() => {
+    const raw = this.profile()?.subscription_cancel_at || this.profile()?.trial_ends_at;
+    if (!raw) {
+      return this.i18n.accountUi().cancelSubscriptionScheduled.replace('{date}', '—');
+    }
+    const label = new Intl.DateTimeFormat(this.i18n.localeId(), {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(raw));
+    return this.i18n.accountUi().cancelSubscriptionScheduled.replace('{date}', label);
+  });
+
+  canManageStripeSub = computed(() => this.isPaidPlan());
 
   taxModeSelectOptions = computed((): AppSelectOption[] =>
     SETUP_TAX_MODES.map((value) => ({
@@ -164,6 +194,51 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
     event.preventDefault();
     this.pendingNavigateUrl.set('/app/pricing');
     this.unsavedOpen.set(true);
+  }
+
+  openCancelConfirm(): void {
+    this.cancelConfirmOpen.set(true);
+  }
+
+  closeCancelConfirm(): void {
+    this.cancelConfirmOpen.set(false);
+  }
+
+  confirmCancelSubscription(): void {
+    this.billingActionLoading.set(true);
+    this.error.set(null);
+    this.billingSvc.cancelSubscription().subscribe({
+      next: (user) => {
+        this.applyProfile(user);
+        this.profileSettings.hydrate(user);
+        this.billingActionLoading.set(false);
+        this.cancelConfirmOpen.set(false);
+      },
+      error: (err) => {
+        this.billingActionLoading.set(false);
+        this.error.set(
+          err?.error?.message ?? this.i18n.accountUi().cancelSubscriptionError,
+        );
+      },
+    });
+  }
+
+  resumeSubscription(): void {
+    this.billingActionLoading.set(true);
+    this.error.set(null);
+    this.billingSvc.resumeSubscription().subscribe({
+      next: (user) => {
+        this.applyProfile(user);
+        this.profileSettings.hydrate(user);
+        this.billingActionLoading.set(false);
+      },
+      error: (err) => {
+        this.billingActionLoading.set(false);
+        this.error.set(
+          err?.error?.message ?? this.i18n.accountUi().cancelSubscriptionError,
+        );
+      },
+    });
   }
 
   onUnsavedStay(): void {
@@ -299,7 +374,9 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
           next: (user) => finish(user),
           error: (err) => {
             this.saving.set(false);
-            this.error.set(err?.message || t.saveError);
+            this.error.set(
+              resolveAccountAuthError(err, t, this.i18n.authUi().passwordMinLength),
+            );
           },
         });
       return;
@@ -313,7 +390,9 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
           next: (user) => finish(user),
           error: (err) => {
             this.saving.set(false);
-            this.error.set(err?.message || t.saveError);
+            this.error.set(
+              resolveAccountAuthError(err, t, this.i18n.authUi().passwordMinLength),
+            );
           },
         });
       return;

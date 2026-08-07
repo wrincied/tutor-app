@@ -26,6 +26,21 @@
   }
 }
 
+/* Public pricing: don't collapse when there is no shell height. */
+.app-public-host .app-scroll-page {
+  display: block;
+  height: auto;
+  min-height: auto;
+  flex: none;
+  overflow: visible;
+
+  > .scrollable-content {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+  }
+}
+
 .page-header {
   display: flex;
   align-items: center;
@@ -33,7 +48,7 @@
   margin-bottom: 24px;
 
   h1 {
-    font-family: var(--font-display, 'Syne', sans-serif);
+    font-family: var(--font-heading, 'Figtree', sans-serif);
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.02em;

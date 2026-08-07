@@ -8,12 +8,17 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import type { Lang } from '@interfaces';
 import { I18nService } from '../../core/services/i18n.service';
+import { MarketingConsentService } from '../../core/services/marketing-consent.service';
 import { PublicContentService } from '../../core/services/public-content.service';
+import { SystemStatusService } from '../../core/services/system-status.service';
+import { getSubscriptionPricing } from '../../core/utils/subscription-pricing';
 
 const DEMO_AUTOPLAY_MS = 10_000;
+
+export type LandingBillingInterval = 'monthly' | 'yearly';
 
 /** Design-only landing preview. Shown at `/` when designMode is on. */
 @Component({
@@ -25,17 +30,84 @@ const DEMO_AUTOPLAY_MS = 10_000;
 })
 export class LandingV2Component implements OnInit, OnDestroy {
   readonly i18n = inject(I18nService);
+  readonly consent = inject(MarketingConsentService);
+  readonly systemStatus = inject(SystemStatusService);
   private readonly publicContent = inject(PublicContentService);
+  private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly contactEmail = signal('support@simple4u.com');
   readonly demoSlide = signal(0);
   readonly demoSlideCount = 3;
   readonly langMenuOpen = signal(false);
+  readonly billingInterval = signal<LandingBillingInterval>('monthly');
   readonly currentLangCode = computed(() => this.i18n.lang().toUpperCase());
+
+  /** Landing teaser uses AT pricing (primary market). */
+  private readonly landingPricing = computed(() => getSubscriptionPricing('AT'));
+
+  readonly pricingCurrency = computed(() => this.landingPricing().currency);
+
+  /** Display symbol for AT marketing (€ instead of EUR). */
+  readonly pricingCurrencySymbol = computed(() => {
+    const code = this.pricingCurrency();
+    return code === 'EUR' ? '€' : code;
+  });
+
+  readonly freeAmountLabel = computed(() => this.formatAmount(0));
+
+  /** Large price: monthly rate, or yearly÷12 when Yearly is selected. */
+  readonly proAmountLabel = computed(() => {
+    const p = this.landingPricing();
+    const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
+    return this.formatAmount(amount);
+  });
+
+  /** Always “per month” under the large amount (Variant A). */
+  readonly proPeriodLabel = computed(() => this.i18n.authUi().landingPricingProPeriodMonthly);
+
+  /** Small annual total line — only in Yearly mode. */
+  readonly proBilledAnnuallyLabel = computed(() => {
+    if (this.billingInterval() !== 'yearly') return null;
+    const p = this.landingPricing();
+    return this.i18n
+      .authUi()
+      .landingPricingBilledAnnually.replace('{amount}', this.formatAmount(p.yearly))
+      .replace('{currency}', this.pricingCurrencySymbol());
+  });
 
   private pointerStartX: number | null = null;
   private autoplayId: ReturnType<typeof setInterval> | null = null;
+
+  setBillingInterval(interval: LandingBillingInterval): void {
+    this.billingInterval.set(interval);
+  }
+
+  scrollToSection(event: Event, sectionId: string): void {
+    event.preventDefault();
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    void this.router.navigateByUrl('/').then(() => {
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    });
+  }
+
+  openCookieSettings(): void {
+    this.consent.openPreferences();
+  }
+
+  private formatAmount(amount: number): string {
+    const fractionDigits = Number.isFinite(amount) && !Number.isInteger(amount) ? 2 : 0;
+    return new Intl.NumberFormat(this.i18n.localeId(), {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(amount);
+  }
 
   /** Stack depth relative to the active slide (0 = front). */
   demoStack(index: number): 0 | 1 | 2 {
@@ -45,6 +117,7 @@ export class LandingV2Component implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.systemStatus.refresh();
     this.publicContent.getContact().subscribe({
       next: (info) => {
         if (info.email) {
@@ -56,6 +129,28 @@ export class LandingV2Component implements OnInit, OnDestroy {
       },
     });
     this.startDemoAutoplay();
+  }
+
+  footerStatusClass(): string {
+    const overall = this.systemStatus.overall();
+    if (this.systemStatus.loading() && overall === 'unknown') {
+      return 'landing-v2__footer-status landing-v2__footer-status--loading';
+    }
+    return `landing-v2__footer-status landing-v2__footer-status--${overall}`;
+  }
+
+  footerStatusLabel(): string {
+    const t = this.i18n.authUi();
+    switch (this.systemStatus.overall()) {
+      case 'ok':
+        return t.footerStatusLive;
+      case 'degraded':
+        return t.statusDegraded;
+      case 'error':
+        return t.statusOutage;
+      default:
+        return this.systemStatus.loading() ? t.statusChecking : t.statusUnknown;
+    }
   }
 
   ngOnDestroy(): void {

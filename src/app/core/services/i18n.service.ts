@@ -109,6 +109,7 @@ export class I18nService {
   readonly legalUi = computed(() => this.requirePack().legal);
   readonly legalDataUi = computed(() => this.requirePack().legalData);
   readonly legalCookiesUi = computed(() => this.requirePack().legalCookies);
+  readonly legalTermsUi = computed(() => this.requirePack().legalTerms);
   readonly calendarUi = computed(() => this.requirePack().calendar);
   readonly sharedUi = computed(() => this.requirePack().shared);
   readonly financeUi = computed(() => this.requirePack().finance);

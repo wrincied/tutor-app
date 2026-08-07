@@ -13,6 +13,7 @@ import { filter, interval } from 'rxjs';
 import { environment } from '../environments/environment';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { AppDialogComponent } from './shared/app-dialog/app-dialog.component';
+import { CookieConsentBannerComponent } from './shared/cookie-consent-banner/cookie-consent-banner.component';
 import { LandingSkeletonComponent } from './features/landing/landing-skeleton.component';
 import { AuthService } from './core/services/auth.service';
 import { AnalyticsService } from './core/services/analytics.service';
@@ -21,10 +22,17 @@ import { I18nService } from './core/services/i18n.service';
 import { SeoService } from './core/services/seo.service';
 import { ThemeService } from './core/services/theme.service';
 import { purgeStaleOverlayLayers } from './core/utils/purge-stale-overlay-layers';
+import { consumeBillingReturnFlag } from './core/utils/billing-return';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavbarComponent, AppDialogComponent, LandingSkeletonComponent],
+  imports: [
+    RouterOutlet,
+    NavbarComponent,
+    AppDialogComponent,
+    LandingSkeletonComponent,
+    CookieConsentBannerComponent,
+  ],
   templateUrl: './app.html',
 })
 export class App {
@@ -51,6 +59,21 @@ export class App {
     }
     // После HMR могут остаться невидимые слои select — они блокируют клики по всему UI
     purgeStaleOverlayLayers(this.document);
+
+    // Stripe returns to /?billing=success#/… — ensure we land on home for the congrats modal.
+    const billingReturn = consumeBillingReturnFlag();
+    if (billingReturn === 'success') {
+      // Re-arm so Home can still consume and open the modal.
+      try {
+        sessionStorage.setItem('simple4u_billing_return_v1', 'success');
+      } catch {
+        /* ignore */
+      }
+      const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
+      if (!hash.includes('/app/home')) {
+        void this.router.navigateByUrl('/app/home?billing=success');
+      }
+    }
 
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((e) => {
       if (e instanceof NavigationStart && this.isLandingUrl(e.url)) {

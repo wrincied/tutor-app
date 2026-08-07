@@ -1,0 +1,37 @@
+<article class="status-page">
+  <header class="status-page__header">
+    <a routerLink="/" class="status-page__back">← {{ i18n.authUi().backHome }}</a>
+  </header>
+
+  <h1>{{ i18n.authUi().statusTitle }}</h1>
+  <p class="status-page__intro">{{ i18n.authUi().statusLead }}</p>
+
+  <div [class]="bannerClass()" role="status">
+    <span class="status-page__pulse" aria-hidden="true"></span>
+    <span>{{ bannerLabel() }}</span>
+  </div>
+
+  <ul class="status-page__list">
+    @for (item of rows(); track item.key) {
+      <li>
+        <span class="status-page__name">{{ rowLabel(item.key) }}</span>
+        <span [class]="stateClass(item.state.status)">
+          <span class="status-page__dot" aria-hidden="true"></span>
+          {{ stateLabel(item.state) }}
+        </span>
+      </li>
+    }
+  </ul>
+
+  <div class="status-page__meta">
+    @if (status.report().checkedAt; as checkedAt) {
+      <p class="status-page__checked">
+        {{ i18n.authUi().statusCheckedAt }}
+        {{ checkedAt | date: 'medium' : undefined : i18n.localeId() }}
+      </p>
+    }
+    <button type="button" class="status-page__refresh" (click)="refresh()" [disabled]="status.loading()">
+      {{ i18n.authUi().statusRefresh }}
+    </button>
+  </div>
+</article>

@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, timer } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 import type { SubscriptionStatus, UserProfile } from '@interfaces';
+import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
@@ -12,10 +13,8 @@ import {
   resolvePricingCountry,
   subscriptionStatusLabel,
 } from '../../core/utils/user-profile.utils';
-import {
-  formatSubscriptionPrice,
-  getSubscriptionPricing,
-} from '../../core/utils/subscription-pricing';
+import { getSubscriptionPricing } from '../../core/utils/subscription-pricing';
+import { markBillingCheckoutPending } from '../../core/utils/billing-return';
 
 export type BillingInterval = 'monthly' | 'yearly';
 
@@ -29,6 +28,7 @@ export type BillingInterval = 'monthly' | 'yearly';
 export class PricingComponent implements OnInit, OnDestroy {
   private readonly userSvc = inject(UserService);
   private readonly billingSvc = inject(BillingService);
+  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private billingPollSub: Subscription | null = null;
@@ -39,6 +39,8 @@ export class PricingComponent implements OnInit, OnDestroy {
   checkoutLoading = signal(false);
   error = signal<string | null>(null);
   profile = signal<UserProfile | null>(null);
+  /** Public /pricing visit without auth. */
+  readonly isGuest = signal(false);
   billingInterval = signal<BillingInterval>('monthly');
   openFaqIndex = signal<number | null>(null);
 
@@ -57,25 +59,37 @@ export class PricingComponent implements OnInit, OnDestroy {
   isTrial = computed(() => this.subscriptionStatus() === 'trial');
 
   pricing = computed(() => {
+    if (this.isGuest()) {
+      // Public marketing page: primary market (AT / EUR).
+      return getSubscriptionPricing('AT');
+    }
     const profile = this.profile();
     const country = resolvePricingCountry(profile?.tax_mode, profile?.country_settings);
     return getSubscriptionPricing(country);
   });
 
-  proPriceLabel = computed(() => {
+  pricingCurrency = computed(() => this.pricing().currency);
+
+  /** Large price: monthly rate, or yearly÷12 when Yearly is selected. */
+  proAmountLabel = computed(() => {
     const p = this.pricing();
-    const amount = this.billingInterval() === 'yearly' ? p.yearly : p.monthly;
-    return formatSubscriptionPrice(amount, p.currency, this.i18n.localeId());
+    const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
+    return this.formatAmount(amount);
   });
 
-  proPeriodLabel = computed(() => {
-    const t = this.i18n.pricingUi().proPlan;
-    return this.billingInterval() === 'yearly' ? t.periodYearly : t.periodMonthly;
-  });
+  freeAmountLabel = computed(() => this.formatAmount(0));
 
-  freePriceLabel = computed(() => {
+  /** Always “per month” under the large amount (Variant A). */
+  proPeriodLabel = computed(() => this.i18n.pricingUi().proPlan.periodMonthly);
+
+  /** Small annual total line — only in Yearly mode. */
+  proBilledAnnuallyLabel = computed(() => {
+    if (this.billingInterval() !== 'yearly') return null;
     const p = this.pricing();
-    return formatSubscriptionPrice(0, p.currency, this.i18n.localeId());
+    return this.i18n
+      .pricingUi()
+      .proPlan.billedAnnually.replace('{amount}', this.formatAmount(p.yearly))
+      .replace('{currency}', p.currency);
   });
 
   subscriptionLabel = computed(() => {
@@ -87,17 +101,34 @@ export class PricingComponent implements OnInit, OnDestroy {
     });
   });
 
+  private formatAmount(amount: number): string {
+    const fractionDigits = Number.isFinite(amount) && !Number.isInteger(amount) ? 2 : 0;
+    return new Intl.NumberFormat(this.i18n.localeId(), {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(amount);
+  }
+
   ngOnInit(): void {
-    this.userSvc.getProfile().subscribe({
-      next: (user) => {
-        this.profile.set(user);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set(this.i18n.accountUi().loadError);
-        this.loading.set(false);
-      },
-    });
+    if (!this.auth.isLoggedIn()) {
+      this.profile.set(null);
+      this.isGuest.set(true);
+      this.loading.set(false);
+    } else {
+      this.userSvc.getProfile().subscribe({
+        next: (user) => {
+          this.profile.set(user);
+          this.isGuest.set(false);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.profile.set(null);
+          this.isGuest.set(true);
+          this.error.set(null);
+          this.loading.set(false);
+        },
+      });
+    }
 
     const billingResult = this.route.snapshot.queryParamMap.get('billing');
     if (billingResult === 'success') {
@@ -141,6 +172,7 @@ export class PricingComponent implements OnInit, OnDestroy {
       next: ({ url }) => {
         this.checkoutLoading.set(false);
         if (url) {
+          markBillingCheckoutPending();
           window.location.href = url;
         }
       },

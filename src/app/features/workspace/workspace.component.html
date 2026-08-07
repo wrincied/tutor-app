@@ -1,0 +1,250 @@
+<div class="page app-scroll-page workspace-page">
+  <header class="workspace-page__mast page-header">
+    <h1 class="workspace-page__title">{{ i18n.nav().workspace }}</h1>
+  </header>
+
+  <div class="scrollable-content workspace-page__content">
+    <div class="workspace-page__inner">
+      @if (loading()) {
+        <div
+          class="workspace-skeleton skeleton-page"
+          role="status"
+          aria-busy="true"
+          [attr.aria-label]="i18n.sharedUi().loadingContent"
+        >
+          <span class="sr-only">{{ i18n.sharedUi().loadingContent }}</span>
+          <div class="skeleton-form-card">
+            <span class="skeleton skeleton--line skeleton--line-lg" style="width: 40%"></span>
+            @for (i of [0, 1, 2, 3, 4]; track i) {
+              <span class="skeleton skeleton--line skeleton--block" style="height: 2.5rem"></span>
+            }
+          </div>
+        </div>
+      } @else {
+        <form class="workspace-form" (ngSubmit)="saveAll()">
+          <section class="workspace-section">
+            <header class="workspace-section__head workspace-section__head--row">
+              <div class="workspace-section__copy">
+                <h2 class="workspace-section__title">{{ i18n.accountUi().vacationSection }}</h2>
+                <p class="section-desc">{{ i18n.accountUi().vacationSubtitle }}</p>
+              </div>
+              <label
+                class="workspace-switch"
+                [attr.aria-label]="i18n.accountUi().vacationEnable"
+              >
+                <span class="workspace-switch__caption">{{ i18n.accountUi().vacationEnable }}</span>
+                <input
+                  type="checkbox"
+                  role="switch"
+                  [(ngModel)]="vacationEnabled"
+                  name="vacationEnabled"
+                />
+                <span class="workspace-switch__track" aria-hidden="true">
+                  <span class="workspace-switch__thumb"></span>
+                </span>
+              </label>
+            </header>
+
+            <div class="workspace-timeline" role="region" [attr.aria-label]="timelineAriaLabel()">
+              <div class="workspace-timeline__toolbar">
+                <button
+                  type="button"
+                  class="workspace-timeline__today-btn"
+                  (click)="scrollTimelineToToday()"
+                >
+                  {{ i18n.calendarUi().today }}
+                </button>
+              </div>
+              <div class="workspace-timeline__scroller" #timelineScroller>
+                <div
+                  class="workspace-timeline__canvas"
+                  [style.width.px]="timelineCanvasWidth()"
+                >
+                  <div class="workspace-timeline__months" aria-hidden="true">
+                    @for (m of timelineMonths(); track m.key) {
+                      <div
+                        class="workspace-timeline__month"
+                        [style.width.px]="m.days * timelineDayWidth"
+                      >
+                        {{ m.label }}
+                      </div>
+                    }
+                  </div>
+
+                  <div class="workspace-timeline__days" aria-hidden="true">
+                    @for (d of timelineDays(); track d.key) {
+                      <div
+                        class="workspace-timeline__day"
+                        [class.workspace-timeline__day--weekend]="d.weekend"
+                        [class.workspace-timeline__day--today]="d.today"
+                        [style.width.px]="timelineDayWidth"
+                      >
+                        @if (d.today) {
+                          <span class="workspace-timeline__today-num">{{ d.dayNum }}</span>
+                        } @else {
+                          <span class="workspace-timeline__day-num">{{ d.dayNum }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <div class="workspace-timeline__body">
+                    @for (d of timelineDays(); track d.key) {
+                      <div
+                        class="workspace-timeline__col"
+                        [class.workspace-timeline__col--weekend]="d.weekend"
+                        [style.width.px]="timelineDayWidth"
+                      ></div>
+                    }
+
+                    @if (todayLineLeftPx() !== null) {
+                      <div
+                        class="workspace-timeline__today-line"
+                        [style.left.px]="todayLineLeftPx()"
+                        aria-hidden="true"
+                      ></div>
+                    }
+
+                    @if (timelineRange(); as range) {
+                      <div
+                        class="workspace-timeline__span"
+                        [style.left.px]="range.leftPx"
+                        [style.width.px]="range.widthPx"
+                        [title]="range.title"
+                      >
+                        <span class="workspace-timeline__span-label">{{ range.label }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              @if (!timelineRange()) {
+                <p class="workspace-timeline__empty">{{ i18n.accountUi().vacationTimelineEmpty }}</p>
+              } @else {
+                <p class="workspace-timeline__caption">{{ timelineRange()?.caption }}</p>
+              }
+            </div>
+
+            @if (vacationEnabled) {
+              <div class="workspace-field">
+                <app-date-range
+                  [(start)]="vacationStart"
+                  [(end)]="vacationEnd"
+                  startId="vacation-start"
+                  endId="vacation-end"
+                  startName="vacationStart"
+                  endName="vacationEnd"
+                  [fromText]="i18n.accountUi().workingHoursFrom"
+                  [toText]="i18n.accountUi().workingHoursTo"
+                  [startAriaLabel]="i18n.accountUi().vacationStart"
+                  [endAriaLabel]="i18n.accountUi().vacationEnd"
+                />
+              </div>
+
+              <div class="workspace-field">
+                <label class="workspace-label" for="vacation-message">
+                  {{ i18n.accountUi().vacationMessage }}
+                </label>
+                <textarea
+                  id="vacation-message"
+                  class="workspace-textarea"
+                  rows="4"
+                  maxlength="500"
+                  [(ngModel)]="vacationMessage"
+                  name="vacationMessage"
+                  [attr.placeholder]="i18n.accountUi().vacationMessageHint"
+                ></textarea>
+              </div>
+            }
+          </section>
+
+          <hr class="workspace-divider" />
+
+          <section class="workspace-section">
+            <header class="workspace-section__head">
+              <h2 class="workspace-section__title">{{ i18n.accountUi().workingHoursSection }}</h2>
+              <p class="section-desc">{{ i18n.accountUi().workingHoursSubtitle }}</p>
+            </header>
+
+            <div class="workspace-field">
+              <label class="workspace-label" for="workspace-duration">
+                {{ i18n.accountUi().workspaceDefaultDuration }}
+              </label>
+              <div class="workspace-duration">
+                <app-select
+                  id="workspace-duration"
+                  name="workspaceDuration"
+                  [ngModel]="duration + ''"
+                  (ngModelChange)="onDurationChange($event)"
+                  [options]="durationOptions()"
+                  menuPlacement="below"
+                />
+              </div>
+            </div>
+
+            <div class="workspace-field">
+              <p class="workspace-label">{{ i18n.accountUi().workingHoursField }}</p>
+              <div class="workspace-inline" role="group">
+                <span class="workspace-inline__prefix">{{ i18n.accountUi().workingHoursFrom }}</span>
+                <div class="workspace-inline__select">
+                  <app-select
+                    name="workingHoursStart"
+                    [(ngModel)]="hoursStart"
+                    [options]="workingHourOptions()"
+                    menuPlacement="below"
+                    [attr.aria-label]="i18n.accountUi().workingHoursStart"
+                  />
+                </div>
+                <span class="workspace-inline__prefix">{{ i18n.accountUi().workingHoursTo }}</span>
+                <div class="workspace-inline__select">
+                  <app-select
+                    name="workingHoursEnd"
+                    [(ngModel)]="hoursEnd"
+                    [options]="workingHourOptions()"
+                    menuPlacement="below"
+                    [attr.aria-label]="i18n.accountUi().workingHoursEnd"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="workspace-field">
+              <p class="workspace-label">{{ i18n.accountUi().workingDays }}</p>
+              <div
+                class="workspace-days"
+                role="group"
+                [attr.aria-label]="i18n.accountUi().workingDays"
+              >
+                @for (day of isoWeekdays; track day) {
+                  <button
+                    type="button"
+                    class="workspace-day"
+                    [class.workspace-day--active]="isWorkingDaySelected(day)"
+                    (click)="toggleWorkingDay(day)"
+                    [attr.aria-pressed]="isWorkingDaySelected(day)"
+                  >
+                    {{ weekdayLabels()[day] }}
+                  </button>
+                }
+              </div>
+            </div>
+          </section>
+
+          @if (error()) {
+            <p class="workspace-page__error">{{ error() }}</p>
+          }
+          @if (saved()) {
+            <p class="workspace-page__success">{{ i18n.accountUi().workspaceSaved }}</p>
+          }
+
+          <div class="workspace-actions">
+            <button type="submit" class="btn-primary workspace-save-btn" [disabled]="saving()">
+              {{ saving() ? i18n.accountUi().workspaceSaving : i18n.accountUi().workspaceSaveChanges }}
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+</div>

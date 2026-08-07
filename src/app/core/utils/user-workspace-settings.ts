@@ -3,7 +3,7 @@ import { WORKSPACE_CURRENCIES, type WorkspaceCurrency } from '../constants/curre
 export type { WorkspaceCurrency };
 export { WORKSPACE_CURRENCIES };
 
-export const WORKSPACE_LESSON_DURATIONS = [45, 60, 90] as const;
+export const WORKSPACE_LESSON_DURATIONS = [45, 60, 90, 120] as const;
 
 export type WorkspaceLessonDuration = (typeof WORKSPACE_LESSON_DURATIONS)[number];
 
@@ -22,6 +22,13 @@ export interface UserWorkingHoursSettings {
   days: IsoWeekday[];
 }
 
+export interface UserVacationSettings {
+  enabled: boolean;
+  startDate: string;
+  endDate: string;
+  message: string;
+}
+
 export const DEFAULT_WORKSPACE: UserWorkspaceSettings = {
   name: '',
   currency: 'EUR',
@@ -32,6 +39,13 @@ export const DEFAULT_WORKING_HOURS: UserWorkingHoursSettings = {
   start: '08:00',
   end: '21:00',
   days: [1, 2, 3, 4, 5],
+};
+
+export const DEFAULT_VACATION: UserVacationSettings = {
+  enabled: false,
+  startDate: '',
+  endDate: '',
+  message: '',
 };
 
 export const HOUR_OPTIONS: readonly string[] = Array.from(
@@ -87,6 +101,53 @@ export function normalizeWorkingHours(raw: unknown): UserWorkingHoursSettings {
     end: `${String(end).padStart(2, '0')}:00`,
     days: uniqueDays.length > 0 ? uniqueDays : [...DEFAULT_WORKING_HOURS.days],
   };
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function normalizeDateToken(value: unknown): string {
+  const raw = String(value ?? '').trim();
+  if (!DATE_RE.test(raw)) {
+    return '';
+  }
+  const time = Date.parse(`${raw}T12:00:00`);
+  return Number.isFinite(time) ? raw : '';
+}
+
+export function normalizeVacation(raw: unknown): UserVacationSettings {
+  const data = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  let startDate = normalizeDateToken(data['startDate']);
+  let endDate = normalizeDateToken(data['endDate']);
+  if (startDate && endDate && endDate < startDate) {
+    const swap = startDate;
+    startDate = endDate;
+    endDate = swap;
+  }
+  return {
+    enabled: data['enabled'] === true,
+    startDate,
+    endDate,
+    message: String(data['message'] ?? '')
+      .replace(/\r\n/g, '\n')
+      .trim()
+      .slice(0, 500),
+  };
+}
+
+/** Local calendar day key YYYY-MM-DD. */
+export function toDayKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function isDateInVacation(date: Date, vacation: UserVacationSettings): boolean {
+  if (!vacation.enabled || !vacation.startDate || !vacation.endDate) {
+    return false;
+  }
+  const key = toDayKey(date);
+  return key >= vacation.startDate && key <= vacation.endDate;
 }
 
 export function buildGridHours(start: string, end: string): number[] {

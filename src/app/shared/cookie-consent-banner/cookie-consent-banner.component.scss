@@ -1,0 +1,193 @@
+.cookie-cmp {
+  position: fixed;
+  z-index: 10050;
+  inset: auto 0 0;
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.cookie-cmp__panel {
+  pointer-events: auto;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.15rem 1.25rem 1.25rem;
+  border: 1px solid rgb(15 61 52 / 0.14);
+  border-radius: 1rem;
+  background: #f7fbf8;
+  box-shadow: 0 18px 48px rgb(7 23 20 / 0.18);
+  color: #071714;
+  font-family: var(--font-body, 'Inter', sans-serif);
+}
+
+.cookie-cmp__title {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.cookie-cmp__body {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #5f746c;
+}
+
+.cookie-cmp__link {
+  color: #0f3d34;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.cookie-cmp__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cookie-cmp__btn {
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &--primary {
+    background: #0f3d34;
+    color: #e7f5ef;
+  }
+
+  &--secondary {
+    background: #fff;
+    border-color: #cfe3d9;
+    color: #071714;
+  }
+
+  &--ghost {
+    background: transparent;
+    border-color: #cfe3d9;
+    color: #0f3d34;
+  }
+
+  &:hover {
+    filter: brightness(1.03);
+  }
+}
+
+.cookie-cmp__cats {
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cookie-cmp__cat {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #cfe3d9;
+  border-radius: 0.75rem;
+  background: #fff;
+
+  p {
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: #5f746c;
+  }
+}
+
+.cookie-cmp__cat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cookie-cmp__badge {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #0f3d34;
+  background: #e7f5ef;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+}
+
+.cookie-cmp__toggle-label {
+  cursor: pointer;
+}
+
+.cookie-cmp__toggle {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: #0f3d34;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .cookie-cmp__actions {
+    flex-direction: column;
+  }
+
+  .cookie-cmp__btn {
+    width: 100%;
+  }
+}
+
+:host-context([data-theme='dark']) .cookie-cmp__panel,
+:host-context(html[data-design='v2']) .cookie-cmp__panel {
+  background: #0d1f1b;
+  border-color: rgb(231 245 239 / 0.16);
+  color: #e7f5ef;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.35);
+}
+
+:host-context([data-theme='dark']) .cookie-cmp__body,
+:host-context(html[data-design='v2']) .cookie-cmp__body,
+:host-context([data-theme='dark']) .cookie-cmp__cat p,
+:host-context(html[data-design='v2']) .cookie-cmp__cat p {
+  color: rgb(231 245 239 / 0.72);
+}
+
+:host-context([data-theme='dark']) .cookie-cmp__link,
+:host-context(html[data-design='v2']) .cookie-cmp__link {
+  color: #b8d4c8;
+}
+
+:host-context([data-theme='dark']) .cookie-cmp__btn--primary,
+:host-context(html[data-design='v2']) .cookie-cmp__btn--primary {
+  background: #b8d4c8;
+  color: #071714;
+}
+
+:host-context([data-theme='dark']) .cookie-cmp__btn--secondary,
+:host-context(html[data-design='v2']) .cookie-cmp__btn--secondary,
+:host-context([data-theme='dark']) .cookie-cmp__btn--ghost,
+:host-context(html[data-design='v2']) .cookie-cmp__btn--ghost {
+  background: rgb(231 245 239 / 0.08);
+  border-color: rgb(231 245 239 / 0.28);
+  color: #e7f5ef;
+}
+
+:host-context([data-theme='dark']) .cookie-cmp__cat,
+:host-context(html[data-design='v2']) .cookie-cmp__cat {
+  background: rgb(231 245 239 / 0.05);
+  border-color: rgb(231 245 239 / 0.14);
+}
+
+:host-context([data-theme='dark']) .cookie-cmp__badge,
+:host-context(html[data-design='v2']) .cookie-cmp__badge {
+  background: rgb(231 245 239 / 0.12);
+  color: #b8d4c8;
+}

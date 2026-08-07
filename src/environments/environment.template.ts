@@ -1,4 +1,6 @@
-/** Copy to `environment.ts` for local work (file is gitignored). */
+/** Placeholder only. Real `environment.ts` is gitignored and created by
+ * `scripts/prepare-environment.mjs` (npm run dev:local / dev:remote / build).
+ * Do not edit environment.ts by hand — edit development-local / development-remote / production. */
 export const environment = {
   production: false,
   designMode: false,

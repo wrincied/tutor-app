@@ -7,6 +7,7 @@ import type {
   LegalCommonStrings,
   LegalDataProcessingStrings,
   LegalCookiesStrings,
+  LegalTermsStrings,
   SharedStrings,
   CalendarStrings,
   FinanceStrings,
@@ -27,6 +28,7 @@ export type LocalePack = {
   legal: LegalCommonStrings;
   legalData: LegalDataProcessingStrings;
   legalCookies: LegalCookiesStrings;
+  legalTerms: LegalTermsStrings;
   shared: SharedStrings;
   calendar: CalendarStrings;
   taxModeLabels: Record<TaxMode, string>;

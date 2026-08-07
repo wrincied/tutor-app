@@ -1,0 +1,52 @@
+.app-date-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+
+  &--disabled {
+    opacity: 0.65;
+    pointer-events: none;
+  }
+}
+
+.app-date-input__field.flatpickr-input:not(.flatpickr-mobile) {
+  display: none;
+}
+
+.app-date-input__alt,
+.app-date-input__field:not(.flatpickr-input),
+input.app-date-input__alt {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 11px 14px;
+  border: 1px solid var(--input-border, var(--border-light, #e2e8f0));
+  border-radius: 10px;
+  background: var(--input-bg, #fff);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.25;
+  box-sizing: border-box;
+  cursor: pointer;
+
+  &::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.72;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--input-focus-border, var(--moss, #0f3d34));
+    box-shadow: 0 0 0 3px var(--input-focus-ring, rgb(16 185 129 / 0.15));
+  }
+}
+
+[data-theme='dark'] {
+  .app-date-input__alt,
+  input.app-date-input__alt {
+    background: color-mix(in srgb, var(--page-bg) 70%, #000);
+    border-color: var(--nav-border);
+  }
+}

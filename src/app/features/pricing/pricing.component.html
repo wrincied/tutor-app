@@ -1,6 +1,13 @@
-<div class="page app-scroll-page pricing-page">
+<div
+  class="page app-scroll-page pricing-page"
+  [class.pricing-page--guest]="isGuest()"
+>
   <header class="page-header pricing-page__header">
     <div class="pricing-page__intro">
+      @if (isGuest()) {
+        <a class="pricing-page__back" routerLink="/">← {{ i18n.authUi().backHome }}</a>
+      }
+      <p class="pricing-page__eyebrow">Simple4U</p>
       <h1>{{ t.title }}</h1>
       <p class="pricing-page__lead">{{ t.subtitle }}</p>
     </div>
@@ -43,10 +50,17 @@
             <h2 class="pricing-plan__name">{{ t.freePlan.name }}</h2>
           </div>
 
+          <p class="pricing-plan__trial pricing-plan__trial--spacer" aria-hidden="true"></p>
+
           <p class="pricing-plan__price">
-            <span class="pricing-plan__amount">{{ freePriceLabel() }}</span>
+            <span class="pricing-plan__price-row">
+              <span class="pricing-plan__amount">{{ freeAmountLabel() }}</span>
+              <span class="pricing-plan__currency">{{ pricingCurrency() }}</span>
+            </span>
             <span class="pricing-plan__period">{{ t.freePlan.period }}</span>
           </p>
+
+          <p class="pricing-plan__note pricing-plan__note--spacer" aria-hidden="true"></p>
 
           <ul class="pricing-plan__features">
             @for (feature of t.freePlan.features; track feature) {
@@ -54,9 +68,19 @@
             }
           </ul>
 
-          <button type="button" class="pricing-plan__cta btn-secondary" disabled>
-            {{ isPro() || isTrial() ? t.freePlan.cta : subscriptionLabel() }}
-          </button>
+          <div class="pricing-plan__footer">
+            @if (isGuest()) {
+              <a routerLink="/register" class="pricing-plan__cta pricing-plan__cta--ghost">{{
+                t.freePlan.ctaGuest
+              }}</a>
+              <p class="pricing-plan__stripe pricing-plan__stripe--spacer" aria-hidden="true">&nbsp;</p>
+            } @else {
+              <button type="button" class="pricing-plan__cta pricing-plan__cta--ghost" disabled>
+                {{ isPro() || isTrial() ? t.freePlan.cta : subscriptionLabel() }}
+              </button>
+              <p class="pricing-plan__stripe pricing-plan__stripe--spacer" aria-hidden="true">&nbsp;</p>
+            }
+          </div>
         </article>
 
         <article
@@ -71,8 +95,14 @@
           <p class="pricing-plan__trial">{{ t.proPlan.trialBadge }}</p>
 
           <p class="pricing-plan__price">
-            <span class="pricing-plan__amount">{{ proPriceLabel() }}</span>
+            <span class="pricing-plan__price-row">
+              <span class="pricing-plan__amount">{{ proAmountLabel() }}</span>
+              <span class="pricing-plan__currency">{{ pricingCurrency() }}</span>
+            </span>
             <span class="pricing-plan__period">{{ proPeriodLabel() }}</span>
+            @if (proBilledAnnuallyLabel(); as billed) {
+              <span class="pricing-plan__billed">{{ billed }}</span>
+            }
           </p>
 
           <p class="pricing-plan__note">{{ t.proPlan.microcopy }}</p>
@@ -83,30 +113,37 @@
             }
           </ul>
 
-          @if (isPro()) {
-            <button type="button" class="pricing-plan__cta btn-secondary" disabled>
-              {{ t.alreadyPro }}
-            </button>
-          } @else if (isTrial()) {
-            <button type="button" class="pricing-plan__cta btn-secondary" disabled>
-              {{ t.alreadyTrial }}
-            </button>
-          } @else if (!taxModeConfigured()) {
-            <p class="pricing-plan__hint">{{ t.taxRequired }}</p>
-            <a routerLink="/app/account" class="pricing-plan__cta btn-secondary">{{
-              t.accountLink
-            }}</a>
-          } @else {
-            <button
-              type="button"
-              class="pricing-plan__cta btn-primary"
-              [disabled]="checkoutLoading()"
-              (click)="startProCheckout()"
-            >
-              {{ checkoutLoading() ? t.proPlan.ctaLoading : t.proPlan.cta }}
-            </button>
-            <p class="pricing-plan__stripe">{{ t.stripeNote }}</p>
-          }
+          <div class="pricing-plan__footer">
+            @if (isGuest()) {
+              <a routerLink="/register" class="pricing-plan__cta pricing-plan__cta--solid">{{
+                t.proPlan.cta
+              }}</a>
+              <p class="pricing-plan__stripe">{{ t.stripeNote }}</p>
+            } @else if (isPro()) {
+              <button type="button" class="pricing-plan__cta pricing-plan__cta--ghost" disabled>
+                {{ t.alreadyPro }}
+              </button>
+            } @else if (isTrial()) {
+              <button type="button" class="pricing-plan__cta pricing-plan__cta--ghost" disabled>
+                {{ t.alreadyTrial }}
+              </button>
+            } @else if (!taxModeConfigured()) {
+              <p class="pricing-plan__hint">{{ t.taxRequired }}</p>
+              <a routerLink="/app/account" class="pricing-plan__cta pricing-plan__cta--ghost">{{
+                t.accountLink
+              }}</a>
+            } @else {
+              <button
+                type="button"
+                class="pricing-plan__cta pricing-plan__cta--solid"
+                [disabled]="checkoutLoading()"
+                (click)="startProCheckout()"
+              >
+                {{ checkoutLoading() ? t.proPlan.ctaLoading : t.proPlan.cta }}
+              </button>
+              <p class="pricing-plan__stripe">{{ t.stripeNote }}</p>
+            }
+          </div>
         </article>
       </div>
 

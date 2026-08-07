@@ -1,11 +1,11 @@
 export const environment = {
   production: true,
-  designMode: false,
+  designMode: true,
   apiUrl: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app',
-  appUrl: 'https://simple4u-64822.web.app',
+  appUrl: 'https://simple4u.at',
   firebaseConfig: {
     apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
-    authDomain: 'simple4u-64822.web.app',
+    authDomain: 'simple4u.at',
     projectId: 'tutorassis',
     storageBucket: 'tutorassis.firebasestorage.app',
     messagingSenderId: '965411338053',

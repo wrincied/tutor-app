@@ -1,0 +1,219 @@
+.status-page {
+  width: min(100%, 40rem);
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4rem) clamp(1.25rem, 4vw, 1.75rem) 4rem;
+  color: var(--ink, #071714);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  line-height: 1.65;
+}
+
+.status-page__header {
+  margin-bottom: 2rem;
+}
+
+.status-page__back {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--moss, #0f3d34);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.status-page__intro {
+  margin: 0 0 1.5rem;
+  color: var(--muted, #5f746c);
+}
+
+.status-page__banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.15rem;
+  border-radius: 0.85rem;
+  font-weight: 600;
+
+  &--ok,
+  &--loading {
+    background: #eef8f2;
+    color: #0f3d34;
+  }
+
+  &--degraded {
+    background: #fff7ed;
+    color: #9a3412;
+  }
+
+  &--error,
+  &--unknown {
+    background: #fef2f2;
+    color: #991b1b;
+  }
+}
+
+.status-page__pulse {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgb(34 197 94 / 0.55);
+  animation: status-pulse 1.8s ease-out infinite;
+
+  .status-page__banner--degraded & {
+    background: #f59e0b;
+    box-shadow: 0 0 0 0 rgb(245 158 11 / 0.45);
+    animation-name: status-pulse-amber;
+  }
+
+  .status-page__banner--error &,
+  .status-page__banner--unknown & {
+    background: #ef4444;
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 0.45);
+    animation-name: status-pulse-red;
+  }
+
+  .status-page__banner--loading & {
+    animation: status-pulse 1s ease-out infinite;
+  }
+}
+
+.status-page__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line, #cfe3d9);
+  border-radius: 0.85rem;
+  overflow: hidden;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1.15rem;
+    border-bottom: 1px solid var(--line, #cfe3d9);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+}
+
+.status-page__name {
+  font-weight: 500;
+}
+
+.status-page__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #15803d;
+
+  &--error {
+    color: #b91c1c;
+  }
+
+  &--unconfigured,
+  &--unknown {
+    color: #b45309;
+  }
+}
+
+.status-page__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-page__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.status-page__checked {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted, #5f746c);
+}
+
+.status-page__refresh {
+  border: 1px solid var(--line, #cfe3d9);
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--moss, #0f3d34);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--moss, #0f3d34);
+  }
+}
+
+@keyframes status-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(34 197 94 / 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 0.55rem rgb(34 197 94 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(34 197 94 / 0);
+  }
+}
+
+@keyframes status-pulse-amber {
+  0% {
+    box-shadow: 0 0 0 0 rgb(245 158 11 / 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 0.55rem rgb(245 158 11 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(245 158 11 / 0);
+  }
+}
+
+@keyframes status-pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 0.55rem rgb(239 68 68 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-page__pulse {
+    animation: none;
+  }
+}

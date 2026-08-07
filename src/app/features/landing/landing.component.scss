@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Syne:wght@700;800&display=swap');
-
 :host {
   display: block;
 }
@@ -18,7 +16,7 @@
     radial-gradient(120% 80% at 10% 0%, #143d36 0%, transparent 55%),
     radial-gradient(90% 70% at 90% 20%, #1a4a3f 0%, transparent 50%),
     linear-gradient(165deg, #061210 0%, #0b221c 48%, #102820 100%);
-  font-family: 'Figtree', sans-serif;
+  font-family: var(--font-body, 'Inter', sans-serif);
 }
 
 .landing__atmosphere {
@@ -91,9 +89,9 @@
 
 .landing__brand {
   margin: 0 0 1.25rem;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(2.75rem, 9vw, 4.75rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 0.95;
   letter-spacing: -0.04em;
   color: var(--foam);
@@ -103,7 +101,7 @@
 .landing__headline {
   margin: 0 0 0.85rem;
   max-width: 18ch;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(1.35rem, 3.6vw, 1.85rem);
   font-weight: 700;
   line-height: 1.2;
@@ -191,7 +189,7 @@
 .landing__section-title {
   margin: 0 0 1.75rem;
   max-width: 18ch;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(1.6rem, 4vw, 2.25rem);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -229,7 +227,7 @@
 .landing__feature-index {
   grid-row: 1 / span 2;
   margin: 0.15rem 0 0;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -238,7 +236,7 @@
 
 .landing__feature-title {
   margin: 0;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(1.2rem, 2.8vw, 1.45rem);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -269,7 +267,7 @@
 .landing__closing-title {
   margin: 0;
   max-width: 16ch;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(1.7rem, 4.5vw, 2.5rem);
   font-weight: 700;
   letter-spacing: -0.03em;
