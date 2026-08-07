@@ -61,3 +61,6 @@ bot/data/
 # Local / generated Angular environments (only the template is committed)
 src/environments/environment*.ts
 !src/environments/environment.template.ts
+
+.vercel
+.env*

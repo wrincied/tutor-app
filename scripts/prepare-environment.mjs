@@ -5,13 +5,20 @@ import { resolve } from 'node:path';
  * Prepares gitignored environment files for local / CI / Vercel builds.
  *
  * - Local file exists and FORCE_ENV_GENERATE is unset → copy to environment.ts
- * - Otherwise → generate from process.env (no secrets hardcoded in this script)
+ * - Otherwise → generate from process.env (nothing secret is hardcoded here)
  *
- * Production / production-design generation requires:
- *   API_URL (or DEV_API_URL), APP_URL (or DEV_APP_URL),
- *   FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID,
- *   FIREBASE_STORAGE_BUCKET, FIREBASE_MESSAGING_SENDER_ID, FIREBASE_APP_ID,
+ * Vercel / production required env (Project → Settings → Environment Variables):
+ *   API_URL
+ *   APP_URL                 (optional on Vercel — falls back to VERCEL_URL)
+ *   FIREBASE_API_KEY
+ *   FIREBASE_AUTH_DOMAIN
+ *   FIREBASE_PROJECT_ID
+ *   FIREBASE_STORAGE_BUCKET
+ *   FIREBASE_MESSAGING_SENDER_ID
+ *   FIREBASE_APP_ID
  *   FIREBASE_MEASUREMENT_ID (optional)
+ *
+ * Aliases: DEV_API_URL → API_URL, DEV_APP_URL → APP_URL
  */
 
 const FILE_BY_MODE = {
@@ -46,6 +53,7 @@ const source = resolve(sourceRel);
 const target = resolve('src/environments/environment.ts');
 const forceGenerate = process.env.FORCE_ENV_GENERATE === '1' || process.env.FORCE_ENV_GENERATE === 'true';
 const isProdLike = defaultsKey === 'production' || defaultsKey === 'production-design';
+const onVercel = process.env.VERCEL === '1';
 
 function boolEnv(name, fallback) {
   const raw = process.env[name];
@@ -55,13 +63,38 @@ function boolEnv(name, fallback) {
   return raw === '1' || raw.toLowerCase() === 'true';
 }
 
-function readRequired(name, { required }) {
-  const value = process.env[name]?.trim() ?? '';
-  if (!value && required) {
-    console.error(`Missing required environment variable: ${name}`);
-    process.exit(1);
+function firstEnv(...names) {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) {
+      return value;
+    }
   }
-  return value;
+  return '';
+}
+
+function vercelAppUrl() {
+  const productionUrl = firstEnv('VERCEL_PROJECT_PRODUCTION_URL');
+  if (productionUrl) {
+    return productionUrl.startsWith('http') ? productionUrl : `https://${productionUrl}`;
+  }
+  const previewUrl = firstEnv('VERCEL_URL');
+  if (previewUrl) {
+    return previewUrl.startsWith('http') ? previewUrl : `https://${previewUrl}`;
+  }
+  return '';
+}
+
+function failMissing(missing) {
+  const where = onVercel
+    ? 'Vercel → Project → Settings → Environment Variables (Production + Preview)'
+    : 'CI secrets / local env';
+  console.error(`Missing required environment variable(s): ${missing.join(', ')}`);
+  console.error(`Set them in ${where}.`);
+  console.error(
+    'Needed: API_URL, APP_URL (or auto on Vercel), FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_STORAGE_BUCKET, FIREBASE_MESSAGING_SENDER_ID, FIREBASE_APP_ID',
+  );
+  process.exit(1);
 }
 
 function buildEnvironmentSource() {
@@ -70,30 +103,44 @@ function buildEnvironmentSource() {
   const requireSecrets = isProdLike || forceGenerate;
 
   const apiUrl =
-    readRequired('API_URL', { required: false }) ||
-    readRequired('DEV_API_URL', { required: requireSecrets }) ||
+    firstEnv('API_URL', 'DEV_API_URL', 'BACKEND_URL') ||
     (requireSecrets ? '' : 'http://localhost:3001');
   const appUrl =
-    readRequired('APP_URL', { required: false }) ||
-    readRequired('DEV_APP_URL', { required: requireSecrets }) ||
+    firstEnv('APP_URL', 'DEV_APP_URL') ||
+    (onVercel ? vercelAppUrl() : '') ||
     (requireSecrets ? '' : 'http://localhost:4200');
 
-  if (requireSecrets && (!apiUrl || !appUrl)) {
-    console.error('API_URL/DEV_API_URL and APP_URL/DEV_APP_URL are required for this mode.');
-    process.exit(1);
-  }
-
   const firebase = {
-    apiKey: readRequired('FIREBASE_API_KEY', { required: requireSecrets }) || 'PLACEHOLDER',
-    authDomain: readRequired('FIREBASE_AUTH_DOMAIN', { required: requireSecrets }) || 'PLACEHOLDER',
-    projectId: readRequired('FIREBASE_PROJECT_ID', { required: requireSecrets }) || 'PLACEHOLDER',
-    storageBucket:
-      readRequired('FIREBASE_STORAGE_BUCKET', { required: requireSecrets }) || 'PLACEHOLDER',
-    messagingSenderId:
-      readRequired('FIREBASE_MESSAGING_SENDER_ID', { required: requireSecrets }) || 'PLACEHOLDER',
-    appId: readRequired('FIREBASE_APP_ID', { required: requireSecrets }) || 'PLACEHOLDER',
-    measurementId: process.env.FIREBASE_MEASUREMENT_ID?.trim() || 'PLACEHOLDER',
+    apiKey: firstEnv('FIREBASE_API_KEY'),
+    authDomain: firstEnv('FIREBASE_AUTH_DOMAIN'),
+    projectId: firstEnv('FIREBASE_PROJECT_ID'),
+    storageBucket: firstEnv('FIREBASE_STORAGE_BUCKET'),
+    messagingSenderId: firstEnv('FIREBASE_MESSAGING_SENDER_ID'),
+    appId: firstEnv('FIREBASE_APP_ID'),
+    measurementId: firstEnv('FIREBASE_MEASUREMENT_ID') || 'PLACEHOLDER',
   };
+
+  if (requireSecrets) {
+    const missing = [];
+    if (!apiUrl) missing.push('API_URL');
+    if (!appUrl) missing.push('APP_URL');
+    if (!firebase.apiKey) missing.push('FIREBASE_API_KEY');
+    if (!firebase.authDomain) missing.push('FIREBASE_AUTH_DOMAIN');
+    if (!firebase.projectId) missing.push('FIREBASE_PROJECT_ID');
+    if (!firebase.storageBucket) missing.push('FIREBASE_STORAGE_BUCKET');
+    if (!firebase.messagingSenderId) missing.push('FIREBASE_MESSAGING_SENDER_ID');
+    if (!firebase.appId) missing.push('FIREBASE_APP_ID');
+    if (missing.length) {
+      failMissing(missing);
+    }
+  } else {
+    firebase.apiKey ||= 'PLACEHOLDER';
+    firebase.authDomain ||= 'PLACEHOLDER';
+    firebase.projectId ||= 'PLACEHOLDER';
+    firebase.storageBucket ||= 'PLACEHOLDER';
+    firebase.messagingSenderId ||= 'PLACEHOLDER';
+    firebase.appId ||= 'PLACEHOLDER';
+  }
 
   return `/** Auto-generated by scripts/prepare-environment.mjs (${defaultsKey}). Do not commit. */
 export const environment = {
