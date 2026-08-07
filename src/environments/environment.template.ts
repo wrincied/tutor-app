@@ -1,6 +1,6 @@
-/** Placeholder only. Real `environment.ts` is gitignored and created by
- * `scripts/prepare-environment.mjs` (npm run dev:local / dev:remote / build).
- * Do not edit environment.ts by hand — edit development-local / development-remote / production. */
+/** Placeholder only. Real env files are gitignored and created by
+ * `scripts/prepare-environment.mjs` (local copies or CI/Vercel generation).
+ * Do not commit environment.ts / development-* / production — edit them locally. */
 export const environment = {
   production: false,
   designMode: false,
