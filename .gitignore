@@ -58,4 +58,6 @@ bot/.env.*
 bot/.venv/
 bot/data/
 
-src/environments/environment.ts
+# Local / generated Angular environments (only the template is committed)
+src/environments/environment*.ts
+!src/environments/environment.template.ts
