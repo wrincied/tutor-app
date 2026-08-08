@@ -13,15 +13,18 @@ import {
   resolvePricingCountry,
   subscriptionStatusLabel,
 } from '../../core/utils/user-profile.utils';
-import { getSubscriptionPricing } from '../../core/utils/subscription-pricing';
+import { getPlanPricing, getSubscriptionPricing } from '../../core/utils/subscription-pricing';
 import { markBillingCheckoutPending } from '../../core/utils/billing-return';
+import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 
 export type BillingInterval = 'monthly' | 'yearly';
+export type CheckoutPlan = 'basis' | 'pro';
+type DowngradeTarget = 'free' | 'basis';
 
 @Component({
   selector: 'app-pricing',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, AppDialogComponent],
   templateUrl: './pricing.component.html',
   styleUrl: './pricing.component.scss',
 })
@@ -36,13 +39,16 @@ export class PricingComponent implements OnInit, OnDestroy {
   readonly i18n = inject(I18nService);
 
   loading = signal(true);
-  checkoutLoading = signal(false);
+  checkoutLoading = signal<CheckoutPlan | null>(null);
+  downgradeLoading = signal(false);
   error = signal<string | null>(null);
   profile = signal<UserProfile | null>(null);
   /** Public /pricing visit without auth. */
   readonly isGuest = signal(false);
   billingInterval = signal<BillingInterval>('monthly');
   openFaqIndex = signal<number | null>(null);
+  downgradeConfirmOpen = signal(false);
+  downgradeTarget = signal<DowngradeTarget | null>(null);
 
   taxModeConfigured = computed(() => {
     const profile = this.profile();
@@ -55,37 +61,83 @@ export class PricingComponent implements OnInit, OnDestroy {
     () => (this.profile()?.subscription_status as SubscriptionStatus) || 'free',
   );
 
+  isFree = computed(() => {
+    const s = this.subscriptionStatus();
+    return s === 'free' || !s;
+  });
+  isBasis = computed(() => this.subscriptionStatus() === 'basis');
   isPro = computed(() => this.subscriptionStatus() === 'pro');
   isTrial = computed(() => this.subscriptionStatus() === 'trial');
+  isProOrTrial = computed(() => this.isPro() || this.isTrial());
+  cancelScheduled = computed(() => this.profile()?.cancel_at_period_end === true);
 
-  pricing = computed(() => {
-    if (this.isGuest()) {
-      // Public marketing page: primary market (AT / EUR).
-      return getSubscriptionPricing('AT');
+  cancelScheduledDateLabel = computed(() => {
+    const raw = this.profile()?.subscription_cancel_at || this.profile()?.trial_ends_at;
+    if (!raw) {
+      return '—';
     }
-    const profile = this.profile();
-    const country = resolvePricingCountry(profile?.tax_mode, profile?.country_settings);
-    return getSubscriptionPricing(country);
+    return new Intl.DateTimeFormat(this.i18n.localeId(), {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(raw));
   });
 
-  pricingCurrency = computed(() => this.pricing().currency);
+  cancelScheduledCtaLabel = computed(() =>
+    this.t.cancelScheduledCta.replace('{date}', this.cancelScheduledDateLabel()),
+  );
 
-  /** Large price: monthly rate, or yearly÷12 when Yearly is selected. */
-  proAmountLabel = computed(() => {
-    const p = this.pricing();
+  cancelScheduledHintLabel = computed(() =>
+    this.t.cancelScheduledHint.replace('{date}', this.cancelScheduledDateLabel()),
+  );
+
+  pricingCountry = computed(() => {
+    if (this.isGuest()) {
+      return 'AT';
+    }
+    const profile = this.profile();
+    return resolvePricingCountry(profile?.tax_mode, profile?.country_settings);
+  });
+
+  /** @deprecated Prefer plan-specific getters; kept for currency. */
+  pricing = computed(() => getSubscriptionPricing(this.pricingCountry()));
+
+  basisPricing = computed(() => getPlanPricing('basis', this.pricingCountry()));
+  proPricing = computed(() => getPlanPricing('pro', this.pricingCountry()));
+
+  pricingCurrency = computed(() => this.proPricing().currency);
+
+  freeAmountLabel = computed(() => this.formatAmount(0));
+
+  basisAmountLabel = computed(() => {
+    const p = this.basisPricing();
     const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
     return this.formatAmount(amount);
   });
 
-  freeAmountLabel = computed(() => this.formatAmount(0));
+  proAmountLabel = computed(() => {
+    const p = this.proPricing();
+    const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
+    return this.formatAmount(amount);
+  });
 
-  /** Always “per month” under the large amount (Variant A). */
+  basisPeriodLabel = computed(() => this.i18n.pricingUi().basisPlan.periodMonthly);
   proPeriodLabel = computed(() => this.i18n.pricingUi().proPlan.periodMonthly);
 
-  /** Small annual total line — only in Yearly mode. */
+  basisBilledAnnuallyLabel = computed(() => {
+    if (this.billingInterval() !== 'yearly') return null;
+    const p = this.basisPricing();
+    return this.i18n
+      .pricingUi()
+      .basisPlan.billedAnnually.replace('{amount}', this.formatAmount(p.yearly))
+      .replace('{currency}', p.currency);
+  });
+
   proBilledAnnuallyLabel = computed(() => {
     if (this.billingInterval() !== 'yearly') return null;
-    const p = this.pricing();
+    const p = this.proPricing();
     return this.i18n
       .pricingUi()
       .proPlan.billedAnnually.replace('{amount}', this.formatAmount(p.yearly))
@@ -96,9 +148,33 @@ export class PricingComponent implements OnInit, OnDestroy {
     const t = this.i18n.accountUi();
     return subscriptionStatusLabel(this.subscriptionStatus(), {
       free: t.subscriptionFree,
+      basis: t.subscriptionBasis,
       pro: t.subscriptionPro,
       trial: t.subscriptionTrial,
     });
+  });
+
+  canBuyBasis = computed(() => this.canBuy() && this.isFree());
+  canBuyPro = computed(() => this.canBuy() && (this.isFree() || this.isBasis()));
+
+  downgradeDialogTitle = computed(() => {
+    const t = this.t;
+    return this.downgradeTarget() === 'basis' ? t.downgradeToBasisTitle : t.downgradeToFreeTitle;
+  });
+
+  downgradeDialogBody = computed(() => {
+    const t = this.t;
+    return this.downgradeTarget() === 'basis' ? t.downgradeToBasisBody : t.downgradeToFreeBody;
+  });
+
+  downgradeDialogConfirm = computed(() => {
+    const t = this.t;
+    if (this.downgradeLoading()) {
+      return t.downgradeLoading;
+    }
+    return this.downgradeTarget() === 'basis'
+      ? t.downgradeToBasisConfirm
+      : t.downgradeToFreeConfirm;
   });
 
   private formatAmount(amount: number): string {
@@ -140,6 +216,17 @@ export class PricingComponent implements OnInit, OnDestroy {
         replaceUrl: true,
       });
     }
+
+    const gate = this.route.snapshot.queryParamMap.get('gate');
+    if (gate === 'finance' && this.auth.isLoggedIn()) {
+      this.error.set(this.i18n.sharedUi().planFinanceRequiredBody);
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { gate: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -162,29 +249,101 @@ export class PricingComponent implements OnInit, OnDestroy {
     return this.openFaqIndex() === index;
   }
 
-  startProCheckout(): void {
-    if (!this.canBuy() || this.isPro() || this.isTrial()) {
+  openDowngradeConfirm(target: DowngradeTarget): void {
+    if (this.isGuest() || this.downgradeLoading() || this.checkoutLoading()) {
       return;
     }
-    this.checkoutLoading.set(true);
+    if (target === 'free') {
+      if (this.isFree() || this.cancelScheduled()) {
+        return;
+      }
+    } else if (target === 'basis') {
+      if (!this.isProOrTrial()) {
+        return;
+      }
+    }
     this.error.set(null);
-    this.billingSvc.createCheckoutSession(this.billingInterval()).subscribe({
+    this.downgradeTarget.set(target);
+    this.downgradeConfirmOpen.set(true);
+  }
+
+  closeDowngradeConfirm(): void {
+    if (this.downgradeLoading()) {
+      return;
+    }
+    this.downgradeConfirmOpen.set(false);
+    this.downgradeTarget.set(null);
+  }
+
+  confirmDowngrade(): void {
+    const target = this.downgradeTarget();
+    if (!target || this.downgradeLoading()) {
+      return;
+    }
+
+    this.downgradeLoading.set(true);
+    this.error.set(null);
+
+    const request =
+      target === 'basis'
+        ? this.billingSvc.changePlan('basis')
+        : this.billingSvc.cancelSubscription();
+
+    request.subscribe({
+      next: (user) => {
+        this.profile.set(user);
+        this.userSvc.invalidateProfile();
+        this.downgradeLoading.set(false);
+        this.downgradeConfirmOpen.set(false);
+        this.downgradeTarget.set(null);
+      },
+      error: (err) => {
+        this.downgradeLoading.set(false);
+        this.error.set(err?.error?.message ?? this.i18n.accountUi().cancelSubscriptionError);
+      },
+    });
+  }
+
+  startCheckout(plan: CheckoutPlan): void {
+    if (plan === 'basis' && !this.canBuyBasis()) return;
+    if (plan === 'pro' && !this.canBuyPro()) return;
+    if (this.isProOrTrial()) return;
+
+    this.checkoutLoading.set(plan);
+    this.error.set(null);
+    this.billingSvc.createCheckoutSession(this.billingInterval(), plan).subscribe({
       next: ({ url }) => {
-        this.checkoutLoading.set(false);
+        this.checkoutLoading.set(null);
         if (url) {
           markBillingCheckoutPending();
           window.location.href = url;
         }
       },
       error: (err) => {
-        this.checkoutLoading.set(false);
+        this.checkoutLoading.set(null);
         this.error.set(err?.error?.message ?? this.i18n.accountUi().saveError);
       },
     });
   }
 
+  startProCheckout(): void {
+    this.startCheckout('pro');
+  }
+
+  startBasisCheckout(): void {
+    this.startCheckout('basis');
+  }
+
   private startBillingSuccessPoll(): void {
     this.billingPollSub?.unsubscribe();
+    this.userSvc.invalidateProfile();
+    this.billingSvc.syncSubscription().subscribe({
+      next: (user) => {
+        this.userSvc.cacheProfile(user);
+        this.profile.set(user);
+      },
+      error: () => undefined,
+    });
     this.billingPollSub = timer(0, 2000)
       .pipe(
         take(15),
@@ -192,9 +351,10 @@ export class PricingComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (user) => {
+          this.userSvc.cacheProfile(user);
           this.profile.set(user);
           const status = String(user.subscription_status || 'free');
-          if (status === 'pro' || status === 'trial') {
+          if (status === 'pro' || status === 'trial' || status === 'basis') {
             this.billingPollSub?.unsubscribe();
             this.billingPollSub = null;
           }

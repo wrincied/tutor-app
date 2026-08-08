@@ -1595,12 +1595,12 @@
   grid-template-columns: 1fr;
   gap: 1rem;
   margin: 1.75rem 0 1.5rem;
-  max-width: 44rem;
+  max-width: 64rem;
   margin-inline: auto;
 
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.1rem;
     align-items: stretch;
   }
 }
@@ -1615,6 +1615,11 @@
   border-radius: 1rem;
   background: var(--pricing-card);
   color: var(--pricing-foam);
+}
+
+.landing-v2__plan--basis {
+  background: rgb(255 255 255 / 0.045);
+  border-color: rgb(255 255 255 / 0.16);
 }
 
 .landing-v2__plan--pro {
@@ -1633,14 +1638,21 @@
 .landing-v2__plan-badge {
   margin: 0;
   width: fit-content;
+  max-width: 12rem;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
   text-transform: uppercase;
   color: #071714;
   background: #e7f5ef;
+
+  &--soft {
+    color: var(--pricing-foam);
+    background: rgb(255 255 255 / 0.12);
+  }
 
   &--spacer {
     visibility: hidden;

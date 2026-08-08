@@ -14,7 +14,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { MarketingConsentService } from '../../core/services/marketing-consent.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { SystemStatusService } from '../../core/services/system-status.service';
-import { getSubscriptionPricing } from '../../core/utils/subscription-pricing';
+import { getPlanPricing } from '../../core/utils/subscription-pricing';
 
 const DEMO_AUTOPLAY_MS = 10_000;
 
@@ -44,9 +44,10 @@ export class LandingV2Component implements OnInit, OnDestroy {
   readonly currentLangCode = computed(() => this.i18n.lang().toUpperCase());
 
   /** Landing teaser uses AT pricing (primary market). */
-  private readonly landingPricing = computed(() => getSubscriptionPricing('AT'));
+  private readonly landingProPricing = computed(() => getPlanPricing('pro', 'AT'));
+  private readonly landingBasisPricing = computed(() => getPlanPricing('basis', 'AT'));
 
-  readonly pricingCurrency = computed(() => this.landingPricing().currency);
+  readonly pricingCurrency = computed(() => this.landingProPricing().currency);
 
   /** Display symbol for AT marketing (€ instead of EUR). */
   readonly pricingCurrencySymbol = computed(() => {
@@ -56,9 +57,15 @@ export class LandingV2Component implements OnInit, OnDestroy {
 
   readonly freeAmountLabel = computed(() => this.formatAmount(0));
 
+  readonly basisAmountLabel = computed(() => {
+    const p = this.landingBasisPricing();
+    const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
+    return this.formatAmount(amount);
+  });
+
   /** Large price: monthly rate, or yearly÷12 when Yearly is selected. */
   readonly proAmountLabel = computed(() => {
-    const p = this.landingPricing();
+    const p = this.landingProPricing();
     const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
     return this.formatAmount(amount);
   });
@@ -66,10 +73,19 @@ export class LandingV2Component implements OnInit, OnDestroy {
   /** Always “per month” under the large amount (Variant A). */
   readonly proPeriodLabel = computed(() => this.i18n.authUi().landingPricingProPeriodMonthly);
 
+  readonly basisBilledAnnuallyLabel = computed(() => {
+    if (this.billingInterval() !== 'yearly') return null;
+    const p = this.landingBasisPricing();
+    return this.i18n
+      .authUi()
+      .landingPricingBilledAnnually.replace('{amount}', this.formatAmount(p.yearly))
+      .replace('{currency}', this.pricingCurrencySymbol());
+  });
+
   /** Small annual total line — only in Yearly mode. */
   readonly proBilledAnnuallyLabel = computed(() => {
     if (this.billingInterval() !== 'yearly') return null;
-    const p = this.landingPricing();
+    const p = this.landingProPricing();
     return this.i18n
       .authUi()
       .landingPricingBilledAnnually.replace('{amount}', this.formatAmount(p.yearly))

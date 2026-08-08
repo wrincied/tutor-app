@@ -170,6 +170,9 @@ export class AppDateRangeComponent implements OnDestroy {
       locale: flatpickrLocale(lang),
       monthSelectorType: 'static',
       plugins: [rangePlugin({ input: endEl })],
+      onReady: (_dates, _str, instance) => {
+        instance.calendarContainer.classList.add('app-flatpickr');
+      },
       onChange: (dates) => {
         if (this.syncing) {
           return;

@@ -2,6 +2,7 @@ import {
   afterNextRender,
   booleanAttribute,
   Component,
+  computed,
   effect,
   ElementRef,
   forwardRef,
@@ -15,9 +16,17 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import flatpickr from 'flatpickr';
 import type { Instance } from 'flatpickr/dist/types/instance';
+import type { Lang } from '@interfaces';
 import { I18nService } from '../../core/services/i18n.service';
-import { flatpickrAltFormat, flatpickrLocale } from './flatpickr-locale';
+import {
+  flatpickrAltFormat,
+  flatpickrDatePlaceholder,
+  flatpickrLocale,
+} from './flatpickr-locale';
 
+export type AppDateInputMode = 'date' | 'time' | 'datetime';
+
+/** YYYY-MM-DD */
 function toIsoDate(d: Date | undefined): string {
   if (!d || Number.isNaN(d.getTime())) {
     return '';
@@ -26,6 +35,34 @@ function toIsoDate(d: Date | undefined): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+/** HH:mm */
+function toTimeValue(d: Date | undefined): string {
+  if (!d || Number.isNaN(d.getTime())) {
+    return '';
+  }
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+/** datetime-local compatible: YYYY-MM-DDTHH:mm */
+function toLocalDateTimeValue(d: Date | undefined): string {
+  if (!d || Number.isNaN(d.getTime())) {
+    return '';
+  }
+  return `${toIsoDate(d)}T${toTimeValue(d)}`;
+}
+
+function formatValue(mode: AppDateInputMode, d: Date | undefined): string {
+  if (mode === 'time') {
+    return toTimeValue(d);
+  }
+  if (mode === 'datetime') {
+    return toLocalDateTimeValue(d);
+  }
+  return toIsoDate(d);
 }
 
 @Component({
@@ -40,9 +77,10 @@ function toIsoDate(d: Date | undefined): string {
       [id]="id() || null"
       [attr.name]="name() || null"
       [attr.aria-label]="ariaLabel() || null"
+      [attr.placeholder]="placeholder()"
       [disabled]="isDisabled"
       autocomplete="off"
-      inputmode="none"
+      [attr.inputmode]="resolvedMode() === 'datetime' ? 'text' : 'none'"
     />
   `,
   styleUrl: './app-date-input.component.scss',
@@ -50,6 +88,8 @@ function toIsoDate(d: Date | undefined): string {
   host: {
     class: 'app-date-input',
     '[class.app-date-input--disabled]': 'isDisabled',
+    '[class.app-date-input--datetime]': 'resolvedMode() === "datetime"',
+    '[class.app-date-input--time]': 'resolvedMode() === "time"',
   },
   providers: [
     {
@@ -77,10 +117,33 @@ export class AppDateInputComponent implements ControlValueAccessor, OnDestroy {
   ariaLabel = input<string | undefined>();
   inputClass = input<string>('');
   disabled = input(false, { transform: booleanAttribute });
-  /** Inclusive min (YYYY-MM-DD). */
+  /**
+   * `date` → YYYY-MM-DD
+   * `time` → HH:mm
+   * `datetime` → YYYY-MM-DDTHH:mm (visible field shows d.m.Y H:i)
+   */
+  mode = input<AppDateInputMode>('date');
+  /** @deprecated Prefer mode="datetime". */
+  enableTime = input(false, { transform: booleanAttribute });
   minDate = input<string | null>(null);
-  /** Inclusive max (YYYY-MM-DD). */
   maxDate = input<string | null>(null);
+
+  protected readonly resolvedMode = computed<AppDateInputMode>(() => {
+    if (this.enableTime() && this.mode() === 'date') {
+      return 'datetime';
+    }
+    return this.mode();
+  });
+
+  protected readonly placeholder = computed(() => {
+    const lang = this.i18n.lang();
+    const mode = this.resolvedMode();
+    if (mode === 'time') {
+      return 'HH:mm';
+    }
+    const datePh = flatpickrDatePlaceholder(lang);
+    return mode === 'datetime' ? `${datePh} HH:mm` : datePh;
+  });
 
   constructor() {
     afterNextRender(
@@ -111,12 +174,18 @@ export class AppDateInputComponent implements ControlValueAccessor, OnDestroy {
 
     effect(() => {
       const lang = this.i18n.lang();
+      const mode = this.resolvedMode();
       if (!this.fp) {
         return;
       }
       this.fp.set('locale', flatpickrLocale(lang) ?? 'default');
-      this.fp.set('altFormat', flatpickrAltFormat(lang));
+      if (mode === 'datetime') {
+        this.fp.set('dateFormat', this.displayFormat(lang, mode));
+      } else {
+        this.fp.set('altFormat', this.displayFormat(lang, mode));
+      }
       this.fp.redraw();
+      this.syncFromValue();
     });
   }
 
@@ -147,40 +216,76 @@ export class AppDateInputComponent implements ControlValueAccessor, OnDestroy {
     }
   }
 
+  private displayFormat(lang: Lang, mode: AppDateInputMode): string {
+    if (mode === 'time') {
+      return 'H:i';
+    }
+    const datePart = flatpickrAltFormat(lang);
+    return mode === 'datetime' ? `${datePart} H:i` : datePart;
+  }
+
+  private modelFormat(mode: AppDateInputMode): string {
+    if (mode === 'time') {
+      return 'H:i';
+    }
+    return mode === 'datetime' ? 'Y-m-d\\TH:i' : 'Y-m-d';
+  }
+
   private initFlatpickr(): void {
     const el = this.hostInput().nativeElement;
     const lang = this.i18n.lang();
+    const mode = this.resolvedMode();
+    const timeOnly = mode === 'time';
+    const withTime = mode === 'time' || mode === 'datetime';
+    /** Datetime: one visible editable field (no hidden altInput). */
+    const useAlt = mode === 'date';
 
     this.fp = flatpickr(el, {
-      dateFormat: 'Y-m-d',
-      altInput: true,
-      altFormat: flatpickrAltFormat(lang),
-      allowInput: false,
+      // Visible format in the input for datetime; ISO only in CVA value.
+      dateFormat: mode === 'datetime' ? this.displayFormat(lang, mode) : this.modelFormat(mode),
+      altInput: useAlt,
+      altFormat: useAlt ? this.displayFormat(lang, mode) : undefined,
+      allowInput: true,
       disableMobile: true,
+      enableTime: withTime,
+      noCalendar: timeOnly,
+      time_24hr: true,
+      minuteIncrement: 5,
       locale: flatpickrLocale(lang),
       monthSelectorType: 'static',
-      onChange: (dates) => {
-        const next = toIsoDate(dates[0]);
-        if (next === this.valueIso) {
-          return;
-        }
-        this.valueIso = next;
-        this.onChange(next);
+      onReady: (_dates, _str, instance) => {
+        instance.calendarContainer.classList.add('app-flatpickr');
       },
-      onClose: () => this.onTouched(),
+      onChange: (dates) => this.emitFromDates(mode, dates),
+      onValueUpdate: (dates) => this.emitFromDates(mode, dates),
+      onClose: (dates) => {
+        this.emitFromDates(mode, dates);
+        this.onTouched();
+      },
     });
 
-    const alt = this.fp.altInput;
-    if (alt) {
-      alt.className = `${el.className} app-date-input__alt`.trim();
-      if (this.id()) {
-        alt.id = this.id()!;
-        el.removeAttribute('id');
-      }
-      if (this.ariaLabel()) {
-        alt.setAttribute('aria-label', this.ariaLabel()!);
+    if (useAlt) {
+      const alt = this.fp.altInput;
+      if (alt) {
+        alt.className = `${el.className} app-date-input__alt`.trim();
+        if (this.id()) {
+          alt.id = this.id()!;
+          el.removeAttribute('id');
+        }
+        if (this.ariaLabel()) {
+          alt.setAttribute('aria-label', this.ariaLabel()!);
+        }
       }
     }
+  }
+
+  private emitFromDates(mode: AppDateInputMode, dates: Date[]): void {
+    const next = formatValue(mode, dates[0]);
+    if (next === this.valueIso) {
+      return;
+    }
+    this.valueIso = next;
+    this.onChange(next);
   }
 
   private syncFromValue(): void {
@@ -191,7 +296,19 @@ export class AppDateInputComponent implements ControlValueAccessor, OnDestroy {
       this.fp.clear(false);
       return;
     }
-    this.fp.setDate(this.valueIso, false, 'Y-m-d');
+    const mode = this.resolvedMode();
+    if (mode === 'time') {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(this.valueIso);
+      if (!m) {
+        this.fp.clear(false);
+        return;
+      }
+      const seed = new Date(1970, 0, 1, Number(m[1]), Number(m[2]), 0, 0);
+      this.fp.setDate(seed, false);
+      return;
+    }
+    // Parse model ISO / date into the picker (display format is separate for datetime).
+    this.fp.setDate(this.valueIso, false, this.modelFormat(mode));
   }
 
   private syncDisabled(): void {
@@ -200,20 +317,26 @@ export class AppDateInputComponent implements ControlValueAccessor, OnDestroy {
     if (!this.fp) {
       return;
     }
+    const inputs = [this.fp._input, this.fp.altInput].filter(Boolean) as HTMLInputElement[];
     if (disabled) {
       this.fp.close();
       this.fp.set('clickOpens', false);
-      this.fp._input.setAttribute('disabled', 'disabled');
-      this.fp.altInput?.setAttribute('disabled', 'disabled');
+      for (const inputEl of inputs) {
+        inputEl.setAttribute('disabled', 'disabled');
+      }
     } else {
       this.fp.set('clickOpens', true);
-      this.fp._input.removeAttribute('disabled');
-      this.fp.altInput?.removeAttribute('disabled');
+      for (const inputEl of inputs) {
+        inputEl.removeAttribute('disabled');
+      }
     }
   }
 
   private syncMinMax(): void {
     if (!this.fp) {
+      return;
+    }
+    if (this.resolvedMode() === 'time') {
       return;
     }
     const min = this.minDate();

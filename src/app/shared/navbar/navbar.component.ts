@@ -6,6 +6,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { PresenceService } from '../../core/services/presence.service';
 import { MarketingConsentService } from '../../core/services/marketing-consent.service';
+import type { UserProfile } from '@interfaces';
 const SIDEBAR_COLLAPSE_BTN_MAX = 890;
 
 @Component({
@@ -46,12 +47,14 @@ export class NavbarComponent implements OnInit {
 
   ngOnInit(): void {
     this.userSvc.ensureProfile().subscribe({
-      next: (profile) => {
+      next: (profile: UserProfile) => {
         this.consent.syncFromProfile(profile);
         this.isSuperAdmin.set(profile.role === 'super_admin');
         this.presence.ping();
       },
-      error: () => this.isSuperAdmin.set(false),
+      error: () => {
+        this.isSuperAdmin.set(false);
+      },
     });
   }
 

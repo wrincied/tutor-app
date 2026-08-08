@@ -1893,6 +1893,7 @@
 
   &__recurrence,
   &__field--status {
+    margin-bottom: 1.5rem;
     app-select .app-select__trigger {
       background: #fff;
       border-color: #d1d5db;
@@ -2479,8 +2480,22 @@
   }
 
   .field--datetime {
+    app-date-input {
+      display: block;
+      width: 100%;
+    }
+
     .app-input--datetime {
       width: 100%;
+      min-height: 2.75rem;
+      box-sizing: border-box;
+    }
+  }
+
+  .field--date {
+    app-date-input {
+      width: 100%;
+      display: block;
     }
   }
 

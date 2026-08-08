@@ -4,11 +4,22 @@
     <button
       type="button"
       class="btn-primary students-page__add students-page__add--header"
+      [disabled]="!canAddStudent()"
+      [attr.title]="studentLimitHint() ?? null"
       (click)="openCreate()"
     >
       {{ t.addButton }}
     </button>
   </div>
+
+  @if (studentLimitHint(); as limitHint) {
+    <p class="students-page__plan-hint" role="status">
+      {{ limitHint }}
+      <button type="button" class="btn-link" (click)="goToPricingFromGate()">
+        {{ i18n.sharedUi().planUpgradeCta }}
+      </button>
+    </p>
+  }
 
   @if (resyncMessage(); as msg) {
     <p class="students-page__success" role="status">{{ msg }}</p>
@@ -150,7 +161,13 @@
   }
 
   <div class="students-page__footer">
-    <button type="button" class="btn-primary students-page__add" (click)="openCreate()">
+    <button
+      type="button"
+      class="btn-primary students-page__add"
+      [disabled]="!canAddStudent()"
+      [attr.title]="studentLimitHint() ?? null"
+      (click)="openCreate()"
+    >
       {{ t.addButton }}
     </button>
   </div>
@@ -924,4 +941,17 @@
   (confirm)="confirmResyncLessons()"
 >
   <p>{{ t.resyncLessonsBody }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="planGateKind() !== null"
+  size="sm"
+  [title]="planGateTitle()"
+  [cancelLabel]="t.close"
+  [confirmLabel]="i18n.sharedUi().planUpgradeCta"
+  layout="center"
+  (cancel)="closePlanGate()"
+  (confirm)="goToPricingFromGate()"
+>
+  <p>{{ planGateBody() }}</p>
 </app-dialog>

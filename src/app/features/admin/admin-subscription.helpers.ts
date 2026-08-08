@@ -2,9 +2,11 @@ import type { SubscriptionStatus } from '@interfaces';
 
 export function adminStatusLabel(
   status: SubscriptionStatus | string,
-  labels: { statusFree: string; statusPro: string; statusTrial: string },
+  labels: { statusFree: string; statusBasis: string; statusPro: string; statusTrial: string },
 ): string {
   switch (status) {
+    case 'basis':
+      return labels.statusBasis;
     case 'pro':
       return labels.statusPro;
     case 'trial':
@@ -16,6 +18,8 @@ export function adminStatusLabel(
 
 export function adminStatusClass(status: SubscriptionStatus | string): string {
   switch (status) {
+    case 'basis':
+      return 'admin-status admin-status--basis';
     case 'pro':
       return 'admin-status admin-status--pro';
     case 'trial':

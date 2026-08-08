@@ -79,6 +79,7 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
     const t = this.i18n.accountUi();
     return subscriptionStatusLabel(this.subscription_status, {
       free: t.subscriptionFree,
+      basis: t.subscriptionBasis,
       pro: t.subscriptionPro,
       trial: t.subscriptionTrial,
     });
@@ -86,7 +87,7 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
 
   isPaidPlan = computed(() => {
     const status = this.subscription_status;
-    return status === 'pro' || status === 'trial';
+    return status === 'pro' || status === 'trial' || status === 'basis';
   });
 
   cancelScheduled = computed(() => this.profile()?.cancel_at_period_end === true);
@@ -100,6 +101,8 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     }).format(new Date(raw));
     return this.i18n.accountUi().cancelSubscriptionScheduled.replace('{date}', label);
   });

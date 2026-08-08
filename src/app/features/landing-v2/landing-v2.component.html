@@ -549,6 +549,36 @@
           }}</a>
         </article>
 
+        <article class="landing-v2__plan landing-v2__plan--basis">
+          <div class="landing-v2__plan-head">
+            <span class="landing-v2__plan-badge landing-v2__plan-badge--soft">{{
+              i18n.authUi().landingPricingBasisBadge
+            }}</span>
+            <h3 class="landing-v2__plan-label">{{ i18n.authUi().landingPricingBasisLabel }}</h3>
+          </div>
+          <p class="landing-v2__plan-trial">{{ i18n.authUi().landingPricingBasisTrial }}</p>
+          <p class="landing-v2__plan-price">
+            <span class="landing-v2__plan-price-row">
+              <span class="landing-v2__plan-amount">{{ basisAmountLabel() }}</span>
+              <span class="landing-v2__plan-currency">{{ pricingCurrencySymbol() }}</span>
+            </span>
+            <span class="landing-v2__plan-period">{{
+              i18n.authUi().landingPricingBasisPeriodMonthly
+            }}</span>
+            @if (basisBilledAnnuallyLabel(); as billed) {
+              <span class="landing-v2__plan-billed">{{ billed }}</span>
+            }
+          </p>
+          <ul class="landing-v2__plan-features">
+            @for (feature of i18n.authUi().landingPricingBasisFeatures; track feature) {
+              <li>{{ feature }}</li>
+            }
+          </ul>
+          <a routerLink="/register" class="landing-v2__plan-cta landing-v2__plan-cta--ghost">{{
+            i18n.authUi().landingPricingBasisCta
+          }}</a>
+        </article>
+
         <article class="landing-v2__plan landing-v2__plan--pro">
           <div class="landing-v2__plan-head">
             <span class="landing-v2__plan-badge">{{ i18n.authUi().landingPricingProBadge }}</span>

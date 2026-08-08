@@ -63,10 +63,35 @@ export class UserService {
     return this.http.get<UserProfile>(`${API}/auth/me`);
   }
 
-  /** Сбрасывает кэш профиля (logout / смена пользователя). */
+  /** Сбрасывает кэш профиля (logout / смена пользователя / billing). */
   invalidateProfile(): void {
     this.profile$ = undefined;
     this.cachedUid = null;
+  }
+
+  /** Подставляет свежий профиль в кэш (после sync-subscription / webhook poll). */
+  cacheProfile(profile: UserProfile): void {
+    this.replaceCachedProfile(profile);
+  }
+
+  /** Свежий GET /me + обновление кэша (тариф / entitlements). */
+  refreshProfile(): Observable<UserProfile> {
+    this.invalidateProfile();
+    const uid = this.auth.firebaseUser()?.uid ?? null;
+    if (!uid) {
+      return throwError(() => new Error('Not authenticated'));
+    }
+    return this.getProfile().pipe(
+      tap((profile) => this.replaceCachedProfile(profile)),
+      catchError((err: unknown) => {
+        if (err instanceof HttpErrorResponse && err.status === 404) {
+          return this.auth.bootstrapProfile().pipe(
+            tap((profile) => this.replaceCachedProfile(profile)),
+          );
+        }
+        return throwError(() => err);
+      }),
+    );
   }
 
   /** GET /me или bootstrap, если документа в Firestore ещё нет. */

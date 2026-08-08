@@ -640,11 +640,12 @@
 
           <div class="cal-lesson-form-v2__field field field--datetime">
             <label for="scheduledAtLocal">{{ i18n.calendarUi().scheduledAtLabel }}</label>
-            <input
+            <app-date-input
               id="scheduledAtLocal"
-              class="app-input app-input--datetime"
-              type="datetime-local"
               name="scheduledAtLocal"
+              mode="datetime"
+              inputClass="app-input app-input--datetime"
+              [ariaLabel]="i18n.calendarUi().scheduledAtLabel"
               [ngModel]="scheduledAtLocal()"
               (ngModelChange)="onScheduledAtLocalChange($event)"
             />
@@ -1093,11 +1094,10 @@
               </button>
               <div class="field field--date cal-recurrence-end-list__field">
                 <label for="recurrenceUntilDetails">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
-                <input
+                <app-date-input
                   id="recurrenceUntilDetails"
-                  class="app-input"
-                  type="date"
                   name="recurrenceUntilDetails"
+                  inputClass="app-input"
                   [ngModel]="recurrenceConfig().untilDate"
                   (ngModelChange)="onRecurrenceConfigUntilChange($event); onRecurrenceConfigEndModeChange('until')"
                 />
@@ -1162,11 +1162,10 @@
       @if (recurrenceConfig().endMode === 'until') {
         <div class="field field--date">
           <label for="recurrenceUntilDesktop">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
-          <input
+          <app-date-input
             id="recurrenceUntilDesktop"
-            class="app-input"
-            type="date"
             name="recurrenceUntilDesktop"
+            inputClass="app-input"
             [ngModel]="recurrenceConfig().untilDate"
             (ngModelChange)="onRecurrenceConfigUntilChange($event)"
           />

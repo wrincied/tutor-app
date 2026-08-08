@@ -46,33 +46,33 @@
           <strong class="account-plan-chip__value">{{ subscriptionLabel() }}</strong>
         </div>
 
-        <p class="account-hint">{{ i18n.accountUi().subscriptionManagedByPayment }}</p>
+        @if (cancelScheduled()) {
+          <p class="account-hint account-hint--warn">{{ cancelScheduledHint() }}</p>
+          <div class="account-subscription-actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              [disabled]="billingActionLoading()"
+              (click)="resumeSubscription()"
+            >
+              {{
+                billingActionLoading()
+                  ? i18n.accountUi().cancelSubscriptionLoading
+                  : i18n.accountUi().resumeSubscription
+              }}
+            </button>
+            <a
+              routerLink="/app/pricing"
+              class="btn-secondary account-subscription-actions__pricing"
+              (click)="onPricingClick($event)"
+            >
+              {{ i18n.nav().pricing }}
+            </a>
+          </div>
+        } @else {
+          <p class="account-hint">{{ i18n.accountUi().subscriptionManagedByPayment }}</p>
 
-        @if (canManageStripeSub()) {
-          @if (cancelScheduled()) {
-            <p class="account-hint account-hint--warn">{{ cancelScheduledHint() }}</p>
-            <div class="account-subscription-actions">
-              <button
-                type="button"
-                class="btn-secondary"
-                [disabled]="billingActionLoading()"
-                (click)="resumeSubscription()"
-              >
-                {{
-                  billingActionLoading()
-                    ? i18n.accountUi().cancelSubscriptionLoading
-                    : i18n.accountUi().resumeSubscription
-                }}
-              </button>
-              <a
-                routerLink="/app/pricing"
-                class="btn-secondary account-subscription-actions__pricing"
-                (click)="onPricingClick($event)"
-              >
-                {{ i18n.nav().pricing }}
-              </a>
-            </div>
-          } @else {
+          @if (canManageStripeSub()) {
             <div class="account-subscription-actions">
               <button
                 type="button"
@@ -90,17 +90,17 @@
                 {{ i18n.nav().pricing }}
               </a>
             </div>
+          } @else {
+            <div class="account-subscription-actions">
+              <a
+                routerLink="/app/pricing"
+                class="btn-secondary account-subscription-actions__pricing"
+                (click)="onPricingClick($event)"
+              >
+                {{ i18n.nav().pricing }}
+              </a>
+            </div>
           }
-        } @else {
-          <div class="account-subscription-actions">
-            <a
-              routerLink="/app/pricing"
-              class="btn-secondary account-subscription-actions__pricing"
-              (click)="onPricingClick($event)"
-            >
-              {{ i18n.nav().pricing }}
-            </a>
-          </div>
         }
       </div>
 

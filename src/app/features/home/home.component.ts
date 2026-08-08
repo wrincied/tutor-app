@@ -6,6 +6,7 @@ import { switchMap, take } from 'rxjs/operators';
 import type { FinanceSummary, Student, SubscriptionStatus, UserProfile } from '@interfaces';
 import { environment } from '../../../environments/environment';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { BillingService } from '../../core/services/billing.service';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
@@ -36,6 +37,7 @@ const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly userSvc = inject(UserService);
   private readonly financeSvc = inject(FinanceService);
+  private readonly billingSvc = inject(BillingService);
   private readonly router = inject(Router);
   readonly i18n = inject(I18nService);
   /** True for local/dev design UI (`ng serve` on :4200). */
@@ -235,6 +237,25 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.userSvc.invalidateProfile();
     this.billingPollSub?.unsubscribe();
+
+    // Force sync from Stripe (webhook may have been missed / old process).
+    this.billingSvc.syncSubscription().subscribe({
+      next: (user) => {
+        this.userSvc.cacheProfile(user);
+        this.profile.set(user);
+        const status = String(user.subscription_status || 'free') as SubscriptionStatus;
+        if (status === 'pro' || status === 'trial') {
+          this.billingCongratsPlan.set(status);
+          this.billingCongratsOpen.set(true);
+        } else if (status === 'basis') {
+          this.billingCongratsOpen.set(false);
+        }
+      },
+      error: () => {
+        /* fall through to poll */
+      },
+    });
+
     this.billingPollSub = timer(0, 1500)
       .pipe(
         take(20),
@@ -242,6 +263,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (user) => {
+          this.userSvc.cacheProfile(user);
           this.profile.set(user);
           const status = String(user.subscription_status || 'free') as SubscriptionStatus;
           if (status === 'pro' || status === 'trial') {
@@ -249,6 +271,10 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.billingCongratsOpen.set(true);
             this.billingPollSub?.unsubscribe();
             this.billingPollSub = null;
+          } else if (status === 'basis') {
+            this.billingPollSub?.unsubscribe();
+            this.billingPollSub = null;
+            this.billingCongratsOpen.set(false);
           }
         },
       });
@@ -269,7 +295,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     const today = financeTodayRange();
     forkJoin({
-      profile: this.userSvc.ensureProfile(),
+      profile: this.userSvc.refreshProfile(),
       summary: this.financeSvc.getSummary({ from: today.from, to: today.to, scope: 'home' }),
     }).subscribe({
       next: ({ profile, summary }) => {

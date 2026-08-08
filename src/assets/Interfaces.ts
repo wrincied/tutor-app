@@ -34,18 +34,23 @@ export interface PricingPlanCopy {
   features: string[];
 }
 
-export interface PricingProPlanCopy {
+/** Paid plan copy shared by Basis and Pro (amounts come from pricing utils). */
+export interface PricingPaidPlanCopy {
   name: string;
   periodMonthly: string;
   periodYearly: string;
   /** Yearly mode footnote. Placeholders: `{amount}`, `{currency}`. */
   billedAnnually: string;
+  /** Optional highlight under the plan name (trial / value line). */
   trialBadge: string;
   microcopy: string;
   cta: string;
   ctaLoading: string;
   features: string[];
 }
+
+/** @deprecated Use PricingPaidPlanCopy */
+export type PricingProPlanCopy = PricingPaidPlanCopy;
 
 export interface PricingStrings {
   title: string;
@@ -54,10 +59,33 @@ export interface PricingStrings {
   toggleYearly: string;
   saveBadge: string;
   recommendedBadge: string;
+  /** Soft highlight on Basis (e.g. “For small tutors”). */
+  basisBadge: string;
+  /** Strong highlight on Pro (e.g. “Pays for itself”). */
+  proValueBadge: string;
   freePlan: PricingPlanCopy;
-  proPlan: PricingProPlanCopy;
+  basisPlan: PricingPaidPlanCopy;
+  proPlan: PricingPaidPlanCopy;
   stripeNote: string;
+  stripeNoteBasis: string;
   taxRequired: string;
+  /** Disabled CTA on the active plan card. */
+  currentPlanCta: string;
+  /** Outline CTA on lower plans when user is on a higher paid plan. */
+  downgradeCta: string;
+  downgradeToFreeTitle: string;
+  downgradeToFreeBody: string;
+  downgradeToFreeConfirm: string;
+  downgradeToBasisTitle: string;
+  downgradeToBasisBody: string;
+  downgradeToBasisConfirm: string;
+  downgradeKeep: string;
+  downgradeLoading: string;
+  /** Shown on Free when cancel_at_period_end is already scheduled. Placeholder: `{date}`. */
+  cancelScheduledCta: string;
+  /** Extra line under Free CTA when cancel is scheduled. Placeholder: `{date}`. */
+  cancelScheduledHint: string;
+  alreadyBasis: string;
   alreadyPro: string;
   alreadyTrial: string;
   accountLink: string;
@@ -143,7 +171,15 @@ export type TaxMode =
   | 'ua-fop3'
   | 'none';
 
-export type SubscriptionStatus = 'free' | 'pro' | 'trial';
+export type SubscriptionStatus = 'free' | 'basis' | 'pro' | 'trial';
+
+/** Feature gates for Free / Basis / Pro (from API enrichUserProfile). */
+export interface PlanEntitlements {
+  /** null = unlimited */
+  max_students: number | null;
+  has_finance: boolean;
+  has_telegram: boolean;
+}
 
 export type UserRole = 'tutor' | 'super_admin';
 
@@ -205,6 +241,8 @@ export interface UserProfile {
   subscription_cancel_at?: string | null;
   /** Whether a Stripe subscription id is linked. */
   has_stripe_subscription?: boolean;
+  /** Feature gates derived from subscription_status. */
+  plan_entitlements?: PlanEntitlements;
   email_verified?: boolean;
   role?: UserRole | string;
   workspace?: UserWorkspaceSettings;
@@ -214,7 +252,10 @@ export interface UserProfile {
 
 export interface AdminStats {
   totalUsers: number;
+  /** Basis + Pro (без Trial). */
   paidUsers: number;
+  basisUsers: number;
+  proUsers: number;
   trialUsers: number;
   conversionPercent: number;
   estimatedMrr: Record<string, number>;
@@ -222,7 +263,9 @@ export interface AdminStats {
 
 export type AdminDashboardWidgetId =
   | 'kpi-total-users'
+  | 'kpi-basis-users'
   | 'kpi-paid-users'
+  | 'kpi-pro-users'
   | 'kpi-trial-users'
   | 'kpi-conversion'
   | 'kpi-mrr'
@@ -341,7 +384,9 @@ export interface AdminStrings {
   settingsReset: string;
   settingsResetConfirm: string;
   widgetKpiTotalUsers: string;
+  widgetKpiBasisUsers: string;
   widgetKpiPaidUsers: string;
+  widgetKpiProUsers: string;
   widgetKpiTrialUsers: string;
   widgetKpiConversion: string;
   widgetKpiMrr: string;
@@ -352,11 +397,15 @@ export interface AdminStrings {
   widgetGeography: string;
   widgetProductUsage: string;
   metricTotalUsers: string;
+  metricBasisUsers: string;
   metricPaidUsers: string;
+  metricProUsers: string;
   metricTrialUsers: string;
   metricConversion: string;
   metricRevenue: string;
   revenueHint: string;
+  paidBreakdownHint: string;
+  signedInAs: string;
   segmentActive7d: string;
   segmentInactive14d: string;
   segmentTrialExpiring: string;
@@ -409,6 +458,7 @@ export interface AdminStrings {
   userDetailLoading: string;
   userDetailError: string;
   statusFree: string;
+  statusBasis: string;
   statusPro: string;
   statusTrial: string;
   trialEndsUntil: string;
@@ -458,6 +508,7 @@ export interface AccountStrings {
   subscriptionSection: string;
   subscriptionStatus: string;
   subscriptionFree: string;
+  subscriptionBasis: string;
   subscriptionPro: string;
   subscriptionTrial: string;
   taxSection: string;
@@ -501,6 +552,7 @@ export interface AccountStrings {
   cancelSubscriptionConfirmBody: string;
   cancelSubscriptionConfirm: string;
   cancelSubscriptionKeep: string;
+  /** Pending cancel → Free. Placeholder: `{date}`. */
   cancelSubscriptionScheduled: string;
   resumeSubscription: string;
   cancelSubscriptionLoading: string;
@@ -615,18 +667,25 @@ export interface AuthStrings {
   landingPricingToggleMonthly: string;
   landingPricingToggleYearly: string;
   landingPricingFreeLabel: string;
+  landingPricingBasisLabel: string;
   landingPricingProLabel: string;
+  landingPricingBasisBadge: string;
   landingPricingProBadge: string;
-  /** Trial line under Pro title (e.g. 14 days free — no card). */
+  /** Line under Basis title. */
+  landingPricingBasisTrial: string;
+  /** Trial line under Pro title. */
   landingPricingProTrial: string;
   landingPricingFreePeriod: string;
+  landingPricingBasisPeriodMonthly: string;
   landingPricingProPeriodMonthly: string;
   landingPricingProPeriodYearly: string;
   /** Yearly mode footnote. Placeholders: `{amount}`, `{currency}`. */
   landingPricingBilledAnnually: string;
   landingPricingFreeFeatures: string[];
+  landingPricingBasisFeatures: string[];
   landingPricingProFeatures: string[];
   landingPricingFreeCta: string;
+  landingPricingBasisCta: string;
   landingPricingProCta: string;
   landingPricingLink: string;
   landingFaqTitle: string;
@@ -861,6 +920,14 @@ export interface LegalTermsStrings extends LegalCommonStrings {
 export interface SharedStrings {
   selectNoData: string;
   loadingContent: string;
+  planStudentLimitTitle: string;
+  /** Placeholder `{max}`. */
+  planStudentLimitBody: string;
+  planFinanceRequiredTitle: string;
+  planFinanceRequiredBody: string;
+  planTelegramRequiredTitle: string;
+  planTelegramRequiredBody: string;
+  planUpgradeCta: string;
 }
 
 export interface CalendarStrings {
@@ -887,6 +954,8 @@ export interface CalendarStrings {
   studentsSidebarEmpty: string;
   studentsSidebarNoResults: string;
   scheduledAtLabel: string;
+  scheduledDateLabel: string;
+  scheduledTimeLabel: string;
   lessonDescriptionLabel: string;
   advancedSettingsLabel: string;
   notesPlaceholder: string;
@@ -1136,6 +1205,16 @@ export interface FinanceStrings {
   exportPdfError: string;
   pdfGeneratedAt: string;
   pdfSummary: string;
+  /** Free-plan teaser overlay */
+  teaserDemoBadge: string;
+  teaserTitle: string;
+  teaserBody: string;
+  teaserCta: string;
+  /** Modal when Free user taps a gated action */
+  upgradeActionTitle: string;
+  upgradeActionBody: string;
+  upgradeActionCta: string;
+  upgradeActionClose: string;
 }
 
 export interface FinanceLessonBreakdown {

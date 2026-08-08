@@ -1,4 +1,5 @@
 export { AppDateInputComponent } from './app-date-input.component';
+export type { AppDateInputMode } from './app-date-input.component';
 export { AppDateRangeComponent } from './app-date-range.component';
 
 import { AppDateInputComponent } from './app-date-input.component';
