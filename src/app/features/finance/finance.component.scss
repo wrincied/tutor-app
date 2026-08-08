@@ -845,6 +845,15 @@
   flex: 1 1 0;
   flex-direction: column;
   min-height: 0;
+  // Teaser overlay wraps content; restore scroll that `.app-scroll-page > .scrollable-content` lost.
+  > .scrollable-content {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
 }
 
 .finance-teaser__preview {
