@@ -1,1 +1,0 @@
-import{d as o,e as t}from"./chunk-E47TXD23.js";function p(e){(e.querySelector(t)??e.body).querySelectorAll(".app-select-portal-host, .app-dialog-portal-host").forEach(r=>r.remove()),e.documentElement.classList.remove(o)}export{p as a};
