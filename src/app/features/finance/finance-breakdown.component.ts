@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { FinanceExpenseBreakdown, FinanceLessonBreakdown, FinanceSummary } from '@interfaces';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { UserService } from '../../core/services/user.service';
 import { financePeriodRange, type FinancePeriodPreset } from '../../core/utils/finance-period';
 import {
   FINANCE_CURRENCY_STORAGE_KEY,
@@ -14,6 +15,7 @@ import {
 } from '../../core/utils/finance-route';
 import { remapFinanceSummary } from '../../core/utils/finance-summary-currency';
 import { formatMoneyWithCode } from '../../core/utils/format-currency';
+import { planEntitlementsFromProfile } from '../../core/utils/user-profile.utils';
 import {
   downloadFinanceBreakdownPdf,
   type FinanceBreakdownPdfOptions,
@@ -29,6 +31,7 @@ import {
 })
 export class FinanceBreakdownComponent implements OnInit {
   private readonly financeSvc = inject(FinanceService);
+  private readonly userSvc = inject(UserService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly i18n = inject(I18nService);
@@ -172,6 +175,24 @@ export class FinanceBreakdownComponent implements OnInit {
   private reload(): void {
     this.loading.set(true);
     this.error.set(null);
+
+    this.userSvc.refreshProfile().subscribe({
+      next: (profile) => {
+        if (!planEntitlementsFromProfile(profile).hasFinance) {
+          void this.router.navigate(['/app/finance'], {
+            queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+          });
+          return;
+        }
+        this.loadSummary();
+      },
+      error: () => {
+        void this.router.navigate(['/app/finance']);
+      },
+    });
+  }
+
+  private loadSummary(): void {
     const range = financePeriodRange(this.periodPreset());
     const currency = this.reportCurrency();
     const summaryQuery = {

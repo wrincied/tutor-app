@@ -44,11 +44,16 @@
   --page-bg: #f4faf7;
   --text-primary: #071714;
   --text-secondary: #5f746c;
+  --border-color: #cfe3d9;
+  --border-light: #e2e8f0;
+  --warning-color: #b45309;
   --skeleton-base: #d9ebe3;
   --skeleton-highlight: #f4faf7;
   --text-main: #fff;
-  --font-display: 'Syne', sans-serif;
-  --font-body: 'Figtree', sans-serif;
+  --font-heading: 'Figtree', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  /* alias for existing call sites */
+  --font-display: var(--font-heading);
 
   /* Modal / form surface tokens */
   --modal-bg: #ffffff;
@@ -88,6 +93,9 @@
   --page-bg: #071714;
   --text-primary: #e7f5ef;
   --text-secondary: #9bb5ab;
+  --border-color: #1a3a32;
+  --border-light: #1a3a32;
+  --warning-color: #fbbf24;
   --skeleton-base: #1a3a32;
   --skeleton-highlight: #0f3d34;
   --ink: #e7f5ef;

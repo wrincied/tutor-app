@@ -50,6 +50,16 @@ export class AdminOverviewComponent implements OnInit {
       .join(' · ');
   });
 
+  readonly paidBreakdownHint = computed(() => {
+    const stats = this.dashboard()?.stats;
+    if (!stats) {
+      return '';
+    }
+    return this.t().paidBreakdownHint
+      .replace('{basis}', String(stats.basisUsers ?? 0))
+      .replace('{pro}', String(stats.proUsers ?? 0));
+  });
+
   readonly recentVisits = computed(() =>
     [...this.users()]
       .sort((left, right) => parseTimestamp(right.last_login_at) - parseTimestamp(left.last_login_at))

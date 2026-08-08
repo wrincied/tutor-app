@@ -34,6 +34,7 @@ import {
 import { DEFAULT_STUDENT_BORDER_COLOR } from '../../core/utils/pastel-color';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+import { AppDateInputComponent } from '../../shared/app-date-input';
 import { I18nService } from '../../core/services/i18n.service';
 import { APP_OVERLAY_LAYER_OPEN } from '../../core/constants/overlay-layer';
 import { purgeStaleOverlayLayers } from '../../core/utils/purge-stale-overlay-layers';
@@ -139,6 +140,7 @@ type BillingConfirmState = {
     FormsModule,
     AppDialogComponent,
     AppSelectComponent,
+    AppDateInputComponent,
     NgTemplateOutlet,
     LessonCardComponent,
     CalendarHeaderComponent,
@@ -164,7 +166,7 @@ export class CalendarComponent implements OnInit {
   private static readonly DEFAULT_LESSON_DURATION_MIN = 90;
 
   /** Мин. высота часа (ниже — появляется скролл). */
-  private static readonly MIN_HOUR_HEIGHT_PX = 60;
+  private static readonly MIN_HOUR_HEIGHT_PX = 65;
   /** Высота одного часа: растягивается под доступную высоту viewport. */
   readonly hourHeightPx = signal(CalendarComponent.MIN_HOUR_HEIGHT_PX);
   /** 1 минута = hourHeight / 60. */

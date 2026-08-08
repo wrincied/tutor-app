@@ -1,5 +1,5 @@
 import { EmailAuthProvider, GoogleAuthProvider } from '@angular/fire/auth';
-import type { AuthStrings } from '@interfaces';
+import type { AccountStrings, AuthStrings } from '@interfaces';
 
 export class EmailAlreadyRegisteredError extends Error {
   readonly signInMethods: string[];
@@ -71,4 +71,24 @@ export function resolveLoginError(error: unknown, strings: AuthStrings): string 
     return strings.wrongCredentials;
   }
   return strings.wrongCredentials;
+}
+
+/** Map Firebase Auth errors when changing email/password in Account. */
+export function resolveAccountAuthError(
+  error: unknown,
+  strings: Pick<AccountStrings, 'currentPasswordIncorrect' | 'saveError'>,
+  weakPasswordMessage?: string,
+): string {
+  const code = getFirebaseAuthErrorCode(error);
+  if (
+    code === 'auth/invalid-credential' ||
+    code === 'auth/wrong-password' ||
+    code === 'auth/invalid-login-credentials'
+  ) {
+    return strings.currentPasswordIncorrect;
+  }
+  if (code === 'auth/weak-password') {
+    return weakPasswordMessage ?? strings.saveError;
+  }
+  return strings.saveError;
 }

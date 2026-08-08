@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: var(--font-body, 'Figtree', sans-serif);
+  font-family: var(--font-body, 'Inter', sans-serif);
   font-optical-sizing: auto;
   font-style: normal;
   background-color: var(--page-bg);
@@ -217,4 +217,18 @@ html.app-select-dropdown-open {
   app-root > router-outlet > * > .onboarding-shell {
     transition: none !important;
   }
+}
+
+/* Public routes (landing/auth): overlay skeleton while lazy landing loads */
+.app-public-host {
+  position: relative;
+  min-height: 100dvh;
+  min-height: 100svh;
+}
+
+.app-public-skel {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: auto;
 }

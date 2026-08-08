@@ -1,10 +1,12 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import type { FinanceSummary, Student, UserProfile } from '@interfaces';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { forkJoin, Subscription, timer } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
+import type { FinanceSummary, Student, SubscriptionStatus, UserProfile } from '@interfaces';
 import { environment } from '../../../environments/environment';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { BillingService } from '../../core/services/billing.service';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
@@ -18,6 +20,10 @@ import {
   type HomeLessonRow,
 } from '../../core/utils/home-dashboard';
 import { dayKey } from '../../core/utils/day-key';
+import {
+  clearBillingQueryFromUrl,
+  consumeBillingReturnFlag,
+} from '../../core/utils/billing-return';
 
 const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
 
@@ -28,13 +34,14 @@ const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   private readonly userSvc = inject(UserService);
   private readonly financeSvc = inject(FinanceService);
+  private readonly billingSvc = inject(BillingService);
+  private readonly router = inject(Router);
   readonly i18n = inject(I18nService);
   /** True for local/dev design UI (`ng serve` on :4200). */
   readonly designMode = (environment as { designMode?: boolean }).designMode === true;
-
 
   profile = signal<UserProfile | null>(null);
   summary = signal<FinanceSummary | null>(null);
@@ -43,7 +50,10 @@ export class HomeComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   betaOpen = signal(false);
+  billingCongratsOpen = signal(false);
+  billingCongratsPlan = signal<'trial' | 'pro' | null>(null);
 
+  private billingPollSub: Subscription | null = null;
   private readonly now = signal(new Date());
 
   displayName = computed(() => {
@@ -94,9 +104,35 @@ export class HomeComponent implements OnInit {
   nextLesson = computed(() => findNextLesson(this.todayLessons(), this.now()));
   overdueCount = computed(() => overdueLessonCount(this.todayLessons(), this.now()));
 
+  billingCongratsTitle = computed(() => {
+    const plan = this.billingCongratsPlan();
+    const t = this.t;
+    if (plan === 'trial') return t.billingCongratsTrialTitle;
+    if (plan === 'pro') return t.billingCongratsProTitle;
+    return t.billingCongratsProTitle;
+  });
+
+  billingCongratsBody = computed(() => {
+    const plan = this.billingCongratsPlan();
+    const t = this.t;
+    if (plan === 'trial') return t.billingCongratsTrialBody;
+    if (plan === 'pro') return t.billingCongratsProBody;
+    return t.billingCongratsProBody;
+  });
+
   ngOnInit(): void {
-    this.openBetaNoticeIfNeeded();
+    const billingReturn = consumeBillingReturnFlag();
+    if (billingReturn === 'success') {
+      clearBillingQueryFromUrl();
+      this.handleBillingSuccessReturn();
+    } else {
+      this.openBetaNoticeIfNeeded();
+    }
     this.reload();
+  }
+
+  ngOnDestroy(): void {
+    this.billingPollSub?.unsubscribe();
   }
 
   get t() {
@@ -183,6 +219,67 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  dismissBillingCongrats(): void {
+    this.billingCongratsOpen.set(false);
+    this.openBetaNoticeIfNeeded();
+  }
+
+  goManageSubscription(): void {
+    this.billingCongratsOpen.set(false);
+    void this.router.navigateByUrl('/app/account/profile');
+  }
+
+  private handleBillingSuccessReturn(): void {
+    // Show immediately — do not wait for webhook/profile poll.
+    const current = String(this.profile()?.subscription_status || '');
+    this.billingCongratsPlan.set(current === 'pro' ? 'pro' : 'trial');
+    this.billingCongratsOpen.set(true);
+
+    this.userSvc.invalidateProfile();
+    this.billingPollSub?.unsubscribe();
+
+    // Force sync from Stripe (webhook may have been missed / old process).
+    this.billingSvc.syncSubscription().subscribe({
+      next: (user) => {
+        this.userSvc.cacheProfile(user);
+        this.profile.set(user);
+        const status = String(user.subscription_status || 'free') as SubscriptionStatus;
+        if (status === 'pro' || status === 'trial') {
+          this.billingCongratsPlan.set(status);
+          this.billingCongratsOpen.set(true);
+        } else if (status === 'basis') {
+          this.billingCongratsOpen.set(false);
+        }
+      },
+      error: () => {
+        /* fall through to poll */
+      },
+    });
+
+    this.billingPollSub = timer(0, 1500)
+      .pipe(
+        take(20),
+        switchMap(() => this.userSvc.getProfile()),
+      )
+      .subscribe({
+        next: (user) => {
+          this.userSvc.cacheProfile(user);
+          this.profile.set(user);
+          const status = String(user.subscription_status || 'free') as SubscriptionStatus;
+          if (status === 'pro' || status === 'trial') {
+            this.billingCongratsPlan.set(status);
+            this.billingCongratsOpen.set(true);
+            this.billingPollSub?.unsubscribe();
+            this.billingPollSub = null;
+          } else if (status === 'basis') {
+            this.billingPollSub?.unsubscribe();
+            this.billingPollSub = null;
+            this.billingCongratsOpen.set(false);
+          }
+        },
+      });
+  }
+
   private openBetaNoticeIfNeeded(): void {
     if (typeof localStorage === 'undefined') {
       this.betaOpen.set(true);
@@ -198,7 +295,7 @@ export class HomeComponent implements OnInit {
 
     const today = financeTodayRange();
     forkJoin({
-      profile: this.userSvc.ensureProfile(),
+      profile: this.userSvc.refreshProfile(),
       summary: this.financeSvc.getSummary({ from: today.from, to: today.to, scope: 'home' }),
     }).subscribe({
       next: ({ profile, summary }) => {

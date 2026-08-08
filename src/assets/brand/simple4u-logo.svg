@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268 64" role="img" aria-label="Simple4U">
+  <title>Simple4U</title>
+  <rect width="64" height="64" rx="18" fill="#0f3d34"/>
+  <text
+    x="32"
+    y="32"
+    dominant-baseline="central"
+    text-anchor="middle"
+    fill="#e7f5ef"
+    font-family="Syne, sans-serif"
+    font-size="18"
+    font-weight="800"
+    letter-spacing="1"
+  >S4U</text>
+  <text
+    x="80"
+    y="42"
+    fill="#071714"
+    font-family="Syne, sans-serif"
+    font-size="30"
+    font-weight="800"
+    letter-spacing="-0.04em"
+  >Simple4U</text>
+</svg>

@@ -1,13 +1,16 @@
 /* 1. Сначала ВСЕ @use и @import */
 @use 'tailwindcss';
-// @use 'flatpickr/dist/flatpickr.min.css';
+@use 'flatpickr/dist/flatpickr.min.css';
 
 @use './styles/variables';
 @use './styles/forms' as *;
 @use './styles/base';
 @use './styles/shared';
+@use './styles/app-pages';
 @use './styles/skeleton';
-@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Syne:wght@700;800&display=swap');
+/* После Tailwind/base — чтобы оверрайды flatpickr не проигрывали cascade */
+@use './styles/flatpickr-calendar';
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@600;700&family=Inter:wght@400;500&display=swap');
 /* 2. Только ПОТОМ настройки и директивы */
 @source "./**/*.{html,ts}";
 @source inline(

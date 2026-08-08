@@ -39,7 +39,7 @@
   </details>
 } @else {
   <section class="activity-log" [attr.aria-label]="title()">
-    <h2 class="activity-log__title">{{ title() }}</h2>
+    <h3 class="activity-log__title">{{ title() }}</h3>
 
     @if (loading()) {
       <p class="activity-log__hint">{{ strings().loading }}</p>

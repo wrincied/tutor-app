@@ -1,6 +1,13 @@
-<div class="page app-scroll-page pricing-page">
+<div
+  class="page app-scroll-page pricing-page"
+  [class.pricing-page--guest]="isGuest()"
+>
   <header class="page-header pricing-page__header">
     <div class="pricing-page__intro">
+      @if (isGuest()) {
+        <a class="pricing-page__back" routerLink="/">← {{ i18n.authUi().backHome }}</a>
+      }
+      <p class="pricing-page__eyebrow">Simple4U</p>
       <h1>{{ t.title }}</h1>
       <p class="pricing-page__lead">{{ t.subtitle }}</p>
     </div>
@@ -8,7 +15,10 @@
 
   <div class="scrollable-content">
     @if (loading()) {
-      <p class="pricing-page__status" role="status">{{ i18n.sharedUi().loadingContent }}</p>
+      <div class="pricing-page__status" role="status" aria-live="polite">
+        <span class="pricing-spinner pricing-spinner--lg" aria-hidden="true"></span>
+        <span>{{ i18n.sharedUi().loadingContent }}</span>
+      </div>
     } @else {
       @if (error()) {
         <p class="pricing-page__error" role="alert">{{ error() }}</p>
@@ -35,78 +45,230 @@
       </div>
 
       <div class="pricing-plans">
+        <!-- Free -->
         <article
-          class="pricing-plan"
-          [class.pricing-plan--current]="!isPro() && !isTrial()"
+          class="pricing-plan pricing-plan--free"
+          [class.pricing-plan--current]="isFree() && !isGuest()"
         >
-          <div class="pricing-plan__head">
-            <h2 class="pricing-plan__name">{{ t.freePlan.name }}</h2>
-          </div>
+          <div class="pricing-plan__badge-slot" aria-hidden="true"></div>
+          <h2 class="pricing-plan__name">{{ t.freePlan.name }}</h2>
+          <p class="pricing-plan__subtitle pricing-plan__subtitle--spacer" aria-hidden="true">&nbsp;</p>
 
-          <p class="pricing-plan__price">
-            <span class="pricing-plan__amount">{{ freePriceLabel() }}</span>
-            <span class="pricing-plan__period">{{ t.freePlan.period }}</span>
-          </p>
+          <div class="pricing-plan__price">
+            <div class="pricing-plan__price-row">
+              <span class="pricing-plan__amount">{{ freeAmountLabel() }}</span>
+              <span class="pricing-plan__currency">{{ pricingCurrency() }}</span>
+            </div>
+            <span class="pricing-plan__period">/ {{ t.freePlan.period }}</span>
+          </div>
 
           <ul class="pricing-plan__features">
             @for (feature of t.freePlan.features; track feature) {
-              <li>{{ feature }}</li>
+              <li>
+                <span class="pricing-plan__check" aria-hidden="true">✓</span>
+                <span class="pricing-plan__feature-text">{{ feature }}</span>
+              </li>
             }
           </ul>
 
-          <button type="button" class="pricing-plan__cta btn-secondary" disabled>
-            {{ isPro() || isTrial() ? t.freePlan.cta : subscriptionLabel() }}
-          </button>
+          <div class="pricing-plan__footer">
+            @if (isGuest()) {
+              <a routerLink="/register" class="pricing-plan__cta pricing-plan__cta--outline">{{
+                t.freePlan.ctaGuest
+              }}</a>
+              <div class="pricing-plan__footer-note" aria-hidden="true"></div>
+            } @else if (isFree()) {
+              <button type="button" class="pricing-plan__cta pricing-plan__cta--muted" disabled>
+                {{ t.currentPlanCta }}
+              </button>
+              <div class="pricing-plan__footer-note" aria-hidden="true"></div>
+            } @else if (cancelScheduled()) {
+              <button type="button" class="pricing-plan__cta pricing-plan__cta--muted" disabled>
+                {{ cancelScheduledCtaLabel() }}
+              </button>
+              <div class="pricing-plan__footer-note">
+                <p class="pricing-plan__stripe">{{ cancelScheduledHintLabel() }}</p>
+              </div>
+            } @else {
+              <button
+                type="button"
+                class="pricing-plan__cta pricing-plan__cta--outline"
+                [class.pricing-plan__cta--busy]="downgradeLoading() && downgradeTarget() === 'free'"
+                [disabled]="downgradeLoading() || checkoutLoading() !== null"
+                (click)="openDowngradeConfirm('free')"
+              >
+                @if (downgradeLoading() && downgradeTarget() === 'free') {
+                  <span class="pricing-spinner" aria-hidden="true"></span>
+                }
+                <span>{{
+                  downgradeLoading() && downgradeTarget() === 'free' ? t.downgradeLoading : t.downgradeCta
+                }}</span>
+              </button>
+              <div class="pricing-plan__footer-note" aria-hidden="true"></div>
+            }
+          </div>
         </article>
 
+        <!-- Basis -->
         <article
-          class="pricing-plan pricing-plan--pro"
-          [class.pricing-plan--current]="isPro() || isTrial()"
+          class="pricing-plan pricing-plan--basis"
+          [class.pricing-plan--current]="isBasis()"
         >
-          <div class="pricing-plan__head">
-            <h2 class="pricing-plan__name">{{ t.proPlan.name }}</h2>
-            <span class="pricing-plan__tag">{{ t.recommendedBadge }}</span>
+          <div class="pricing-plan__badge-slot">
+            <span class="pricing-plan__badge pricing-plan__badge--soft">{{ t.basisBadge }}</span>
+          </div>
+          <h2 class="pricing-plan__name">{{ t.basisPlan.name }}</h2>
+          <p class="pricing-plan__subtitle">{{ t.basisPlan.trialBadge }}</p>
+
+          <div class="pricing-plan__price">
+            <div class="pricing-plan__price-row">
+              <span class="pricing-plan__amount">{{ basisAmountLabel() }}</span>
+              <span class="pricing-plan__currency">{{ pricingCurrency() }}</span>
+            </div>
+            <span class="pricing-plan__period">/ {{ basisPeriodLabel() }}</span>
+            @if (basisBilledAnnuallyLabel(); as billed) {
+              <span class="pricing-plan__billed">{{ billed }}</span>
+            }
           </div>
 
-          <p class="pricing-plan__trial">{{ t.proPlan.trialBadge }}</p>
+          <ul class="pricing-plan__features">
+            @for (feature of t.basisPlan.features; track feature) {
+              <li>
+                <span class="pricing-plan__check" aria-hidden="true">✓</span>
+                <span class="pricing-plan__feature-text">{{ feature }}</span>
+              </li>
+            }
+          </ul>
 
-          <p class="pricing-plan__price">
-            <span class="pricing-plan__amount">{{ proPriceLabel() }}</span>
-            <span class="pricing-plan__period">{{ proPeriodLabel() }}</span>
-          </p>
+          <div class="pricing-plan__footer">
+            @if (isGuest()) {
+              <a routerLink="/register" class="pricing-plan__cta pricing-plan__cta--outline">{{
+                t.basisPlan.cta
+              }}</a>
+              <div class="pricing-plan__footer-note">
+                <p class="pricing-plan__stripe">{{ t.stripeNoteBasis }}</p>
+              </div>
+            } @else if (isBasis()) {
+              <button type="button" class="pricing-plan__cta pricing-plan__cta--muted" disabled>
+                {{ t.currentPlanCta }}
+              </button>
+              <div class="pricing-plan__footer-note" aria-hidden="true"></div>
+            } @else if (isProOrTrial()) {
+              <button
+                type="button"
+                class="pricing-plan__cta pricing-plan__cta--outline"
+                [class.pricing-plan__cta--busy]="downgradeLoading() && downgradeTarget() === 'basis'"
+                [disabled]="downgradeLoading() || checkoutLoading() !== null"
+                (click)="openDowngradeConfirm('basis')"
+              >
+                @if (downgradeLoading() && downgradeTarget() === 'basis') {
+                  <span class="pricing-spinner" aria-hidden="true"></span>
+                }
+                <span>{{
+                  downgradeLoading() && downgradeTarget() === 'basis' ? t.downgradeLoading : t.downgradeCta
+                }}</span>
+              </button>
+              <div class="pricing-plan__footer-note" aria-hidden="true"></div>
+            } @else if (!taxModeConfigured()) {
+              <a routerLink="/app/account/profile" class="pricing-plan__cta pricing-plan__cta--outline">{{
+                t.accountLink
+              }}</a>
+              <div class="pricing-plan__footer-note">
+                <p class="pricing-plan__hint">{{ t.taxRequired }}</p>
+              </div>
+            } @else {
+              <button
+                type="button"
+                class="pricing-plan__cta pricing-plan__cta--outline"
+                [class.pricing-plan__cta--busy]="checkoutLoading() === 'basis'"
+                [disabled]="checkoutLoading() !== null || downgradeLoading()"
+                (click)="startBasisCheckout()"
+              >
+                @if (checkoutLoading() === 'basis') {
+                  <span class="pricing-spinner" aria-hidden="true"></span>
+                }
+                <span>{{
+                  checkoutLoading() === 'basis' ? t.basisPlan.ctaLoading : t.basisPlan.cta
+                }}</span>
+              </button>
+              <div class="pricing-plan__footer-note">
+                <p class="pricing-plan__stripe">{{ t.stripeNoteBasis }}</p>
+              </div>
+            }
+          </div>
+        </article>
 
-          <p class="pricing-plan__note">{{ t.proPlan.microcopy }}</p>
+        <!-- Pro -->
+        <article
+          class="pricing-plan pricing-plan--pro"
+          [class.pricing-plan--current]="isProOrTrial()"
+        >
+          <div class="pricing-plan__badge-slot">
+            <span class="pricing-plan__badge">{{ t.proValueBadge }}</span>
+          </div>
+          <h2 class="pricing-plan__name">{{ t.proPlan.name }}</h2>
+          <p class="pricing-plan__subtitle">{{ t.proPlan.trialBadge }}</p>
+
+          <div class="pricing-plan__price">
+            <div class="pricing-plan__price-row">
+              <span class="pricing-plan__amount">{{ proAmountLabel() }}</span>
+              <span class="pricing-plan__currency">{{ pricingCurrency() }}</span>
+            </div>
+            <span class="pricing-plan__period">/ {{ proPeriodLabel() }}</span>
+            @if (proBilledAnnuallyLabel(); as billed) {
+              <span class="pricing-plan__billed">{{ billed }}</span>
+            }
+          </div>
 
           <ul class="pricing-plan__features">
             @for (feature of t.proPlan.features; track feature) {
-              <li>{{ feature }}</li>
+              <li>
+                <span class="pricing-plan__check" aria-hidden="true">✓</span>
+                <span class="pricing-plan__feature-text">{{ feature }}</span>
+              </li>
             }
           </ul>
 
-          @if (isPro()) {
-            <button type="button" class="pricing-plan__cta btn-secondary" disabled>
-              {{ t.alreadyPro }}
-            </button>
-          } @else if (isTrial()) {
-            <button type="button" class="pricing-plan__cta btn-secondary" disabled>
-              {{ t.alreadyTrial }}
-            </button>
-          } @else if (!taxModeConfigured()) {
-            <p class="pricing-plan__hint">{{ t.taxRequired }}</p>
-            <a routerLink="/app/account" class="pricing-plan__cta btn-secondary">{{
-              t.accountLink
-            }}</a>
-          } @else {
-            <button
-              type="button"
-              class="pricing-plan__cta btn-primary"
-              [disabled]="checkoutLoading()"
-              (click)="startProCheckout()"
-            >
-              {{ checkoutLoading() ? t.proPlan.ctaLoading : t.proPlan.cta }}
-            </button>
-            <p class="pricing-plan__stripe">{{ t.stripeNote }}</p>
-          }
+          <div class="pricing-plan__footer">
+            @if (isGuest()) {
+              <a routerLink="/register" class="pricing-plan__cta pricing-plan__cta--solid">{{
+                t.proPlan.cta
+              }}</a>
+              <div class="pricing-plan__footer-note">
+                <p class="pricing-plan__stripe">{{ t.stripeNote }}</p>
+              </div>
+            } @else if (isProOrTrial()) {
+              <button type="button" class="pricing-plan__cta pricing-plan__cta--muted" disabled>
+                {{ t.currentPlanCta }}
+              </button>
+              <div class="pricing-plan__footer-note" aria-hidden="true"></div>
+            } @else if (!taxModeConfigured()) {
+              <a routerLink="/app/account/profile" class="pricing-plan__cta pricing-plan__cta--outline">{{
+                t.accountLink
+              }}</a>
+              <div class="pricing-plan__footer-note">
+                <p class="pricing-plan__hint">{{ t.taxRequired }}</p>
+              </div>
+            } @else {
+              <button
+                type="button"
+                class="pricing-plan__cta pricing-plan__cta--solid"
+                [class.pricing-plan__cta--busy]="checkoutLoading() === 'pro'"
+                [disabled]="checkoutLoading() !== null || downgradeLoading()"
+                (click)="startProCheckout()"
+              >
+                @if (checkoutLoading() === 'pro') {
+                  <span class="pricing-spinner pricing-spinner--on-dark" aria-hidden="true"></span>
+                }
+                <span>{{
+                  checkoutLoading() === 'pro' ? t.proPlan.ctaLoading : t.proPlan.cta
+                }}</span>
+              </button>
+              <div class="pricing-plan__footer-note">
+                <p class="pricing-plan__stripe">{{ t.stripeNote }}</p>
+              </div>
+            }
+          </div>
         </article>
       </div>
 
@@ -136,3 +298,21 @@
     }
   </div>
 </div>
+
+<app-dialog
+  [open]="downgradeConfirmOpen()"
+  [title]="downgradeDialogTitle()"
+  [cancelLabel]="downgradeLoading() ? null : t.downgradeKeep"
+  [confirmLabel]="downgradeDialogConfirm()"
+  [confirmDisabled]="downgradeLoading()"
+  [closeOnOverlay]="!downgradeLoading()"
+  (cancel)="closeDowngradeConfirm()"
+  (confirm)="confirmDowngrade()"
+>
+  <div class="pricing-downgrade-dialog" [class.pricing-downgrade-dialog--busy]="downgradeLoading()">
+    @if (downgradeLoading()) {
+      <span class="pricing-spinner pricing-spinner--lg" aria-hidden="true"></span>
+    }
+    <p>{{ downgradeDialogBody() }}</p>
+  </div>
+</app-dialog>

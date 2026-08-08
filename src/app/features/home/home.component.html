@@ -242,6 +242,18 @@
 }
 
 <app-dialog
+  [open]="billingCongratsOpen()"
+  size="sm"
+  [title]="billingCongratsTitle()"
+  [dismissLabel]="t.billingCongratsDismiss"
+  [secondaryLabel]="t.billingCongratsManage"
+  (cancel)="dismissBillingCongrats()"
+  (secondary)="goManageSubscription()"
+>
+  <p>{{ billingCongratsBody() }}</p>
+</app-dialog>
+
+<app-dialog
   [open]="betaOpen()"
   size="sm"
   [title]="t.betaTitle"

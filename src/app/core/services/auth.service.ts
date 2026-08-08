@@ -67,14 +67,35 @@ export class AuthService {
   readonly firebaseUser = toSignal(authState(this.auth), { initialValue: null });
   readonly isLoggedIn = computed(() => this.firebaseUser() !== null);
   readonly emailVerified = computed(() => this.firebaseUser()?.emailVerified === true);
-  /** Вход по email/паролю — можно менять пароль в аккаунте. Только Google — нет. */
-  readonly canChangePassword = computed(() => this.hasPasswordProvider(this.firebaseUser()));
 
-  private hasPasswordProvider(user: User | null | undefined): boolean {
-    return Boolean(
-      user?.providerData.some((provider) => provider.providerId === EmailAuthProvider.PROVIDER_ID),
-    );
-  }
+  /**
+   * Провайдер текущей сессии (password / google.com / …), не весь список linked accounts.
+   * Нужен, чтобы не показывать пароль после входа через Google, даже если password когда-то линковали.
+   */
+  private readonly sessionSignInProvider = toSignal(
+    authState(this.auth).pipe(
+      switchMap((user) => {
+        if (!user) {
+          return of(null);
+        }
+        return from(user.getIdTokenResult()).pipe(
+          map((token) => token.signInProvider ?? null),
+          catchError(() => of(null)),
+        );
+      }),
+    ),
+    { initialValue: null as string | null },
+  );
+
+  /** Смена пароля в UI — только если сейчас вошли email/паролем. */
+  readonly canChangePassword = computed(
+    () => this.sessionSignInProvider() === EmailAuthProvider.PROVIDER_ID,
+  );
+
+  /** Текущий вход через Google — пароль в аккаунте не показываем. */
+  readonly isGoogleOnlyAuth = computed(
+    () => this.sessionSignInProvider() === GoogleAuthProvider.PROVIDER_ID,
+  );
 
   private appBaseUrl(): string {
     return (

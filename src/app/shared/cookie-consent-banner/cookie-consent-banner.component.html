@@ -1,0 +1,72 @@
+@if (consent.shouldShowBanner()) {
+  <div
+    class="cookie-cmp"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="i18n.authUi().cookieBannerTitle"
+  >
+    <div class="cookie-cmp__panel">
+      @if (!consent.settingsPanelOpen()) {
+        <h2 class="cookie-cmp__title">{{ i18n.authUi().cookieBannerTitle }}</h2>
+        <p class="cookie-cmp__body">
+          {{ i18n.authUi().cookieBannerBody }}
+          <a routerLink="/legal/cookies" class="cookie-cmp__link">{{
+            i18n.authUi().cookiePolicyLink
+          }}</a>
+        </p>
+        <div class="cookie-cmp__actions" role="group">
+          <button type="button" class="cookie-cmp__btn cookie-cmp__btn--primary" (click)="acceptAll()">
+            {{ i18n.authUi().cookieAcceptAll }}
+          </button>
+          <button type="button" class="cookie-cmp__btn cookie-cmp__btn--secondary" (click)="essentialOnly()">
+            {{ i18n.authUi().cookieEssentialOnly }}
+          </button>
+          <button type="button" class="cookie-cmp__btn cookie-cmp__btn--ghost" (click)="openSettings()">
+            {{ i18n.authUi().cookieSettings }}
+          </button>
+        </div>
+      } @else {
+        <h2 class="cookie-cmp__title">{{ i18n.authUi().cookieSettings }}</h2>
+        <ul class="cookie-cmp__cats">
+          <li class="cookie-cmp__cat">
+            <div class="cookie-cmp__cat-head">
+              <span>{{ i18n.authUi().cookieCatEssential }}</span>
+              <span class="cookie-cmp__badge">{{ i18n.authUi().cookieAlwaysOn }}</span>
+            </div>
+            <p>{{ i18n.authUi().cookieCatEssentialDesc }}</p>
+          </li>
+          <li class="cookie-cmp__cat">
+            <div class="cookie-cmp__cat-head">
+              <span>{{ i18n.authUi().cookieCatFunctional }}</span>
+              <span class="cookie-cmp__badge">{{ i18n.authUi().cookieAlwaysOn }}</span>
+            </div>
+            <p>{{ i18n.authUi().cookieCatFunctionalDesc }}</p>
+          </li>
+          <li class="cookie-cmp__cat">
+            <div class="cookie-cmp__cat-head">
+              <label class="cookie-cmp__toggle-label" [attr.for]="'cookie-analytics-toggle'">
+                {{ i18n.authUi().cookieCatAnalytics }}
+              </label>
+              <input
+                id="cookie-analytics-toggle"
+                type="checkbox"
+                class="cookie-cmp__toggle"
+                [checked]="consent.draftAnalytics()"
+                (change)="onAnalyticsToggle($event)"
+              />
+            </div>
+            <p>{{ i18n.authUi().cookieCatAnalyticsDesc }}</p>
+          </li>
+        </ul>
+        <div class="cookie-cmp__actions" role="group">
+          <button type="button" class="cookie-cmp__btn cookie-cmp__btn--primary" (click)="saveSettings()">
+            {{ i18n.authUi().cookieSave }}
+          </button>
+          <button type="button" class="cookie-cmp__btn cookie-cmp__btn--ghost" (click)="backToMain()">
+            {{ i18n.authUi().cookieBack }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

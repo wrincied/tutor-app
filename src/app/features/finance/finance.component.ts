@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FINANCE_REPORT_CURRENCIES, type Expense, type FinanceSummary } from '@interfaces';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { UserService } from '../../core/services/user.service';
 import {
   financePeriodRange,
   type FinancePeriodPreset,
@@ -22,6 +23,8 @@ import {
 } from '../../core/utils/finance-route';
 import { getExchangeRateSourceLink } from '../../core/constants/exchange-rate-sources';
 import { formatMoneyWithCode } from '../../core/utils/format-currency';
+import { createFinanceTeaserDemo } from '../../core/utils/finance-teaser-demo';
+import { planEntitlementsFromProfile } from '../../core/utils/user-profile.utils';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 
@@ -34,6 +37,7 @@ import { AppSelectComponent, type AppSelectOption } from '../../shared/app-selec
 })
 export class FinanceComponent implements OnInit {
   private readonly financeSvc = inject(FinanceService);
+  private readonly userSvc = inject(UserService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   readonly i18n = inject(I18nService);
@@ -44,6 +48,9 @@ export class FinanceComponent implements OnInit {
   error = signal<string | null>(null);
   summary = signal<FinanceSummary | null>(null);
   expenses = signal<Expense[]>([]);
+  /** Free plan: demo preview + paywall overlay. */
+  isTeaser = signal(false);
+  upgradeModalOpen = signal(false);
 
   periodPreset = signal<FinancePeriodPreset>('all');
   reportCurrency = signal(this.readStoredReportCurrency());
@@ -212,6 +219,37 @@ export class FinanceComponent implements OnInit {
   reload(): void {
     this.loading.set(true);
     this.error.set(null);
+
+    // Always fetch fresh /me — ensureProfile can keep a pre-upgrade Free cache.
+    this.userSvc.refreshProfile().subscribe({
+      next: (profile) => {
+        const unlocked = planEntitlementsFromProfile(profile).hasFinance;
+        this.isTeaser.set(!unlocked);
+        if (!unlocked) {
+          this.applyTeaserDemo();
+          this.loading.set(false);
+          return;
+        }
+        this.loadLiveData();
+      },
+      error: () => {
+        this.isTeaser.set(true);
+        this.applyTeaserDemo();
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private applyTeaserDemo(): void {
+    const currency = this.reportCurrency() || 'EUR';
+    const demo = createFinanceTeaserDemo(currency);
+    this.reportCurrency.set(demo.summary.currency);
+    this.summary.set(demo.summary);
+    this.expenses.set(demo.expenses);
+    this.error.set(null);
+  }
+
+  private loadLiveData(): void {
     const range = financePeriodRange(this.periodPreset());
     const currency = this.reportCurrency();
     const summaryQuery = {
@@ -333,34 +371,48 @@ export class FinanceComponent implements OnInit {
       .sort((a, b) => a.code.localeCompare(b.code));
   }
 
+  private gateOrRun(action: () => void): void {
+    if (this.isTeaser()) {
+      this.upgradeModalOpen.set(true);
+      return;
+    }
+    action();
+  }
+
   openBreakdown(panel: FinanceBreakdownPanel): void {
-    void this.router.navigate(['/app/finance/breakdown', panel], {
-      queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+    this.gateOrRun(() => {
+      void this.router.navigate(['/app/finance/breakdown', panel], {
+        queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+      });
     });
   }
 
   openExpenseCreate(): void {
-    this.expenseEditTarget.set(null);
-    this.expenseForm = {
-      title: '',
-      amount: 0,
-      currency: this.defaultExpenseCurrency(),
-      expense_date: new Date().toISOString().slice(0, 10),
-      category: '',
-    };
-    this.expenseFormOpen.set(true);
+    this.gateOrRun(() => {
+      this.expenseEditTarget.set(null);
+      this.expenseForm = {
+        title: '',
+        amount: 0,
+        currency: this.defaultExpenseCurrency(),
+        expense_date: new Date().toISOString().slice(0, 10),
+        category: '',
+      };
+      this.expenseFormOpen.set(true);
+    });
   }
 
   openExpenseEdit(expense: Expense): void {
-    this.expenseEditTarget.set(expense);
-    this.expenseForm = {
-      title: expense.title,
-      amount: expense.amount,
-      currency: this.expenseCurrency(expense),
-      expense_date: expense.expense_date || new Date().toISOString().slice(0, 10),
-      category: expense.category ?? '',
-    };
-    this.expenseFormOpen.set(true);
+    this.gateOrRun(() => {
+      this.expenseEditTarget.set(expense);
+      this.expenseForm = {
+        title: expense.title,
+        amount: expense.amount,
+        currency: this.expenseCurrency(expense),
+        expense_date: expense.expense_date || new Date().toISOString().slice(0, 10),
+        category: expense.category ?? '',
+      };
+      this.expenseFormOpen.set(true);
+    });
   }
 
   closeExpenseForm(): void {
@@ -369,6 +421,10 @@ export class FinanceComponent implements OnInit {
   }
 
   saveExpense(): void {
+    if (this.isTeaser()) {
+      this.upgradeModalOpen.set(true);
+      return;
+    }
     const title = this.expenseForm.title.trim();
     const amount = Number(this.expenseForm.amount);
     if (!title || Number.isNaN(amount) || amount < 0) {
@@ -403,7 +459,7 @@ export class FinanceComponent implements OnInit {
   }
 
   confirmDeleteExpense(id: string): void {
-    this.expenseDeleteId.set(id);
+    this.gateOrRun(() => this.expenseDeleteId.set(id));
   }
 
   cancelDeleteExpense(): void {
@@ -411,6 +467,10 @@ export class FinanceComponent implements OnInit {
   }
 
   deleteExpense(): void {
+    if (this.isTeaser()) {
+      this.upgradeModalOpen.set(true);
+      return;
+    }
     const id = this.expenseDeleteId();
     if (!id) {
       return;
@@ -422,5 +482,14 @@ export class FinanceComponent implements OnInit {
       },
       error: () => this.error.set(this.t.loadError),
     });
+  }
+
+  closeUpgradeModal(): void {
+    this.upgradeModalOpen.set(false);
+  }
+
+  goToPricing(): void {
+    this.upgradeModalOpen.set(false);
+    void this.router.navigate(['/app/pricing']);
   }
 }

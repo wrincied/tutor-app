@@ -1,14 +1,10 @@
 <div class="landing-v2">
-  <div class="landing-v2__atmosphere" aria-hidden="true">
-    <span class="landing-v2__orb landing-v2__orb--a"></span>
-    <span class="landing-v2__orb landing-v2__orb--b"></span>
-    <span class="landing-v2__orb landing-v2__orb--c"></span>
-  </div>
   <div class="landing-v2__dither" aria-hidden="true"></div>
 
   <nav class="landing-v2__nav" [attr.aria-label]="i18n.authUi().footerRights">
     <a class="landing-v2__nav-brand" routerLink="/">Simple4U</a>
     <div class="landing-v2__nav-actions">
+      <a class="landing-v2__nav-link" routerLink="/pricing">{{ i18n.authUi().landingNavPricing }}</a>
       <div class="landing-v2__lang" [class.landing-v2__lang--open]="langMenuOpen()">
         <button
           type="button"
@@ -45,11 +41,14 @@
   <header class="landing-v2__hero">
     <div class="landing-v2__hero-copy">
       <p class="landing-v2__brand">Simple4U</p>
+      <p class="landing-v2__kicker">{{ i18n.authUi().landingAudience }}</p>
       <h1 class="landing-v2__headline">{{ i18n.authUi().landingHeadline }}</h1>
       <p class="landing-v2__subtitle">{{ i18n.authUi().landingSubtitle }}</p>
       <div class="landing-v2__cta-row">
         <a class="landing-v2__cta" routerLink="/register">{{ i18n.authUi().join }}</a>
+        <a class="landing-v2__cta-secondary" routerLink="/login">{{ i18n.authUi().landingSignIn }}</a>
       </div>
+      <p class="landing-v2__cta-hint">{{ i18n.authUi().landingCtaHint }}</p>
     </div>
 
     <aside
@@ -307,17 +306,17 @@
     </h2>
 
     <div class="landing-v2__features">
-      <article class="landing-v2__feature" tabindex="0">
+      <article class="landing-v2__feature">
         <p class="landing-v2__feature-index" aria-hidden="true">01</p>
         <h3 class="landing-v2__feature-title">{{ i18n.authUi().landingFeatureScheduleTitle }}</h3>
         <p class="landing-v2__feature-body">{{ i18n.authUi().landingFeatureScheduleBody }}</p>
       </article>
-      <article class="landing-v2__feature" tabindex="0">
+      <article class="landing-v2__feature">
         <p class="landing-v2__feature-index" aria-hidden="true">02</p>
         <h3 class="landing-v2__feature-title">{{ i18n.authUi().landingFeatureStudentsTitle }}</h3>
         <p class="landing-v2__feature-body">{{ i18n.authUi().landingFeatureStudentsBody }}</p>
       </article>
-      <article class="landing-v2__feature" tabindex="0">
+      <article class="landing-v2__feature">
         <p class="landing-v2__feature-index" aria-hidden="true">03</p>
         <h3 class="landing-v2__feature-title">{{ i18n.authUi().landingFeatureFinanceTitle }}</h3>
         <p class="landing-v2__feature-body">{{ i18n.authUi().landingFeatureFinanceBody }}</p>
@@ -492,20 +491,204 @@
     </div>
   </section>
 
+  <section class="landing-v2__section landing-v2__section--pricing" aria-labelledby="landing-v2-pricing">
+    <div class="landing-v2__pricing-inner">
+      <h2 id="landing-v2-pricing" class="landing-v2__section-title landing-v2__pricing-title">
+        {{ i18n.authUi().landingPricingTitle }}
+      </h2>
+      <p class="landing-v2__section-copy landing-v2__pricing-lead">
+        {{ i18n.authUi().landingPricingLead }}
+      </p>
+
+      <div
+        class="landing-v2__billing"
+        role="group"
+        [attr.aria-label]="i18n.authUi().landingPricingToggleMonthly"
+      >
+        <button
+          type="button"
+          class="landing-v2__billing-option"
+          [class.landing-v2__billing-option--active]="billingInterval() === 'monthly'"
+          (click)="setBillingInterval('monthly')"
+        >
+          {{ i18n.authUi().landingPricingToggleMonthly }}
+        </button>
+        <button
+          type="button"
+          class="landing-v2__billing-option"
+          [class.landing-v2__billing-option--active]="billingInterval() === 'yearly'"
+          (click)="setBillingInterval('yearly')"
+        >
+          {{ i18n.authUi().landingPricingToggleYearly }}
+        </button>
+      </div>
+
+      <div class="landing-v2__plans">
+        <article class="landing-v2__plan">
+          <div class="landing-v2__plan-head">
+            <span class="landing-v2__plan-badge landing-v2__plan-badge--spacer" aria-hidden="true"
+              >&nbsp;</span
+            >
+            <h3 class="landing-v2__plan-label">{{ i18n.authUi().landingPricingFreeLabel }}</h3>
+          </div>
+          <p class="landing-v2__plan-trial landing-v2__plan-trial--spacer" aria-hidden="true"></p>
+          <p class="landing-v2__plan-price">
+            <span class="landing-v2__plan-price-row">
+              <span class="landing-v2__plan-amount">{{ freeAmountLabel() }}</span>
+              <span class="landing-v2__plan-currency">{{ pricingCurrencySymbol() }}</span>
+            </span>
+            <span class="landing-v2__plan-period">{{ i18n.authUi().landingPricingFreePeriod }}</span>
+          </p>
+          <ul class="landing-v2__plan-features">
+            @for (feature of i18n.authUi().landingPricingFreeFeatures; track feature) {
+              <li>{{ feature }}</li>
+            }
+          </ul>
+          <a routerLink="/register" class="landing-v2__plan-cta landing-v2__plan-cta--ghost">{{
+            i18n.authUi().landingPricingFreeCta
+          }}</a>
+        </article>
+
+        <article class="landing-v2__plan landing-v2__plan--basis">
+          <div class="landing-v2__plan-head">
+            <span class="landing-v2__plan-badge landing-v2__plan-badge--soft">{{
+              i18n.authUi().landingPricingBasisBadge
+            }}</span>
+            <h3 class="landing-v2__plan-label">{{ i18n.authUi().landingPricingBasisLabel }}</h3>
+          </div>
+          <p class="landing-v2__plan-trial">{{ i18n.authUi().landingPricingBasisTrial }}</p>
+          <p class="landing-v2__plan-price">
+            <span class="landing-v2__plan-price-row">
+              <span class="landing-v2__plan-amount">{{ basisAmountLabel() }}</span>
+              <span class="landing-v2__plan-currency">{{ pricingCurrencySymbol() }}</span>
+            </span>
+            <span class="landing-v2__plan-period">{{
+              i18n.authUi().landingPricingBasisPeriodMonthly
+            }}</span>
+            @if (basisBilledAnnuallyLabel(); as billed) {
+              <span class="landing-v2__plan-billed">{{ billed }}</span>
+            }
+          </p>
+          <ul class="landing-v2__plan-features">
+            @for (feature of i18n.authUi().landingPricingBasisFeatures; track feature) {
+              <li>{{ feature }}</li>
+            }
+          </ul>
+          <a routerLink="/register" class="landing-v2__plan-cta landing-v2__plan-cta--ghost">{{
+            i18n.authUi().landingPricingBasisCta
+          }}</a>
+        </article>
+
+        <article class="landing-v2__plan landing-v2__plan--pro">
+          <div class="landing-v2__plan-head">
+            <span class="landing-v2__plan-badge">{{ i18n.authUi().landingPricingProBadge }}</span>
+            <h3 class="landing-v2__plan-label">{{ i18n.authUi().landingPricingProLabel }}</h3>
+          </div>
+          <p class="landing-v2__plan-trial">{{ i18n.authUi().landingPricingProTrial }}</p>
+          <p class="landing-v2__plan-price">
+            <span class="landing-v2__plan-price-row">
+              <span class="landing-v2__plan-amount">{{ proAmountLabel() }}</span>
+              <span class="landing-v2__plan-currency">{{ pricingCurrencySymbol() }}</span>
+            </span>
+            <span class="landing-v2__plan-period">{{ proPeriodLabel() }}</span>
+            @if (proBilledAnnuallyLabel(); as billed) {
+              <span class="landing-v2__plan-billed">{{ billed }}</span>
+            }
+          </p>
+          <ul class="landing-v2__plan-features">
+            @for (feature of i18n.authUi().landingPricingProFeatures; track feature) {
+              <li>{{ feature }}</li>
+            }
+          </ul>
+          <a routerLink="/register" class="landing-v2__plan-cta landing-v2__plan-cta--solid">{{
+            i18n.authUi().landingPricingProCta
+          }}</a>
+        </article>
+      </div>
+
+      <a class="landing-v2__text-link landing-v2__pricing-link" routerLink="/pricing">{{
+        i18n.authUi().landingPricingLink
+      }}</a>
+    </div>
+  </section>
+
+  <section class="landing-v2__section landing-v2__section--faq" aria-labelledby="landing-v2-faq">
+    <h2 id="landing-v2-faq" class="landing-v2__section-title">
+      {{ i18n.authUi().landingFaqTitle }}
+    </h2>
+    <div class="landing-v2__faq">
+      <details class="landing-v2__faq-item">
+        <summary>{{ i18n.authUi().landingFaq1Q }}</summary>
+        <p>{{ i18n.authUi().landingFaq1A }}</p>
+      </details>
+      <details class="landing-v2__faq-item">
+        <summary>{{ i18n.authUi().landingFaq2Q }}</summary>
+        <p>{{ i18n.authUi().landingFaq2A }}</p>
+      </details>
+      <details class="landing-v2__faq-item">
+        <summary>{{ i18n.authUi().landingFaq3Q }}</summary>
+        <p>{{ i18n.authUi().landingFaq3A }}</p>
+      </details>
+      <details class="landing-v2__faq-item">
+        <summary>{{ i18n.authUi().landingFaq4Q }}</summary>
+        <p>{{ i18n.authUi().landingFaq4A }}</p>
+      </details>
+      <details class="landing-v2__faq-item">
+        <summary>{{ i18n.authUi().landingFaq5Q }}</summary>
+        <p>{{ i18n.authUi().landingFaq5A }}</p>
+      </details>
+    </div>
+  </section>
+
   <section class="landing-v2__closing" aria-labelledby="landing-v2-closing">
     <h2 id="landing-v2-closing" class="landing-v2__closing-title">
       {{ i18n.authUi().landingClosingTitle }}
     </h2>
-    <a class="landing-v2__cta" routerLink="/register">{{ i18n.authUi().landingClosingCta }}</a>
+    <div class="landing-v2__cta-row">
+      <a class="landing-v2__cta" routerLink="/register">{{ i18n.authUi().landingClosingCta }}</a>
+      <a class="landing-v2__cta-secondary landing-v2__cta-secondary--on-ink" routerLink="/login">{{
+        i18n.authUi().landingNavSignIn
+      }}</a>
+    </div>
+    <p class="landing-v2__cta-hint landing-v2__cta-hint--on-ink">{{ i18n.authUi().landingCtaHint }}</p>
   </section>
 
   <footer class="landing-v2__footer">
-    <nav class="landing-v2__footer-nav" [attr.aria-label]="i18n.authUi().footerRights">
-      <a routerLink="/legal/data-processing">{{ i18n.authUi().footerDatenschutz }}</a>
-      <a routerLink="/legal/impressum">{{ i18n.authUi().footerImpressum }}</a>
-      <a [href]="'mailto:' + contactEmail()">{{ i18n.authUi().footerKontakt }}</a>
-      <a routerLink="/legal/cookies">{{ i18n.authUi().footerCookies }}</a>
-    </nav>
+    <div class="landing-v2__footer-grid">
+      <nav class="landing-v2__footer-col" [attr.aria-label]="i18n.authUi().footerColProduct">
+        <h2 class="landing-v2__footer-heading">{{ i18n.authUi().footerColProduct }}</h2>
+        <a routerLink="/pricing">{{ i18n.authUi().landingNavPricing }}</a>
+        <a href="#landing-v2-features" (click)="scrollToSection($event, 'landing-v2-features')">{{
+          i18n.authUi().footerFeatures
+        }}</a>
+        <a routerLink="/status" [class]="footerStatusClass()">
+          <span
+            class="landing-v2__footer-pulse"
+            [attr.aria-label]="footerStatusLabel()"
+          ></span>
+          {{ i18n.authUi().footerStatus }}
+        </a>
+      </nav>
+
+      <nav class="landing-v2__footer-col" [attr.aria-label]="i18n.authUi().footerColCompany">
+        <h2 class="landing-v2__footer-heading">{{ i18n.authUi().footerColCompany }}</h2>
+        <a routerLink="/help">{{ i18n.authUi().footerHelpCenter }}</a>
+        <a href="#landing-v2-faq" (click)="scrollToSection($event, 'landing-v2-faq')">{{
+          i18n.authUi().footerFaq
+        }}</a>
+        <a [href]="'mailto:' + contactEmail()">{{ i18n.authUi().footerKontakt }}</a>
+      </nav>
+
+      <nav class="landing-v2__footer-col" [attr.aria-label]="i18n.authUi().footerColLegal">
+        <h2 class="landing-v2__footer-heading">{{ i18n.authUi().footerColLegal }}</h2>
+        <a routerLink="/legal/data-processing">{{ i18n.authUi().footerDatenschutz }}</a>
+        <a routerLink="/legal/terms">{{ i18n.authUi().footerTerms }}</a>
+        <a routerLink="/legal/impressum">{{ i18n.authUi().footerImpressum }}</a>
+        <button type="button" class="landing-v2__footer-btn" (click)="openCookieSettings()">
+          {{ i18n.authUi().footerCookieSettings }}
+        </button>
+      </nav>
+    </div>
     <p class="landing-v2__footer-copy">{{ i18n.authUi().footerRights }}</p>
   </footer>
 </div>

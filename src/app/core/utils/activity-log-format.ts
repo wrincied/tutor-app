@@ -55,7 +55,9 @@ function fieldLabel(field: string, strings: ActivityLogStrings): string {
 }
 
 function balanceReasonLabel(reason: string | undefined, strings: ActivityLogStrings): string {
-  switch (reason) {
+  const raw = String(reason ?? '').trim();
+  switch (raw) {
+    case 'lesson_completed':
     case 'lesson_completed_delayed':
       return strings.reasonLessonCompleted;
     case 'lesson_completed_postpaid':
@@ -67,13 +69,14 @@ function balanceReasonLabel(reason: string | undefined, strings: ActivityLogStri
     case 'lesson_balance_refund':
     case 'lesson_uncompleted_refund':
     case 'lesson_restored_refund':
+    case 'refund to balance':
       return strings.reasonLessonRefund;
     case 'lesson_uncompleted_postpaid_reversal':
       return strings.reasonLessonUncompleted;
     case 'lesson_deleted_refund':
       return strings.reasonLessonDeleted;
     default:
-      return reason ?? '';
+      return raw;
   }
 }
 
@@ -100,6 +103,10 @@ export function formatActivityLogTitle(entry: ActivityLogEntry, strings: Activit
       return student
         ? `${strings.actionStudentDeleted}: ${student}`
         : strings.actionStudentDeleted;
+    case 'student.balance_adjust':
+      return student
+        ? `${strings.actionStudentBalanceAdjust}: ${student}`
+        : strings.actionStudentBalanceAdjust;
     case 'student.topup': {
       const added = meta['added'];
       return student
@@ -119,8 +126,26 @@ export function formatActivityLogTitle(entry: ActivityLogEntry, strings: Activit
         : `${strings.actionBalanceCredit}${reason ? `: ${reason}` : ''}`;
     }
     default:
-      return entry.summary || entry.action;
+      return localizeFallbackTitle(entry, strings);
   }
+}
+
+function localizeFallbackTitle(entry: ActivityLogEntry, strings: ActivityLogStrings): string {
+  const summary = String(entry.summary || entry.action || '').trim();
+  const normalized = summary.toLowerCase();
+  if (normalized === 'student added' || normalized.includes('student added')) {
+    return strings.actionStudentCreated;
+  }
+  if (normalized === 'refund to balance' || normalized.includes('refund to balance')) {
+    return strings.reasonLessonRefund;
+  }
+  if (normalized === 'lesson_completed' || normalized === 'lesson completed') {
+    return strings.reasonLessonCompleted;
+  }
+  if (normalized === 'student.balance_adjust' || normalized.includes('balance adjust')) {
+    return strings.actionStudentBalanceAdjust;
+  }
+  return summary || entry.action;
 }
 
 export function formatActivityLogChanges(

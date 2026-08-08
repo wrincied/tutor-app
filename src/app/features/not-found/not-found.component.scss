@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Syne:wght@700;800&display=swap');
-
 :host {
   display: block;
   min-height: 100dvh;
@@ -24,7 +22,7 @@
     radial-gradient(110% 70% at 12% 0%, #143d36 0%, transparent 55%),
     radial-gradient(80% 60% at 88% 18%, #1a4a3f 0%, transparent 52%),
     linear-gradient(165deg, #061210 0%, #0b221c 48%, #102820 100%);
-  font-family: 'Figtree', sans-serif;
+  font-family: var(--font-body, 'Inter', sans-serif);
   overflow: hidden;
 }
 
@@ -83,9 +81,9 @@
 
 .not-found__brand {
   margin: 0 0 1.25rem;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1;
   color: var(--foam);
@@ -93,9 +91,9 @@
 
 .not-found__code {
   margin: 0 0 0.35rem;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(4.5rem, 18vw, 7rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.06em;
   line-height: 0.9;
   color: rgb(231 245 239 / 0.16);
@@ -104,7 +102,7 @@
 
 .not-found__title {
   margin: 0 0 0.65rem;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(1.35rem, 3.5vw, 1.75rem);
   font-weight: 700;
   letter-spacing: -0.02em;

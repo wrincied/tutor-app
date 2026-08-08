@@ -67,7 +67,14 @@ export class AdminDashboardLayoutService {
     if (!raw?.length) {
       return [...DEFAULT_ADMIN_DASHBOARD_WIDGETS];
     }
-    const filtered = raw.filter((id) => allowed.has(id));
+    const selected = new Set(raw.filter((id) => allowed.has(id)));
+    // Older saved prefs had only "Paid (Pro)" — surface Basis/Pro KPIs automatically.
+    if (selected.has('kpi-paid-users') && !selected.has('kpi-basis-users') && allowed.has('kpi-basis-users')) {
+      selected.add('kpi-basis-users');
+      selected.add('kpi-pro-users');
+    }
+    const order = ADMIN_DASHBOARD_WIDGETS.map((w) => w.id);
+    const filtered = order.filter((id) => selected.has(id));
     return filtered.length ? filtered : [...DEFAULT_ADMIN_DASHBOARD_WIDGETS];
   }
 

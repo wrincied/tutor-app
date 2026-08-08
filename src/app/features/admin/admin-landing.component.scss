@@ -8,7 +8,7 @@
 .admin-landing__head {
   h2 {
     margin: 0 0 0.35rem;
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-heading, 'Figtree', sans-serif);
     font-size: 1.35rem;
     font-weight: 700;
     color: var(--ink, #071714);

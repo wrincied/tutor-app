@@ -41,9 +41,9 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
 }
 
 .sidebar-logo {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--ink, #071714);
   padding: 8px 8px 0;
@@ -120,6 +120,11 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
   transition: background 0.15s, color 0.15s;
 
   svg { flex-shrink: 0; }
+
+  /* Students-иконка визуально смещена влево в viewBox — чуть подвинуть */
+  .nav-icon--students {
+    transform: translateX(0.25rem);
+  }
 
   &:hover { background: var(--nav-hover); }
 
@@ -242,7 +247,7 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
   gap: 3px;
   color: var(--nav-text);
   text-decoration: none;
-  font-size: 10px;
+  font-size: 9px;
   flex: 1;
   padding: 6px 0;
   overflow: hidden;
@@ -254,6 +259,10 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
     width: 22px;
     height: 22px;
     flex-shrink: 0;
+  }
+
+  .nav-icon--students {
+    transform: translateX(0.05rem);
   }
 
   &.active {

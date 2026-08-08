@@ -377,9 +377,9 @@
 .home-studio__greeting {
   margin: 0;
   max-width: 22rem;
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(1.75rem, 5vw, 2.35rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1.1;
   color: var(--ink, #071714);
@@ -428,9 +428,9 @@
 }
 
 .home-studio__clock {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: clamp(3.5rem, 14vw, 5.5rem);
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.06em;
   line-height: 0.9;
@@ -540,7 +540,7 @@
 }
 
 .home-studio__item-time {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: 0.9375rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
