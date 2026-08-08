@@ -138,38 +138,26 @@ npm install
 
 ### 2. Environment
 
-Copy the template and fill in Firebase client config and API URL:
+`environment.ts` is **gitignored**. Named sources in `src/environments/`:
 
-```bash
-cp src/environments/environment.template.ts src/environments/environment.development.ts
-```
+- `environment.development-local.ts` — `:4200` + `localhost:3001`
+- `environment.development-remote.ts` — `:4200` + remote API
+- `environment.production.ts` — production (`simple4u.at`)
 
-Minimum fields in `environment.development.ts`:
-
-```ts
-export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:3001',
-  appUrl: 'http://localhost:4200',
-  firebase: { /* Firebase Console → Project settings */ },
-};
-```
-
-`src/environments/environment.ts` is used for production builds. Do not commit secrets; Firebase client keys are public by design but should be restricted in the Firebase Console.
+`prepare-environment.mjs` copies the right file → `environment.ts` before serve/build. Edit the named files, not `environment.ts`.
 
 ### 3. Run
 
 ```bash
 # Terminal 1 — API (see backend/README.md)
-cd backend && npm run dev
+cd backend && npm run dev   # or: node server.js
 
-# Terminal 2 — frontend
-npm start
-# → http://localhost:4200 (design UI: Home + shell v2)
-
-# Alias — same design UI on :4200
-npm run start:design
+# Terminal 2 — frontend + local API
+npm run dev:local
 # → http://localhost:4200
+
+# Or frontend against prod API
+npm run dev:remote
 ```
 
 ### 4. Build and test
@@ -220,9 +208,10 @@ Suggested screens for a live demo:
 
 | Command | Description |
 |---------|-------------|
-| `npm start` | `ng serve` — design UI (Home + shell v2) on :4200 |
-| `npm run start:design` | Same design UI on :4200 (alias) |
+| `npm run dev:local` | Frontend :4200 + local API :3001 |
+| `npm run dev:remote` | Frontend :4200 + remote (prod) API |
 | `npm run build` | Production build |
+| `npm run build:hosting` | Production build for Firebase Hosting |
 | `npm test` | Vitest unit tests |
 | `ng generate component …` | Angular CLI scaffolding |
 

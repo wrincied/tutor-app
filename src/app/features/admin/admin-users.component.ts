@@ -107,6 +107,7 @@ export class AdminUsersComponent implements OnInit {
     const labels = this.t();
     return [
       { value: 'free', label: labels.statusFree },
+      { value: 'basis', label: labels.statusBasis },
       { value: 'pro', label: labels.statusPro },
       { value: 'trial', label: labels.statusTrial },
     ];

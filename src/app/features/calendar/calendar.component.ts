@@ -34,6 +34,7 @@ import {
 import { DEFAULT_STUDENT_BORDER_COLOR } from '../../core/utils/pastel-color';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+import { AppDateInputComponent } from '../../shared/app-date-input';
 import { I18nService } from '../../core/services/i18n.service';
 import { APP_OVERLAY_LAYER_OPEN } from '../../core/constants/overlay-layer';
 import { purgeStaleOverlayLayers } from '../../core/utils/purge-stale-overlay-layers';
@@ -139,6 +140,7 @@ type BillingConfirmState = {
     FormsModule,
     AppDialogComponent,
     AppSelectComponent,
+    AppDateInputComponent,
     NgTemplateOutlet,
     LessonCardComponent,
     CalendarHeaderComponent,

@@ -27,20 +27,30 @@ export interface PricingPlanCopy {
   name: string;
   priceLabel: string;
   period: string;
+  /** Logged-in free user (current plan). */
   cta: string;
+  /** Guest CTA on public /pricing. */
+  ctaGuest: string;
   features: string[];
 }
 
-export interface PricingProPlanCopy {
+/** Paid plan copy shared by Basis and Pro (amounts come from pricing utils). */
+export interface PricingPaidPlanCopy {
   name: string;
   periodMonthly: string;
   periodYearly: string;
+  /** Yearly mode footnote. Placeholders: `{amount}`, `{currency}`. */
+  billedAnnually: string;
+  /** Optional highlight under the plan name (trial / value line). */
   trialBadge: string;
   microcopy: string;
   cta: string;
   ctaLoading: string;
   features: string[];
 }
+
+/** @deprecated Use PricingPaidPlanCopy */
+export type PricingProPlanCopy = PricingPaidPlanCopy;
 
 export interface PricingStrings {
   title: string;
@@ -49,10 +59,33 @@ export interface PricingStrings {
   toggleYearly: string;
   saveBadge: string;
   recommendedBadge: string;
+  /** Soft highlight on Basis (e.g. “For small tutors”). */
+  basisBadge: string;
+  /** Strong highlight on Pro (e.g. “Pays for itself”). */
+  proValueBadge: string;
   freePlan: PricingPlanCopy;
-  proPlan: PricingProPlanCopy;
+  basisPlan: PricingPaidPlanCopy;
+  proPlan: PricingPaidPlanCopy;
   stripeNote: string;
+  stripeNoteBasis: string;
   taxRequired: string;
+  /** Disabled CTA on the active plan card. */
+  currentPlanCta: string;
+  /** Outline CTA on lower plans when user is on a higher paid plan. */
+  downgradeCta: string;
+  downgradeToFreeTitle: string;
+  downgradeToFreeBody: string;
+  downgradeToFreeConfirm: string;
+  downgradeToBasisTitle: string;
+  downgradeToBasisBody: string;
+  downgradeToBasisConfirm: string;
+  downgradeKeep: string;
+  downgradeLoading: string;
+  /** Shown on Free when cancel_at_period_end is already scheduled. Placeholder: `{date}`. */
+  cancelScheduledCta: string;
+  /** Extra line under Free CTA when cancel is scheduled. Placeholder: `{date}`. */
+  cancelScheduledHint: string;
+  alreadyBasis: string;
   alreadyPro: string;
   alreadyTrial: string;
   accountLink: string;
@@ -71,12 +104,16 @@ export type PageTitleKey =
   | 'legalDataProcessing'
   | 'legalCookies'
   | 'legalImpressum'
+  | 'legalTerms'
+  | 'help'
+  | 'status'
   | 'adminLogin'
   | 'verifyEmail'
   | 'onboarding'
   | 'home'
   | 'students'
   | 'calendar'
+  | 'workspace'
   | 'finance'
   | 'pricing'
   | 'account'
@@ -109,6 +146,7 @@ export interface NavStrings {
   home: string;
   students: string;
   calendar: string;
+  workspace: string;
   finance: string;
   themeDark: string;
   themeLight: string;
@@ -133,7 +171,15 @@ export type TaxMode =
   | 'ua-fop3'
   | 'none';
 
-export type SubscriptionStatus = 'free' | 'pro' | 'trial';
+export type SubscriptionStatus = 'free' | 'basis' | 'pro' | 'trial';
+
+/** Feature gates for Free / Basis / Pro (from API enrichUserProfile). */
+export interface PlanEntitlements {
+  /** null = unlimited */
+  max_students: number | null;
+  has_finance: boolean;
+  has_telegram: boolean;
+}
 
 export type UserRole = 'tutor' | 'super_admin';
 
@@ -144,7 +190,7 @@ export interface SubscriptionPricing {
   yearly: number;
 }
 
-export type WorkspaceLessonDuration = 45 | 60 | 90;
+export type WorkspaceLessonDuration = 45 | 60 | 90 | 120;
 
 export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -158,6 +204,17 @@ export interface UserWorkingHoursSettings {
   start: string;
   end: string;
   days: IsoWeekday[];
+}
+
+/** Out-of-office / vacation mode for the tutor workspace. */
+export interface UserVacationSettings {
+  enabled: boolean;
+  /** Inclusive YYYY-MM-DD, or empty when unset. */
+  startDate: string;
+  /** Inclusive YYYY-MM-DD, or empty when unset. */
+  endDate: string;
+  /** Auto-reply / note for students (Telegram / calendar later). */
+  message: string;
 }
 
 export interface UserProfile {
@@ -176,15 +233,29 @@ export interface UserProfile {
   tax_mode_configured?: boolean;
   timezone: string;
   subscription_status: SubscriptionStatus | string;
+  /** ISO end of Stripe trial, when status is trial. */
+  trial_ends_at?: string | null;
+  /** User scheduled cancel at period end. */
+  cancel_at_period_end?: boolean;
+  /** ISO when access ends after cancel-at-period-end. */
+  subscription_cancel_at?: string | null;
+  /** Whether a Stripe subscription id is linked. */
+  has_stripe_subscription?: boolean;
+  /** Feature gates derived from subscription_status. */
+  plan_entitlements?: PlanEntitlements;
   email_verified?: boolean;
   role?: UserRole | string;
   workspace?: UserWorkspaceSettings;
   workingHours?: UserWorkingHoursSettings;
+  vacation?: UserVacationSettings;
 }
 
 export interface AdminStats {
   totalUsers: number;
+  /** Basis + Pro (без Trial). */
   paidUsers: number;
+  basisUsers: number;
+  proUsers: number;
   trialUsers: number;
   conversionPercent: number;
   estimatedMrr: Record<string, number>;
@@ -192,7 +263,9 @@ export interface AdminStats {
 
 export type AdminDashboardWidgetId =
   | 'kpi-total-users'
+  | 'kpi-basis-users'
   | 'kpi-paid-users'
+  | 'kpi-pro-users'
   | 'kpi-trial-users'
   | 'kpi-conversion'
   | 'kpi-mrr'
@@ -311,7 +384,9 @@ export interface AdminStrings {
   settingsReset: string;
   settingsResetConfirm: string;
   widgetKpiTotalUsers: string;
+  widgetKpiBasisUsers: string;
   widgetKpiPaidUsers: string;
+  widgetKpiProUsers: string;
   widgetKpiTrialUsers: string;
   widgetKpiConversion: string;
   widgetKpiMrr: string;
@@ -322,11 +397,15 @@ export interface AdminStrings {
   widgetGeography: string;
   widgetProductUsage: string;
   metricTotalUsers: string;
+  metricBasisUsers: string;
   metricPaidUsers: string;
+  metricProUsers: string;
   metricTrialUsers: string;
   metricConversion: string;
   metricRevenue: string;
   revenueHint: string;
+  paidBreakdownHint: string;
+  signedInAs: string;
   segmentActive7d: string;
   segmentInactive14d: string;
   segmentTrialExpiring: string;
@@ -379,6 +458,7 @@ export interface AdminStrings {
   userDetailLoading: string;
   userDetailError: string;
   statusFree: string;
+  statusBasis: string;
   statusPro: string;
   statusTrial: string;
   trialEndsUntil: string;
@@ -420,12 +500,15 @@ export interface AccountStrings {
   email: string;
   newEmail: string;
   passwordSection: string;
+  /** Hint when signed in with Google only (no password provider). */
+  googlePasswordHint: string;
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
   subscriptionSection: string;
   subscriptionStatus: string;
   subscriptionFree: string;
+  subscriptionBasis: string;
   subscriptionPro: string;
   subscriptionTrial: string;
   taxSection: string;
@@ -436,6 +519,8 @@ export interface AccountStrings {
   loadError: string;
   passwordsMismatch: string;
   currentPasswordRequired: string;
+  /** Firebase reauth failed: wrong current password. */
+  currentPasswordIncorrect: string;
   saveError: string;
   subscriptionManagedByPayment: string;
   taxModeRequiredHint: string;
@@ -462,6 +547,16 @@ export interface AccountStrings {
   subscriptionPriceMonthly: string;
   subscriptionPriceYearly: string;
   subscriptionModalClose: string;
+  cancelSubscription: string;
+  cancelSubscriptionConfirmTitle: string;
+  cancelSubscriptionConfirmBody: string;
+  cancelSubscriptionConfirm: string;
+  cancelSubscriptionKeep: string;
+  /** Pending cancel → Free. Placeholder: `{date}`. */
+  cancelSubscriptionScheduled: string;
+  resumeSubscription: string;
+  cancelSubscriptionLoading: string;
+  cancelSubscriptionError: string;
   customizationTab: string;
   accountTab: string;
   administrationTab: string;
@@ -473,11 +568,32 @@ export interface AccountStrings {
   workspaceCurrency: string;
   workspaceDefaultDuration: string;
   workingHoursSection: string;
+  workingHoursSubtitle: string;
+  workingHoursField: string;
   workingHoursStart: string;
   workingHoursEnd: string;
+  workingHoursFrom: string;
+  workingHoursTo: string;
   workingDays: string;
   workspaceSaving: string;
   workspaceSaved: string;
+  workspaceSaveChanges: string;
+  workspaceSaveError: string;
+  vacationSection: string;
+  vacationSubtitle: string;
+  vacationEnable: string;
+  vacationTimelineEmpty: string;
+  vacationTimelineDefault: string;
+  vacationStart: string;
+  vacationEnd: string;
+  vacationMessage: string;
+  vacationMessageHint: string;
+  vacationSave: string;
+  vacationSaving: string;
+  vacationSaved: string;
+  vacationSaveError: string;
+  vacationDatesRequired: string;
+  vacationDatesInvalid: string;
 }
 
 /** Публичная визитка / лендинг + auth. */
@@ -541,11 +657,85 @@ export interface AuthStrings {
   landingMockBookingSlot2: string;
   landingMockBookingSlot3: string;
   landingMockBookingConfirm: string;
+  /** Audience line under hero subtitle (landing-v2 trial). */
+  landingAudience: string;
+  /** Microcopy under primary CTA (e.g. free tier hint). */
+  landingCtaHint: string;
+  landingNavPricing: string;
+  landingPricingTitle: string;
+  landingPricingLead: string;
+  landingPricingToggleMonthly: string;
+  landingPricingToggleYearly: string;
+  landingPricingFreeLabel: string;
+  landingPricingBasisLabel: string;
+  landingPricingProLabel: string;
+  landingPricingBasisBadge: string;
+  landingPricingProBadge: string;
+  /** Line under Basis title. */
+  landingPricingBasisTrial: string;
+  /** Trial line under Pro title. */
+  landingPricingProTrial: string;
+  landingPricingFreePeriod: string;
+  landingPricingBasisPeriodMonthly: string;
+  landingPricingProPeriodMonthly: string;
+  landingPricingProPeriodYearly: string;
+  /** Yearly mode footnote. Placeholders: `{amount}`, `{currency}`. */
+  landingPricingBilledAnnually: string;
+  landingPricingFreeFeatures: string[];
+  landingPricingBasisFeatures: string[];
+  landingPricingProFeatures: string[];
+  landingPricingFreeCta: string;
+  landingPricingBasisCta: string;
+  landingPricingProCta: string;
+  landingPricingLink: string;
+  landingFaqTitle: string;
+  landingFaq1Q: string;
+  landingFaq1A: string;
+  landingFaq2Q: string;
+  landingFaq2A: string;
+  landingFaq3Q: string;
+  landingFaq3A: string;
+  landingFaq4Q: string;
+  landingFaq4A: string;
+  landingFaq5Q: string;
+  landingFaq5A: string;
   footerDatenschutz: string;
   footerImpressum: string;
   footerKontakt: string;
   footerCookies: string;
   footerRights: string;
+  footerColProduct: string;
+  footerColCompany: string;
+  footerColLegal: string;
+  footerFeatures: string;
+  footerStatus: string;
+  footerHelpCenter: string;
+  footerFaq: string;
+  footerTerms: string;
+  footerCookieSettings: string;
+  footerStatusLive: string;
+  helpTitle: string;
+  helpIntro: string;
+  helpGuideProfile: string;
+  helpGuideStudents: string;
+  helpGuideFinance: string;
+  helpFaqCta: string;
+  helpContactCta: string;
+  statusTitle: string;
+  statusLead: string;
+  statusAllOk: string;
+  statusApp: string;
+  statusDatabase: string;
+  statusStripe: string;
+  statusOperational: string;
+  statusChecking: string;
+  statusDegraded: string;
+  statusOutage: string;
+  statusDown: string;
+  statusUnconfigured: string;
+  statusUnknown: string;
+  statusCheckedAt: string;
+  statusRefresh: string;
   loginTitle: string;
   loginSubtitle: string;
   registerTitle: string;
@@ -624,6 +814,21 @@ export interface AuthStrings {
   onboardingCookiePolicyLink: string;
   onboardingCookiesAccept: string;
   onboardingCookiesDecline: string;
+  cookieBannerTitle: string;
+  cookieBannerBody: string;
+  cookieAcceptAll: string;
+  cookieEssentialOnly: string;
+  cookieSettings: string;
+  cookieSave: string;
+  cookieBack: string;
+  cookieCatEssential: string;
+  cookieCatEssentialDesc: string;
+  cookieCatFunctional: string;
+  cookieCatFunctionalDesc: string;
+  cookieCatAnalytics: string;
+  cookieCatAnalyticsDesc: string;
+  cookieAlwaysOn: string;
+  cookiePolicyLink: string;
   onboardingContinue: string;
   onboardingSaving: string;
   onboardingSubmitting: string;
@@ -655,7 +860,39 @@ export interface LegalDataProcessingStrings extends LegalCommonStrings {
   section5Body: string;
 }
 
+export interface LegalCookieTableRow {
+  category: string;
+  name: string;
+  provider: string;
+  purpose: string;
+  retention: string;
+}
+
 export interface LegalCookiesStrings extends LegalCommonStrings {
+  title: string;
+  intro: string;
+  definitionTitle: string;
+  definitionBody: string;
+  categoriesTitle: string;
+  essentialTitle: string;
+  essentialBody: string;
+  functionalTitle: string;
+  functionalBody: string;
+  analyticsTitle: string;
+  analyticsBody: string;
+  tableTitle: string;
+  tableCategory: string;
+  tableName: string;
+  tableProvider: string;
+  tablePurpose: string;
+  tableRetention: string;
+  tableRows: LegalCookieTableRow[];
+  withdrawTitle: string;
+  withdrawBody: string;
+  contactBody: string;
+}
+
+export interface LegalTermsStrings extends LegalCommonStrings {
   title: string;
   intro: string;
   section1Title: string;
@@ -666,11 +903,31 @@ export interface LegalCookiesStrings extends LegalCommonStrings {
   section3Body: string;
   section4Title: string;
   section4Body: string;
+  section5Title: string;
+  section5Body: string;
+  section6Title: string;
+  section6Body: string;
+  section7Title: string;
+  section7Body: string;
+  section8Title: string;
+  section8Body: string;
+  section9Title: string;
+  section9Body: string;
+  section10Title: string;
+  section10Body: string;
 }
 
 export interface SharedStrings {
   selectNoData: string;
   loadingContent: string;
+  planStudentLimitTitle: string;
+  /** Placeholder `{max}`. */
+  planStudentLimitBody: string;
+  planFinanceRequiredTitle: string;
+  planFinanceRequiredBody: string;
+  planTelegramRequiredTitle: string;
+  planTelegramRequiredBody: string;
+  planUpgradeCta: string;
 }
 
 export interface CalendarStrings {
@@ -697,6 +954,8 @@ export interface CalendarStrings {
   studentsSidebarEmpty: string;
   studentsSidebarNoResults: string;
   scheduledAtLabel: string;
+  scheduledDateLabel: string;
+  scheduledTimeLabel: string;
   lessonDescriptionLabel: string;
   advancedSettingsLabel: string;
   notesPlaceholder: string;
@@ -851,6 +1110,12 @@ export interface HomeStrings {
   betaTitle: string;
   betaBody: string;
   betaDismiss: string;
+  billingCongratsTrialTitle: string;
+  billingCongratsProTitle: string;
+  billingCongratsTrialBody: string;
+  billingCongratsProBody: string;
+  billingCongratsDismiss: string;
+  billingCongratsManage: string;
 }
 
 export interface FinanceStrings {
@@ -940,6 +1205,16 @@ export interface FinanceStrings {
   exportPdfError: string;
   pdfGeneratedAt: string;
   pdfSummary: string;
+  /** Free-plan teaser overlay */
+  teaserDemoBadge: string;
+  teaserTitle: string;
+  teaserBody: string;
+  teaserCta: string;
+  /** Modal when Free user taps a gated action */
+  upgradeActionTitle: string;
+  upgradeActionBody: string;
+  upgradeActionCta: string;
+  upgradeActionClose: string;
 }
 
 export interface FinanceLessonBreakdown {
@@ -1247,6 +1522,7 @@ export interface ActivityLogStrings {
   actionStudentUpdated: string;
   actionStudentDeleted: string;
   actionStudentTopup: string;
+  actionStudentBalanceAdjust: string;
   actionBalanceDebit: string;
   actionBalanceCredit: string;
   fieldName: string;

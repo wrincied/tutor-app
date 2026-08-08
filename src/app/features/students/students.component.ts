@@ -7,6 +7,7 @@ import { fromEvent } from 'rxjs';
 import { StudentService, Student } from '../../core/services/student.service';
 import { BotUnlinkAlertService } from '../../core/services/bot-unlink-alert.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { UserService } from '../../core/services/user.service';
 import {
   RATE_CURRENCIES,
   type RateCurrency,
@@ -14,6 +15,7 @@ import {
   type StudentBillingType,
   type StudentRateUnit,
   type StudentTelegramNotificationSettings,
+  type UserProfile,
 } from '@interfaces';
 import {
   colorToHexForPicker,
@@ -25,6 +27,7 @@ import {
   DEFAULT_TELEGRAM_SETTINGS,
   normalizeTelegramSettings,
 } from '../../core/utils/telegram-notification-settings';
+import { planEntitlementsFromProfile } from '../../core/utils/user-profile.utils';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { HelpTipComponent } from '../../shared/help-tip/help-tip.component';
@@ -58,6 +61,7 @@ function rateUnitSuffix(unit: StudentRateUnit, t: { perHour: string; perLesson: 
 export class StudentsComponent implements OnInit, OnDestroy {
   private svc = inject(StudentService);
   private unlinkAlerts = inject(BotUnlinkAlertService);
+  private readonly userSvc = inject(UserService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
@@ -65,6 +69,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   @ViewChild('studentForm') studentFormRef?: NgForm;
   students = signal<Student[]>([]);
+  profile = signal<UserProfile | null>(null);
   loading = signal(true);
   /** Desktop table vs mobile cards — only one list in DOM. */
   desktopLayout = signal(false);
@@ -153,12 +158,66 @@ export class StudentsComponent implements OnInit, OnDestroy {
     return false;
   });
 
+  readonly planEntitlements = computed(() => planEntitlementsFromProfile(this.profile()));
+  readonly hasTelegramPlan = computed(() => this.planEntitlements().hasTelegram);
+  readonly maxStudents = computed(() => this.planEntitlements().maxStudents);
+  readonly canAddStudent = computed(() => {
+    // Wait for /me — unknown plan must not look like Free(3).
+    if (!this.profile()) {
+      return false;
+    }
+    const max = this.maxStudents();
+    if (max === null) {
+      return true;
+    }
+    return this.students().length < max;
+  });
+  readonly studentLimitHint = computed(() => {
+    if (!this.profile()) {
+      return null;
+    }
+    const max = this.maxStudents();
+    if (max === null || this.canAddStudent()) {
+      return null;
+    }
+    return this.i18n.sharedUi().planStudentLimitBody.replace('{max}', String(max));
+  });
+
+  planGateKind = signal<'students' | 'telegram' | null>(null);
+  readonly planGateTitle = computed(() => {
+    const kind = this.planGateKind();
+    const s = this.i18n.sharedUi();
+    if (kind === 'telegram') {
+      return s.planTelegramRequiredTitle;
+    }
+    return s.planStudentLimitTitle;
+  });
+  readonly planGateBody = computed(() => {
+    const kind = this.planGateKind();
+    const s = this.i18n.sharedUi();
+    if (kind === 'telegram') {
+      return s.planTelegramRequiredBody;
+    }
+    const max = this.maxStudents() ?? 3;
+    return s.planStudentLimitBody.replace('{max}', String(max));
+  });
+
   private linkCopiedTimer: ReturnType<typeof setTimeout> | null = null;
   private invitePollTimer: ReturnType<typeof setInterval> | null = null;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit() {
     this.bindDesktopLayoutMq();
+    this.userSvc.invalidateProfile();
+    this.userSvc.refreshProfile().subscribe({
+      next: (profile) => this.profile.set(profile),
+      error: () => {
+        this.userSvc.ensureProfile().subscribe({
+          next: (profile) => this.profile.set(profile),
+          error: () => this.profile.set(null),
+        });
+      },
+    });
     this.load();
   }
 
@@ -403,6 +462,9 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   canNotifyTelegram(student: Student | null | undefined): boolean {
+    if (!this.hasTelegramPlan()) {
+      return false;
+    }
     if (!student) {
       return false;
     }
@@ -517,6 +579,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   openCreate() {
+    if (!this.canAddStudent()) {
+      this.planGateKind.set('students');
+      return;
+    }
     this.formSubmitted.set(false);
     this.formError.set(null);
     this.linkCopied.set(false);
@@ -630,15 +696,23 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   private apiErrorMessage(err: unknown): string {
-    const message =
+    const body =
       err &&
       typeof err === 'object' &&
       'error' in err &&
       err.error &&
-      typeof err.error === 'object' &&
-      'message' in err.error
-        ? String((err.error as { message?: unknown }).message || '')
-        : '';
+      typeof err.error === 'object'
+        ? (err.error as { message?: unknown; code?: unknown; max_students?: unknown })
+        : null;
+    const code = body?.code ? String(body.code) : '';
+    if (code === 'PLAN_STUDENT_LIMIT') {
+      const max = Number(body?.max_students) || this.maxStudents() || 3;
+      return this.i18n.sharedUi().planStudentLimitBody.replace('{max}', String(max));
+    }
+    if (code === 'PLAN_TELEGRAM_REQUIRED') {
+      return this.i18n.sharedUi().planTelegramRequiredBody;
+    }
+    const message = body?.message ? String(body.message) : '';
     return message || 'Ошибка сохранения';
   }
 
@@ -652,6 +726,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
         String(target!.rate_currency) !== String(this.form.rate_currency));
 
     if (opts.inviteAfter || opts.openInviteDialog) {
+      if (!this.hasTelegramPlan()) {
+        this.planGateKind.set('telegram');
+        return;
+      }
       payload.bot_active = true;
     }
     this.formError.set(null);
@@ -756,6 +834,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   /** Открыть диалог с invite-ссылкой (из таблицы, быстрых действий или формы). */
   inviteStudentToBot(student?: Student | null): void {
+    if (!this.hasTelegramPlan()) {
+      this.planGateKind.set('telegram');
+      return;
+    }
     if (student) {
       this.openInviteDialog(student);
       return;
@@ -764,6 +846,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   openInviteDialog(student: Student): void {
+    if (!this.hasTelegramPlan()) {
+      this.planGateKind.set('telegram');
+      return;
+    }
     if (this.isTelegramLinked(student)) {
       this.openTelegramSettings(student);
       return;
@@ -883,6 +969,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   openTelegramSettings(student: Student): void {
+    if (!this.hasTelegramPlan()) {
+      this.planGateKind.set('telegram');
+      return;
+    }
     this.closeQuickActions();
     this.manualChatId.set('');
     this.manualChatConsent.set(false);
@@ -1193,10 +1283,23 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   requestBotToggle(student: Student): void {
+    if (!this.hasTelegramPlan()) {
+      this.planGateKind.set('telegram');
+      return;
+    }
     if (!this.isTelegramLinked(student)) {
       return;
     }
     this.botToggleConfirm.set({ student, nextActive: !student.bot_active });
+  }
+
+  closePlanGate(): void {
+    this.planGateKind.set(null);
+  }
+
+  goToPricingFromGate(): void {
+    this.planGateKind.set(null);
+    void this.router.navigate(['/app/pricing']);
   }
 
   requestBotToggleFromQuick(): void {

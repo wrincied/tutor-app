@@ -11,7 +11,7 @@ import {
 } from './core/guards/onboarding.guard';
 import { onboardingProfileResolver } from './core/resolvers/onboarding-profile.resolver';
 
-/** В designMode корень сразу показывает landing-v2; в prod остаётся старый LandingComponent. */
+/** Корень: landing-v2 при designMode, иначе старый LandingComponent. */
 const rootLandingLoad =
   (environment as { designMode?: boolean }).designMode === true
     ? () =>
@@ -37,6 +37,12 @@ export const routes: Routes = [
     data: { title: 'register' satisfies PageTitleKey },
   },
   {
+    path: 'pricing',
+    loadComponent: () =>
+      import('./features/pricing/pricing.component').then((m) => m.PricingComponent),
+    data: { title: 'pricing' satisfies PageTitleKey },
+  },
+  {
     path: 'legal/data-processing',
     loadComponent: () =>
       import('./features/legal/legal-document.component').then((m) => m.LegalDocumentComponent),
@@ -53,6 +59,24 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/legal/legal-document.component').then((m) => m.LegalDocumentComponent),
     data: { doc: 'cookies', title: 'legalCookies' satisfies PageTitleKey },
+  },
+  {
+    path: 'legal/terms',
+    loadComponent: () =>
+      import('./features/legal/legal-document.component').then((m) => m.LegalDocumentComponent),
+    data: { doc: 'terms', title: 'legalTerms' satisfies PageTitleKey },
+  },
+  {
+    path: 'help',
+    loadComponent: () =>
+      import('./features/help/help-center.component').then((m) => m.HelpCenterComponent),
+    data: { title: 'help' satisfies PageTitleKey },
+  },
+  {
+    path: 'status',
+    loadComponent: () =>
+      import('./features/status/status-page.component').then((m) => m.StatusPageComponent),
+    data: { title: 'status' satisfies PageTitleKey },
   },
   {
     path: 'admin-login',
@@ -140,6 +164,12 @@ export const routes: Routes = [
             data: { title: 'calendar' satisfies PageTitleKey },
           },
           {
+            path: 'workspace',
+            loadComponent: () =>
+              import('./features/workspace/workspace.component').then((m) => m.WorkspaceComponent),
+            data: { title: 'workspace' satisfies PageTitleKey },
+          },
+          {
             path: 'finance',
             loadComponent: () =>
               import('./features/finance/finance.component').then((m) => m.FinanceComponent),
@@ -185,11 +215,8 @@ export const routes: Routes = [
               },
               {
                 path: 'administration',
-                loadComponent: () =>
-                  import('./features/account/account-administration.component').then(
-                    (m) => m.AccountAdministrationComponent,
-                  ),
-                data: { title: 'accountAdministration' satisfies PageTitleKey },
+                redirectTo: 'profile',
+                pathMatch: 'full',
               },
             ],
           },

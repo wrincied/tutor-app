@@ -22,6 +22,26 @@
   min-height: 0;
 }
 
+.admin-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.admin-page__header-text {
+  min-width: 0;
+}
+
+.admin-page__account {
+  margin: 0.25rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
 .admin-tabs {
   display: flex;
   flex-shrink: 0;

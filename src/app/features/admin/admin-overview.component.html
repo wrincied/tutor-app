@@ -17,6 +17,8 @@
   } @else if (dashboard(); as d) {
     @if (
       isEnabled('kpi-total-users') ||
+      isEnabled('kpi-basis-users') ||
+      isEnabled('kpi-pro-users') ||
       isEnabled('kpi-paid-users') ||
       isEnabled('kpi-trial-users') ||
       isEnabled('kpi-conversion') ||
@@ -29,10 +31,23 @@
             <strong class="admin-kpi__value">{{ d.stats.totalUsers }}</strong>
           </article>
         }
+        @if (isEnabled('kpi-basis-users')) {
+          <article class="admin-kpi__card">
+            <span class="admin-kpi__label">{{ t().metricBasisUsers }}</span>
+            <strong class="admin-kpi__value">{{ d.stats.basisUsers }}</strong>
+          </article>
+        }
+        @if (isEnabled('kpi-pro-users')) {
+          <article class="admin-kpi__card">
+            <span class="admin-kpi__label">{{ t().metricProUsers }}</span>
+            <strong class="admin-kpi__value">{{ d.stats.proUsers }}</strong>
+          </article>
+        }
         @if (isEnabled('kpi-paid-users')) {
           <article class="admin-kpi__card">
             <span class="admin-kpi__label">{{ t().metricPaidUsers }}</span>
             <strong class="admin-kpi__value">{{ d.stats.paidUsers }}</strong>
+            <span class="admin-kpi__hint">{{ paidBreakdownHint() }}</span>
           </article>
         }
         @if (isEnabled('kpi-trial-users')) {

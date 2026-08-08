@@ -9,21 +9,63 @@
     <p class="legal-page__intro">{{ i18n.legalCookiesUi().intro }}</p>
 
     <section>
-      <h2>{{ i18n.legalCookiesUi().section1Title }}</h2>
-      <p>{{ i18n.legalCookiesUi().section1Body }}</p>
+      <h2>{{ i18n.legalCookiesUi().definitionTitle }}</h2>
+      <p>{{ i18n.legalCookiesUi().definitionBody }}</p>
     </section>
+
     <section>
-      <h2>{{ i18n.legalCookiesUi().section2Title }}</h2>
-      <p>{{ i18n.legalCookiesUi().section2Body }}</p>
+      <h2>{{ i18n.legalCookiesUi().categoriesTitle }}</h2>
+      <h3>{{ i18n.legalCookiesUi().essentialTitle }}</h3>
+      <p>{{ i18n.legalCookiesUi().essentialBody }}</p>
+      <h3>{{ i18n.legalCookiesUi().functionalTitle }}</h3>
+      <p>{{ i18n.legalCookiesUi().functionalBody }}</p>
+      <h3>{{ i18n.legalCookiesUi().analyticsTitle }}</h3>
+      <p>{{ i18n.legalCookiesUi().analyticsBody }}</p>
     </section>
+
     <section>
-      <h2>{{ i18n.legalCookiesUi().section3Title }}</h2>
-      <p>{{ i18n.legalCookiesUi().section3Body }}</p>
+      <h2>{{ i18n.legalCookiesUi().tableTitle }}</h2>
+      <div class="legal-page__table-wrap">
+        <table class="legal-page__table">
+          <thead>
+            <tr>
+              <th>{{ i18n.legalCookiesUi().tableCategory }}</th>
+              <th>{{ i18n.legalCookiesUi().tableName }}</th>
+              <th>{{ i18n.legalCookiesUi().tableProvider }}</th>
+              <th>{{ i18n.legalCookiesUi().tablePurpose }}</th>
+              <th>{{ i18n.legalCookiesUi().tableRetention }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of i18n.legalCookiesUi().tableRows; track row.name) {
+              <tr>
+                <td>{{ row.category }}</td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.provider }}</td>
+                <td>{{ row.purpose }}</td>
+                <td>{{ row.retention }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </section>
+
     <section>
-      <h2>{{ i18n.legalCookiesUi().section4Title }}</h2>
-      <p>{{ i18n.legalCookiesUi().section4Body }}</p>
+      <h2>{{ i18n.legalCookiesUi().withdrawTitle }}</h2>
+      <p>{{ i18n.legalCookiesUi().withdrawBody }}</p>
+      <p>{{ i18n.legalCookiesUi().contactBody }}</p>
     </section>
+  } @else if (isTerms()) {
+    <h1>{{ i18n.legalTermsUi().title }}</h1>
+    <p class="legal-page__intro">{{ i18n.legalTermsUi().intro }}</p>
+
+    @for (section of termsSections(); track section.title) {
+      <section>
+        <h2>{{ section.title }}</h2>
+        <p>{{ section.body }}</p>
+      </section>
+    }
   } @else if (isCmsDoc()) {
     @if (cmsLoading()) {
       <p>{{ i18n.sharedUi().loadingContent }}</p>

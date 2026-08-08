@@ -18,9 +18,16 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
+      # Required repo secrets — never hardcode Firebase / API values in YAML.
       DEV_API_URL: ${{ secrets.DEV_API_URL }}
-      DEV_API_URL_FALLBACK: 'https://tutor-app-backend--tutorassis.europe-west4.hosted.app'
-      DEV_APP_URL: https://wrincied.github.io/tutor-app/dev
+      DEV_APP_URL: ${{ secrets.DEV_APP_URL }}
+      FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+      FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+      FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+      FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+      FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+      FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+      FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
 
     steps:
       - name: Checkout Code
@@ -35,35 +42,27 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # environment.ts gitignored — Angular path @environment needs the file present.
       - name: Generate studio environment for GitHub Pages
         run: |
-          API_URL="${DEV_API_URL:-$DEV_API_URL_FALLBACK}"
-          if [ -z "$API_URL" ]; then
-            echo "::error::Backend URL is missing. Set secret DEV_API_URL or DEV_API_URL_FALLBACK."
+          if [ -z "$DEV_API_URL" ]; then
+            echo "::error::Set repository secret DEV_API_URL"
             exit 1
           fi
-          if [ -z "$DEV_API_URL" ]; then
-            echo "::warning::Using DEV_API_URL_FALLBACK (secret DEV_API_URL is not set)"
+          if [ -z "$DEV_APP_URL" ]; then
+            echo "::error::Set repository secret DEV_APP_URL (e.g. https://wrincied.github.io/tutor-app/dev)"
+            exit 1
           fi
-          cat > src/environments/environment.production-design.ts << EOF
-          export const environment = {
-            production: true,
-            designMode: true,
-            apiUrl: '${API_URL}',
-            appUrl: '${DEV_APP_URL}',
-            firebaseConfig: {
-              apiKey: 'AIzaSyDI_O1K8uBbEIe2uJvY-8tzpJjfhgg0rlw',
-              authDomain: 'simple4u-64822.web.app',
-              projectId: 'tutorassis',
-              storageBucket: 'tutorassis.firebasestorage.app',
-              messagingSenderId: '965411338053',
-              appId: '1:965411338053:web:d98317afdb5602a53c702c',
-              measurementId: 'G-TXM74NGN6R',
-            },
-          };
-          EOF
-          cp src/environments/environment.production-design.ts src/environments/environment.ts
+          for key in FIREBASE_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_MESSAGING_SENDER_ID FIREBASE_APP_ID; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Set repository secret $key"
+              exit 1
+            fi
+          done
+          export API_URL="$DEV_API_URL"
+          export APP_URL="$DEV_APP_URL"
+          export DESIGN_MODE=true
+          export PRODUCTION=true
+          export FORCE_ENV_GENERATE=1
           node scripts/prepare-environment.mjs production-design
 
       - name: Build Angular for GitHub Pages

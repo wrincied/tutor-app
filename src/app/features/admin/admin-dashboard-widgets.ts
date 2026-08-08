@@ -8,6 +8,8 @@ export interface AdminDashboardWidgetDef {
 
 export const ADMIN_DASHBOARD_WIDGETS: AdminDashboardWidgetDef[] = [
   { id: 'kpi-total-users', labelKey: 'widgetKpiTotalUsers', group: 'kpi' },
+  { id: 'kpi-basis-users', labelKey: 'widgetKpiBasisUsers', group: 'kpi' },
+  { id: 'kpi-pro-users', labelKey: 'widgetKpiProUsers', group: 'kpi' },
   { id: 'kpi-paid-users', labelKey: 'widgetKpiPaidUsers', group: 'kpi' },
   { id: 'kpi-trial-users', labelKey: 'widgetKpiTrialUsers', group: 'kpi' },
   { id: 'kpi-conversion', labelKey: 'widgetKpiConversion', group: 'kpi' },

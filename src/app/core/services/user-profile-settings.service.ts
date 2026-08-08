@@ -1,12 +1,13 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, Subject, of } from 'rxjs';
 import { catchError, debounceTime, switchMap, tap } from 'rxjs/operators';
-import type { UserProfile } from '@interfaces';
+import type { UserProfile, UserVacationSettings } from '@interfaces';
 import {
   DEFAULT_WORKING_HOURS,
-  DEFAULT_WORKSPACE,
   HOUR_OPTIONS,
   buildGridHours,
+  isDateInVacation,
+  normalizeVacation,
   normalizeWorkingHours,
   normalizeWorkspace,
   parseHourToken,
@@ -25,6 +26,7 @@ export class UserProfileSettingsService {
   private readonly saveQueue$ = new Subject<UpdateProfilePayload>();
   readonly workspace = computed(() => normalizeWorkspace(this.profile()?.workspace));
   readonly workingHours = computed(() => normalizeWorkingHours(this.profile()?.workingHours));
+  readonly vacation = computed(() => normalizeVacation(this.profile()?.vacation));
   readonly gridStartHour = computed(() => parseHourToken(this.workingHours().start));
   readonly gridEndHour = computed(() => parseHourToken(this.workingHours().end));
   readonly gridHours = computed(() =>
@@ -90,9 +92,43 @@ export class UserProfileSettingsService {
     });
   }
 
+  /** Persist schedule + vacation in one request (Workspace Save bar). */
+  saveWorkspaceSettings(input: {
+    workspace: UserWorkspaceSettings;
+    workingHours: UserWorkingHoursSettings;
+    vacation: UserVacationSettings;
+  }): Observable<UserProfile> {
+    const workspace = normalizeWorkspace(input.workspace);
+    const workingHours = this.clampWorkingHours(input.workingHours);
+    const vacation = normalizeVacation(input.vacation);
+    const current = this.profile();
+    if (current) {
+      this.profile.set({ ...current, workspace, workingHours, vacation });
+    }
+    return this.userSvc
+      .updateProfile({ workspace, workingHours, vacation })
+      .pipe(tap((user) => this.hydrate(user)));
+  }
+
+  /** Persist vacation settings immediately (explicit Save on Workspace page). */
+  saveVacation(vacation: UserVacationSettings): Observable<UserProfile> {
+    return this.saveWorkspaceSettings({
+      workspace: this.workspace(),
+      workingHours: this.workingHours(),
+      vacation,
+    });
+  }
+
   isWorkingDay(date: Date): boolean {
+    if (isDateInVacation(date, this.vacation())) {
+      return false;
+    }
     const iso = date.getDay() === 0 ? 7 : date.getDay();
     return this.workingHours().days.includes(iso as IsoWeekday);
+  }
+
+  isOnVacation(date: Date): boolean {
+    return isDateInVacation(date, this.vacation());
   }
 
   private clampWorkingHours(hours: UserWorkingHoursSettings): UserWorkingHoursSettings {
@@ -104,7 +140,7 @@ export class UserProfileSettingsService {
   }
 
   private patchProfile(
-    patch: Pick<UpdateProfilePayload, 'workspace' | 'workingHours'>,
+    patch: Pick<UpdateProfilePayload, 'workspace' | 'workingHours' | 'vacation'>,
   ): void {
     const current = this.profile();
     if (!current) {
@@ -114,6 +150,7 @@ export class UserProfileSettingsService {
       ...current,
       workspace: patch.workspace ?? current.workspace,
       workingHours: patch.workingHours ?? current.workingHours,
+      vacation: patch.vacation ?? current.vacation,
     };
     this.profile.set(nextProfile);
     this.saveQueue$.next(patch);

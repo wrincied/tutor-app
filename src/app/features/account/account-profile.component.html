@@ -37,133 +37,205 @@
       />
     }
 
-    <section class="account-card">
-      <div class="field field--float">
-        <input
-          type="text"
-          [(ngModel)]="firstName"
-          name="firstName"
-          placeholder=" "
-          autocomplete="given-name"
-          maxlength="60"
-        />
-        <label>{{ i18n.accountUi().firstName }}</label>
-      </div>
+    <section class="account-panel">
+      <div class="account-section">
+        <h2 class="account-section__title">{{ i18n.accountUi().subscriptionSection }}</h2>
 
-      <div class="field field--float">
-        <input
-          type="text"
-          [(ngModel)]="lastName"
-          name="lastName"
-          placeholder=" "
-          autocomplete="family-name"
-          maxlength="60"
-        />
-        <label>{{ i18n.accountUi().lastName }}</label>
-      </div>
+        <div class="account-plan-chip">
+          <span class="account-plan-chip__label">{{ i18n.accountUi().subscriptionStatus }}</span>
+          <strong class="account-plan-chip__value">{{ subscriptionLabel() }}</strong>
+        </div>
 
-      <h3 class="account-card__subtitle">{{ i18n.accountUi().emailSection }}</h3>
-
-      <div class="field field--float">
-        <input
-          type="email"
-          [(ngModel)]="newEmail"
-          name="email"
-          required
-          placeholder=" "
-          autocomplete="email"
-          inputmode="email"
-          spellcheck="false"
-        />
-        <label>{{ i18n.accountUi().newEmail }}</label>
-      </div>
-
-      @if (showPasswordSection()) {
-        <h3 class="account-card__subtitle">{{ i18n.accountUi().passwordSection }}</h3>
-
-        <fieldset class="account-password-fields">
-          <div class="field field--float">
-            <input
-              type="password"
-              [(ngModel)]="currentPassword"
-              name="currentPassword"
-              placeholder=" "
-              autocomplete="current-password"
-            />
-            <label>{{ i18n.accountUi().currentPassword }}</label>
+        @if (cancelScheduled()) {
+          <p class="account-hint account-hint--warn">{{ cancelScheduledHint() }}</p>
+          <div class="account-subscription-actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              [disabled]="billingActionLoading()"
+              (click)="resumeSubscription()"
+            >
+              {{
+                billingActionLoading()
+                  ? i18n.accountUi().cancelSubscriptionLoading
+                  : i18n.accountUi().resumeSubscription
+              }}
+            </button>
+            <a
+              routerLink="/app/pricing"
+              class="btn-secondary account-subscription-actions__pricing"
+              (click)="onPricingClick($event)"
+            >
+              {{ i18n.nav().pricing }}
+            </a>
           </div>
+        } @else {
+          <p class="account-hint">{{ i18n.accountUi().subscriptionManagedByPayment }}</p>
 
-          <div class="field field--float">
-            <input
-              type="password"
-              [(ngModel)]="newPassword"
-              name="newPassword"
-              placeholder=" "
-              autocomplete="new-password"
-            />
-            <label>{{ i18n.accountUi().newPassword }}</label>
-          </div>
-
-          <div class="field field--float">
-            <input
-              type="password"
-              [(ngModel)]="confirmPassword"
-              name="confirmPassword"
-              placeholder=" "
-              autocomplete="new-password"
-            />
-            <label>{{ i18n.accountUi().confirmPassword }}</label>
-          </div>
-        </fieldset>
-      }
-
-      <h3 class="account-card__subtitle">{{ i18n.accountUi().subscriptionSection }}</h3>
-
-      <p class="account-readonly account-readonly--plan">
-        <span class="account-readonly__label">{{ i18n.accountUi().subscriptionStatus }}</span>
-        <strong>{{ subscriptionLabel() }}</strong>
-      </p>
-
-      <p class="account-hint">{{ i18n.accountUi().subscriptionManagedByPayment }}</p>
-
-      <div class="account-subscription-actions">
-        <a
-          routerLink="/app/pricing"
-          class="btn-secondary account-subscription-actions__pricing"
-          (click)="onPricingClick($event)"
-        >
-          {{ i18n.nav().pricing }}
-        </a>
+          @if (canManageStripeSub()) {
+            <div class="account-subscription-actions">
+              <button
+                type="button"
+                class="btn-link danger"
+                [disabled]="billingActionLoading()"
+                (click)="openCancelConfirm()"
+              >
+                {{ i18n.accountUi().cancelSubscription }}
+              </button>
+              <a
+                routerLink="/app/pricing"
+                class="btn-secondary account-subscription-actions__pricing"
+                (click)="onPricingClick($event)"
+              >
+                {{ i18n.nav().pricing }}
+              </a>
+            </div>
+          } @else {
+            <div class="account-subscription-actions">
+              <a
+                routerLink="/app/pricing"
+                class="btn-secondary account-subscription-actions__pricing"
+                (click)="onPricingClick($event)"
+              >
+                {{ i18n.nav().pricing }}
+              </a>
+            </div>
+          }
+        }
       </div>
 
-      <h3 class="account-card__subtitle">{{ i18n.accountUi().taxSection }}</h3>
+      <div class="account-section">
+        <h2 class="account-section__title">{{ i18n.accountUi().accountSection }}</h2>
+        <div class="field field--stack">
+          <label for="account-first-name">{{ i18n.accountUi().firstName }}</label>
+          <input
+            id="account-first-name"
+            type="text"
+            [(ngModel)]="firstName"
+            name="firstName"
+            autocomplete="given-name"
+            maxlength="60"
+          />
+        </div>
 
-      @if (!taxModeConfigured()) {
-        <p class="account-hint account-hint--warn">{{ i18n.accountUi().taxModeRequiredHint }}</p>
-      } @else {
-        <p class="account-hint">{{ i18n.accountUi().taxModeChangeHint }}</p>
-      }
-
-      <div class="field field--select">
-        <app-select
-          name="tax_mode"
-          [ngModel]="taxModeSelectValue"
-          (ngModelChange)="onTaxModePick($event)"
-          [options]="taxModeSelectOptions()"
-          menuPlacement="below"
-        />
-        <label>{{ i18n.accountUi().taxMode }}</label>
+        <div class="field field--stack">
+          <label for="account-last-name">{{ i18n.accountUi().lastName }}</label>
+          <input
+            id="account-last-name"
+            type="text"
+            [(ngModel)]="lastName"
+            name="lastName"
+            autocomplete="family-name"
+            maxlength="60"
+          />
+        </div>
       </div>
 
-      @if (hasUnsavedTaxChange()) {
-        <p class="account-hint account-hint--warn">{{ i18n.accountUi().taxModeUnsavedHint }}</p>
-      }
+      <div class="account-section">
+        <h2 class="account-section__title">{{ i18n.accountUi().emailSection }}</h2>
+
+        <div class="field field--stack">
+          <label for="account-email">{{ i18n.accountUi().newEmail }}</label>
+          <input
+            id="account-email"
+            type="email"
+            [(ngModel)]="newEmail"
+            name="email"
+            required
+            autocomplete="email"
+            inputmode="email"
+            spellcheck="false"
+          />
+        </div>
+
+        @if (isGoogleOnlyAuth()) {
+          <p class="account-hint">{{ i18n.accountUi().googlePasswordHint }}</p>
+        } @else if (showPasswordSection()) {
+          <h3 class="account-section__subtitle">{{ i18n.accountUi().passwordSection }}</h3>
+
+          <fieldset class="account-password-fields">
+            <div class="field field--stack">
+              <label for="account-current-password">{{ i18n.accountUi().currentPassword }}</label>
+              <input
+                id="account-current-password"
+                type="password"
+                [(ngModel)]="currentPassword"
+                name="currentPassword"
+                autocomplete="current-password"
+              />
+            </div>
+
+            <div class="field field--stack">
+              <label for="account-new-password">{{ i18n.accountUi().newPassword }}</label>
+              <input
+                id="account-new-password"
+                type="password"
+                [(ngModel)]="newPassword"
+                name="newPassword"
+                autocomplete="new-password"
+              />
+            </div>
+
+            <div class="field field--stack">
+              <label for="account-confirm-password">{{ i18n.accountUi().confirmPassword }}</label>
+              <input
+                id="account-confirm-password"
+                type="password"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                autocomplete="new-password"
+              />
+            </div>
+          </fieldset>
+        }
+      </div>
+
+      <div class="account-section">
+        <h2 class="account-section__title">{{ i18n.accountUi().taxSection }}</h2>
+
+        <div class="field field--stack field--stack-select">
+          <label for="account-tax-mode">{{ i18n.accountUi().taxMode }}</label>
+          <app-select
+            id="account-tax-mode"
+            name="tax_mode"
+            [ngModel]="taxModeSelectValue"
+            (ngModelChange)="onTaxModePick($event)"
+            [options]="taxModeSelectOptions()"
+            menuPlacement="below"
+          />
+          @if (!taxModeConfigured()) {
+            <p class="account-hint account-hint--warn account-hint--below">
+              {{ i18n.accountUi().taxModeRequiredHint }}
+            </p>
+          } @else {
+            <p class="account-hint account-hint--below">{{ i18n.accountUi().taxModeChangeHint }}</p>
+          }
+        </div>
+
+        @if (hasUnsavedTaxChange()) {
+          <p class="account-hint account-hint--warn">{{ i18n.accountUi().taxModeUnsavedHint }}</p>
+        }
+      </div>
     </section>
 
-    <button type="submit" class="btn-primary account-form__submit" [disabled]="saving()">
-      {{ saving() ? i18n.accountUi().saving : i18n.accountUi().save }}
-    </button>
+    <div class="account-form__footer">
+      <button type="submit" class="btn-primary account-form__submit" [disabled]="saving()">
+        {{ saving() ? i18n.accountUi().saving : i18n.accountUi().save }}
+      </button>
+    </div>
   </form>
+
+  <section class="account-panel account-history" id="account-history">
+    <p class="account-administration__intro">{{ i18n.accountUi().administrationIntro }}</p>
+    <app-activity-log-panel
+      category="all"
+      [limit]="50"
+      [lazy]="true"
+      [title]="i18n.accountUi().activityLogSection"
+      [emptyText]="i18n.accountUi().activityLogEmpty"
+      [strings]="i18n.activityLogUi()"
+    />
+  </section>
 }
 
 <app-dialog
@@ -192,4 +264,23 @@
   (confirm)="onUnsavedLeave()"
 >
   <p>{{ i18n.accountUi().unsavedTaxBody }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="cancelConfirmOpen()"
+  size="sm"
+  [title]="i18n.accountUi().cancelSubscriptionConfirmTitle"
+  [cancelLabel]="i18n.accountUi().cancelSubscriptionKeep"
+  [confirmLabel]="
+    billingActionLoading()
+      ? i18n.accountUi().cancelSubscriptionLoading
+      : i18n.accountUi().cancelSubscriptionConfirm
+  "
+  [confirmDanger]="true"
+  [confirmDisabled]="billingActionLoading()"
+  layout="center"
+  (cancel)="closeCancelConfirm()"
+  (confirm)="confirmCancelSubscription()"
+>
+  <p>{{ i18n.accountUi().cancelSubscriptionConfirmBody }}</p>
 </app-dialog>

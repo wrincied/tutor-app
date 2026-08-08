@@ -9,7 +9,7 @@ html[data-design='v2'] {
   --nav-accent: var(--moss, #0f3d34);
   --text-primary: var(--ink, #071714);
   --sidebar-w: 232px;
-  font-family: var(--font-body, 'Figtree', sans-serif);
+  font-family: var(--font-body, 'Inter', sans-serif);
 
   body {
     background: var(--page-bg);
@@ -25,7 +25,7 @@ html[data-design='v2'] {
   }
 
   .page-header h1 {
-    font-family: var(--font-display, 'Syne', sans-serif);
+    font-family: var(--font-heading, 'Figtree', sans-serif);
     letter-spacing: -0.03em;
   }
 
@@ -36,7 +36,7 @@ html[data-design='v2'] {
   }
 
   .sidebar-logo {
-    font-family: var(--font-display, 'Syne', sans-serif);
+    font-family: var(--font-heading, 'Figtree', sans-serif);
     font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: -0.04em;

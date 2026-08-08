@@ -58,18 +58,87 @@ export function canPurchaseSubscription(profile: UserProfile | null | undefined)
     return false;
   }
   const taxOk = profile.tax_mode_configured ?? isTaxModeConfigured(profile.tax_mode);
-  return taxOk && (profile.subscription_status as SubscriptionStatus) === 'free';
+  const status = profile.subscription_status as SubscriptionStatus;
+  return taxOk && (status === 'free' || status === 'basis');
+}
+
+export function normalizeSubscriptionStatus(
+  status: string | null | undefined,
+): SubscriptionStatus {
+  if (status === 'pro' || status === 'trial' || status === 'basis' || status === 'free') {
+    return status;
+  }
+  return 'free';
+}
+
+/** null = unlimited */
+export function maxStudentsForPlan(status: string | null | undefined): number | null {
+  const s = normalizeSubscriptionStatus(status);
+  if (s === 'pro' || s === 'trial') {
+    return null;
+  }
+  if (s === 'basis') {
+    return 10;
+  }
+  return 3;
+}
+
+export function hasFinanceAccess(status: string | null | undefined): boolean {
+  const s = normalizeSubscriptionStatus(status);
+  return s === 'basis' || s === 'pro' || s === 'trial';
+}
+
+export function hasTelegramAccess(status: string | null | undefined): boolean {
+  const s = normalizeSubscriptionStatus(status);
+  return s === 'pro' || s === 'trial';
+}
+
+export function planEntitlementsFromProfile(profile: UserProfile | null | undefined): {
+  maxStudents: number | null;
+  hasFinance: boolean;
+  hasTelegram: boolean;
+} {
+  if (!profile) {
+    // Unknown plan — do not assume Free (that falsely blocks Basis/Pro while /me loads).
+    return {
+      maxStudents: null,
+      hasFinance: false,
+      hasTelegram: false,
+    };
+  }
+
+  const status = profile.subscription_status;
+  const fromStatus = {
+    maxStudents: maxStudentsForPlan(status),
+    hasFinance: hasFinanceAccess(status),
+    hasTelegram: hasTelegramAccess(status),
+  };
+
+  const fromApi = profile.plan_entitlements;
+  if (fromApi && typeof fromApi.has_finance === 'boolean') {
+    return {
+      maxStudents:
+        fromApi.max_students === undefined ? fromStatus.maxStudents : fromApi.max_students,
+      hasFinance: fromApi.has_finance,
+      hasTelegram: fromApi.has_telegram === true,
+    };
+  }
+
+  return fromStatus;
 }
 
 export function subscriptionStatusLabel(
   status: string,
-  labels: { free: string; pro: string; trial: string },
+  labels: { free: string; basis: string; pro: string; trial: string },
 ): string {
   if (status === 'pro') {
     return labels.pro;
   }
   if (status === 'trial') {
     return labels.trial;
+  }
+  if (status === 'basis') {
+    return labels.basis;
   }
   return labels.free;
 }

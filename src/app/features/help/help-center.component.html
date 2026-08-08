@@ -1,0 +1,23 @@
+<article class="help-page">
+  <header class="help-page__header">
+    <a routerLink="/" class="help-page__back">← {{ i18n.authUi().backHome }}</a>
+  </header>
+
+  <h1>{{ i18n.authUi().helpTitle }}</h1>
+  <p class="help-page__intro">{{ i18n.authUi().helpIntro }}</p>
+
+  <ul class="help-page__guides">
+    <li>{{ i18n.authUi().helpGuideProfile }}</li>
+    <li>{{ i18n.authUi().helpGuideStudents }}</li>
+    <li>{{ i18n.authUi().helpGuideFinance }}</li>
+  </ul>
+
+  <div class="help-page__actions">
+    <a href="#landing-v2-faq" class="help-page__cta help-page__cta--solid" (click)="openFaq($event)">{{
+      i18n.authUi().helpFaqCta
+    }}</a>
+    <a class="help-page__cta help-page__cta--ghost" [href]="'mailto:' + contactEmail()">{{
+      i18n.authUi().helpContactCta
+    }}</a>
+  </div>
+</article>
