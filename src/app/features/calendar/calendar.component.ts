@@ -2919,14 +2919,21 @@ export class CalendarComponent implements OnInit {
 
   private buildRecurrencePayload(
     scheduledAt: string | null,
-    _editing: CalendarLesson | null = this.editLessonTarget(),
+    editing: CalendarLesson | null = this.editLessonTarget(),
   ): {
     isRecurring: boolean;
     startDate: string | null;
     rrule: string | null;
   } {
     const config = this.recurrenceConfig();
-    const startDate = scheduledAt ? dayKey(new Date(scheduledAt)) : null;
+    // Never move series DTSTART to the edited occurrence day — that hides earlier
+    // missed/canceled/completed instances from expansion.
+    const seriesStart =
+      editing && (editing.isRecurring || editing.rrule) && editing.startDate
+        ? String(editing.startDate).slice(0, 10)
+        : null;
+    const startDate =
+      seriesStart || (scheduledAt ? dayKey(new Date(scheduledAt)) : null);
 
     if (!isRecurrenceConfigActive(config) || !startDate) {
       return { isRecurring: false, startDate: null, rrule: null };
@@ -3287,6 +3294,9 @@ export class CalendarComponent implements OnInit {
       exdates: (raw as LessonApiRow & { exdates?: string[] }).exdates ?? [],
       completedDates:
         (raw as LessonApiRow & { completedDates?: string[] }).completedDates ?? [],
+      missedDates: (raw as LessonApiRow & { missedDates?: string[] }).missedDates ?? [],
+      canceledDates:
+        (raw as LessonApiRow & { canceledDates?: string[] }).canceledDates ?? [],
     };
   }
 

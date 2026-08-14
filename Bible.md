@@ -111,6 +111,53 @@ wrincied.github.io/tutor-app/dev/      ← актуальная сборка и�
 - Локально: только `simple4u-64822.web.app`. Не ставь `simple4u.at` на localhost.
 - `start:prod` (:4400) = production-конфиг — OAuth с localhost обычно ломается.
 
+### Firebase Web API key — актуальный ключ и проверка restrictions
+
+Актуальный client key (после регена):
+
+```bash
+firebase apps:sdkconfig WEB --project tutorassis
+```
+
+Ориентир в Console: Firebase → Project settings → **Web API Key**, или Cloud → Credentials → ключ вида **`Simple4UWebsite (auto created by Firebase)`**.
+
+Website restrictions (HTTP referrers) для browser key — примерно:
+
+```text
+http://localhost:4200/*
+http://127.0.0.1:4200/*
+https://simple4u.at/*
+https://www.simple4u.at/*
+https://simple4u-64822.web.app/*
+https://simple4u-64822.firebaseapp.com/*
+https://wrincied.github.io/*
+https://*.vercel.app/*
+```
+
+**Проверка restrictions в консоли браузера** (чужой сайт → должен быть 403):
+
+1. Открой например `https://example.com`
+2. DevTools → Console:
+
+```js
+fetch('https://identitytoolkit.googleapis.com/v1/projects?key=ТВОЙ_API_KEY')
+  .then((r) => console.log('status', r.status))
+  .catch((e) => console.error(e));
+```
+
+Или вкладка:
+
+```text
+https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=ТВОЙ_API_KEY
+```
+
+| Где | Ожидание |
+|-----|----------|
+| `example.com` / без своего Referer | **403** — referrers режут чужой домен |
+| `localhost:4200` / `simple4u.at` | логин ок; быстрый 403 с чужого = restrictions работают |
+
+Для browser Firebase-ключа обычно достаточно **Website restrictions**; жёсткий список API часто даёт лишние 403 на Analytics/`webConfig`.
+
 ### Команды дня
 
 ```bash
@@ -200,6 +247,16 @@ HTTP API для Express: `POST /v1/notify/...` + `X-Bot-Secret`. Подробн�
 
 ---
 
+## SEO / индексация (simple4u.at)
+
+Поиск (и Google AI) раньше не видел сайт: hash-роутинг (`/#/…`) + почти пустой `index.html`. Краулер индексирует URL до `#` и путает бренд с **simple4u.io**.
+
+Сейчас: path-URL (`/pricing`), мета/JSON-LD в `index.html`, `robots.txt` + `sitemap.xml` + `llms.txt` в `public/`. `/app/*` — noindex.
+
+После деплоя Hosting: [Search Console](https://search.google.com/search-console) → подтвердить `https://simple4u.at` → отправить `https://simple4u.at/sitemap.xml` → запросить индекс `/` и `/pricing`. `site:simple4u.at` появится не сразу.
+
+---
+
 ## Правила для агентов / автоматизации
 
 1. **Не деплоить** на Firebase Hosting / App Hosting и не пушить в remote, пока пользователь явно не попросил.
@@ -210,4 +267,4 @@ HTTP API для Express: `POST /v1/notify/...` + `X-Bot-Secret`. Подробн�
 
 ---
 
-*Последнее обновление: environments local/remote, production = designMode, simple4u.at, запрет автодеплоя без запроса.*
+*Последнее обновление: SEO path-routing, sitemap/robots, simple4u.at vs simple4u.io.*

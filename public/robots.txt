@@ -1,0 +1,14 @@
+# Simple4U (simple4u.at) — tutor CRM, Austria. Not simple4u.io / simple4u.net.
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /admin-login
+Disallow: /admin
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://simple4u.at/sitemap.xml

@@ -222,7 +222,22 @@ function statusForOccurrence(lesson: Lesson, occurrenceDate: string): Lesson['st
   if (completed.has(occurrenceDate)) {
     return 'completed';
   }
-  return lesson.status === 'completed' ? 'scheduled' : lesson.status;
+  const canceled = new Set((lesson.canceledDates ?? []).map((item) => String(item).slice(0, 10)));
+  if (canceled.has(occurrenceDate)) {
+    return 'canceled';
+  }
+  const missed = new Set((lesson.missedDates ?? []).map((item) => String(item).slice(0, 10)));
+  if (missed.has(occurrenceDate)) {
+    return 'missed';
+  }
+  if (
+    lesson.status === 'completed' ||
+    lesson.status === 'missed' ||
+    lesson.status === 'canceled'
+  ) {
+    return 'scheduled';
+  }
+  return lesson.status;
 }
 
 /** Разворачивает рекуррентный урок в экземпляры для диапазона [rangeStart, rangeEnd]. */
