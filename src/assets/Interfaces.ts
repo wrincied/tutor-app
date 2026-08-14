@@ -1608,10 +1608,14 @@ export interface Lesson {
   startDate?: string | null;
   /** Напр. FREQ=WEEKLY;BYDAY=MO,WE */
   rrule?: string | null;
-  /** Исключённые даты вхождений (YYYY-MM-DD). */
+  /** Исключённые даты вхождений (YYYY-MM-DD) — удаление из серии. */
   exdates?: string[];
   /** Даты проведённых вхождений (YYYY-MM-DD), баланс списан. */
   completedDates?: string[];
+  /** Даты пропущенных вхождений (YYYY-MM-DD); остаются в календаре. */
+  missedDates?: string[];
+  /** Даты отменённых вхождений (YYYY-MM-DD); остаются в календаре. */
+  canceledDates?: string[];
 }
 
 /** Урок в сетке календаря с UI-флагами (не сохраняется в Firestore). */

@@ -60,7 +60,7 @@ export class App {
     // После HMR могут остаться невидимые слои select — они блокируют клики по всему UI
     purgeStaleOverlayLayers(this.document);
 
-    // Stripe returns to /?billing=success#/… — ensure we land on home for the congrats modal.
+    // Stripe returns to /app/home?billing=success (legacy: /?billing=success#/…).
     const billingReturn = consumeBillingReturnFlag();
     if (billingReturn === 'success') {
       // Re-arm so Home can still consume and open the modal.
