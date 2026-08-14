@@ -70,6 +70,19 @@
         ]
       },
       {
+        "source": "/google280c6bf42ae00d1a.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
         "source": "/robots.txt",
         "headers": [
           {
