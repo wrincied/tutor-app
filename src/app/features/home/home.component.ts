@@ -125,6 +125,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (billingReturn === 'success') {
       clearBillingQueryFromUrl();
       this.handleBillingSuccessReturn();
+    } else if (billingReturn === 'cancel') {
+      clearBillingQueryFromUrl();
+      this.handleBillingCancelReturn();
     } else {
       this.openBetaNoticeIfNeeded();
     }
@@ -229,49 +232,65 @@ export class HomeComponent implements OnInit, OnDestroy {
     void this.router.navigateByUrl('/app/account/profile');
   }
 
-  private handleBillingSuccessReturn(): void {
-    // Do not celebrate until Stripe/profile confirms an entitlement.
+  private handleBillingCancelReturn(): void {
+    // Back / cancel from Stripe must not keep a false Trial — reconcile to Free.
+    this.billingCongratsOpen.set(false);
     this.userSvc.invalidateProfile();
-    this.billingPollSub?.unsubscribe();
-
     this.billingSvc.syncSubscription().subscribe({
       next: (user) => {
         this.userSvc.cacheProfile(user);
         this.profile.set(user);
-        const status = String(user.subscription_status || 'free') as SubscriptionStatus;
-        if (status === 'pro' || status === 'trial') {
-          this.billingCongratsPlan.set(status);
-          this.billingCongratsOpen.set(true);
-        } else if (status === 'basis') {
-          this.billingCongratsOpen.set(false);
-        }
+        this.openBetaNoticeIfNeeded();
       },
       error: () => {
-        /* fall through to poll — no fake Trial UI */
+        this.openBetaNoticeIfNeeded();
       },
     });
+  }
 
-    this.billingPollSub = timer(0, 1500)
+  private handleBillingSuccessReturn(): void {
+    // Only celebrate after Stripe confirms an active/trialing subscription.
+    this.userSvc.invalidateProfile();
+    this.billingPollSub?.unsubscribe();
+
+    const applyUser = (user: UserProfile) => {
+      this.userSvc.cacheProfile(user);
+      this.profile.set(user);
+      const status = String(user.subscription_status || 'free') as SubscriptionStatus;
+      if (status === 'pro' || status === 'trial') {
+        this.billingCongratsPlan.set(status);
+        this.billingCongratsOpen.set(true);
+        return true;
+      }
+      if (status === 'basis') {
+        this.billingCongratsOpen.set(false);
+      }
+      return false;
+    };
+
+    this.billingSvc.syncSubscription().subscribe({
+      next: (user) => {
+        if (applyUser(user)) {
+          this.billingPollSub?.unsubscribe();
+          this.billingPollSub = null;
+        }
+      },
+      error: () => undefined,
+    });
+
+    this.billingPollSub = timer(2000, 2000)
       .pipe(
-        take(20),
-        switchMap(() => this.userSvc.getProfile()),
+        take(10),
+        switchMap(() => this.billingSvc.syncSubscription()),
       )
       .subscribe({
         next: (user) => {
-          this.userSvc.cacheProfile(user);
-          this.profile.set(user);
-          const status = String(user.subscription_status || 'free') as SubscriptionStatus;
-          if (status === 'pro' || status === 'trial') {
-            this.billingCongratsPlan.set(status);
-            this.billingCongratsOpen.set(true);
+          if (applyUser(user)) {
             this.billingPollSub?.unsubscribe();
             this.billingPollSub = null;
-          } else if (status === 'basis') {
-            this.billingPollSub?.unsubscribe();
-            this.billingPollSub = null;
-            this.billingCongratsOpen.set(false);
           }
         },
+        error: () => undefined,
       });
   }
 

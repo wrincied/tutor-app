@@ -23,6 +23,8 @@ import { SeoService } from './core/services/seo.service';
 import { ThemeService } from './core/services/theme.service';
 import { purgeStaleOverlayLayers } from './core/utils/purge-stale-overlay-layers';
 import { consumeBillingReturnFlag } from './core/utils/billing-return';
+import { BillingService } from './core/services/billing.service';
+import { UserService } from './core/services/user.service';
 
 @Component({
   selector: 'app-root',
@@ -38,6 +40,8 @@ import { consumeBillingReturnFlag } from './core/utils/billing-return';
 export class App {
   auth = inject(AuthService);
   router = inject(Router);
+  private readonly billingSvc = inject(BillingService);
+  private readonly userSvc = inject(UserService);
   readonly unlinkAlert = inject(BotUnlinkAlertService);
   private readonly i18n = inject(I18nService);
   /** Глобальная тема (localStorage + data-theme). */
@@ -61,15 +65,21 @@ export class App {
     purgeStaleOverlayLayers(this.document);
 
     // Stripe returns to /app/home?billing=success (legacy: /?billing=success#/…).
+    // Browser Back leaves sessionStorage=pending — treat as cancel and force Free if no Stripe sub.
     const billingReturn = consumeBillingReturnFlag();
     if (billingReturn === 'success') {
       const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
       const path = typeof window !== 'undefined' ? window.location.pathname : '';
-      const alreadyHome =
-        path.includes('/app/home') || hash.includes('/app/home');
+      const alreadyHome = path.includes('/app/home') || hash.includes('/app/home');
       if (!alreadyHome) {
         void this.router.navigateByUrl('/app/home?billing=success');
       }
+    } else if (billingReturn === 'cancel' && this.auth.isLoggedIn()) {
+      this.userSvc.invalidateProfile();
+      this.billingSvc.syncSubscription().subscribe({
+        next: (user) => this.userSvc.cacheProfile(user),
+        error: () => undefined,
+      });
     }
 
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((e) => {

@@ -288,6 +288,18 @@ export class PricingComponent implements OnInit, OnDestroy {
         queryParamsHandling: 'merge',
         replaceUrl: true,
       });
+    } else if (billingResult === 'cancel') {
+      this.userSvc.invalidateProfile();
+      this.billingSvc.syncSubscription().subscribe({
+        next: (user) => this.userSvc.cacheProfile(user),
+        error: () => undefined,
+      });
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { billing: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
     }
 
     const gate = this.route.snapshot.queryParamMap.get('gate');
