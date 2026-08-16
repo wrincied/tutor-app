@@ -1,23 +1,103 @@
 <article class="help-page">
-  <header class="help-page__header">
+  <header class="help-page__header u-rise">
     <a routerLink="/" class="help-page__back">← {{ i18n.authUi().backHome }}</a>
   </header>
 
-  <h1>{{ i18n.authUi().helpTitle }}</h1>
-  <p class="help-page__intro">{{ i18n.authUi().helpIntro }}</p>
+  @if (loading()) {
+    <div class="help-page__skeleton" aria-busy="true" aria-live="polite">
+      <div class="skeleton skeleton--line-lg help-page__sk-title"></div>
+      <div class="skeleton skeleton--line help-page__sk-line"></div>
+      <div class="skeleton skeleton--line help-page__sk-line help-page__sk-line--short"></div>
+      <div class="skeleton help-page__sk-card"></div>
+      <div class="skeleton help-page__sk-card"></div>
+      <div class="skeleton help-page__sk-form"></div>
+    </div>
+  } @else {
+    <div class="u-rise">
+      <h1>{{ i18n.authUi().helpTitle }}</h1>
+      <p class="help-page__intro">{{ i18n.authUi().helpIntro }}</p>
+    </div>
 
-  <ul class="help-page__guides">
-    <li>{{ i18n.authUi().helpGuideProfile }}</li>
-    <li>{{ i18n.authUi().helpGuideStudents }}</li>
-    <li>{{ i18n.authUi().helpGuideFinance }}</li>
-  </ul>
+    <ul class="help-page__guides u-rise u-rise-delay-1" appReveal>
+      <li>{{ i18n.authUi().helpGuideProfile }}</li>
+      <li>{{ i18n.authUi().helpGuideStudents }}</li>
+      <li>{{ i18n.authUi().helpGuideFinance }}</li>
+    </ul>
 
-  <div class="help-page__actions">
-    <a href="#landing-v2-faq" class="help-page__cta help-page__cta--solid" (click)="openFaq($event)">{{
-      i18n.authUi().helpFaqCta
-    }}</a>
-    <a class="help-page__cta help-page__cta--ghost" [href]="'mailto:' + contactEmail()">{{
-      i18n.authUi().helpContactCta
-    }}</a>
-  </div>
+    <div class="help-page__actions u-rise u-rise-delay-2">
+      <a href="#landing-v2-faq" class="help-page__cta help-page__cta--ghost" (click)="openFaq($event)">{{
+        i18n.authUi().helpFaqCta
+      }}</a>
+    </div>
+
+    <section class="help-page__form-block u-rise u-rise-delay-3" appReveal aria-labelledby="help-form-title">
+      <h2 id="help-form-title">{{ i18n.helpFormUi().formTitle }}</h2>
+      <p class="help-page__mail-hint">
+        {{ mailHintText() }}
+        ·
+        <a class="help-page__mail-link" [href]="mailtoHref()">{{ i18n.helpFormUi().mailCta }}</a>
+      </p>
+
+      @if (success()) {
+        <p class="help-page__success" role="status">{{ i18n.helpFormUi().success }}</p>
+      }
+
+      <form class="help-page__form" (ngSubmit)="submit()">
+        <label class="help-page__field">
+          <span>{{ i18n.helpFormUi().nameLabel }}</span>
+          <input
+            type="text"
+            name="name"
+            autocomplete="name"
+            required
+            maxlength="120"
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+          />
+        </label>
+        <label class="help-page__field">
+          <span>{{ i18n.helpFormUi().emailLabel }}</span>
+          <input
+            type="email"
+            name="email"
+            autocomplete="email"
+            required
+            maxlength="200"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+          />
+        </label>
+        <label class="help-page__field">
+          <span>{{ i18n.helpFormUi().subjectLabel }}</span>
+          <input
+            type="text"
+            name="subject"
+            required
+            maxlength="160"
+            [ngModel]="subject()"
+            (ngModelChange)="subject.set($event)"
+          />
+        </label>
+        <label class="help-page__field">
+          <span>{{ i18n.helpFormUi().messageLabel }}</span>
+          <textarea
+            name="message"
+            rows="5"
+            required
+            maxlength="4000"
+            [ngModel]="message()"
+            (ngModelChange)="message.set($event)"
+          ></textarea>
+        </label>
+
+        @if (error()) {
+          <p class="help-page__error" role="alert">{{ error() }}</p>
+        }
+
+        <button type="submit" class="help-page__cta help-page__cta--solid" [disabled]="submitting()">
+          {{ submitting() ? i18n.helpFormUi().sending : i18n.helpFormUi().submit }}
+        </button>
+      </form>
+    </section>
+  }
 </article>

@@ -27,6 +27,8 @@ export interface PricingPlanCopy {
   name: string;
   priceLabel: string;
   period: string;
+  /** Short value line under the plan name. */
+  subtitle: string;
   /** Logged-in free user (current plan). */
   cta: string;
   /** Guest CTA on public /pricing. */
@@ -77,10 +79,16 @@ export interface PricingStrings {
   downgradeToFreeBody: string;
   downgradeToFreeConfirm: string;
   downgradeToBasisTitle: string;
+  /** Placeholders: `{current_period_end}`, `{basis_price}`. */
   downgradeToBasisBody: string;
   downgradeToBasisConfirm: string;
   downgradeKeep: string;
+  /** Safe cancel label when downgrading from Pro → Basis. */
+  downgradeKeepPro: string;
   downgradeLoading: string;
+  /** Shown on Basis when Pro→Basis is already scheduled. Placeholder: `{date}`. */
+  downgradeBasisScheduledCta: string;
+  downgradeBasisScheduledHint: string;
   /** Shown on Free when cancel_at_period_end is already scheduled. Placeholder: `{date}`. */
   cancelScheduledCta: string;
   /** Extra line under Free CTA when cancel is scheduled. Placeholder: `{date}`. */
@@ -93,6 +101,73 @@ export interface PricingStrings {
     title: string;
     items: PricingFaqItem[];
   };
+}
+
+export interface PaymentStrings {
+  backToPricing: string;
+  planPrefix: string;
+  intervalMonthly: string;
+  intervalYearly: string;
+  /** Short period unit for “/ month” lines, e.g. месяц / month. */
+  periodMonth: string;
+  periodYear: string;
+  /** Placeholders: {amount}, {currency} */
+  dueToday: string;
+  /** Placeholders: {amount}, {currency}, {period}, {days} */
+  thenAfterTrial: string;
+  /** Placeholders: {days} */
+  timelineToday: string;
+  /** Placeholders: {days}, {amount}, {currency} */
+  timelineCharge: string;
+  features: [string, string, string];
+  methodsTitle: string;
+  methodsSubtitle: string;
+  tributeName: string;
+  tributeRegion: string;
+  tributeHint: string;
+  tributeBadges: [string, string, string];
+  stripeName: string;
+  stripeRegion: string;
+  stripeHint: string;
+  stripeBadges: string[];
+  recommended: string;
+  unavailable: string;
+  /** Placeholders: {days} */
+  payCtaTrial: string;
+  /** Placeholders: {amount}, {currency} */
+  payCtaPayNow: string;
+  payLoading: string;
+  /** Lead-in before terms/privacy links inside the consent checkbox label. */
+  legalBefore: string;
+  legalTerms: string;
+  legalMid: string;
+  legalPrivacy: string;
+  legalAfter: string;
+  tributeNotReady: string;
+  stripeNotReady: string;
+  /** Shown when CIS preferred Tribute but Stripe is used as temporary fallback. */
+  stripeFallbackHint: string;
+  taxRequired: string;
+  accountLink: string;
+  loadError: string;
+  payError: string;
+}
+
+export interface HelpFormStrings {
+  formTitle: string;
+  nameLabel: string;
+  emailLabel: string;
+  subjectLabel: string;
+  messageLabel: string;
+  submit: string;
+  sending: string;
+  success: string;
+  error: string;
+  captchaRequired: string;
+  rateLimited: string;
+  /** Placeholder: {email} */
+  mailHint: string;
+  mailCta: string;
 }
 
 /** Ключи для document.title (route data `title` и SeoService). */
@@ -109,6 +184,7 @@ export type PageTitleKey =
   | 'status'
   | 'adminLogin'
   | 'verifyEmail'
+  | 'authAction'
   | 'onboarding'
   | 'home'
   | 'students'
@@ -116,6 +192,7 @@ export type PageTitleKey =
   | 'workspace'
   | 'finance'
   | 'pricing'
+  | 'payment'
   | 'account'
   | 'accountCustomization'
   | 'accountProfile'
@@ -239,6 +316,14 @@ export interface UserProfile {
   cancel_at_period_end?: boolean;
   /** ISO when access ends after cancel-at-period-end. */
   subscription_cancel_at?: string | null;
+  /** ISO end of current Stripe billing period (or trial end). */
+  subscription_current_period_end?: string | null;
+  /** Billing interval of the active Stripe subscription. */
+  subscription_interval?: 'monthly' | 'yearly' | null;
+  /** Scheduled plan change (e.g. Pro → Basis at period end). */
+  pending_plan?: 'basis' | null;
+  /** ISO when pending_plan takes effect. */
+  pending_plan_at?: string | null;
   /** Whether a Stripe subscription id is linked. */
   has_stripe_subscription?: boolean;
   /** Feature gates derived from subscription_status. */
@@ -559,6 +644,7 @@ export interface AccountStrings {
   cancelSubscriptionError: string;
   customizationTab: string;
   accountTab: string;
+  supportTab: string;
   administrationTab: string;
   activityLogSection: string;
   activityLogEmpty: string;
@@ -639,15 +725,16 @@ export interface AuthStrings {
   landingMockBotPayment: string;
   landingMockBotLessonStart: string;
   landingMockBotHomework: string;
-  /** Tax cushion (AT) preview. */
-  landingTaxTitle: string;
-  landingTaxBody: string;
-  landingMockTaxGross: string;
-  landingMockTaxFrozen: string;
-  landingMockTaxSpendable: string;
-  landingMockTaxSvs: string;
-  landingMockTaxEst: string;
-  landingMockTaxHint: string;
+  /** Vacation / absence mode preview. */
+  landingVacationTitle: string;
+  landingVacationBody: string;
+  landingMockVacationMode: string;
+  landingMockVacationOn: string;
+  landingMockVacationStart: string;
+  landingMockVacationEnd: string;
+  landingMockVacationMessage: string;
+  landingMockVacationMessageText: string;
+  landingMockVacationHint: string;
   /** Self-booking calendar link preview. */
   landingBookingTitle: string;
   landingBookingBody: string;
@@ -667,6 +754,8 @@ export interface AuthStrings {
   landingPricingToggleMonthly: string;
   landingPricingToggleYearly: string;
   landingPricingFreeLabel: string;
+  /** Value line under Free title (same role as Basis/Pro trial lines). */
+  landingPricingFreeSubtitle: string;
   landingPricingBasisLabel: string;
   landingPricingProLabel: string;
   landingPricingBasisBadge: string;
@@ -699,6 +788,8 @@ export interface AuthStrings {
   landingFaq4A: string;
   landingFaq5Q: string;
   landingFaq5A: string;
+  landingFaq6Q: string;
+  landingFaq6A: string;
   footerDatenschutz: string;
   footerImpressum: string;
   footerKontakt: string;
@@ -791,6 +882,26 @@ export interface AuthStrings {
   resetPasswordSend: string;
   cancel: string;
   close: string;
+  /** Firebase email action handler (/auth/action). */
+  authActionLoading: string;
+  authActionInvalidTitle: string;
+  authActionInvalidLink: string;
+  authActionExpired: string;
+  authActionGenericError: string;
+  authActionUserDisabled: string;
+  authActionResetTitle: string;
+  authActionResetSubtitle: string;
+  authActionResetSuccess: string;
+  authActionVerifyTitle: string;
+  authActionVerifySuccess: string;
+  authActionRecoverTitle: string;
+  authActionRecoverSuccess: string;
+  authActionNewPassword: string;
+  authActionConfirmPassword: string;
+  authActionSavePassword: string;
+  authActionSaving: string;
+  authActionPasswordTooShort: string;
+  authActionPasswordMismatch: string;
   continueWithGoogle: string;
   orContinueWith: string;
   oauthError: string;
@@ -843,6 +954,12 @@ export interface AuthStrings {
 export interface LegalCommonStrings {
   back: string;
   lastUpdated: string;
+}
+
+/** Shared chrome + Impressum fallback (CMS failure). */
+export interface LegalStrings extends LegalCommonStrings {
+  impressumTitle: string;
+  impressumUnavailable: string;
 }
 
 export interface LegalDataProcessingStrings extends LegalCommonStrings {
@@ -1094,17 +1211,36 @@ export interface HomeStrings {
   todaySection: string;
   todayLessons: string;
   todayIncome: string;
+  todayIncomeToday: string;
+  todayIncomeWeek: string;
   todayHours: string;
   todayCompleted: string;
   todayScheduled: string;
   incomeApproxHint: string;
   lessonsEmpty: string;
+  lessonsEmptyCta: string;
+  newLessonCta: string;
   nextLessonTitle: string;
   nextLessonNone: string;
   todayAgenda: string;
+  scheduleTitle: string;
+  scheduleTodayBtn: string;
   overdueLessonsHint: string;
   lowBalanceTitle: string;
   lowBalanceLessonsLeft: string;
+  lowBalanceAllOk: string;
+  paymentPackage: string;
+  paymentPackageProgress: string;
+  paymentUnpaid: string;
+  attentionTitle: string;
+  telegramBotTitle: string;
+  telegramBotActive: string;
+  telegramBotInactive: string;
+  telegramBotUnavailable: string;
+  telegramBotProBadge: string;
+  telegramBotLearnMore: string;
+  telegramRemindersToday: string;
+  telegramLinkedStudents: string;
   loading: string;
   loadError: string;
   betaTitle: string;
@@ -1319,7 +1455,16 @@ export interface FinanceSummary {
   /** Только при `scope=home` — укороченный список учеников без отдельного GET. */
   students?: Pick<
     Student,
-    '_id' | 'name' | 'color_hex' | 'balance_lessons' | 'billing_type' | 'rate_unit'
+    | '_id'
+    | 'name'
+    | 'color_hex'
+    | 'balance_lessons'
+    | 'billing_type'
+    | 'rate_unit'
+    | 'last_topup'
+    | 'unpaid_lessons_count'
+    | 'bot_active'
+    | 'telegram_chat_id'
   >[];
 }
 

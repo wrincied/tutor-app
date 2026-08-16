@@ -17,4 +17,16 @@ export class PublicContentService {
   getContact(): Observable<PublicContactInfo> {
     return this.http.get<PublicContactInfo>(`${API}/contact`);
   }
+
+  sendContactMessage(body: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    recaptchaToken?: string | null;
+    /** @deprecated Use recaptchaToken */
+    turnstileToken?: string | null;
+  }): Observable<{ ok: true; emailed?: boolean }> {
+    return this.http.post<{ ok: true; emailed?: boolean }>(`${API}/contact`, body);
+  }
 }

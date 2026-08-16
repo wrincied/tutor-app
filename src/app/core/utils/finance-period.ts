@@ -22,6 +22,22 @@ export function financeTodayRange(now = new Date()): FinancePeriodRange {
   return { from: iso, to: iso };
 }
 
+/** Локальный день YYYY-MM-DD → from/to для summary. */
+export function financeDayRange(dayIso: string): FinancePeriodRange {
+  return { from: dayIso, to: dayIso };
+}
+
+/** Текущая календарная неделя (пн–вс, локальные даты). */
+export function financeWeekRange(now = new Date()): FinancePeriodRange {
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekday = (day.getDay() + 6) % 7; // Mon=0
+  const monday = new Date(day);
+  monday.setDate(day.getDate() - weekday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return { from: toIsoDateLocal(monday), to: toIsoDateLocal(sunday) };
+}
+
 /** Диапазон YYYY-MM-DD для запроса summary (UTC-границы дня). */
 export function financePeriodRange(preset: FinancePeriodPreset, now = new Date()): FinancePeriodRange {
   if (preset === 'all') {

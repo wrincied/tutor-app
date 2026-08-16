@@ -1,8 +1,8 @@
-import type { Lang, PageTitleKey } from '@interfaces';
+﻿import type { Lang, PageTitleKey } from '@interfaces';
 
 export const SEO_CANONICAL_ORIGIN = 'https://simple4u.at';
-export const SEO_OG_IMAGE = `${SEO_CANONICAL_ORIGIN}/assets/brand/simple4u-logo.svg`;
-export const SEO_SUPPORT_EMAIL = 'support@simple4u.com';
+export const SEO_OG_IMAGE = `${SEO_CANONICAL_ORIGIN}/assets/brand/og-image.png`;
+export const SEO_SUPPORT_EMAIL = 'support@simple4u.at';
 
 const PRIVATE_TITLE_KEYS = new Set<PageTitleKey>([
   'verifyEmail',
@@ -33,6 +33,7 @@ const DESCRIPTIONS: Record<SeoLang, Partial<Record<PageTitleKey, string>>> = {
       'Simple4U.at: All-in-One Plattform für private Tutoren in Österreich. Unterricht, Schüler, Finanzen. Nicht die US-Firma simple4u.io.',
     pricing:
       'Tarife Simple4U.at: Free, Basis und Pro für Nachhilfelehrer. Kalender, Finanzen und Telegram-Erinnerungen. SaaS aus Österreich.',
+    payment: 'Zahlung Simple4U.at — Stripe oder Tribute je nach Land.',
     login: 'Anmelden bei Simple4U.at — CRM für Nachhilfelehrer (Österreich).',
     register:
       'Kostenloses Konto auf Simple4U.at erstellen. Terminplaner und Schülerverwaltung für private Tutoren.',
@@ -53,6 +54,7 @@ const DESCRIPTIONS: Record<SeoLang, Partial<Record<PageTitleKey, string>>> = {
       'Simple4U.at: all-in-one workspace for private tutors — schedule, students, and finances. Based in Graz, Austria.',
     pricing:
       'Simple4U.at plans: Free, Basis, and Pro for tutors. Calendar, finance, and Telegram reminders. SaaS from Austria.',
+    payment: 'Pay for Simple4U.at — Stripe or Tribute depending on country.',
     login: 'Sign in to Simple4U.at — tutor CRM in Austria.',
     register: 'Create a free Simple4U.at account. Lesson planner and student CRM for tutors.',
     help: 'Help Center for Simple4U.at — tutor CRM and scheduler.',
@@ -96,7 +98,7 @@ export function structuredDataJson(lang: Lang): string {
         telephone: '+43-664-93290516',
         address: {
           '@type': 'PostalAddress',
-          streetAddress: 'Köflacher Gasse 9, 2.218',
+          streetAddress: 'Köflacher Gasse 9, Tür 218.2',
           addressLocality: 'Graz',
           postalCode: '8020',
           addressCountry: 'AT',

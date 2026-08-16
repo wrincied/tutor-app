@@ -30,7 +30,23 @@ describe('postAuthPath', () => {
     expect(postAuthPath(profile, true, null)).toBe('/app/home');
   });
 
-  it('ignores returnUrl until email is verified', () => {
-    expect(postAuthPath(profile, false, '/app/students')).toBe('/app/verify-email-notice');
+  it('sends declined consent back to onboarding so the user can accept', () => {
+    expect(
+      postAuthPath(
+        { onboarding_completed: false, data_consent_accepted: false } as UserProfile,
+        true,
+        '/app/home',
+      ),
+    ).toBe('/app/onboarding');
+  });
+
+  it('sends incomplete onboarding to onboarding', () => {
+    expect(
+      postAuthPath(
+        { onboarding_completed: false, data_consent_accepted: true } as UserProfile,
+        true,
+        null,
+      ),
+    ).toBe('/app/onboarding');
   });
 });

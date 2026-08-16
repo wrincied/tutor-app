@@ -93,7 +93,15 @@
           [disabled]="loading()"
           (click)="signInWithGoogle()"
         >
-          {{ i18n.authUi().continueWithGoogle }}
+          <img
+            class="auth-oauth-btn__icon"
+            src="assets/icons/google-g.svg"
+            width="18"
+            height="18"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>{{ i18n.authUi().continueWithGoogle }}</span>
         </button>
       </form>
     </div>
@@ -112,35 +120,60 @@
 
 <app-dialog
   [open]="resetModalOpen()"
-  size="md"
+  size="sm"
   [title]="i18n.authUi().resetPasswordModalTitle"
+  [showClose]="true"
+  [closeAriaLabel]="i18n.authUi().close"
+  [actionsStackMobile]="true"
+  [cancelMuted]="true"
   [cancelLabel]="resetModalSuccess() ? null : i18n.authUi().cancel"
   [confirmLabel]="resetModalSuccess() ? null : i18n.authUi().resetPasswordSend"
+  [confirmDisabled]="resetLoading()"
   [dismissLabel]="resetModalSuccess() ? i18n.authUi().close : null"
   (cancel)="closeResetModal()"
   (confirm)="onResetDialogConfirm()"
 >
-  @if (resetModalSuccess()) {
-    <p class="auth-dialog-success">{{ i18n.authUi().resetPasswordSent }}</p>
-  } @else {
-    <p class="auth-dialog-hint">{{ i18n.authUi().resetPasswordModalHint }}</p>
-    @if (resetModalError()) {
-      <div class="auth-error auth-error--dialog">{{ resetModalError() }}</div>
+  <div class="auth-reset">
+    @if (resetModalSuccess()) {
+      <div class="auth-reset__success" role="status">
+        <span class="auth-reset__success-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+            <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M7.5 12.5 10.5 15.5 16.5 9"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+        <p class="auth-reset__success-title">{{ i18n.authUi().resetPasswordSent }}</p>
+        <p class="auth-reset__success-hint">{{ resetModalEmail.trim() }}</p>
+      </div>
+    } @else {
+      <p class="auth-reset__lead">{{ i18n.authUi().resetPasswordModalHint }}</p>
+      @if (resetModalError()) {
+        <div class="auth-reset__error" role="alert">{{ resetModalError() }}</div>
+      }
+      <label class="auth-reset__field">
+        <span class="auth-reset__label">{{ i18n.authUi().email }}</span>
+        <input
+          class="auth-reset__input"
+          type="email"
+          [(ngModel)]="resetModalEmail"
+          name="reset_email"
+          required
+          autocomplete="email"
+          inputmode="email"
+          spellcheck="false"
+          [disabled]="resetLoading()"
+          [attr.aria-invalid]="resetModalError() ? true : null"
+        />
+      </label>
+      @if (resetLoading()) {
+        <p class="auth-reset__status">{{ i18n.authUi().resetPasswordSending }}</p>
+      }
     }
-    <div class="field field--float auth-dialog-field">
-      <input
-        type="email"
-        [(ngModel)]="resetModalEmail"
-        name="reset_email"
-        required
-        placeholder=" "
-        autocomplete="email"
-        [disabled]="resetLoading()"
-      />
-      <label>{{ i18n.authUi().email }}</label>
-    </div>
-    @if (resetLoading()) {
-      <p class="auth-dialog-status">{{ i18n.authUi().resetPasswordSending }}</p>
-    }
-  }
+  </div>
 </app-dialog>

@@ -38,10 +38,8 @@ export function postAuthPath(
   if (!emailVerified) {
     return '/app/verify-email-notice';
   }
-  if (profile.data_consent_accepted === false) {
-    return '/login';
-  }
-  if (!profile.onboarding_completed) {
+  // Declined earlier: allow signing in again and re-running onboarding to accept.
+  if (profile.data_consent_accepted === false || !profile.onboarding_completed) {
     return '/app/onboarding';
   }
   return safeReturnUrl(returnUrl) ?? '/app/home';

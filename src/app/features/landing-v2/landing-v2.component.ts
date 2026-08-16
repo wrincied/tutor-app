@@ -1,4 +1,4 @@
-import {
+﻿import {
   Component,
   ElementRef,
   HostListener,
@@ -36,12 +36,12 @@ export class LandingV2Component implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
 
-  readonly contactEmail = signal('support@simple4u.com');
+  readonly contactEmail = signal('support@simple4u.at');
   readonly demoSlide = signal(0);
   readonly demoSlideCount = 3;
   readonly langMenuOpen = signal(false);
   readonly billingInterval = signal<LandingBillingInterval>('monthly');
-  readonly currentLangCode = computed(() => this.i18n.lang().toUpperCase());
+  readonly currentLangCode = computed(() => this.i18n.codeForLang(this.i18n.lang()));
 
   /** Landing teaser uses AT pricing (primary market). */
   private readonly landingProPricing = computed(() => getPlanPricing('pro', 'AT'));
@@ -70,7 +70,7 @@ export class LandingV2Component implements OnInit, OnDestroy {
     return this.formatAmount(amount);
   });
 
-  /** Always “per month” under the large amount (Variant A). */
+  /** Always "per month" under the large amount (Variant A). */
   readonly proPeriodLabel = computed(() => this.i18n.authUi().landingPricingProPeriodMonthly);
 
   readonly basisBilledAnnuallyLabel = computed(() => {

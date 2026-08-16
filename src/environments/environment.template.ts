@@ -6,6 +6,10 @@ export const environment = {
   designMode: false,
   apiUrl: 'http://localhost:3001',
   appUrl: 'http://localhost:4200',
+  /** Cloudflare Turnstile site key (legacy; prefer recaptchaSiteKey). */
+  turnstileSiteKey: '',
+  /** Google reCAPTCHA v3 site key (public). Empty = captcha off. */
+  recaptchaSiteKey: '',
   firebaseConfig: {
     apiKey: 'PLACEHOLDER',
     authDomain: 'PLACEHOLDER',

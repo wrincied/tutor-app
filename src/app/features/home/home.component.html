@@ -1,90 +1,153 @@
-@if (designMode) {
-  <div class="page app-scroll-page home-studio">
-    <div class="home-studio__glow" aria-hidden="true"></div>
+<div class="page app-scroll-page home-dash">
+  <header class="home-dash__mast">
+    <div class="home-dash__intro">
+      <p class="home-dash__date">{{ todayDateLabel() }}</p>
+      <h1 class="home-dash__greeting">{{ greeting() }}</h1>
+    </div>
+    <a routerLink="/app/calendar" [queryParams]="newLessonQuery()" class="home-dash__new">
+      {{ t.newLessonCta }}
+    </a>
+  </header>
 
-    <header class="home-studio__mast">
-      <p class="home-studio__date">{{ todayDateLabel() }}</p>
-      <h1 class="home-studio__greeting">{{ greeting() }}</h1>
-    </header>
-
-    <div class="scrollable-content home-studio__body">
-      @if (loading()) {
-        <div class="home-pulse" role="status" aria-busy="true">
-          <span class="sr-only">{{ t.loading }}</span>
+  <div class="scrollable-content home-dash__body">
+    @if (loading()) {
+      <div class="home-dash__skeleton" role="status" aria-busy="true">
+        <span class="sr-only">{{ t.loading }}</span>
+        <div class="home-dash__stats">
           @for (slot of [0, 1, 2]; track slot) {
-            <div class="home-pulse__row">
-              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 40%"></span>
-              <span class="skeleton skeleton--line skeleton--line-lg" style="width: 70%"></span>
+            <div class="home-card home-card--stat">
+              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 50%"></span>
+              <span class="skeleton skeleton--line skeleton--line-lg" style="width: 35%"></span>
             </div>
           }
         </div>
-      } @else if (error()) {
-        <p class="home-page__error">{{ error() }}</p>
-      } @else {
-        <section class="home-studio__focus" aria-labelledby="home-next-lesson">
-          <p id="home-next-lesson" class="home-studio__eyebrow">{{ t.nextLessonTitle }}</p>
-          @if (nextLesson(); as row) {
-            <a
-              routerLink="/app/calendar"
-              [queryParams]="calendarLessonQuery(row)"
-              class="home-studio__focus-link"
-            >
-              <span class="home-studio__clock">{{ lessonTime(row.lesson.scheduledAt) }}</span>
-              <span class="home-studio__focus-copy">
-                <span class="home-studio__focus-name">{{ row.studentName }}</span>
-                <span class="home-studio__focus-meta">{{ lessonDuration(row.lesson.lesson_duration) }}</span>
-              </span>
-            </a>
-          } @else {
-            <p class="home-studio__quiet">{{ t.nextLessonNone }}</p>
-            <a routerLink="/app/calendar" class="home-studio__text-cta">{{ i18n.nav().calendar }}</a>
+      </div>
+    } @else if (error()) {
+      <p class="home-dash__error" role="alert">{{ error() }}</p>
+    } @else {
+      <div class="home-dash__stats" [attr.aria-label]="t.todaySection">
+        <a routerLink="/app/calendar" class="home-card home-card--stat">
+          <span class="home-card__label">{{ t.todayLessons }}</span>
+          <span class="home-card__value">{{ todayLessonCount() }}</span>
+          @if (todayLessonCount() > 0) {
+            <span class="home-card__progress" aria-hidden="true">
+              <span class="home-card__progress-bar" [style.width.%]="lessonsProgressPct()"></span>
+            </span>
           }
-        </section>
+          <span class="home-card__hint">
+            {{ todayCompletedCount() }} {{ t.todayCompleted }} ·
+            {{ todayScheduledCount() }} {{ t.todayScheduled }}
+          </span>
+        </a>
 
-        <p class="home-studio__strip" [attr.aria-label]="t.todaySection">
-          <a routerLink="/app/calendar" class="home-studio__chip">
-            <strong>{{ todayLessonCount() }}</strong> {{ t.todayLessons }}
-          </a>
-          <span class="home-studio__dot" aria-hidden="true"></span>
-          <a routerLink="/app/finance" class="home-studio__chip">
-            <strong>{{ todayIncomeLabel() }}</strong> {{ t.todayIncome }}
-          </a>
-          <span class="home-studio__dot" aria-hidden="true"></span>
-          <a routerLink="/app/calendar" class="home-studio__chip">
-            <strong>{{ todayHours() | number: '1.0-1' }}</strong> {{ t.todayHours }}
-          </a>
-        </p>
+        <a routerLink="/app/finance" class="home-card home-card--stat">
+          <span class="home-card__label">{{ t.todayIncomeToday }}</span>
+          <span class="home-card__value home-card__value--money">{{ todayIncomeLabel() }}</span>
+          <span class="home-card__hint">{{ weekIncomeHint() }}</span>
+        </a>
 
-        <section class="home-studio__day" aria-labelledby="home-agenda">
-          <div class="home-studio__day-head">
-            <h2 id="home-agenda" class="home-studio__eyebrow">{{ t.todayAgenda }}</h2>
-            @if (overdueCount() > 0) {
-              <p class="home-studio__warn">{{ overdueHint() }}</p>
-            }
+        <a routerLink="/app/calendar" class="home-card home-card--stat">
+          <span class="home-card__label">{{ t.todayHours }}</span>
+          <span class="home-card__value">{{ todayHours() | number: '1.0-1' }}</span>
+        </a>
+      </div>
+
+      <div class="home-dash__grid">
+        <section class="home-card home-card--schedule" aria-labelledby="home-schedule-title">
+          <div class="home-schedule__head">
+            <h2 id="home-schedule-title" class="home-card__title">{{ scheduleTitle() }}</h2>
+            <div class="home-schedule__nav" role="group" [attr.aria-label]="t.scheduleTitle">
+              <button type="button" class="home-schedule__nav-btn" (click)="shiftDay(-1)" aria-label="←">
+                ‹
+              </button>
+              <button
+                type="button"
+                class="home-schedule__today"
+                (click)="goToday()"
+                [disabled]="isSelectedToday()"
+              >
+                {{ t.scheduleTodayBtn }}
+              </button>
+              <button type="button" class="home-schedule__nav-btn" (click)="shiftDay(1)" aria-label="→">
+                ›
+              </button>
+            </div>
           </div>
 
-          @if (todayLessons().length === 0) {
-            <p class="home-studio__quiet">{{ t.lessonsEmpty }}</p>
+          @if (overdueCount() > 0 && isSelectedToday()) {
+            <p class="home-schedule__warn">{{ overdueHint() }}</p>
+          }
+
+          @if (agendaLoading()) {
+            <p class="home-schedule__empty">{{ t.loading }}</p>
+          } @else if (dayLessons().length === 0) {
+            <div class="home-schedule__empty-state">
+              <svg
+                class="home-schedule__empty-icon"
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M8 3v2M16 3v2M5 8h14"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+                <rect
+                  x="4"
+                  y="5"
+                  width="16"
+                  height="15"
+                  rx="2.5"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                />
+                <path
+                  d="M9 13.2l2 2 4.2-4.2"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <p class="home-schedule__empty">{{ t.lessonsEmpty }}</p>
+              <a
+                routerLink="/app/calendar"
+                [queryParams]="newLessonQuery()"
+                class="home-schedule__empty-btn"
+              >
+                {{ t.lessonsEmptyCta }}
+              </a>
+            </div>
           } @else {
-            <ol class="home-studio__list">
-              @for (row of todayLessons(); track row.lesson.occurrenceKey ?? row.lesson._id + row.lesson.scheduledAt) {
+            <ol class="home-timeline">
+              @for (row of dayLessons(); track row.lesson.occurrenceKey ?? row.lesson._id + row.lesson.scheduledAt) {
                 <li>
                   <a
                     routerLink="/app/calendar"
                     [queryParams]="calendarLessonQuery(row)"
-                    class="home-studio__item"
-                    [class.home-studio__item--overdue]="isLessonOverdue(row)"
+                    class="home-timeline__item"
+                    [class.home-timeline__item--overdue]="isLessonOverdue(row)"
                   >
-                    <time class="home-studio__item-time">{{ lessonTime(row.lesson.scheduledAt) }}</time>
-                    <span class="home-studio__rail" aria-hidden="true">
-                      <span class="home-studio__swatch" [style.background]="row.studentColor"></span>
+                    <span class="home-timeline__rail" aria-hidden="true">
+                      <span class="home-timeline__dot" [style.background]="row.studentColor"></span>
                     </span>
-                    <span class="home-studio__item-main">
-                      <span class="home-studio__item-name">{{ row.studentName }}</span>
-                      <span class="home-studio__item-status" [attr.data-status]="row.lesson.status">
-                        {{ statusLabel(row.lesson.status) }}
+                    <span class="home-timeline__time">{{ lessonTimeRange(row) }}</span>
+                    <span class="home-timeline__main">
+                      <span class="home-timeline__name">{{ row.studentName }}</span>
+                      <span class="home-timeline__meta">{{ lessonMeta(row) }}</span>
+                    </span>
+                    @if (paymentBadge(row); as badge) {
+                      <span
+                        class="home-timeline__badge"
+                        [class.home-timeline__badge--unpaid]="badge.kind === 'unpaid'"
+                      >
+                        {{ badge.text }}
                       </span>
-                    </span>
+                    }
                   </a>
                 </li>
               }
@@ -92,154 +155,72 @@
           }
         </section>
 
-        @if (lowBalanceStudents().length > 0) {
-          <section class="home-studio__aside" aria-labelledby="home-low-balance">
-            <h2 id="home-low-balance" class="home-studio__eyebrow">{{ t.lowBalanceTitle }}</h2>
-            <ul class="home-studio__aside-list">
-              @for (student of lowBalanceStudents(); track student._id) {
-                <li>
-                  <a
-                    routerLink="/app/students"
-                    [queryParams]="studentQuery(student)"
-                    class="home-studio__aside-link"
-                  >
-                    <span>{{ student.name }}</span>
-                    <span>{{ lowBalanceLabel(student) }}</span>
-                  </a>
-                </li>
-              }
-            </ul>
+        <aside class="home-dash__aside" [attr.aria-label]="t.attentionTitle">
+          <section class="home-card home-card--aside" aria-labelledby="home-low-balance">
+            <h2 id="home-low-balance" class="home-card__title">{{ t.lowBalanceTitle }}</h2>
+            @if (lowBalanceStudents().length === 0) {
+              <p class="home-aside__ok">
+                <svg
+                  class="home-aside__ok-icon"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+                  <path
+                    d="M4.8 8.2l2.1 2.1 4.3-4.4"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>{{ t.lowBalanceAllOk }}</span>
+              </p>
+            } @else {
+              <ul class="home-aside__list">
+                @for (student of lowBalanceStudents(); track student._id) {
+                  <li>
+                    <a
+                      routerLink="/app/students"
+                      [queryParams]="studentQuery(student)"
+                      class="home-aside__row"
+                    >
+                      <span class="home-aside__name">{{ student.name }}</span>
+                      <span class="home-aside__meta">{{ lowBalanceLabel(student) }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
           </section>
-        }
-      }
-    </div>
-  </div>
-} @else {
-  <div class="page app-scroll-page home-page">
-    <header class="home-page__header">
-      <p class="home-page__badge">Beta</p>
-      <h1 class="home-page__greeting">{{ greeting() }}</h1>
-      <p class="home-page__subtitle">{{ todayDateLabel() }}</p>
-    </header>
 
-    <div class="scrollable-content">
-      @if (loading()) {
-        <div class="home-stats home-stats--loading" role="status" aria-busy="true">
-          <span class="sr-only">{{ t.loading }}</span>
-          @for (slot of [0, 1, 2]; track slot) {
-            <div class="home-stat home-stat--skeleton">
-              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 55%"></span>
-              <span class="skeleton skeleton--line skeleton--line-lg" style="width: 40%"></span>
+          <section class="home-card home-card--aside home-card--telegram" aria-labelledby="home-telegram">
+            <div class="home-card__head">
+              <h2 id="home-telegram" class="home-card__title">{{ t.telegramBotTitle }}</h2>
+              @if (telegramPlanEnabled()) {
+                <span class="home-telegram__pro">{{ t.telegramBotProBadge }}</span>
+              }
             </div>
-          }
-        </div>
-      } @else if (error()) {
-        <p class="home-page__error">{{ error() }}</p>
-      } @else {
-        <p class="home-page__section-label">{{ t.todaySection }}</p>
-
-        <div class="home-stats">
-          <a routerLink="/app/calendar" class="home-stat home-stat--lessons">
-            <span class="home-stat__value">{{ todayLessonCount() }}</span>
-            <span class="home-stat__label">{{ t.todayLessons }}</span>
-            <span class="home-stat__hint">
-              {{ todayCompletedCount() }} {{ t.todayCompleted }} ·
-              {{ todayScheduledCount() }} {{ t.todayScheduled }}
-            </span>
-          </a>
-
-          <a routerLink="/app/finance" class="home-stat home-stat--income">
-            <span class="home-stat__value home-stat__value--sm">{{ todayIncomeLabel() }}</span>
-            <span class="home-stat__label">{{ t.todayIncome }}</span>
-            <span class="home-stat__hint">{{ t.incomeApproxHint }}</span>
-          </a>
-
-          <a routerLink="/app/calendar" class="home-stat home-stat--hours">
-            <span class="home-stat__value">{{ todayHours() | number: '1.0-1' }}</span>
-            <span class="home-stat__label">{{ t.todayHours }}</span>
-            @if (todayLessonCount() === 0) {
-              <span class="home-stat__hint">{{ t.lessonsEmpty }}</span>
-            }
-          </a>
-        </div>
-
-        <section class="home-panel home-panel--next" aria-labelledby="home-next-lesson">
-          <h2 id="home-next-lesson" class="home-panel__title">{{ t.nextLessonTitle }}</h2>
-          @if (nextLesson(); as row) {
-            <a
-              routerLink="/app/calendar"
-              [queryParams]="calendarLessonQuery(row)"
-              class="home-next"
+            <p
+              class="home-telegram__status"
+              [class.home-telegram__status--on]="telegramPlanEnabled() && telegramLinkedCount() > 0"
             >
-              <span class="home-next__time">{{ lessonTime(row.lesson.scheduledAt) }}</span>
-              <span class="home-next__meta">
-                <span class="home-next__name">{{ row.studentName }}</span>
-                <span class="home-next__duration">{{ lessonDuration(row.lesson.lesson_duration) }}</span>
-              </span>
-            </a>
-          } @else {
-            <p class="home-panel__empty">{{ t.nextLessonNone }}</p>
-          }
-        </section>
-
-        <section class="home-panel" aria-labelledby="home-agenda">
-          <div class="home-panel__head">
-            <h2 id="home-agenda" class="home-panel__title">{{ t.todayAgenda }}</h2>
-            @if (overdueCount() > 0) {
-              <p class="home-panel__alert">{{ overdueHint() }}</p>
+              {{ telegramBotStatusLabel() }}
+            </p>
+            <p class="home-aside__meta">{{ telegramLinkedLabel() }}</p>
+            <p class="home-aside__meta">{{ telegramRemindersLabel() }}</p>
+            @if (!telegramPlanEnabled()) {
+              <a routerLink="/app/pricing" class="home-telegram__more">{{ t.telegramBotLearnMore }}</a>
             }
-          </div>
-
-          @if (todayLessons().length === 0) {
-            <p class="home-panel__empty">{{ t.lessonsEmpty }}</p>
-          } @else {
-            <ul class="home-agenda">
-              @for (row of todayLessons(); track row.lesson.occurrenceKey ?? row.lesson._id + row.lesson.scheduledAt) {
-                <li>
-                  <a
-                    routerLink="/app/calendar"
-                    [queryParams]="calendarLessonQuery(row)"
-                    class="home-agenda__item"
-                    [class.home-agenda__item--overdue]="isLessonOverdue(row)"
-                  >
-                    <span class="home-agenda__stripe" [style.background]="row.studentColor"></span>
-                    <span class="home-agenda__time">{{ lessonTime(row.lesson.scheduledAt) }}</span>
-                    <span class="home-agenda__body">
-                      <span class="home-agenda__name">{{ row.studentName }}</span>
-                      <span class="home-agenda__status" [attr.data-status]="row.lesson.status">
-                        {{ statusLabel(row.lesson.status) }}
-                      </span>
-                    </span>
-                  </a>
-                </li>
-              }
-            </ul>
-          }
-        </section>
-
-        @if (lowBalanceStudents().length > 0) {
-          <section class="home-panel home-panel--warn" aria-labelledby="home-low-balance">
-            <h2 id="home-low-balance" class="home-panel__title">{{ t.lowBalanceTitle }}</h2>
-            <ul class="home-balance">
-              @for (student of lowBalanceStudents(); track student._id) {
-                <li>
-                  <a
-                    routerLink="/app/students"
-                    [queryParams]="studentQuery(student)"
-                    class="home-balance__item"
-                  >
-                    <span class="home-balance__name">{{ student.name }}</span>
-                    <span class="home-balance__count">{{ lowBalanceLabel(student) }}</span>
-                  </a>
-                </li>
-              }
-            </ul>
           </section>
-        }
-      }
-    </div>
+        </aside>
+      </div>
+    }
   </div>
-}
+</div>
 
 <app-dialog
   [open]="billingCongratsOpen()"

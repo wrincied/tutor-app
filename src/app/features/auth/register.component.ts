@@ -6,6 +6,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { resolveRegisterError } from '../../core/utils/auth-errors';
 import { shouldUseGoogleSignInPopup } from '../../core/utils/google-sign-in-mode';
+import { isBlockedBrandEmail } from '../../core/utils/brand-email';
 
 @Component({
   selector: 'app-register',
@@ -97,13 +98,17 @@ export class RegisterComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Google sign-in popup error]', err);
-        this.error.set(this.i18n.authUi().oauthError);
+        this.error.set(resolveRegisterError(err, this.i18n.authUi()));
         this.loading.set(false);
       },
     });
   }
 
   submit() {
+    if (isBlockedBrandEmail(this.email)) {
+      this.error.set(this.i18n.authUi().emailAlreadyInUse);
+      return;
+    }
     if (this.password !== this.passwordConfirm) {
       this.error.set(this.i18n.authUi().passwordsMismatch);
       return;

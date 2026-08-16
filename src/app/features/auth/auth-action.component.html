@@ -1,0 +1,104 @@
+<div class="auth-split">
+  <section class="auth-split__panel">
+    <a routerLink="/" class="auth-split__brand" aria-label="Simple4U">
+      <img
+        class="auth-split__brand-mark"
+        src="assets/brand/simple4u-mark.svg"
+        width="36"
+        height="36"
+        alt=""
+      />
+      <span>Simple4U</span>
+    </a>
+
+    <div class="auth-split__card">
+      <h1>{{ title() }}</h1>
+      @if (subtitle()) {
+        <p class="subtitle">{{ subtitle() }}</p>
+      }
+
+      @if (phase() === 'loading') {
+        <p class="auth-hint">{{ i18n.authUi().authActionLoading }}</p>
+      }
+
+      @if (phase() === 'signingIn') {
+        <p class="auth-hint">{{ i18n.authUi().loggingIn }}</p>
+      }
+
+      @if (error()) {
+        <div class="auth-error">{{ error() }}</div>
+      }
+
+      @if (phase() === 'form' && mode() === 'resetPassword') {
+        @if (email()) {
+          <p class="auth-email-display">{{ email() }}</p>
+        }
+        <form class="auth-form" (ngSubmit)="submitReset()" autocomplete="on">
+          <div class="field field--float">
+            <input
+              type="password"
+              [(ngModel)]="password"
+              name="new_password"
+              required
+              minlength="6"
+              placeholder=" "
+              autocomplete="new-password"
+              [disabled]="submitting()"
+            />
+            <label>{{ i18n.authUi().authActionNewPassword }}</label>
+          </div>
+          <div class="field field--float">
+            <input
+              type="password"
+              [(ngModel)]="passwordConfirm"
+              name="new_password_confirm"
+              required
+              minlength="6"
+              placeholder=" "
+              autocomplete="new-password"
+              [disabled]="submitting()"
+            />
+            <label>{{ i18n.authUi().authActionConfirmPassword }}</label>
+          </div>
+          <button type="submit" class="auth-btn-primary" [disabled]="submitting()">
+            {{
+              submitting()
+                ? i18n.authUi().authActionSaving
+                : i18n.authUi().authActionSavePassword
+            }}
+          </button>
+        </form>
+      }
+
+      @if (phase() === 'success') {
+        <div class="auth-banner-success">
+          {{ successMessage() }}
+        </div>
+        <a routerLink="/login" class="auth-btn-primary auth-btn-primary--link">
+          {{ i18n.authUi().goToLogin }}
+        </a>
+      }
+
+      @if (phase() === 'error') {
+        <div class="auth-actions auth-actions--stack">
+          <a routerLink="/login" class="auth-btn-primary auth-btn-primary--link">
+            {{ i18n.authUi().goToLogin }}
+          </a>
+          <a routerLink="/login" [queryParams]="{ reset: '1' }" class="auth-link-button auth-link-button--center">
+            {{ i18n.authUi().forgotPassword }}
+          </a>
+        </div>
+      }
+    </div>
+
+    <a routerLink="/" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
+  </section>
+
+  <aside class="auth-split__visual" aria-hidden="true">
+    <div class="auth-aurora">
+      <span class="auth-aurora__blob auth-aurora__blob--1"></span>
+      <span class="auth-aurora__blob auth-aurora__blob--2"></span>
+      <span class="auth-aurora__blob auth-aurora__blob--3"></span>
+    </div>
+  </aside>
+</div>

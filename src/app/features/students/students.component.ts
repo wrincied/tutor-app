@@ -1127,8 +1127,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.topupMoney.set(rate > 0 ? this.roundMoney(rate * step) : 0);
     this.topupPaidAt.set(this.todayInputDate());
     this.topupAmountSource.set('units');
-    const settings = normalizeTelegramSettings(student?.telegram_notification_settings);
-    this.topupSendReceipt.set(settings.payment_receipt_enabled && this.canNotifyTelegram(student));
+    this.topupSendReceipt.set(false);
     this.topupTargetId.set(id);
   }
 
@@ -1174,7 +1173,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     if (!id || !(n > 0)) {
       return;
     }
-    const wantsReceipt = this.topupSendReceipt();
+    const wantsReceipt = false;
     this.svc
       .topup(id, {
         lessons: n,

@@ -63,12 +63,18 @@ export class AppDialogComponent implements OnDestroy {
   cancelLabel = input<string | null>(null);
   /** Красная кнопка отмены (как btn-link.danger). */
   cancelDanger = input(false, { transform: booleanAttribute });
+  /** Приглушённая отмена без рамки (текст #64748B). */
+  cancelMuted = input(false, { transform: booleanAttribute });
+  /** На мобильных: кнопки столбцом, primary сверху на всю ширину. */
+  actionsStackMobile = input(false, { transform: booleanAttribute });
   /** Левая кнопка в actions (например «Удалить»), отдельно от cancel/confirm. */
   leadingLabel = input<string | null>(null);
   leadingDanger = input(false, { transform: booleanAttribute });
   confirmLabel = input<string | null>(null);
   /** Красная кнопка подтверждения (удаление и т.п.). */
   confirmDanger = input(false, { transform: booleanAttribute });
+  /** Контурная акцентная кнопка вместо залитой primary. */
+  confirmOutline = input(false, { transform: booleanAttribute });
   /** Блокирует кнопку подтверждения (например конфликт расписания). */
   confirmDisabled = input(false, { transform: booleanAttribute });
   /** Одна кнопка (например «Понятно») — если нет confirm/cancel. */

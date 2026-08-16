@@ -26,7 +26,7 @@
                   [class.landing-v2__lang-option--active]="isLang(code)"
                   (click)="pickLang(code)"
                 >
-                  <span class="landing-v2__lang-code">{{ code.toUpperCase() }}</span>
+                  <span class="landing-v2__lang-code">{{ i18n.codeForLang(code) }}</span>
                   <span class="landing-v2__lang-name">{{ i18n.labelForLang(code) }}</span>
                 </button>
               </li>
@@ -416,47 +416,40 @@
     <p class="landing-v2__section-copy">{{ i18n.authUi().landingHowBody }}</p>
   </section>
 
-  <section class="landing-v2__section landing-v2__section--tax" aria-labelledby="landing-v2-tax">
+  <section class="landing-v2__section landing-v2__section--vacation" aria-labelledby="landing-v2-vacation">
     <div class="landing-v2__split">
       <div class="landing-v2__split-copy">
-        <h2 id="landing-v2-tax" class="landing-v2__section-title">
-          {{ i18n.authUi().landingTaxTitle }}
+        <h2 id="landing-v2-vacation" class="landing-v2__section-title">
+          {{ i18n.authUi().landingVacationTitle }}
         </h2>
-        <p class="landing-v2__section-copy">{{ i18n.authUi().landingTaxBody }}</p>
+        <p class="landing-v2__section-copy">{{ i18n.authUi().landingVacationBody }}</p>
       </div>
 
-      <div class="landing-v2__tax-mock" aria-hidden="true">
-        <p class="landing-v2__mock-plaque">{{ i18n.authUi().landingMockComingSoon }}</p>
-        <div class="landing-v2__cushion">
-          <div class="landing-v2__cushion-row">
-            <span>{{ i18n.authUi().landingMockTaxGross }}</span>
-            <strong>€ 28 000</strong>
+      <div class="landing-v2__vacation-mock" aria-hidden="true">
+        <div class="landing-v2__vacation">
+          <div class="landing-v2__vacation-head">
+            <span>{{ i18n.authUi().landingMockVacationMode }}</span>
+            <span class="landing-v2__vacation-pill">{{ i18n.authUi().landingMockVacationOn }}</span>
           </div>
-          <div class="landing-v2__cushion-bar" role="presentation">
-            <span class="landing-v2__cushion-bar-spend"></span>
-            <span class="landing-v2__cushion-bar-freeze"></span>
-          </div>
-          <div class="landing-v2__cushion-split">
-            <div class="landing-v2__cushion-chip landing-v2__cushion-chip--spend">
-              <span>{{ i18n.authUi().landingMockTaxSpendable }}</span>
-              <strong>€ 20 693</strong>
+          <div class="landing-v2__vacation-dates">
+            <div class="landing-v2__vacation-date">
+              <span>{{ i18n.authUi().landingMockVacationStart }}</span>
+              <strong>15.08</strong>
             </div>
-            <div class="landing-v2__cushion-chip landing-v2__cushion-chip--freeze">
-              <span>{{ i18n.authUi().landingMockTaxFrozen }}</span>
-              <strong>€ 7 307</strong>
+            <div class="landing-v2__vacation-date">
+              <span>{{ i18n.authUi().landingMockVacationEnd }}</span>
+              <strong>01.09</strong>
             </div>
           </div>
-          <ul class="landing-v2__cushion-lines">
-            <li>
-              <span>{{ i18n.authUi().landingMockTaxSvs }}</span>
-              <span>€ 5 074</span>
-            </li>
-            <li>
-              <span>{{ i18n.authUi().landingMockTaxEst }}</span>
-              <span>€ 2 233</span>
-            </li>
-          </ul>
-          <p class="landing-v2__cushion-hint">{{ i18n.authUi().landingMockTaxHint }}</p>
+          <div class="landing-v2__vacation-bar" role="presentation">
+            <span class="landing-v2__vacation-bar-track"></span>
+            <span class="landing-v2__vacation-bar-span"></span>
+          </div>
+          <div class="landing-v2__vacation-msg">
+            <span>{{ i18n.authUi().landingMockVacationMessage }}</span>
+            <p>{{ i18n.authUi().landingMockVacationMessageText }}</p>
+          </div>
+          <p class="landing-v2__vacation-hint">{{ i18n.authUi().landingMockVacationHint }}</p>
         </div>
       </div>
     </div>
@@ -531,7 +524,7 @@
             >
             <h3 class="landing-v2__plan-label">{{ i18n.authUi().landingPricingFreeLabel }}</h3>
           </div>
-          <p class="landing-v2__plan-trial landing-v2__plan-trial--spacer" aria-hidden="true"></p>
+          <p class="landing-v2__plan-trial">{{ i18n.authUi().landingPricingFreeSubtitle }}</p>
           <p class="landing-v2__plan-price">
             <span class="landing-v2__plan-price-row">
               <span class="landing-v2__plan-amount">{{ freeAmountLabel() }}</span>
@@ -637,6 +630,10 @@
         <summary>{{ i18n.authUi().landingFaq5Q }}</summary>
         <p>{{ i18n.authUi().landingFaq5A }}</p>
       </details>
+      <details class="landing-v2__faq-item">
+        <summary>{{ i18n.authUi().landingFaq6Q }}</summary>
+        <p>{{ i18n.authUi().landingFaq6A }}</p>
+      </details>
     </div>
   </section>
 
@@ -676,7 +673,6 @@
         <a href="#landing-v2-faq" (click)="scrollToSection($event, 'landing-v2-faq')">{{
           i18n.authUi().footerFaq
         }}</a>
-        <a [href]="'mailto:' + contactEmail()">{{ i18n.authUi().footerKontakt }}</a>
       </nav>
 
       <nav class="landing-v2__footer-col" [attr.aria-label]="i18n.authUi().footerColLegal">

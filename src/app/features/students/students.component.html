@@ -798,6 +798,7 @@
   layout="sheet"
   [stackOnTop]="true"
   [showHandle]="true"
+  [closeOnOverlay]="false"
   [title]="t.topupTitle"
   [cancelLabel]="t.cancel"
   [confirmLabel]="t.topupApply"
@@ -839,16 +840,6 @@
           (ngModelChange)="topupPaidAt.set($event)"
         />
       </div>
-      <label class="tg-toggle-row">
-        <span>{{ t.topupSendReceipt }}</span>
-        <input
-          type="checkbox"
-          role="switch"
-          [disabled]="!canNotifyTelegram(student)"
-          [checked]="topupSendReceipt()"
-          (change)="topupSendReceipt.set($any($event.target).checked)"
-        />
-      </label>
     </div>
   }
 </app-dialog>
