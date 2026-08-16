@@ -1,8 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin, Subscription, timer } from 'rxjs';
-import { switchMap, take } from 'rxjs/operators';
+import { forkJoin, Subscription } from 'rxjs';
 import type { FinanceSummary, Student, SubscriptionStatus, UserProfile } from '@interfaces';
 import { environment } from '../../../environments/environment';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
