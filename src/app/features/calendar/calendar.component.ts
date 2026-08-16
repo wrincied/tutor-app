@@ -3168,6 +3168,7 @@ export class CalendarComponent implements OnInit {
 
     const studentId = params.get('student')?.trim() || null;
     const lessonId = params.get('lesson')?.trim() || null;
+    const openNew = params.get('new') === '1';
     if (studentId) {
       this.focusedStudentId.set(studentId);
     }
@@ -3175,12 +3176,21 @@ export class CalendarComponent implements OnInit {
       this.highlightedLessonId.set(lessonId);
       this.pendingRouteLessonFocus = true;
     }
-    if (studentId || lessonId) {
+    if (studentId || lessonId || openNew) {
       void this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { student: null, lesson: null },
+        queryParams: { student: null, lesson: null, new: null },
         queryParamsHandling: 'merge',
         replaceUrl: true,
+      });
+    }
+    if (openNew) {
+      queueMicrotask(() => {
+        const base = new Date(this.currentDate().getTime());
+        const now = new Date();
+        const minutes = Math.round(now.getMinutes() / 15) * 15;
+        base.setHours(now.getHours(), minutes, 0, 0);
+        this.openNewLessonAt(base.toISOString());
       });
     }
   }

@@ -27,6 +27,8 @@ export interface PricingPlanCopy {
   name: string;
   priceLabel: string;
   period: string;
+  /** Short value line under the plan name. */
+  subtitle: string;
   /** Logged-in free user (current plan). */
   cta: string;
   /** Guest CTA on public /pricing. */
@@ -127,7 +129,7 @@ export interface PaymentStrings {
   stripeName: string;
   stripeRegion: string;
   stripeHint: string;
-  stripeBadges: [string, string];
+  stripeBadges: string[];
   recommended: string;
   unavailable: string;
   /** Placeholders: {days} */
@@ -722,15 +724,16 @@ export interface AuthStrings {
   landingMockBotPayment: string;
   landingMockBotLessonStart: string;
   landingMockBotHomework: string;
-  /** Tax cushion (AT) preview. */
-  landingTaxTitle: string;
-  landingTaxBody: string;
-  landingMockTaxGross: string;
-  landingMockTaxFrozen: string;
-  landingMockTaxSpendable: string;
-  landingMockTaxSvs: string;
-  landingMockTaxEst: string;
-  landingMockTaxHint: string;
+  /** Vacation / absence mode preview. */
+  landingVacationTitle: string;
+  landingVacationBody: string;
+  landingMockVacationMode: string;
+  landingMockVacationOn: string;
+  landingMockVacationStart: string;
+  landingMockVacationEnd: string;
+  landingMockVacationMessage: string;
+  landingMockVacationMessageText: string;
+  landingMockVacationHint: string;
   /** Self-booking calendar link preview. */
   landingBookingTitle: string;
   landingBookingBody: string;
@@ -750,6 +753,8 @@ export interface AuthStrings {
   landingPricingToggleMonthly: string;
   landingPricingToggleYearly: string;
   landingPricingFreeLabel: string;
+  /** Value line under Free title (same role as Basis/Pro trial lines). */
+  landingPricingFreeSubtitle: string;
   landingPricingBasisLabel: string;
   landingPricingProLabel: string;
   landingPricingBasisBadge: string;
@@ -782,6 +787,8 @@ export interface AuthStrings {
   landingFaq4A: string;
   landingFaq5Q: string;
   landingFaq5A: string;
+  landingFaq6Q: string;
+  landingFaq6A: string;
   footerDatenschutz: string;
   footerImpressum: string;
   footerKontakt: string;
@@ -1183,17 +1190,36 @@ export interface HomeStrings {
   todaySection: string;
   todayLessons: string;
   todayIncome: string;
+  todayIncomeToday: string;
+  todayIncomeWeek: string;
   todayHours: string;
   todayCompleted: string;
   todayScheduled: string;
   incomeApproxHint: string;
   lessonsEmpty: string;
+  lessonsEmptyCta: string;
+  newLessonCta: string;
   nextLessonTitle: string;
   nextLessonNone: string;
   todayAgenda: string;
+  scheduleTitle: string;
+  scheduleTodayBtn: string;
   overdueLessonsHint: string;
   lowBalanceTitle: string;
   lowBalanceLessonsLeft: string;
+  lowBalanceAllOk: string;
+  paymentPackage: string;
+  paymentPackageProgress: string;
+  paymentUnpaid: string;
+  attentionTitle: string;
+  telegramBotTitle: string;
+  telegramBotActive: string;
+  telegramBotInactive: string;
+  telegramBotUnavailable: string;
+  telegramBotProBadge: string;
+  telegramBotLearnMore: string;
+  telegramRemindersToday: string;
+  telegramLinkedStudents: string;
   loading: string;
   loadError: string;
   betaTitle: string;
@@ -1408,7 +1434,16 @@ export interface FinanceSummary {
   /** Только при `scope=home` — укороченный список учеников без отдельного GET. */
   students?: Pick<
     Student,
-    '_id' | 'name' | 'color_hex' | 'balance_lessons' | 'billing_type' | 'rate_unit'
+    | '_id'
+    | 'name'
+    | 'color_hex'
+    | 'balance_lessons'
+    | 'billing_type'
+    | 'rate_unit'
+    | 'last_topup'
+    | 'unpaid_lessons_count'
+    | 'bot_active'
+    | 'telegram_chat_id'
   >[];
 }
 

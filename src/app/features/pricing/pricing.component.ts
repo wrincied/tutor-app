@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, timer } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
@@ -34,6 +34,7 @@ export class PricingComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private billingPollSub: Subscription | null = null;
+  private readonly plansTrack = viewChild<ElementRef<HTMLElement>>('plansTrack');
 
   readonly i18n = inject(I18nService);
 
@@ -48,6 +49,17 @@ export class PricingComponent implements OnInit, OnDestroy {
   openFaqIndex = signal<number | null>(null);
   downgradeConfirmOpen = signal(false);
   downgradeTarget = signal<DowngradeTarget | null>(null);
+  /** Active card index for the mobile snap carousel (below 1024px). */
+  plansScrollIndex = signal(0);
+
+  readonly planDots = computed(() => {
+    const t = this.i18n.pricingUi();
+    return [
+      { id: 'free', label: t.freePlan.name },
+      { id: 'basis', label: t.basisPlan.name },
+      { id: 'pro', label: t.proPlan.name },
+    ] as const;
+  });
 
   taxModeConfigured = computed(() => {
     const profile = this.profile();
@@ -324,6 +336,47 @@ export class PricingComponent implements OnInit, OnDestroy {
 
   setBillingInterval(interval: BillingInterval): void {
     this.billingInterval.set(interval);
+  }
+
+  onPlansScroll(event: Event): void {
+    const track = event.currentTarget as HTMLElement;
+    const cards = track.querySelectorAll<HTMLElement>('.pricing-plan');
+    if (!cards.length) {
+      return;
+    }
+
+    const trackRect = track.getBoundingClientRect();
+    const center = trackRect.left + trackRect.width / 2;
+    let best = 0;
+    let bestDist = Number.POSITIVE_INFINITY;
+
+    cards.forEach((card, index) => {
+      const rect = card.getBoundingClientRect();
+      const dist = Math.abs(rect.left + rect.width / 2 - center);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = index;
+      }
+    });
+
+    if (this.plansScrollIndex() !== best) {
+      this.plansScrollIndex.set(best);
+    }
+  }
+
+  scrollToPlan(index: number): void {
+    const track = this.plansTrack()?.nativeElement;
+    if (!track || window.matchMedia('(min-width: 1024px)').matches) {
+      return;
+    }
+
+    const card = track.querySelectorAll<HTMLElement>('.pricing-plan')[index];
+    if (!card) {
+      return;
+    }
+
+    card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    this.plansScrollIndex.set(index);
   }
 
   toggleFaq(index: number): void {

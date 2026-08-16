@@ -408,6 +408,21 @@
   border: 1px solid #e2e8f0;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
+
+  &--mark {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem;
+    border-radius: 6px;
+    background: #fff;
+  }
+}
+
+.pay__badge-logo {
+  display: block;
+  width: 2.5rem;
+  height: 1.625rem;
+  object-fit: contain;
 }
 
 .pay__card-hint {

@@ -78,7 +78,7 @@ export function maxStudentsForPlan(status: string | null | undefined): number | 
     return null;
   }
   if (s === 'basis') {
-    return 10;
+    return 8;
   }
   return 3;
 }

@@ -1,29 +1,5 @@
 @import './account.component.scss';
 
-.account-support__mail {
-  color: var(--accent, #0d382c);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-
-  &:hover {
-    opacity: 0.85;
-  }
-}
-
 .account-support__form {
   margin-top: 0.75rem;
-}
-
-.account-support textarea {
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 7rem;
-  resize: vertical;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--nav-border, #cfe3d9);
-  border-radius: 0.75rem;
-  background: var(--surface, #fff);
-  font: inherit;
-  color: inherit;
 }

@@ -49,10 +49,10 @@ export class LandingV2Component implements OnInit, OnDestroy {
 
   readonly pricingCurrency = computed(() => this.landingProPricing().currency);
 
-  /** Display symbol for AT marketing (â‚¬ instead of EUR). */
+  /** Display symbol for AT marketing (€ instead of EUR). */
   readonly pricingCurrencySymbol = computed(() => {
     const code = this.pricingCurrency();
-    return code === 'EUR' ? 'â‚¬' : code;
+    return code === 'EUR' ? '€' : code;
   });
 
   readonly freeAmountLabel = computed(() => this.formatAmount(0));
@@ -63,14 +63,14 @@ export class LandingV2Component implements OnInit, OnDestroy {
     return this.formatAmount(amount);
   });
 
-  /** Large price: monthly rate, or yearlyÃ·12 when Yearly is selected. */
+  /** Large price: monthly rate, or yearly÷12 when Yearly is selected. */
   readonly proAmountLabel = computed(() => {
     const p = this.landingProPricing();
     const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
     return this.formatAmount(amount);
   });
 
-  /** Always â€œper monthâ€ under the large amount (Variant A). */
+  /** Always "per month" under the large amount (Variant A). */
   readonly proPeriodLabel = computed(() => this.i18n.authUi().landingPricingProPeriodMonthly);
 
   readonly basisBilledAnnuallyLabel = computed(() => {
@@ -82,7 +82,7 @@ export class LandingV2Component implements OnInit, OnDestroy {
       .replace('{currency}', this.pricingCurrencySymbol());
   });
 
-  /** Small annual total line â€” only in Yearly mode. */
+  /** Small annual total line — only in Yearly mode. */
   readonly proBilledAnnuallyLabel = computed(() => {
     if (this.billingInterval() !== 'yearly') return null;
     const p = this.landingProPricing();

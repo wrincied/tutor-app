@@ -4,7 +4,7 @@
     <p class="account-hint">
       {{ mailHintText() }}
       ·
-      <a class="account-support__mail" [href]="mailtoHref()">{{ i18n.helpFormUi().mailCta }}</a>
+      <a [href]="mailtoHref()">{{ i18n.helpFormUi().mailCta }}</a>
     </p>
 
     @if (success()) {
@@ -71,7 +71,7 @@
       </div>
 
       <div class="account-form__footer">
-        <button type="submit" class="account-form__submit" [disabled]="submitting()">
+        <button type="submit" class="btn-primary account-form__submit" [disabled]="submitting()">
           {{ submitting() ? i18n.helpFormUi().sending : i18n.helpFormUi().submit }}
         </button>
       </div>

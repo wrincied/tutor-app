@@ -102,8 +102,16 @@
                   <span class="pay__card-region">{{ t().stripeRegion }}</span>
                 </span>
                 <span class="pay__badges">
-                  @for (badge of t().stripeBadges; track badge) {
-                    <span class="pay__badge">{{ badge }}</span>
+                  @for (mark of stripeMethodMarks(); track mark.id) {
+                    <span class="pay__badge pay__badge--mark">
+                      <img
+                        class="pay__badge-logo"
+                        [src]="mark.icon"
+                        [alt]="mark.label"
+                        width="40"
+                        height="26"
+                      />
+                    </span>
                   }
                 </span>
                 <span class="pay__card-hint">{{ t().stripeHint }}</span>

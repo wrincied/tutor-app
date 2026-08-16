@@ -13,7 +13,7 @@ import {
   parseTimestamp,
 } from './admin-subscription.helpers';
 
-const TRIAL_GIFT_DAYS = 14;
+const TRIAL_GIFT_DAYS = 7;
 
 type UsersSortKey = 'email' | 'registered' | 'lastVisit';
 

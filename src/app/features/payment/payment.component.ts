@@ -24,7 +24,7 @@ type BillingInterval = 'monthly' | 'yearly';
 
 const TRIAL_DAYS: Record<PaymentProviderId, number> = {
   tribute: 7,
-  stripe: 14,
+  stripe: 7,
 };
 
 function fill(template: string, vars: Record<string, string | number>): string {
@@ -143,6 +143,27 @@ export class PaymentComponent implements OnInit, OnDestroy {
   readonly planTitle = computed(
     () => `${this.t().planPrefix} ${this.plan() === 'basis' ? 'Basis' : 'Pro'}`,
   );
+
+  /** Stripe acceptance marks. SEPA only for EUR (Stripe shows SEPA Debit for euro only). */
+  readonly stripeMethodMarks = computed(() => {
+    const labels = this.t().stripeBadges;
+    const marks: Array<{ id: 'visa' | 'mastercard' | 'sepa'; label: string; icon: string }> = [
+      { id: 'visa', label: labels[0] ?? 'Visa', icon: 'assets/payment/visa.svg' },
+      {
+        id: 'mastercard',
+        label: labels[1] ?? 'Mastercard',
+        icon: 'assets/payment/mastercard.svg',
+      },
+    ];
+    if (this.pricing().currency === 'EUR') {
+      marks.push({
+        id: 'sepa',
+        label: labels[2] ?? 'SEPA',
+        icon: 'assets/payment/sepa.svg',
+      });
+    }
+    return marks;
+  });
 
   ngOnInit(): void {
     const q = this.route.snapshot.queryParamMap;

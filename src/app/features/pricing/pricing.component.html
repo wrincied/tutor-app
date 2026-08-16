@@ -49,7 +49,8 @@
         </button>
       </div>
 
-      <div class="pricing-plans u-rise u-rise-delay-2">
+      <div class="pricing-plans-wrap u-rise u-rise-delay-2">
+      <div class="pricing-plans" #plansTrack (scroll)="onPlansScroll($event)">
         <!-- Free -->
         <article
           class="pricing-plan pricing-plan--free"
@@ -57,7 +58,7 @@
         >
           <div class="pricing-plan__badge-slot" aria-hidden="true"></div>
           <h2 class="pricing-plan__name">{{ t.freePlan.name }}</h2>
-          <p class="pricing-plan__subtitle pricing-plan__subtitle--spacer" aria-hidden="true">&nbsp;</p>
+          <p class="pricing-plan__subtitle">{{ t.freePlan.subtitle }}</p>
 
           <div class="pricing-plan__price">
             <div class="pricing-plan__price-row">
@@ -282,6 +283,21 @@
             }
           </div>
         </article>
+      </div>
+
+      <div class="pricing-plans-dots" role="tablist" [attr.aria-label]="t.title">
+        @for (dot of planDots(); track dot.id; let i = $index) {
+          <button
+            type="button"
+            class="pricing-plans-dots__dot"
+            role="tab"
+            [class.pricing-plans-dots__dot--active]="plansScrollIndex() === i"
+            [attr.aria-selected]="plansScrollIndex() === i"
+            [attr.aria-label]="dot.label"
+            (click)="scrollToPlan(i)"
+          ></button>
+        }
+      </div>
       </div>
 
       <section class="pricing-faq u-rise u-rise-delay-3" aria-labelledby="pricing-faq-title">

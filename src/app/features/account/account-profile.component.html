@@ -19,10 +19,6 @@
     <p class="account-page__error">{{ error() }}</p>
   }
 
-  @if (saved()) {
-    <p class="account-page__success">{{ i18n.accountUi().saved }}</p>
-  }
-
   <form class="account-form" (ngSubmit)="save()" autocomplete="on">
     @if (profile()?.email; as accountEmail) {
       <input
@@ -284,3 +280,21 @@
 >
   <p>{{ i18n.accountUi().cancelSubscriptionConfirmBody }}</p>
 </app-dialog>
+
+@if (toastMessage(); as toast) {
+  <div
+    class="account-toast"
+    [class.account-toast--error]="toastKind() === 'error'"
+    [attr.role]="toastKind() === 'error' ? 'alert' : 'status'"
+  >
+    <span>{{ toast }}</span>
+    <button
+      type="button"
+      class="account-toast__close"
+      (click)="dismissToast()"
+      [attr.aria-label]="i18n.authUi().close"
+    >
+      ×
+    </button>
+  </div>
+}
