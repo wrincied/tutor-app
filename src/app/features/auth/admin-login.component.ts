@@ -1,15 +1,18 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Auth, GithubAuthProvider, signInWithPopup, signOut } from '@angular/fire/auth';
+import { Auth, signOut } from '@angular/fire/auth';
 import type { User } from 'firebase/auth';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { isAdminAllowlistedEmail } from '../../core/utils/brand-email';
+import { resolveLoginError } from '../../core/utils/auth-errors';
 
 @Component({
   selector: 'app-admin-login',
   standalone: true,
-  imports: [RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './admin-login.component.html',
   styleUrls: ['./auth.scss', './admin-login.component.scss'],
 })
@@ -19,6 +22,8 @@ export class AdminLoginComponent implements OnInit {
   private readonly router = inject(Router);
   readonly i18n = inject(I18nService);
 
+  email = 'admin@simple4u.at';
+  password = '';
   loading = signal(false);
   error = signal('');
   info = signal('');
@@ -28,43 +33,42 @@ export class AdminLoginComponent implements OnInit {
     if (!user) {
       return;
     }
-    const isGithub = user.providerData.some((p) => p.providerId === 'github.com');
-    if (isGithub) {
+    const isPassword = user.providerData.some((p) => p.providerId === 'password');
+    if (isPassword && isAdminAllowlistedEmail(user.email)) {
       void this.finishAdmin(user);
       return;
     }
-    // Google/email session must not stay here — admin is GitHub-only.
     this.info.set(
-      'Admin requires a separate GitHub sign-in. Your current session will be signed out when you continue.',
+      'Admin requires the admin@simple4u.at email/password account. Your current session will be signed out when you continue.',
     );
   }
 
-  async signInWithGithub(): Promise<void> {
+  submit(): void {
     this.error.set('');
     this.info.set('');
-    this.loading.set(true);
-    const provider = new GithubAuthProvider();
-    provider.addScope('read:user');
-    provider.addScope('user:email');
-    try {
-      // Clear Google/email session first so we don't keep the wrong account.
-      if (this.auth.currentUser) {
-        await signOut(this.auth);
-      }
-      const cred = await signInWithPopup(this.auth, provider);
-      await this.finishAdmin(cred.user);
-    } catch (err) {
-      console.error('[admin-login github]', err);
-      const code = (err as { code?: string })?.code;
-      if (code === 'auth/account-exists-with-different-credential') {
-        this.error.set(
-          'This email is already linked to another sign-in method. Use the GitHub account on the admin allowlist (UID).',
-        );
-      } else {
-        this.error.set(this.i18n.authUi().oauthErrorGithub);
-      }
-      this.loading.set(false);
+    const email = this.email.trim().toLowerCase();
+    if (!isAdminAllowlistedEmail(email)) {
+      this.error.set(this.i18n.authUi().emailAlreadyInUse);
+      return;
     }
+    if (this.password.length < 6) {
+      this.error.set(this.i18n.authUi().passwordMinLength);
+      return;
+    }
+    this.loading.set(true);
+    void (async () => {
+      try {
+        if (this.auth.currentUser) {
+          await signOut(this.auth);
+        }
+        const user = await firstValueFrom(this.authSvc.login(email, this.password));
+        await this.finishAdmin(user);
+      } catch (err) {
+        console.error('[admin-login]', err);
+        this.error.set(resolveLoginError(err, this.i18n.authUi()));
+        this.loading.set(false);
+      }
+    })();
   }
 
   private async finishAdmin(user: User): Promise<void> {
@@ -76,14 +80,18 @@ export class AdminLoginComponent implements OnInit {
       const provider = (
         token.claims['firebase'] as { sign_in_provider?: string } | undefined
       )?.sign_in_provider;
-      if (provider !== 'github.com') {
-        this.error.set('Admin access requires GitHub sign-in');
+      if (provider !== 'password') {
+        this.error.set('Admin access requires email/password sign-in');
         this.loading.set(false);
         return;
       }
-
+      if (!isAdminAllowlistedEmail(user.email || profile.email)) {
+        this.error.set(this.i18n.authUi().emailAlreadyInUse);
+        this.loading.set(false);
+        return;
+      }
       if (profile.role !== 'super_admin') {
-        this.error.set('This GitHub account is not a super admin');
+        this.error.set('This account is not a super admin');
         this.loading.set(false);
         return;
       }

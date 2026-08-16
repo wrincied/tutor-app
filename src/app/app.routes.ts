@@ -26,6 +26,12 @@ export const routes: Routes = [
     data: { title: 'landing' satisfies PageTitleKey },
   },
   {
+    path: 'auth/action',
+    loadComponent: () =>
+      import('./features/auth/auth-action.component').then((m) => m.AuthActionComponent),
+    data: { title: 'authAction' satisfies PageTitleKey },
+  },
+  {
     path: 'login',
     loadComponent: () =>
       import('./features/auth/login.component').then((m) => m.LoginComponent),

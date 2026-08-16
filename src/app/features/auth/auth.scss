@@ -404,6 +404,9 @@
     height: 1.125rem;
     flex: 0 0 auto;
   }
+  span {
+    padding-top: 3px;
+  }
 
   .auth-btn-secondary {
     width: 100%;
@@ -1369,4 +1372,123 @@
     color: #c6f071;
     box-shadow: 0 0 0 1px #0d2a24;
   }
+}
+
+/* Portaled reset-password dialog (content lives under body, not .auth-split). */
+.auth-reset {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-reset__lead {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #5f746c;
+}
+
+.auth-reset__field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.auth-reset__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #13241f;
+}
+
+.auth-reset__input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #cfe3d9;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: #071714;
+  font: inherit;
+  font-size: 0.9375rem;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: #9bb5ab;
+  }
+
+  &:focus {
+    border-color: #0f3d34;
+    box-shadow: 0 0 0 3px rgb(15 61 52 / 0.12);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: default;
+    background: #f4faf7;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgb(220 38 38 / 0.1);
+  }
+}
+
+.auth-reset__error {
+  margin: 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.55rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.auth-reset__status {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #5f746c;
+}
+
+.auth-reset__success {
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0 0.15rem;
+  text-align: center;
+}
+
+.auth-reset__success-icon {
+  display: inline-flex;
+  color: #0f3d34;
+}
+
+.auth-reset__success-title {
+  margin: 0;
+  font-size: 0.975rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #071714;
+}
+
+.auth-reset__success-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #5f746c;
+  word-break: break-all;
+}
+
+.auth-btn-primary--link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.auth-link-button--center {
+  display: block;
+  text-align: center;
 }

@@ -13,7 +13,7 @@
 
     <div class="auth-split__card">
       <h1>Admin</h1>
-      <p class="subtitle">GitHub only — use an account with 2FA enabled on GitHub</p>
+      <p class="subtitle">Sign in with admin@simple4u.at</p>
 
       @if (error()) {
         <div class="auth-error">{{ error() }}</div>
@@ -22,14 +22,36 @@
         <div class="auth-banner-success">{{ info() }}</div>
       }
 
-      <button
-        type="button"
-        class="auth-btn-primary"
-        [disabled]="loading()"
-        (click)="signInWithGithub()"
-      >
-        {{ loading() ? '…' : 'Continue with GitHub' }}
-      </button>
+      <form class="auth-form" (ngSubmit)="submit()" autocomplete="on">
+        <div class="field field--float">
+          <input
+            type="email"
+            name="admin_email"
+            [(ngModel)]="email"
+            required
+            placeholder=" "
+            autocomplete="username"
+            [disabled]="loading()"
+          />
+          <label>{{ i18n.authUi().email }}</label>
+        </div>
+        <div class="field field--float">
+          <input
+            type="password"
+            name="admin_password"
+            [(ngModel)]="password"
+            required
+            minlength="6"
+            placeholder=" "
+            autocomplete="current-password"
+            [disabled]="loading()"
+          />
+          <label>{{ i18n.authUi().password }}</label>
+        </div>
+        <button type="submit" class="auth-btn-primary" [disabled]="loading()">
+          {{ loading() ? i18n.authUi().loggingIn : i18n.authUi().login }}
+        </button>
+      </form>
 
       <a routerLink="/app/home" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
     </div>

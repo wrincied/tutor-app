@@ -184,6 +184,7 @@ export type PageTitleKey =
   | 'status'
   | 'adminLogin'
   | 'verifyEmail'
+  | 'authAction'
   | 'onboarding'
   | 'home'
   | 'students'
@@ -881,6 +882,26 @@ export interface AuthStrings {
   resetPasswordSend: string;
   cancel: string;
   close: string;
+  /** Firebase email action handler (/auth/action). */
+  authActionLoading: string;
+  authActionInvalidTitle: string;
+  authActionInvalidLink: string;
+  authActionExpired: string;
+  authActionGenericError: string;
+  authActionUserDisabled: string;
+  authActionResetTitle: string;
+  authActionResetSubtitle: string;
+  authActionResetSuccess: string;
+  authActionVerifyTitle: string;
+  authActionVerifySuccess: string;
+  authActionRecoverTitle: string;
+  authActionRecoverSuccess: string;
+  authActionNewPassword: string;
+  authActionConfirmPassword: string;
+  authActionSavePassword: string;
+  authActionSaving: string;
+  authActionPasswordTooShort: string;
+  authActionPasswordMismatch: string;
   continueWithGoogle: string;
   orContinueWith: string;
   oauthError: string;

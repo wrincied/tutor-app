@@ -45,6 +45,9 @@ export class LoginComponent implements OnInit {
     this.route.queryParamMap.subscribe((params) => {
       this.verifySuccess.set(params.get('verify') === 'success');
       this.consentDeclined.set(params.get('consent') === 'declined');
+      if (params.get('reset') === '1') {
+        this.openResetModal();
+      }
     });
 
     // 2. Перехват результата редиректа от Google
@@ -83,7 +86,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Google sign-in redirect error]', err);
-        this.error.set(this.i18n.authUi().oauthError);
+        this.error.set(resolveLoginError(err, this.i18n.authUi()));
         this.loading.set(false);
       },
     });
@@ -206,7 +209,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Google sign-in popup error]', err);
-        this.error.set(this.i18n.authUi().oauthError);
+        this.error.set(resolveLoginError(err, this.i18n.authUi()));
         this.loading.set(false);
       },
     });

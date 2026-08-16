@@ -1,9 +1,8 @@
 import { inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
-import { catchError, map, switchMap, take } from 'rxjs/operators';
+import { catchError, map, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 function redirectOnProfileError(err: unknown, router: Router, fallback: string) {
@@ -27,40 +26,35 @@ export const onboardingGuard: CanActivateFn = () => {
   );
 };
 
-/** Только для страницы онбординга: уже завершён → home. */
+/** Только для страницы онбординга: уже завершён → home (кроме повторного согласия). */
 export const onboardingPageGuard: CanActivateFn = () => {
   const userSvc = inject(UserService);
   const router = inject(Router);
 
   return userSvc.getProfile().pipe(
     take(1),
-    map((profile) =>
-      profile.onboarding_completed ? router.createUrlTree(['/app/home']) : true,
-    ),
+    map((profile) => {
+      if (profile.data_consent_accepted === false) {
+        return true;
+      }
+      return profile.onboarding_completed ? router.createUrlTree(['/app/home']) : true;
+    }),
     catchError((err) => redirectOnProfileError(err, router, '/app/onboarding')),
   );
 };
 
-/** Отказ от сбора данных — выход и login. */
+/** Отказ от сбора данных — снова на онбординг (можно принять согласие), не в приложение. */
 export const dataConsentGuard: CanActivateFn = () => {
   const userSvc = inject(UserService);
-  const auth = inject(AuthService);
   const router = inject(Router);
 
   return userSvc.ensureProfile().pipe(
     take(1),
-    switchMap((profile) => {
-      if (profile.data_consent_accepted !== false) {
-        return of(true);
-      }
-      return auth.logout().pipe(
-        map(() =>
-          router.createUrlTree(['/login'], {
-            queryParams: { consent: 'declined' },
-          }),
-        ),
-      );
-    }),
+    map((profile) =>
+      profile.data_consent_accepted === false
+        ? router.createUrlTree(['/app/onboarding'])
+        : true,
+    ),
     catchError((err) => {
       if (err instanceof HttpErrorResponse && err.status === 401) {
         return of(router.createUrlTree(['/login']));

@@ -63,6 +63,9 @@ export function resolveRegisterError(error: unknown, strings: AuthStrings): stri
 }
 
 export function resolveLoginError(error: unknown, strings: AuthStrings): string {
+  if (error instanceof EmailAlreadyRegisteredError) {
+    return strings.emailAlreadyInUse;
+  }
   if (error instanceof GoogleSignInRequiredError) {
     return strings.emailAlreadyInUseGoogle;
   }
