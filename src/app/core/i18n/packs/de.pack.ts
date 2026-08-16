@@ -1034,9 +1034,9 @@ export const LOCALE_PACK = {
     betaBody:
       'Simple4U befindet sich in der Beta-Phase. Bei Fehlern oder unerwartetem Verhalten bitte beachten, dass es sich um eine Beta-Version handelt — wir verbessern die App laufend.',
     betaDismiss: 'Verstanden',
-    billingCongratsTrialTitle: "Willkommen im Pro-Trial!",
+    billingCongratsTrialTitle: "Willkommen bei Pro — 14 Tage gratis!",
     billingCongratsProTitle: "Willkommen bei Pro!",
-    billingCongratsTrialBody: "Dein 14-Tage-Pro-Trial ist aktiv. Jederzeit im Konto kündbar, bevor abgebucht wird.",
+    billingCongratsTrialBody: "Deine 14 gratis Tage Pro sind aktiv. Jederzeit im Konto kündbar, bevor abgebucht wird.",
     billingCongratsProBody: "Pro ist aktiv. Verwalten oder kündigen unter Konto → Profil.",
     billingCongratsDismiss: "Los geht’s",
     billingCongratsManage: "Abo verwalten",

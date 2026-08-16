@@ -1033,9 +1033,9 @@ export const LOCALE_PACK = {
     betaBody:
       'Приложение Simple4U находится в стадии бета-тестирования. Если вы столкнётесь с ошибками или неожиданным поведением, учитывайте, что это бета-версия — мы активно её дорабатываем.',
     betaDismiss: 'Понятно',
-    billingCongratsTrialTitle: "Поздравляем — у вас Trial!",
+    billingCongratsTrialTitle: "Поздравляем — Pro бесплатно на 14 дней!",
     billingCongratsProTitle: "Поздравляем — у вас Pro!",
-    billingCongratsTrialBody: "14-дневный Pro trial активен. Безлимитные ученики, умный биллинг и Telegram — отменить можно в Аккаунте до списания.",
+    billingCongratsTrialBody: "14 дней Pro бесплатно. Безлимитные ученики, умный биллинг и Telegram — отменить можно в Аккаунте до списания.",
     billingCongratsProBody: "Pro активен. Управлять или отменить подписку можно в Аккаунт → Профиль.",
     billingCongratsDismiss: "Отлично",
     billingCongratsManage: "Управление подпиской",

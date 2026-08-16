@@ -1020,9 +1020,9 @@ export const LOCALE_PACK = {
     betaBody:
       'Simple4U бета-тестте. Қателер немесе күтілмеген әрекет болса, бұл бета-нұсқа екенін ескеріңіз — біз қолданбаны жақсартудамыз.',
     betaDismiss: 'Түсінікті',
-    billingCongratsTrialTitle: "Құттықтаймыз — сізде Trial!",
+    billingCongratsTrialTitle: "Құттықтаймыз — Pro 14 күн тегін!",
     billingCongratsProTitle: "Құттықтаймыз — сізде Pro!",
-    billingCongratsTrialBody: "14 күндік Pro trial белсенді. Төлемге дейін Аккаунттан бас тартуға болады.",
+    billingCongratsTrialBody: "Pro 14 күн тегін белсенді. Төлемге дейін Аккаунттан бас тартуға болады.",
     billingCongratsProBody: "Pro белсенді. Жазылымды Аккаунт → Профиль ішінен басқарыңыз.",
     billingCongratsDismiss: "Керемет",
     billingCongratsManage: "Жазылымды басқару",

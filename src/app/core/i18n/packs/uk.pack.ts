@@ -1030,9 +1030,9 @@ export const LOCALE_PACK = {
     betaBody:
       'Simple4U перебуває на стадії бета-тестування. Якщо ви зіткнетеся з помилками або неочікуваною поведінкою, врахуйте, що це бета-версія — ми активно її вдосконалюємо.',
     betaDismiss: 'Зрозуміло',
-    billingCongratsTrialTitle: "Вітаємо — у вас Trial!",
+    billingCongratsTrialTitle: "Вітаємо — Pro безкоштовно на 14 днів!",
     billingCongratsProTitle: "Вітаємо — у вас Pro!",
-    billingCongratsTrialBody: "14-денний Pro trial активний. Скасувати можна в Акаунті до списання.",
+    billingCongratsTrialBody: "14 днів Pro безкоштовно. Скасувати можна в Акаунті до списання.",
     billingCongratsProBody: "Pro активний. Керувати підпискою можна в Акаунт → Профіль.",
     billingCongratsDismiss: "Чудово",
     billingCongratsManage: "Керування підпискою",

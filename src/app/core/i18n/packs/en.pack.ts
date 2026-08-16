@@ -1030,9 +1030,9 @@ export const LOCALE_PACK = {
     betaBody:
       'Simple4U is in beta. If you run into errors or unexpected behavior, please keep in mind this is a beta release — we are actively improving the app.',
     betaDismiss: 'Got it',
-    billingCongratsTrialTitle: "Welcome to Pro Trial!",
+    billingCongratsTrialTitle: "Welcome to Pro — 14 days free!",
     billingCongratsProTitle: "Welcome to Pro!",
-    billingCongratsTrialBody: "Your 14-day Pro trial is active. Enjoy unlimited students, smart billing, and Telegram — cancel anytime in Account before you are charged.",
+    billingCongratsTrialBody: "Your 14 free days of Pro are active. Enjoy unlimited students, smart billing, and Telegram — cancel anytime in Account before you are charged.",
     billingCongratsProBody: "Pro is active on your account. Manage or cancel the subscription anytime in Account → Profile.",
     billingCongratsDismiss: "Let's go",
     billingCongratsManage: "Manage subscription",
