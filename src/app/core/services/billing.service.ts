@@ -66,6 +66,11 @@ export class BillingService {
     return this.http.post<UserProfile>(`${API}/billing/sync-subscription`, {});
   }
 
+  /** Verify Stripe Checkout session before showing Pro/Trial congrats. */
+  confirmCheckoutSession(sessionId: string): Observable<UserProfile> {
+    return this.http.post<UserProfile>(`${API}/billing/confirm-checkout-session`, { sessionId });
+  }
+
   /** Ручное подтверждение оплаты (прод: admin secret в .env бэкенда). */
   confirmPayment(plan: 'pro' | 'trial', adminSecret: string): Observable<UserProfile> {
     return this.http.post<UserProfile>(`${API}/billing/confirm-payment`, {

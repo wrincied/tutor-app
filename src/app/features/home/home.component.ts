@@ -23,6 +23,7 @@ import { dayKey } from '../../core/utils/day-key';
 import {
   clearBillingQueryFromUrl,
   consumeBillingReturnFlag,
+  peekCheckoutSessionId,
 } from '../../core/utils/billing-return';
 
 const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
@@ -249,9 +250,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private handleBillingSuccessReturn(): void {
-    // Only celebrate after Stripe confirms an active/trialing subscription.
+    const sessionId = peekCheckoutSessionId();
+    this.billingCongratsOpen.set(false);
     this.userSvc.invalidateProfile();
     this.billingPollSub?.unsubscribe();
+
+    if (!sessionId) {
+      // No Stripe session id → never celebrate; reconcile to Free.
+      this.handleBillingCancelReturn();
+      return;
+    }
 
     const applyUser = (user: UserProfile) => {
       this.userSvc.cacheProfile(user);
@@ -262,36 +270,27 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.billingCongratsOpen.set(true);
         return true;
       }
-      if (status === 'basis') {
-        this.billingCongratsOpen.set(false);
-      }
+      this.billingCongratsOpen.set(false);
       return false;
     };
 
-    this.billingSvc.syncSubscription().subscribe({
+    this.billingSvc.confirmCheckoutSession(sessionId).subscribe({
       next: (user) => {
-        if (applyUser(user)) {
-          this.billingPollSub?.unsubscribe();
-          this.billingPollSub = null;
+        clearBillingQueryFromUrl();
+        if (!applyUser(user)) {
+          this.openBetaNoticeIfNeeded();
         }
       },
-      error: () => undefined,
+      error: (err) => {
+        clearBillingQueryFromUrl();
+        const fallbackUser = err?.error?.user as UserProfile | undefined;
+        if (fallbackUser) {
+          applyUser(fallbackUser);
+        } else {
+          this.handleBillingCancelReturn();
+        }
+      },
     });
-
-    this.billingPollSub = timer(2000, 2000)
-      .pipe(
-        take(10),
-        switchMap(() => this.billingSvc.syncSubscription()),
-      )
-      .subscribe({
-        next: (user) => {
-          if (applyUser(user)) {
-            this.billingPollSub?.unsubscribe();
-            this.billingPollSub = null;
-          }
-        },
-        error: () => undefined,
-      });
   }
 
   private openBetaNoticeIfNeeded(): void {

@@ -14,23 +14,32 @@ describe('billing-return', () => {
     window.history.replaceState({}, '', '/');
   });
 
-  it('treats ?billing=success as success and clears pending', () => {
+  it('requires session_id for success', () => {
     markBillingCheckoutPending();
-    window.history.replaceState({}, '', '/app/home?billing=success');
+    window.history.replaceState(
+      {},
+      '',
+      '/app/home?billing=success&session_id=cs_test_123',
+    );
     expect(consumeBillingReturnFlag()).toBe('success');
     expect(sessionStorage.getItem(BILLING_RETURN_STORAGE_KEY)).toBeNull();
   });
 
-  it('does not treat abandoned pending checkout as success', () => {
+  it('rejects billing=success without session_id', () => {
+    window.history.replaceState({}, '', '/app/home?billing=success');
+    expect(consumeBillingReturnFlag()).toBe('cancel');
+  });
+
+  it('treats abandoned pending checkout as cancel', () => {
     markBillingCheckoutPending();
     window.history.replaceState({}, '', '/app/payment?plan=pro');
     expect(consumeBillingReturnFlag()).toBe('cancel');
     expect(sessionStorage.getItem(BILLING_RETURN_STORAGE_KEY)).toBeNull();
   });
 
-  it('treats ?billing=cancel as cancel', () => {
-    markBillingCheckoutPending();
-    window.history.replaceState({}, '', '/app/pricing?billing=cancel');
+  it('clears legacy pending keys as cancel', () => {
+    sessionStorage.setItem('simple4u_billing_return_v1', 'pending');
+    window.history.replaceState({}, '', '/app/payment');
     expect(consumeBillingReturnFlag()).toBe('cancel');
   });
 });
