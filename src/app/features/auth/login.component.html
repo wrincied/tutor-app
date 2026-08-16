@@ -93,7 +93,15 @@
           [disabled]="loading()"
           (click)="signInWithGoogle()"
         >
-          {{ i18n.authUi().continueWithGoogle }}
+          <img
+            class="auth-oauth-btn__icon"
+            src="assets/icons/google-g.svg"
+            width="18"
+            height="18"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>{{ i18n.authUi().continueWithGoogle }}</span>
         </button>
       </form>
     </div>

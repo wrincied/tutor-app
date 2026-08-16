@@ -375,6 +375,10 @@
 
   .auth-oauth-btn {
     width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
     border: 1px solid var(--line);
     border-radius: 999px;
     padding: 0.75rem 1rem;
@@ -392,6 +396,13 @@
       opacity: 0.6;
       cursor: default;
     }
+  }
+
+  .auth-oauth-btn__icon {
+    display: block;
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: 0 0 auto;
   }
 
   .auth-btn-secondary {
@@ -1135,6 +1146,10 @@
 
   .auth-oauth-btn {
     width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
     border: 1px solid #dadce0;
     border-radius: 4px;
     padding: 10px 16px;
@@ -1152,6 +1167,13 @@
       opacity: 0.6;
       cursor: default;
     }
+  }
+
+  .auth-oauth-btn__icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
   }
 }
 
