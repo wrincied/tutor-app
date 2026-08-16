@@ -123,7 +123,11 @@ export class App {
     if (!this.auth.isLoggedIn() || !path.startsWith('/app')) {
       return false;
     }
-    return path !== '/app/onboarding' && path !== '/app/verify-email-notice';
+    return (
+      path !== '/app/onboarding' &&
+      path !== '/app/verify-email-notice' &&
+      path !== '/app/payment'
+    );
   }
 
   private isLandingUrl(url: string): boolean {

@@ -18,6 +18,7 @@
         [class.app-dialog--size-md]="effectiveSize() === 'md'"
         [class.app-dialog--size-lg]="effectiveSize() === 'lg'"
         [class.app-dialog--size-lesson]="effectiveSize() === 'lesson'"
+        [class.app-dialog--actions-stack-mobile]="actionsStackMobile()"
         role="alertdialog"
         aria-modal="true"
         [attr.aria-labelledby]="'app-dialog-title'"
@@ -92,7 +93,9 @@
             @if (leadingLabel()) {
               <button
                 type="button"
-                class="app-dialog__btn app-dialog__btn--secondary"
+                class="app-dialog__btn"
+                [class.app-dialog__btn--secondary]="!cancelMuted()"
+                [class.app-dialog__btn--muted]="cancelMuted()"
                 [class.app-dialog__btn--danger]="leadingDanger()"
                 (click)="onLeadingClick()"
               >
@@ -103,7 +106,9 @@
               @if (cancelLabel()) {
                 <button
                   type="button"
-                  class="app-dialog__btn app-dialog__btn--secondary"
+                  class="app-dialog__btn"
+                  [class.app-dialog__btn--secondary]="!cancelMuted()"
+                  [class.app-dialog__btn--muted]="cancelMuted()"
                   [class.app-dialog__btn--danger]="cancelDanger()"
                   (click)="onCancelClick()"
                 >
@@ -123,7 +128,8 @@
                 <button
                   type="button"
                   class="app-dialog__btn"
-                  [class.app-dialog__btn--primary]="!confirmDanger()"
+                  [class.app-dialog__btn--primary]="!confirmDanger() && !confirmOutline()"
+                  [class.app-dialog__btn--outline]="!confirmDanger() && confirmOutline()"
                   [class.app-dialog__btn--confirm-danger]="confirmDanger()"
                   [disabled]="confirmDisabled()"
                   (click)="onConfirmClick()"

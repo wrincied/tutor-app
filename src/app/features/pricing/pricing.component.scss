@@ -119,6 +119,40 @@
   color: var(--pricing-muted);
 }
 
+.pricing-page__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pricing-page__sk-toggle {
+  width: min(100%, 20rem);
+  height: 2.75rem;
+  border-radius: 999px;
+}
+
+.pricing-page__sk-plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.pricing-page__sk-plan {
+  min-height: 22rem;
+  border-radius: 1rem;
+}
+
+.pricing-page__sk-faq {
+  height: 12rem;
+  border-radius: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .pricing-page__sk-plans {
+    grid-template-columns: 1fr;
+  }
+}
+
 .pricing-page__status {
   display: flex;
   align-items: center;
@@ -169,6 +203,11 @@
 
   p {
     margin: 0;
+  }
+
+  &__body {
+    color: var(--text-secondary, #475569);
+    line-height: 1.55;
   }
 
   &--busy {
@@ -565,7 +604,7 @@
     height: 2px;
     background: var(--pricing-muted);
     transform: translate(-50%, -50%);
-    transition: transform 0.15s ease;
+    transition: transform 0.28s ease;
   }
 
   &::after {
@@ -578,14 +617,45 @@
 }
 
 .pricing-faq__answer {
-  padding: 0 0 1rem;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 
-  p {
-    margin: 0;
-    max-width: 42rem;
-    font-size: 0.9375rem;
-    line-height: 1.55;
-    color: var(--pricing-muted);
+  &--open {
+    grid-template-rows: 1fr;
+  }
+}
+
+.pricing-faq__answer-inner {
+  overflow: hidden;
+}
+
+.pricing-faq__answer p {
+  margin: 0;
+  padding: 0 0 1rem;
+  max-width: 42rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--pricing-muted);
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+.pricing-faq__answer--open p {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.05s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-faq__answer,
+  .pricing-faq__answer p,
+  .pricing-faq__icon::before,
+  .pricing-faq__icon::after {
+    transition: none;
   }
 }
 

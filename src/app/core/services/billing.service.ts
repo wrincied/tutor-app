@@ -18,11 +18,41 @@ export class BillingService {
     return this.http.post<{ url: string }>(`${API}/billing/checkout-session`, { interval, plan });
   }
 
+  createTributeCheckoutSession(
+    interval: 'monthly' | 'yearly' = 'monthly',
+    plan: 'basis' | 'pro' = 'pro',
+  ): Observable<{ url: string }> {
+    return this.http.post<{ url: string }>(`${API}/billing/tribute/checkout-session`, {
+      interval,
+      plan,
+    });
+  }
+
+  getPaymentOptions(plan: 'basis' | 'pro' = 'pro'): Observable<{
+    country: string;
+    provider: 'stripe' | 'tribute';
+    preferredProvider?: 'stripe' | 'tribute';
+    fallbackUsed?: boolean;
+    tributeReady: boolean;
+    stripeReady: boolean;
+    trialDays: number;
+  }> {
+    return this.http.get<{
+      country: string;
+      provider: 'stripe' | 'tribute';
+      preferredProvider?: 'stripe' | 'tribute';
+      fallbackUsed?: boolean;
+      tributeReady: boolean;
+      stripeReady: boolean;
+      trialDays: number;
+    }>(`${API}/billing/payment-options`, { params: { plan } });
+  }
+
   cancelSubscription(): Observable<UserProfile> {
     return this.http.post<UserProfile>(`${API}/billing/cancel-subscription`, {});
   }
 
-  /** Downgrade Pro/Trial → Basis on the existing Stripe subscription. */
+  /** Schedule Pro/Trial → Basis at period end (no immediate proration). */
   changePlan(plan: 'basis'): Observable<UserProfile> {
     return this.http.post<UserProfile>(`${API}/billing/change-plan`, { plan });
   }

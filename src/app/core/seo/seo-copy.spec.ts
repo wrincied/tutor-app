@@ -7,6 +7,7 @@ describe('seo-copy', () => {
     expect(isNoindexPage('/admin-login', 'adminLogin')).toBe(true);
     expect(isNoindexPage('/', 'landing')).toBe(false);
     expect(isNoindexPage('/pricing', 'pricing')).toBe(false);
+    expect(isNoindexPage('/app/payment', 'payment')).toBe(true);
   });
 
   it('mentions simple4u.at and disambiguates .io in default copy', () => {

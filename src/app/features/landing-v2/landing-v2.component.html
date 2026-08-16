@@ -26,7 +26,7 @@
                   [class.landing-v2__lang-option--active]="isLang(code)"
                   (click)="pickLang(code)"
                 >
-                  <span class="landing-v2__lang-code">{{ code.toUpperCase() }}</span>
+                  <span class="landing-v2__lang-code">{{ i18n.codeForLang(code) }}</span>
                   <span class="landing-v2__lang-name">{{ i18n.labelForLang(code) }}</span>
                 </button>
               </li>
@@ -676,7 +676,6 @@
         <a href="#landing-v2-faq" (click)="scrollToSection($event, 'landing-v2-faq')">{{
           i18n.authUi().footerFaq
         }}</a>
-        <a [href]="'mailto:' + contactEmail()">{{ i18n.authUi().footerKontakt }}</a>
       </nav>
 
       <nav class="landing-v2__footer-col" [attr.aria-label]="i18n.authUi().footerColLegal">

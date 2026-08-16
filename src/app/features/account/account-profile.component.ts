@@ -90,10 +90,18 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
     return status === 'pro' || status === 'trial' || status === 'basis';
   });
 
-  cancelScheduled = computed(() => this.profile()?.cancel_at_period_end === true);
+  cancelScheduled = computed(
+    () =>
+      this.profile()?.cancel_at_period_end === true || this.profile()?.pending_plan === 'basis',
+  );
 
   cancelScheduledHint = computed(() => {
-    const raw = this.profile()?.subscription_cancel_at || this.profile()?.trial_ends_at;
+    const profile = this.profile();
+    const raw =
+      profile?.pending_plan_at ||
+      profile?.subscription_cancel_at ||
+      profile?.subscription_current_period_end ||
+      profile?.trial_ends_at;
     if (!raw) {
       return this.i18n.accountUi().cancelSubscriptionScheduled.replace('{date}', '—');
     }
@@ -101,8 +109,6 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     }).format(new Date(raw));
     return this.i18n.accountUi().cancelSubscriptionScheduled.replace('{date}', label);
   });

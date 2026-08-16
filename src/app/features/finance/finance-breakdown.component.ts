@@ -37,7 +37,7 @@ export class FinanceBreakdownComponent implements OnInit {
   readonly i18n = inject(I18nService);
 
   readonly panel = signal<FinanceBreakdownPanel>('income');
-  readonly periodPreset = signal<FinancePeriodPreset>('all');
+  readonly periodPreset = signal<FinancePeriodPreset>('month');
   readonly reportCurrency = signal(this.readStoredReportCurrency());
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -176,7 +176,7 @@ export class FinanceBreakdownComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.userSvc.refreshProfile().subscribe({
+    this.userSvc.ensureProfile().subscribe({
       next: (profile) => {
         if (!planEntitlementsFromProfile(profile).hasFinance) {
           void this.router.navigate(['/app/finance'], {

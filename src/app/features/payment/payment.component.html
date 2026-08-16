@@ -1,0 +1,153 @@
+<div class="pay">
+  <!-- Left: order summary -->
+  <aside class="pay__summary">
+    <div class="pay__summary-inner">
+      <a routerLink="/app/pricing" class="pay__back">
+        <svg class="pay__back-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M9.78 3.22a.75.75 0 0 1 0 1.06L6.06 8l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
+          />
+        </svg>
+        {{ t().backToPricing }}
+      </a>
+
+      <a routerLink="/" class="pay__brand" aria-label="Simple4U">
+        <img src="assets/brand/simple4u-mark.svg" width="28" height="28" alt="" />
+        <span>Simple4U</span>
+      </a>
+
+      @if (loading()) {
+        <div class="pay__skel" aria-hidden="true"></div>
+      } @else {
+        <h1 class="pay__plan">{{ planTitle() }}</h1>
+
+        <p class="pay__due">{{ dueTodayText() }}</p>
+        @if (thenAfterTrialText(); as thenText) {
+          <p class="pay__then">{{ thenText }}</p>
+        }
+
+        @if (hasTrial()) {
+          <ol class="pay__timeline">
+            <li class="pay__timeline-step pay__timeline-step--active">
+              <span class="pay__timeline-dot" aria-hidden="true"></span>
+              <span class="pay__timeline-copy">{{ timelineTodayText() }}</span>
+            </li>
+            <li class="pay__timeline-step">
+              <span class="pay__timeline-dot" aria-hidden="true"></span>
+              <span class="pay__timeline-copy">{{ timelineChargeText() }}</span>
+            </li>
+          </ol>
+        }
+
+        <ul class="pay__features">
+          @for (feature of t().features; track feature) {
+            <li>
+              <span class="pay__check" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="14" height="14">
+                  <path
+                    fill="currentColor"
+                    d="M6.4 11.3 3.2 8.1l1.1-1.1 2.1 2.1 4.7-4.7 1.1 1.1-5.8 5.8Z"
+                  />
+                </svg>
+              </span>
+              <span>{{ feature }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </aside>
+
+  <!-- Right: payment selection -->
+  <section class="pay__main">
+    <div class="pay__main-inner">
+      @if (loading()) {
+        <p class="pay__loading">{{ i18n.sharedUi().loadingContent }}</p>
+      } @else {
+        <header class="pay__methods-head">
+          <h2 class="pay__methods-title">{{ t().methodsTitle }}</h2>
+          <p class="pay__methods-sub">{{ t().methodsSubtitle }}</p>
+        </header>
+
+        @if (error()) {
+          <div class="pay__error" role="alert">{{ error() }}</div>
+        }
+
+        <div class="pay__methods" role="group" [attr.aria-label]="t().methodsTitle">
+          @if (fallbackUsed()) {
+            <p class="pay__fallback-hint">{{ t().stripeFallbackHint }}</p>
+          }
+
+          @if (selectedProvider() === 'tribute') {
+            <div class="pay__card pay__card--selected pay__card--static" aria-current="true">
+              <span class="pay__card-body">
+                <span class="pay__card-top">
+                  <span class="pay__card-name">{{ t().tributeName }}</span>
+                  <span class="pay__card-region">{{ t().tributeRegion }}</span>
+                </span>
+                <span class="pay__badges">
+                  @for (badge of t().tributeBadges; track badge) {
+                    <span class="pay__badge">{{ badge }}</span>
+                  }
+                </span>
+                <span class="pay__card-hint">{{ t().tributeHint }}</span>
+              </span>
+            </div>
+          } @else {
+            <div class="pay__card pay__card--selected pay__card--static" aria-current="true">
+              <span class="pay__card-body">
+                <span class="pay__card-top">
+                  <span class="pay__card-name">{{ t().stripeName }}</span>
+                  <span class="pay__card-region">{{ t().stripeRegion }}</span>
+                </span>
+                <span class="pay__badges">
+                  @for (badge of t().stripeBadges; track badge) {
+                    <span class="pay__badge">{{ badge }}</span>
+                  }
+                </span>
+                <span class="pay__card-hint">{{ t().stripeHint }}</span>
+              </span>
+            </div>
+          }
+        </div>
+
+        <div class="pay__actions">
+          @if (!taxOk()) {
+            <p class="pay__hint">{{ t().taxRequired }}</p>
+            <a routerLink="/app/account/profile" class="pay__btn">{{ t().accountLink }}</a>
+          } @else {
+            <label class="pay__consent">
+              <input
+                type="checkbox"
+                class="pay__consent-input"
+                [checked]="consentAccepted()"
+                (change)="onConsentChange($event)"
+              />
+              <span class="pay__consent-text">
+                {{ t().legalBefore }}
+                <a routerLink="/legal/terms" (click)="$event.stopPropagation()">{{
+                  t().legalTerms
+                }}</a>
+                {{ t().legalMid }}
+                <a routerLink="/legal/data-processing" (click)="$event.stopPropagation()">{{
+                  t().legalPrivacy
+                }}</a>
+                {{ t().legalAfter }}
+              </span>
+            </label>
+
+            <button
+              type="button"
+              class="pay__btn"
+              [disabled]="paying() || !canPay()"
+              (click)="pay()"
+            >
+              {{ paying() ? t().payLoading : ctaLabel() }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </section>
+</div>

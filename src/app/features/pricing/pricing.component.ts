@@ -13,8 +13,7 @@ import {
   resolvePricingCountry,
   subscriptionStatusLabel,
 } from '../../core/utils/user-profile.utils';
-import { getPlanPricing, getSubscriptionPricing } from '../../core/utils/subscription-pricing';
-import { markBillingCheckoutPending } from '../../core/utils/billing-return';
+import { getPlanPricing, getSubscriptionPricing, formatSubscriptionPrice } from '../../core/utils/subscription-pricing';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 
 export type BillingInterval = 'monthly' | 'yearly';
@@ -70,19 +69,34 @@ export class PricingComponent implements OnInit, OnDestroy {
   isTrial = computed(() => this.subscriptionStatus() === 'trial');
   isProOrTrial = computed(() => this.isPro() || this.isTrial());
   cancelScheduled = computed(() => this.profile()?.cancel_at_period_end === true);
+  basisDowngradeScheduled = computed(() => this.profile()?.pending_plan === 'basis');
 
   cancelScheduledDateLabel = computed(() => {
     const raw = this.profile()?.subscription_cancel_at || this.profile()?.trial_ends_at;
     if (!raw) {
       return '—';
     }
-    return new Intl.DateTimeFormat(this.i18n.localeId(), {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(raw));
+    return this.formatDateLabel(raw);
+  });
+
+  periodEndDateLabel = computed(() => {
+    const profile = this.profile();
+    const raw =
+      profile?.pending_plan_at ||
+      profile?.subscription_current_period_end ||
+      profile?.trial_ends_at ||
+      profile?.subscription_cancel_at;
+    if (!raw) {
+      return '—';
+    }
+    return this.formatDateLabel(raw);
+  });
+
+  basisDowngradePriceLabel = computed(() => {
+    const p = this.basisPricing();
+    const interval = this.profile()?.subscription_interval === 'yearly' ? 'yearly' : 'monthly';
+    const amount = interval === 'yearly' ? p.yearly : p.monthly;
+    return formatSubscriptionPrice(amount, p.currency, this.i18n.localeId());
   });
 
   cancelScheduledCtaLabel = computed(() =>
@@ -91,6 +105,14 @@ export class PricingComponent implements OnInit, OnDestroy {
 
   cancelScheduledHintLabel = computed(() =>
     this.t.cancelScheduledHint.replace('{date}', this.cancelScheduledDateLabel()),
+  );
+
+  basisScheduledCtaLabel = computed(() =>
+    this.t.downgradeBasisScheduledCta.replace('{date}', this.periodEndDateLabel()),
+  );
+
+  basisScheduledHintLabel = computed(() =>
+    this.t.downgradeBasisScheduledHint.replace('{date}', this.periodEndDateLabel()),
   );
 
   pricingCountry = computed(() => {
@@ -164,18 +186,69 @@ export class PricingComponent implements OnInit, OnDestroy {
 
   downgradeDialogBody = computed(() => {
     const t = this.t;
-    return this.downgradeTarget() === 'basis' ? t.downgradeToBasisBody : t.downgradeToFreeBody;
+    if (this.downgradeTarget() === 'basis') {
+      return t.downgradeToBasisBody
+        .replace('{current_period_end}', this.periodEndDateLabel())
+        .replace('{basis_price}', this.basisDowngradePriceLabel());
+    }
+    return t.downgradeToFreeBody;
   });
 
+  /** Left action label (Free keep / unused when Basis uses leading). */
+  downgradeDialogCancel = computed(() => {
+    const t = this.t;
+    if (this.downgradeLoading() || this.downgradeTarget() === 'basis') {
+      return null;
+    }
+    return t.downgradeKeep;
+  });
+
+  /** Left muted action for Pro → Basis (switch). */
+  downgradeDialogLeading = computed(() => {
+    const t = this.t;
+    if (this.downgradeLoading() || this.downgradeTarget() !== 'basis') {
+      return null;
+    }
+    return t.downgradeToBasisConfirm;
+  });
+
+  /** Right / primary: stay on Pro (Basis) or confirm Free schedule. */
   downgradeDialogConfirm = computed(() => {
     const t = this.t;
     if (this.downgradeLoading()) {
       return t.downgradeLoading;
     }
-    return this.downgradeTarget() === 'basis'
-      ? t.downgradeToBasisConfirm
-      : t.downgradeToFreeConfirm;
+    return this.downgradeTarget() === 'basis' ? t.downgradeKeepPro : t.downgradeToFreeConfirm;
   });
+
+  downgradePreferSafePrimary = computed(() => this.downgradeTarget() === 'basis');
+
+  onDowngradeDialogCancel(): void {
+    this.closeDowngradeConfirm();
+  }
+
+  onDowngradeDialogLeading(): void {
+    this.confirmDowngrade();
+  }
+
+  onDowngradeDialogConfirm(): void {
+    if (this.downgradeLoading()) {
+      return;
+    }
+    if (this.downgradeTarget() === 'basis') {
+      this.closeDowngradeConfirm();
+      return;
+    }
+    this.confirmDowngrade();
+  }
+
+  private formatDateLabel(raw: string): string {
+    return new Intl.DateTimeFormat(this.i18n.localeId(), {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(raw));
+  }
 
   private formatAmount(amount: number): string {
     const fractionDigits = Number.isFinite(amount) && !Number.isInteger(amount) ? 2 : 0;
@@ -258,7 +331,7 @@ export class PricingComponent implements OnInit, OnDestroy {
         return;
       }
     } else if (target === 'basis') {
-      if (!this.isProOrTrial()) {
+      if (!this.isProOrTrial() || this.basisDowngradeScheduled()) {
         return;
       }
     }
@@ -309,20 +382,8 @@ export class PricingComponent implements OnInit, OnDestroy {
     if (plan === 'pro' && !this.canBuyPro()) return;
     if (this.isProOrTrial()) return;
 
-    this.checkoutLoading.set(plan);
-    this.error.set(null);
-    this.billingSvc.createCheckoutSession(this.billingInterval(), plan).subscribe({
-      next: ({ url }) => {
-        this.checkoutLoading.set(null);
-        if (url) {
-          markBillingCheckoutPending();
-          window.location.href = url;
-        }
-      },
-      error: (err) => {
-        this.checkoutLoading.set(null);
-        this.error.set(err?.error?.message ?? this.i18n.accountUi().saveError);
-      },
+    void this.router.navigate(['/app/payment'], {
+      queryParams: { plan, interval: this.billingInterval() },
     });
   }
 

@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import type { PageTitleKey } from '@interfaces';
 import { environment } from '@environment';
 import { adminGuard } from './core/guards/admin.guard';
@@ -41,6 +42,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/pricing/pricing.component').then((m) => m.PricingComponent),
     data: { title: 'pricing' satisfies PageTitleKey },
+  },
+  {
+    path: 'payment',
+    redirectTo: ({ queryParams }) =>
+      inject(Router).createUrlTree(['/app/payment'], { queryParams }),
+    pathMatch: 'full',
   },
   {
     path: 'legal/data-processing',
@@ -190,6 +197,12 @@ export const routes: Routes = [
             data: { title: 'pricing' satisfies PageTitleKey },
           },
           {
+            path: 'payment',
+            loadComponent: () =>
+              import('./features/payment/payment.component').then((m) => m.PaymentComponent),
+            data: { title: 'payment' satisfies PageTitleKey },
+          },
+          {
             path: 'account',
             loadComponent: () =>
               import('./features/account/account-shell.component').then((m) => m.AccountShellComponent),
@@ -212,6 +225,14 @@ export const routes: Routes = [
                     (m) => m.AccountProfileComponent,
                   ),
                 data: { title: 'accountProfile' satisfies PageTitleKey },
+              },
+              {
+                path: 'support',
+                loadComponent: () =>
+                  import('./features/account/account-support.component').then(
+                    (m) => m.AccountSupportComponent,
+                  ),
+                data: { title: 'account' satisfies PageTitleKey },
               },
               {
                 path: 'administration',

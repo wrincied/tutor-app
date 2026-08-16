@@ -4,7 +4,7 @@ import type {
   PageTitleStrings,
   AccountStrings,
   AuthStrings,
-  LegalCommonStrings,
+  LegalStrings,
   LegalDataProcessingStrings,
   LegalCookiesStrings,
   LegalTermsStrings,
@@ -15,6 +15,8 @@ import type {
   StudentStrings,
   HomeStrings,
   PricingStrings,
+  PaymentStrings,
+  HelpFormStrings,
   AdminStrings,
   TaxMode,
 } from '@interfaces';
@@ -25,7 +27,7 @@ export type LocalePack = {
   pageTitles: PageTitleStrings;
   account: AccountStrings;
   auth: AuthStrings;
-  legal: LegalCommonStrings;
+  legal: LegalStrings;
   legalData: LegalDataProcessingStrings;
   legalCookies: LegalCookiesStrings;
   legalTerms: LegalTermsStrings;
@@ -37,6 +39,8 @@ export type LocalePack = {
   students: StudentStrings;
   home: HomeStrings;
   pricing: PricingStrings;
+  payment: PaymentStrings;
+  helpForm: HelpFormStrings;
   admin: AdminStrings;
 };
 

@@ -1,28 +1,26 @@
-﻿import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
 import { from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { I18nService } from '../../core/services/i18n.service';
 import { PublicContentService } from '../../core/services/public-content.service';
+import { UserService } from '../../core/services/user.service';
 import { RecaptchaService } from '../../shared/recaptcha/recaptcha.service';
-import { RevealDirective } from '../../shared/reveal/reveal.directive';
 
 @Component({
-  selector: 'app-help-center',
+  selector: 'app-account-support',
   standalone: true,
-  imports: [RouterLink, FormsModule, RevealDirective],
-  templateUrl: './help-center.component.html',
-  styleUrl: './help-center.component.scss',
+  imports: [FormsModule],
+  templateUrl: './account-support.component.html',
+  styleUrls: ['./account-page-host.scss', './account-support.component.scss'],
 })
-export class HelpCenterComponent implements OnInit {
+export class AccountSupportComponent implements OnInit {
   readonly i18n = inject(I18nService);
   private readonly publicContent = inject(PublicContentService);
+  private readonly userSvc = inject(UserService);
   private readonly recaptcha = inject(RecaptchaService);
-  private readonly router = inject(Router);
 
-  readonly loading = signal(true);
   readonly contactEmail = signal('support@simple4u.at');
   readonly name = signal('');
   readonly email = signal('');
@@ -37,9 +35,21 @@ export class HelpCenterComponent implements OnInit {
     this.publicContent.getContact().subscribe({
       next: (info) => {
         if (info.email) this.contactEmail.set(info.email);
-        this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+    });
+    this.userSvc.ensureProfile().subscribe({
+      next: (profile) => {
+        if (profile.email && !this.email()) {
+          this.email.set(profile.email);
+        }
+        const fullName = [profile.first_name, profile.last_name]
+          .map((p) => String(p || '').trim())
+          .filter(Boolean)
+          .join(' ');
+        if (fullName && !this.name()) {
+          this.name.set(fullName);
+        }
+      },
     });
   }
 
@@ -49,17 +59,6 @@ export class HelpCenterComponent implements OnInit {
 
   mailtoHref(): string {
     return `mailto:${this.contactEmail()}`;
-  }
-
-  openFaq(event: Event): void {
-    event.preventDefault();
-    void this.router.navigateByUrl('/').then(() => {
-      setTimeout(() => {
-        document
-          .getElementById('landing-v2-faq')
-          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 80);
-    });
   }
 
   submit(): void {
@@ -97,8 +96,6 @@ export class HelpCenterComponent implements OnInit {
         next: () => {
           this.submitting.set(false);
           this.success.set(true);
-          this.name.set('');
-          this.email.set('');
           this.subject.set('');
           this.message.set('');
         },

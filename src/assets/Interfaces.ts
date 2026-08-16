@@ -77,10 +77,16 @@ export interface PricingStrings {
   downgradeToFreeBody: string;
   downgradeToFreeConfirm: string;
   downgradeToBasisTitle: string;
+  /** Placeholders: `{current_period_end}`, `{basis_price}`. */
   downgradeToBasisBody: string;
   downgradeToBasisConfirm: string;
   downgradeKeep: string;
+  /** Safe cancel label when downgrading from Pro → Basis. */
+  downgradeKeepPro: string;
   downgradeLoading: string;
+  /** Shown on Basis when Pro→Basis is already scheduled. Placeholder: `{date}`. */
+  downgradeBasisScheduledCta: string;
+  downgradeBasisScheduledHint: string;
   /** Shown on Free when cancel_at_period_end is already scheduled. Placeholder: `{date}`. */
   cancelScheduledCta: string;
   /** Extra line under Free CTA when cancel is scheduled. Placeholder: `{date}`. */
@@ -93,6 +99,73 @@ export interface PricingStrings {
     title: string;
     items: PricingFaqItem[];
   };
+}
+
+export interface PaymentStrings {
+  backToPricing: string;
+  planPrefix: string;
+  intervalMonthly: string;
+  intervalYearly: string;
+  /** Short period unit for “/ month” lines, e.g. месяц / month. */
+  periodMonth: string;
+  periodYear: string;
+  /** Placeholders: {amount}, {currency} */
+  dueToday: string;
+  /** Placeholders: {amount}, {currency}, {period}, {days} */
+  thenAfterTrial: string;
+  /** Placeholders: {days} */
+  timelineToday: string;
+  /** Placeholders: {days}, {amount}, {currency} */
+  timelineCharge: string;
+  features: [string, string, string];
+  methodsTitle: string;
+  methodsSubtitle: string;
+  tributeName: string;
+  tributeRegion: string;
+  tributeHint: string;
+  tributeBadges: [string, string, string];
+  stripeName: string;
+  stripeRegion: string;
+  stripeHint: string;
+  stripeBadges: [string, string];
+  recommended: string;
+  unavailable: string;
+  /** Placeholders: {days} */
+  payCtaTrial: string;
+  /** Placeholders: {amount}, {currency} */
+  payCtaPayNow: string;
+  payLoading: string;
+  /** Lead-in before terms/privacy links inside the consent checkbox label. */
+  legalBefore: string;
+  legalTerms: string;
+  legalMid: string;
+  legalPrivacy: string;
+  legalAfter: string;
+  tributeNotReady: string;
+  stripeNotReady: string;
+  /** Shown when CIS preferred Tribute but Stripe is used as temporary fallback. */
+  stripeFallbackHint: string;
+  taxRequired: string;
+  accountLink: string;
+  loadError: string;
+  payError: string;
+}
+
+export interface HelpFormStrings {
+  formTitle: string;
+  nameLabel: string;
+  emailLabel: string;
+  subjectLabel: string;
+  messageLabel: string;
+  submit: string;
+  sending: string;
+  success: string;
+  error: string;
+  captchaRequired: string;
+  rateLimited: string;
+  /** Placeholder: {email} */
+  mailHint: string;
+  mailCta: string;
 }
 
 /** Ключи для document.title (route data `title` и SeoService). */
@@ -116,6 +189,7 @@ export type PageTitleKey =
   | 'workspace'
   | 'finance'
   | 'pricing'
+  | 'payment'
   | 'account'
   | 'accountCustomization'
   | 'accountProfile'
@@ -239,6 +313,14 @@ export interface UserProfile {
   cancel_at_period_end?: boolean;
   /** ISO when access ends after cancel-at-period-end. */
   subscription_cancel_at?: string | null;
+  /** ISO end of current Stripe billing period (or trial end). */
+  subscription_current_period_end?: string | null;
+  /** Billing interval of the active Stripe subscription. */
+  subscription_interval?: 'monthly' | 'yearly' | null;
+  /** Scheduled plan change (e.g. Pro → Basis at period end). */
+  pending_plan?: 'basis' | null;
+  /** ISO when pending_plan takes effect. */
+  pending_plan_at?: string | null;
   /** Whether a Stripe subscription id is linked. */
   has_stripe_subscription?: boolean;
   /** Feature gates derived from subscription_status. */
@@ -559,6 +641,7 @@ export interface AccountStrings {
   cancelSubscriptionError: string;
   customizationTab: string;
   accountTab: string;
+  supportTab: string;
   administrationTab: string;
   activityLogSection: string;
   activityLogEmpty: string;
@@ -843,6 +926,12 @@ export interface AuthStrings {
 export interface LegalCommonStrings {
   back: string;
   lastUpdated: string;
+}
+
+/** Shared chrome + Impressum fallback (CMS failure). */
+export interface LegalStrings extends LegalCommonStrings {
+  impressumTitle: string;
+  impressumUnavailable: string;
 }
 
 export interface LegalDataProcessingStrings extends LegalCommonStrings {

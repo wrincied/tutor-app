@@ -2,7 +2,14 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { FINANCE_REPORT_CURRENCIES, type Expense, type FinanceSummary } from '@interfaces';
+import { of } from 'rxjs';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
+import {
+  FINANCE_REPORT_CURRENCIES,
+  type Expense,
+  type FinanceExpenseBreakdown,
+  type FinanceSummary,
+} from '@interfaces';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
@@ -28,6 +35,17 @@ import { planEntitlementsFromProfile } from '../../core/utils/user-profile.utils
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 
+function expensesFromSummaryBreakdown(rows: FinanceExpenseBreakdown[] | undefined): Expense[] {
+  return (rows ?? []).map((row) => ({
+    _id: row.id,
+    title: row.title,
+    amount: row.amount,
+    currency: row.currency,
+    expense_date: row.expense_date,
+    category: row.category || '',
+  }));
+}
+
 @Component({
   selector: 'app-finance',
   standalone: true,
@@ -52,7 +70,7 @@ export class FinanceComponent implements OnInit {
   isTeaser = signal(false);
   upgradeModalOpen = signal(false);
 
-  periodPreset = signal<FinancePeriodPreset>('all');
+  periodPreset = signal<FinancePeriodPreset>('month');
   reportCurrency = signal(this.readStoredReportCurrency());
 
   displayCurrency = computed(() => this.reportCurrency() || this.summary()?.currency || 'EUR');
@@ -198,7 +216,6 @@ export class FinanceComponent implements OnInit {
       this.summary.set(remapFinanceSummary(current, code));
     }
     this.syncRouteQuery();
-    this.reload();
   }
 
   private readStoredReportCurrency(): string {
@@ -220,24 +237,27 @@ export class FinanceComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    // Always fetch fresh /me — ensureProfile can keep a pre-upgrade Free cache.
-    this.userSvc.refreshProfile().subscribe({
-      next: (profile) => {
-        const unlocked = planEntitlementsFromProfile(profile).hasFinance;
-        this.isTeaser.set(!unlocked);
-        if (!unlocked) {
+    // Cached /me when available (Home/nav already warm it). Fresh fetch only if empty.
+    this.userSvc
+      .ensureProfile()
+      .pipe(
+        switchMap((profile) => {
+          const unlocked = planEntitlementsFromProfile(profile).hasFinance;
+          this.isTeaser.set(!unlocked);
+          if (!unlocked) {
+            this.applyTeaserDemo();
+            return of(null);
+          }
+          return this.fetchLiveSummary$();
+        }),
+        catchError(() => {
+          this.isTeaser.set(true);
           this.applyTeaserDemo();
-          this.loading.set(false);
-          return;
-        }
-        this.loadLiveData();
-      },
-      error: () => {
-        this.isTeaser.set(true);
-        this.applyTeaserDemo();
-        this.loading.set(false);
-      },
-    });
+          return of(null);
+        }),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe();
   }
 
   private applyTeaserDemo(): void {
@@ -249,46 +269,30 @@ export class FinanceComponent implements OnInit {
     this.error.set(null);
   }
 
-  private loadLiveData(): void {
+  /** One /summary call — expenses come from expensesBreakdown (no second RTT). */
+  private fetchLiveSummary$() {
     const range = financePeriodRange(this.periodPreset());
     const currency = this.reportCurrency();
     const summaryQuery = {
       ...range,
       ...(currency ? { currency } : {}),
     };
-    let pending = 2;
-    const finish = () => {
-      pending -= 1;
-      if (pending === 0) {
-        this.loading.set(false);
-      }
-    };
-
-    this.financeSvc.getSummary(summaryQuery).subscribe({
-      next: (data) => {
+    return this.financeSvc.getSummary(summaryQuery).pipe(
+      map((data) => {
         const target = this.reportCurrency() || data.currency;
         if (!this.reportCurrency()) {
           this.reportCurrency.set(target);
         }
-        this.summary.set(remapFinanceSummary(data, target));
-        finish();
-      },
-      error: () => {
+        const remapped = remapFinanceSummary(data, target);
+        this.summary.set(remapped);
+        this.expenses.set(expensesFromSummaryBreakdown(remapped.expensesBreakdown));
+        return remapped;
+      }),
+      catchError(() => {
         this.error.set(this.t.loadError);
-        finish();
-      },
-    });
-
-    this.financeSvc.getExpenses().subscribe({
-      next: (list) => {
-        this.expenses.set(list);
-        finish();
-      },
-      error: () => {
-        this.error.set(this.t.loadError);
-        finish();
-      },
-    });
+        return of(null);
+      }),
+    );
   }
 
   formatMoney(amount: number, currencyCode?: string): string {
