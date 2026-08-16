@@ -321,6 +321,18 @@ export class HomeComponent implements OnInit, OnDestroy {
         );
         this.lowBalanceStudents.set(studentsLowBalance(students));
         this.loading.set(false);
+
+        // Drop false Trial/Pro if Stripe no longer has an active subscription.
+        const status = String(profile?.subscription_status || 'free');
+        if (status === 'trial' || status === 'pro' || status === 'basis') {
+          this.billingSvc.syncSubscription().subscribe({
+            next: (user) => {
+              this.userSvc.cacheProfile(user);
+              this.profile.set(user);
+            },
+            error: () => undefined,
+          });
+        }
       },
       error: () => {
         this.error.set(this.t.loadError);
