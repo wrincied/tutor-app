@@ -230,15 +230,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private handleBillingSuccessReturn(): void {
-    // Show immediately — do not wait for webhook/profile poll.
-    const current = String(this.profile()?.subscription_status || '');
-    this.billingCongratsPlan.set(current === 'pro' ? 'pro' : 'trial');
-    this.billingCongratsOpen.set(true);
-
+    // Do not celebrate until Stripe/profile confirms an entitlement.
     this.userSvc.invalidateProfile();
     this.billingPollSub?.unsubscribe();
 
-    // Force sync from Stripe (webhook may have been missed / old process).
     this.billingSvc.syncSubscription().subscribe({
       next: (user) => {
         this.userSvc.cacheProfile(user);
@@ -252,7 +247,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        /* fall through to poll */
+        /* fall through to poll — no fake Trial UI */
       },
     });
 

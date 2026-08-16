@@ -10,6 +10,11 @@ export function markBillingCheckoutPending(): void {
   sessionStorage.setItem(BILLING_RETURN_STORAGE_KEY, 'pending');
 }
 
+/**
+ * Resolve billing return from the URL only.
+ * `pending` in sessionStorage is NOT success — browser Back from Stripe must not unlock Pro/Trial.
+ * Success requires `?billing=success` (or legacy hash query) from Stripe redirect.
+ */
 export function consumeBillingReturnFlag(): BillingReturnKind | null {
   if (typeof window === 'undefined') {
     return null;
@@ -28,22 +33,28 @@ export function consumeBillingReturnFlag(): BillingReturnKind | null {
     fromStorage = null;
   }
 
-  if (fromUrl === 'success' || fromStorage === 'pending' || fromStorage === 'success') {
+  const clearStorage = () => {
     try {
       sessionStorage.removeItem(BILLING_RETURN_STORAGE_KEY);
     } catch {
       /* ignore */
     }
+  };
+
+  if (fromUrl === 'success') {
+    clearStorage();
     return 'success';
   }
 
   if (fromUrl === 'cancel') {
-    try {
-      sessionStorage.removeItem(BILLING_RETURN_STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
+    clearStorage();
     return 'cancel';
+  }
+
+  // Abandoned checkout (Back button): drop pending marker, do not treat as paid.
+  if (fromStorage === 'pending' || fromStorage === 'success') {
+    clearStorage();
+    return fromStorage === 'pending' ? 'cancel' : null;
   }
 
   return null;

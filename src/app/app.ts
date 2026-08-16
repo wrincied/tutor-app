@@ -63,14 +63,11 @@ export class App {
     // Stripe returns to /app/home?billing=success (legacy: /?billing=success#/…).
     const billingReturn = consumeBillingReturnFlag();
     if (billingReturn === 'success') {
-      // Re-arm so Home can still consume and open the modal.
-      try {
-        sessionStorage.setItem('simple4u_billing_return_v1', 'success');
-      } catch {
-        /* ignore */
-      }
       const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
-      if (!hash.includes('/app/home')) {
+      const path = typeof window !== 'undefined' ? window.location.pathname : '';
+      const alreadyHome =
+        path.includes('/app/home') || hash.includes('/app/home');
+      if (!alreadyHome) {
         void this.router.navigateByUrl('/app/home?billing=success');
       }
     }
