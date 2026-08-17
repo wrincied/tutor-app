@@ -79,27 +79,25 @@
             <p class="pay__fallback-hint">{{ t().stripeFallbackHint }}</p>
           }
 
-          @if (selectedProvider() === 'tribute') {
-            <div class="pay__card pay__card--selected pay__card--static" aria-current="true">
-              <span class="pay__card-body">
-                <span class="pay__card-top">
-                  <span class="pay__card-name">{{ t().tributeName }}</span>
-                  <span class="pay__card-region">{{ t().tributeRegion }}</span>
-                </span>
-                <span class="pay__badges">
-                  @for (badge of t().tributeBadges; track badge) {
-                    <span class="pay__badge">{{ badge }}</span>
-                  }
-                </span>
-                <span class="pay__card-hint">{{ t().tributeHint }}</span>
-              </span>
-            </div>
-          } @else {
-            <div class="pay__card pay__card--selected pay__card--static" aria-current="true">
+          @if (providerVisible('stripe')) {
+            <button
+              type="button"
+              class="pay__card"
+              [class.pay__card--selected]="selectedProvider() === 'stripe'"
+              [class.pay__card--static]="!choiceAllowed()"
+              [disabled]="!providerEnabled('stripe')"
+              (click)="selectProvider('stripe')"
+            >
+              @if (choiceAllowed()) {
+                <span class="pay__radio" aria-hidden="true"></span>
+              }
               <span class="pay__card-body">
                 <span class="pay__card-top">
                   <span class="pay__card-name">{{ t().stripeName }}</span>
                   <span class="pay__card-region">{{ t().stripeRegion }}</span>
+                  @if (preferredProvider() === 'stripe' && choiceAllowed()) {
+                    <span class="pay__pill">{{ t().recommended }}</span>
+                  }
                 </span>
                 <span class="pay__badges">
                   @for (mark of stripeMethodMarks(); track mark.id) {
@@ -115,8 +113,44 @@
                   }
                 </span>
                 <span class="pay__card-hint">{{ t().stripeHint }}</span>
+                @if (!providerEnabled('stripe')) {
+                  <span class="pay__card-off">{{ t().unavailable }}</span>
+                }
               </span>
-            </div>
+            </button>
+          }
+
+          @if (providerVisible('tribute')) {
+            <button
+              type="button"
+              class="pay__card"
+              [class.pay__card--selected]="selectedProvider() === 'tribute'"
+              [class.pay__card--static]="!choiceAllowed()"
+              [disabled]="!providerEnabled('tribute')"
+              (click)="selectProvider('tribute')"
+            >
+              @if (choiceAllowed()) {
+                <span class="pay__radio" aria-hidden="true"></span>
+              }
+              <span class="pay__card-body">
+                <span class="pay__card-top">
+                  <span class="pay__card-name">{{ t().tributeName }}</span>
+                  <span class="pay__card-region">{{ t().tributeRegion }}</span>
+                  @if (preferredProvider() === 'tribute' && choiceAllowed()) {
+                    <span class="pay__pill">{{ t().recommended }}</span>
+                  }
+                </span>
+                <span class="pay__badges">
+                  @for (badge of t().tributeBadges; track badge) {
+                    <span class="pay__badge">{{ badge }}</span>
+                  }
+                </span>
+                <span class="pay__card-hint">{{ t().tributeHint }}</span>
+                @if (!providerEnabled('tribute')) {
+                  <span class="pay__card-off">{{ t().unavailable }}</span>
+                }
+              </span>
+            </button>
           }
         </div>
 

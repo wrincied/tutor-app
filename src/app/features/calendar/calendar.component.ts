@@ -17,8 +17,13 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CalendarLessonDisplayService } from '../../core/services/calendar-lesson-display.service';
+import {
+  clampLessonDurationMinutes,
+  LESSON_DURATION_MAX,
+  LESSON_DURATION_MIN,
+} from '../../core/utils/user-workspace-settings';
 import { LessonService } from '../../core/services/lesson.service';
+import { CalendarLessonDisplayService } from '../../core/services/calendar-lesson-display.service';
 import { UserProfileSettingsService } from '../../core/services/user-profile-settings.service';
 import { StudentService, type Student } from '../../core/services/student.service';
 import { isPackageStudentWithEmptyBalance, isPackageStudentWithLastBalance } from '../../core/utils/calendar-last-paid-lesson';
@@ -285,7 +290,14 @@ export class CalendarComponent implements OnInit {
   /** Объём удаления: только вхождение или вся серия. */
   deleteRecurringScope = signal<'single' | 'series'>('single');
   deleteLessonConfirmOpen = signal(false);
-  readonly durationPresets: readonly number[] = [30, 45, 60, 90];
+  readonly durationMin = LESSON_DURATION_MIN;
+  readonly durationMax = LESSON_DURATION_MAX;
+  private static readonly BASE_DURATION_PRESETS: readonly number[] = [30, 45, 60, 90];
+  readonly durationPresets = computed(() => {
+    const presets = new Set<number>(CalendarComponent.BASE_DURATION_PRESETS);
+    presets.add(this.profileSettings.workspace().defaultLessonDuration);
+    return [...presets].sort((a, b) => a - b);
+  });
   /** Цвета точек статуса — как у карточек урока в сетке. */
   private static readonly STATUS_DOT_COLORS: Record<LessonStatus, string> = {
     scheduled: 'rgb(14 165 233)',
@@ -832,7 +844,7 @@ export class CalendarComponent implements OnInit {
   });
 
   /** Уроки для сетки: развёрнутые RRULE-вхождения в видимом диапазоне. */
-  gridLessons = computed(() => {
+  gridLessons = computed((): CalendarLesson[] => {
     const base = this.displayLessons();
     const range = this.visibleRange();
     if (!range) {
@@ -1666,6 +1678,11 @@ export class CalendarComponent implements OnInit {
     this.durationChipMode.set('custom');
   }
 
+  onCustomDurationInput(value: string | number): void {
+    this.durationChipMode.set('custom');
+    this.duration.set(clampLessonDurationMinutes(value));
+  }
+
   recurrenceDraftShowsWeekdays = computed(() => {
     const draft = this.recurrenceDraft();
     if (draft.preset === 'weekly') {
@@ -1789,7 +1806,13 @@ export class CalendarComponent implements OnInit {
 
   onRecurrenceEndModeChange(value: string): void {
     const endMode = value as RecurrenceEndMode;
-    this.recurrenceDraft.update((current) => ({ ...current, endMode }));
+    this.recurrenceDraft.update((current) => {
+      const next = { ...current, endMode };
+      if (endMode === 'until' && !next.untilDate) {
+        next.untilDate = this.defaultRecurrenceUntilDate();
+      }
+      return next;
+    });
   }
 
   onRecurrenceIntervalChange(raw: string | number): void {
@@ -1841,7 +1864,13 @@ export class CalendarComponent implements OnInit {
 
   onRecurrenceConfigEndModeChange(value: string): void {
     const endMode = value as RecurrenceEndMode;
-    this.recurrenceConfig.update((current) => ({ ...current, endMode }));
+    this.recurrenceConfig.update((current) => {
+      const next = { ...current, endMode };
+      if (endMode === 'until' && !next.untilDate) {
+        next.untilDate = this.defaultRecurrenceUntilDate();
+      }
+      return next;
+    });
   }
 
   onRecurrenceConfigIntervalChange(raw: string | number): void {
@@ -1888,15 +1917,23 @@ export class CalendarComponent implements OnInit {
     return new Date();
   }
 
-  onCustomDurationInput(value: string | number): void {
-    const n = Math.round(Number(value));
-    this.duration.set(
-      Math.min(
-        480,
-        Math.max(5, Number.isNaN(n) ? CalendarComponent.DEFAULT_LESSON_DURATION_MIN : n),
-      ),
-    );
+  private defaultRecurrenceUntilDate(): string {
+    const anchor = this.scheduledAtAnchor();
+    const until = new Date(anchor);
+    until.setMonth(until.getMonth() + 3);
+    const y = until.getFullYear();
+    const m = String(until.getMonth() + 1).padStart(2, '0');
+    const d = String(until.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
+
+  recurrenceUntilMinDate = computed(() => {
+    const anchor = this.scheduledAtAnchor();
+    const y = anchor.getFullYear();
+    const m = String(anchor.getMonth() + 1).padStart(2, '0');
+    const d = String(anchor.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  });
 
   private static readonly CURRENCY_REGION: Record<string, string> = {
     EUR: 'EU',
@@ -3061,7 +3098,7 @@ export class CalendarComponent implements OnInit {
     this.ensureStudentsLoaded();
     const mins = lesson.lesson_duration;
     this.duration.set(mins);
-    this.durationChipMode.set(this.durationPresets.includes(mins) ? 'preset' : 'custom');
+    this.durationChipMode.set(this.durationPresets().includes(mins) ? 'preset' : 'custom');
     if (lesson.isRecurring && lesson.rrule) {
       this.recurrenceConfig.set(
         parseRruleToConfig(lesson.rrule, lesson.scheduledAt ? new Date(lesson.scheduledAt) : null),
@@ -3112,8 +3149,9 @@ export class CalendarComponent implements OnInit {
   }
 
   private resetLessonForm(): void {
-    this.duration.set(this.profileSettings.workspace().defaultLessonDuration);
-    this.durationChipMode.set('preset');
+    const defaultDuration = this.profileSettings.workspace().defaultLessonDuration;
+    this.duration.set(defaultDuration);
+    this.durationChipMode.set(this.durationPresets().includes(defaultDuration) ? 'preset' : 'custom');
     this.recurrenceConfig.set({ ...DEFAULT_RECURRENCE_CONFIG });
     this.editingOccurrenceDate.set(null);
     this.scheduledAtLocal.set('');

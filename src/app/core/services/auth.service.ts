@@ -21,7 +21,6 @@ import {
   reauthenticateWithCredential,
   reauthenticateWithPopup,
   signInWithPopup,
-  sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithRedirect,
   getRedirectResult,
@@ -30,7 +29,7 @@ import {
   updatePassword,
   verifyPasswordResetCode,
 } from '@angular/fire/auth';
-import type { ActionCodeSettings, User } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import {
   catchError,
   from,
@@ -48,7 +47,6 @@ import {
 } from '../utils/auth-errors';
 import { isBlockedBrandEmail } from '../utils/brand-email';
 
-import { environment } from '@environment';
 import { apiUrl } from '../config/api-url';
 import type { UserProfile } from '@interfaces';
 import { postAuthPath } from '../utils/post-auth-navigation';
@@ -101,22 +99,15 @@ export class AuthService {
     () => this.sessionSignInProvider() === GoogleAuthProvider.PROVIDER_ID,
   );
 
-  private appBaseUrl(): string {
-    return (
-      environment.appUrl?.replace(/\/$/, '') ||
-      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4200')
-    );
-  }
-
-  private verificationActionCodeSettings(): ActionCodeSettings {
-    return {
-      url: `${this.appBaseUrl()}/login?verify=success`,
-      handleCodeInApp: false,
-    };
-  }
-
   private fromAuth<T>(fn: () => Promise<T>): Observable<T> {
     return from(runInInjectionContext(this.injector, fn));
+  }
+
+  /** Resend SMTP + SPA /auth/action (same pattern as password reset). */
+  private requestVerificationEmail(): Observable<void> {
+    return this.http
+      .post<{ ok: boolean }>(`${API}/auth/send-verification-email`, {})
+      .pipe(map(() => undefined));
   }
 
   sendPasswordReset(email: string): Observable<void> {
@@ -166,11 +157,11 @@ export class AuthService {
         return this.fromAuth(() => createUserWithEmailAndPassword(this.auth, normalized, password));
       }),
       switchMap((cred) =>
-        this.fromAuth(() =>
-          sendEmailVerification(cred.user, this.verificationActionCodeSettings()),
-        ).pipe(map(() => cred.user)),
+        this.bootstrapProfile().pipe(
+          switchMap(() => this.requestVerificationEmail()),
+          map(() => cred.user),
+        ),
       ),
-      switchMap((user) => this.bootstrapProfile().pipe(map(() => user))),
     );
   }
 
@@ -258,11 +249,10 @@ export class AuthService {
   }
 
   resendVerificationEmail(): Observable<void> {
-    const user = this.auth.currentUser;
-    if (!user) {
+    if (!this.auth.currentUser) {
       throw new Error('Not signed in');
     }
-    return this.fromAuth(() => sendEmailVerification(user, this.verificationActionCodeSettings()));
+    return this.requestVerificationEmail();
   }
 
   reloadUser(): Observable<User | null> {
@@ -305,10 +295,8 @@ export class AuthService {
     provider.setCustomParameters({ prompt: 'none' });
     return this.fromAuth(() => reauthenticateWithPopup(user, provider)).pipe(
       switchMap(() => this.fromAuth(() => updateEmail(user, normalized))),
-      switchMap(() =>
-        this.fromAuth(() => sendEmailVerification(user, this.verificationActionCodeSettings())),
-      ),
-      switchMap(() => this.fromAuth(() => user.reload())),
+      switchMap(() => this.reloadUser()),
+      switchMap(() => this.requestVerificationEmail()),
       map(() => this.auth.currentUser),
     );
   }
@@ -334,13 +322,12 @@ export class AuthService {
         }
         return tasks.length ? this.fromAuth(() => Promise.all(tasks)) : from(Promise.resolve());
       }),
+      switchMap(() => this.reloadUser()),
       switchMap(() => {
         if (options.newEmail) {
-          return this.fromAuth(() =>
-            sendEmailVerification(user, this.verificationActionCodeSettings()),
-          ).pipe(switchMap(() => this.fromAuth(() => user.reload())));
+          return this.requestVerificationEmail();
         }
-        return this.fromAuth(() => user.reload());
+        return of(undefined);
       }),
       map(() => this.auth.currentUser),
     );

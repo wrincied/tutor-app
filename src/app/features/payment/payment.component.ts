@@ -8,6 +8,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { markBillingCheckoutPending } from '../../core/utils/billing-return';
 import {
+  allowedPaymentProviders,
   paymentProviderForCountry,
   resolvePaymentProvider,
   type PaymentProviderId,
@@ -55,6 +56,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
   readonly stripeReady = signal(true);
   readonly selectedProvider = signal<PaymentProviderId>('stripe');
   readonly preferredProvider = signal<PaymentProviderId>('stripe');
+  readonly allowedProviders = signal<PaymentProviderId[]>(['stripe']);
   readonly consentAccepted = signal(false);
 
   readonly plan = signal<CheckoutPlan>('pro');
@@ -67,8 +69,13 @@ export class PaymentComponent implements OnInit, OnDestroy {
   );
 
   readonly fallbackUsed = computed(
-    () => this.preferredProvider() === 'tribute' && this.selectedProvider() === 'stripe',
+    () =>
+      this.preferredProvider() === 'tribute' &&
+      this.selectedProvider() === 'stripe' &&
+      !this.allowedProviders().includes('tribute'),
   );
+
+  readonly choiceAllowed = computed(() => this.allowedProviders().length > 1);
 
   readonly hasTrial = computed(() => this.plan() === 'pro');
 
@@ -179,6 +186,11 @@ export class PaymentComponent implements OnInit, OnDestroy {
         this.profile.set(user);
         const preferred = paymentProviderForCountry(this.country());
         this.preferredProvider.set(preferred);
+        const initialAllowed = allowedPaymentProviders(this.country(), {
+          tributeReady: false,
+          stripeReady: true,
+        });
+        this.allowedProviders.set(initialAllowed);
         this.selectedProvider.set(
           resolvePaymentProvider(this.country(), {
             tributeReady: false,
@@ -193,13 +205,21 @@ export class PaymentComponent implements OnInit, OnDestroy {
             this.preferredProvider.set(
               opts.preferredProvider ?? paymentProviderForCountry(opts.country),
             );
-            this.selectedProvider.set(
+            const allowed =
+              opts.allowedProviders?.length
+                ? opts.allowedProviders
+                : allowedPaymentProviders(opts.country, {
+                    tributeReady: opts.tributeReady,
+                    stripeReady: opts.stripeReady,
+                  });
+            this.allowedProviders.set(allowed);
+            const next =
               opts.provider ??
-                resolvePaymentProvider(opts.country, {
-                  tributeReady: opts.tributeReady,
-                  stripeReady: opts.stripeReady,
-                }),
-            );
+              resolvePaymentProvider(opts.country, {
+                tributeReady: opts.tributeReady,
+                stripeReady: opts.stripeReady,
+              });
+            this.selectedProvider.set(allowed.includes(next) ? next : (allowed[0] ?? next));
           },
           error: () => undefined,
         });
@@ -217,6 +237,18 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   providerEnabled(id: PaymentProviderId): boolean {
     return id === 'tribute' ? this.tributeReady() : this.stripeReady();
+  }
+
+  providerVisible(id: PaymentProviderId): boolean {
+    return this.allowedProviders().includes(id);
+  }
+
+  selectProvider(id: PaymentProviderId): void {
+    if (!this.providerVisible(id) || !this.providerEnabled(id)) {
+      return;
+    }
+    this.selectedProvider.set(id);
+    this.error.set(null);
   }
 
   onConsentChange(event: Event): void {

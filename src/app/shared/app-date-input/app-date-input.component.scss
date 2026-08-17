@@ -9,10 +9,15 @@
   }
 }
 
-/* Only hide the storage input when an alt (visible) input exists — date mode. */
+/* Hide flatpickr's storage input only — not the visible alt field. */
 .app-date-input:not(.app-date-input--datetime):not(.app-date-input--time)
-  .app-date-input__field.flatpickr-input:not(.flatpickr-mobile) {
+  input.app-date-input__field.flatpickr-input:not(.flatpickr-mobile):not(.app-date-input__alt) {
   display: none;
+}
+
+.app-date-input__alt,
+input.app-date-input__alt {
+  display: block !important;
 }
 
 /* Datetime / time: the same input stays visible and editable. */

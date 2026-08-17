@@ -267,7 +267,8 @@ export interface SubscriptionPricing {
   yearly: number;
 }
 
-export type WorkspaceLessonDuration = 45 | 60 | 90 | 120;
+/** Minutes; 5–480 (workspace presets are 45 / 60 / 90 / 120, custom values allowed). */
+export type WorkspaceLessonDuration = number;
 
 export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -653,6 +654,9 @@ export interface AccountStrings {
   workspaceName: string;
   workspaceCurrency: string;
   workspaceDefaultDuration: string;
+  workspaceDurationCustom: string;
+  workspaceDurationCustomHint: string;
+  workspaceDurationInvalid: string;
   workingHoursSection: string;
   workingHoursSubtitle: string;
   workingHoursField: string;

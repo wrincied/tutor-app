@@ -32,6 +32,8 @@ export class BillingService {
     country: string;
     provider: 'stripe' | 'tribute';
     preferredProvider?: 'stripe' | 'tribute';
+    allowedProviders?: Array<'stripe' | 'tribute'>;
+    choiceAllowed?: boolean;
     fallbackUsed?: boolean;
     tributeReady: boolean;
     stripeReady: boolean;
@@ -41,6 +43,8 @@ export class BillingService {
       country: string;
       provider: 'stripe' | 'tribute';
       preferredProvider?: 'stripe' | 'tribute';
+      allowedProviders?: Array<'stripe' | 'tribute'>;
+      choiceAllowed?: boolean;
       fallbackUsed?: boolean;
       tributeReady: boolean;
       stripeReady: boolean;

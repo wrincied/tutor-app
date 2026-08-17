@@ -2556,6 +2556,26 @@
   }
 }
 
+.cal-duration-custom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  max-width: 12rem;
+}
+
+.cal-duration-custom__input {
+  width: 5.5rem;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.cal-duration-custom__suffix {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .cal-recurrence {
   display: flex;
   flex-direction: column;
@@ -2745,6 +2765,21 @@
 
   &__field {
     margin: 0 0.25rem 0.25rem;
+
+    app-date-input {
+      display: block;
+      width: 100%;
+    }
+  }
+}
+
+.cal-recurrence-details {
+  .field--date,
+  .cal-recurrence-until-field {
+    app-date-input {
+      display: block;
+      width: 100%;
+    }
   }
 }
 
