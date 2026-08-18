@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
+import { isAdminAllowlistedEmail } from '../../core/utils/brand-email';
 
 @Component({
   selector: 'app-verify-email-notice',
@@ -27,10 +28,12 @@ export class VerifyEmailNoticeComponent implements OnInit {
       return;
     }
     const firebaseUser = this.auth.firebaseUser();
-    const isGithub = firebaseUser?.providerData.some((p) => p.providerId === 'github.com');
+    const isPasswordAdmin =
+      Boolean(firebaseUser?.providerData.some((p) => p.providerId === 'password')) &&
+      isAdminAllowlistedEmail(firebaseUser?.email);
     this.userSvc.ensureProfile().subscribe({
       next: (profile) => {
-        if (profile.role === 'super_admin' && isGithub) {
+        if (profile.role === 'super_admin' && isPasswordAdmin) {
           void this.router.navigate(['/app/admin']);
         }
       },
@@ -64,12 +67,13 @@ export class VerifyEmailNoticeComponent implements OnInit {
         this.userSvc.ensureProfile().subscribe({
           next: (profile) => {
             this.loading.set(false);
-            if (profile.role === 'super_admin') {
-              const isGithub = user?.providerData.some((p) => p.providerId === 'github.com');
-              if (isGithub) {
-                void this.router.navigate(['/app/admin']);
-                return;
-              }
+            if (
+              profile.role === 'super_admin' &&
+              user?.providerData.some((p) => p.providerId === 'password') &&
+              isAdminAllowlistedEmail(user.email)
+            ) {
+              void this.router.navigate(['/app/admin']);
+              return;
             }
             if (user?.emailVerified) {
               this.auth.navigateAfterAuth(profile, user);

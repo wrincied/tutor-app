@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, timer } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
@@ -13,8 +13,7 @@ import {
   resolvePricingCountry,
   subscriptionStatusLabel,
 } from '../../core/utils/user-profile.utils';
-import { getPlanPricing, getSubscriptionPricing } from '../../core/utils/subscription-pricing';
-import { markBillingCheckoutPending } from '../../core/utils/billing-return';
+import { getPlanPricing, getSubscriptionPricing, formatSubscriptionPrice, getEarlyAdopterYearly } from '../../core/utils/subscription-pricing';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 
 export type BillingInterval = 'monthly' | 'yearly';
@@ -35,6 +34,7 @@ export class PricingComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private billingPollSub: Subscription | null = null;
+  private readonly plansTrack = viewChild<ElementRef<HTMLElement>>('plansTrack');
 
   readonly i18n = inject(I18nService);
 
@@ -49,6 +49,17 @@ export class PricingComponent implements OnInit, OnDestroy {
   openFaqIndex = signal<number | null>(null);
   downgradeConfirmOpen = signal(false);
   downgradeTarget = signal<DowngradeTarget | null>(null);
+  /** Active card index for the mobile snap carousel (below 1024px). */
+  plansScrollIndex = signal(0);
+
+  readonly planDots = computed(() => {
+    const t = this.i18n.pricingUi();
+    return [
+      { id: 'free', label: t.freePlan.name },
+      { id: 'basis', label: t.basisPlan.name },
+      { id: 'pro', label: t.proPlan.name },
+    ] as const;
+  });
 
   taxModeConfigured = computed(() => {
     const profile = this.profile();
@@ -69,20 +80,43 @@ export class PricingComponent implements OnInit, OnDestroy {
   isPro = computed(() => this.subscriptionStatus() === 'pro');
   isTrial = computed(() => this.subscriptionStatus() === 'trial');
   isProOrTrial = computed(() => this.isPro() || this.isTrial());
+  readonly isEarlyAdopter = computed(() => this.profile()?.isEarlyAdopter === true);
+  readonly hasReferral = computed(() => Boolean(this.profile()?.referredBy));
+  readonly showEarlyYearly = computed(
+    () => !this.isGuest() && this.isEarlyAdopter() && this.billingInterval() === 'yearly',
+  );
+  readonly showReferralHint = computed(
+    () => !this.isGuest() && this.hasReferral() && !this.isEarlyAdopter(),
+  );
   cancelScheduled = computed(() => this.profile()?.cancel_at_period_end === true);
+  basisDowngradeScheduled = computed(() => this.profile()?.pending_plan === 'basis');
 
   cancelScheduledDateLabel = computed(() => {
     const raw = this.profile()?.subscription_cancel_at || this.profile()?.trial_ends_at;
     if (!raw) {
       return '—';
     }
-    return new Intl.DateTimeFormat(this.i18n.localeId(), {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(raw));
+    return this.formatDateLabel(raw);
+  });
+
+  periodEndDateLabel = computed(() => {
+    const profile = this.profile();
+    const raw =
+      profile?.pending_plan_at ||
+      profile?.subscription_current_period_end ||
+      profile?.trial_ends_at ||
+      profile?.subscription_cancel_at;
+    if (!raw) {
+      return '—';
+    }
+    return this.formatDateLabel(raw);
+  });
+
+  basisDowngradePriceLabel = computed(() => {
+    const p = this.basisPricing();
+    const interval = this.profile()?.subscription_interval === 'yearly' ? 'yearly' : 'monthly';
+    const amount = interval === 'yearly' ? p.yearly : p.monthly;
+    return formatSubscriptionPrice(amount, p.currency, this.i18n.localeId());
   });
 
   cancelScheduledCtaLabel = computed(() =>
@@ -91,6 +125,14 @@ export class PricingComponent implements OnInit, OnDestroy {
 
   cancelScheduledHintLabel = computed(() =>
     this.t.cancelScheduledHint.replace('{date}', this.cancelScheduledDateLabel()),
+  );
+
+  basisScheduledCtaLabel = computed(() =>
+    this.t.downgradeBasisScheduledCta.replace('{date}', this.periodEndDateLabel()),
+  );
+
+  basisScheduledHintLabel = computed(() =>
+    this.t.downgradeBasisScheduledHint.replace('{date}', this.periodEndDateLabel()),
   );
 
   pricingCountry = computed(() => {
@@ -119,6 +161,9 @@ export class PricingComponent implements OnInit, OnDestroy {
 
   proAmountLabel = computed(() => {
     const p = this.proPricing();
+    if (this.showEarlyYearly()) {
+      return this.formatAmount(getEarlyAdopterYearly(p) / 12);
+    }
     const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
     return this.formatAmount(amount);
   });
@@ -138,10 +183,16 @@ export class PricingComponent implements OnInit, OnDestroy {
   proBilledAnnuallyLabel = computed(() => {
     if (this.billingInterval() !== 'yearly') return null;
     const p = this.proPricing();
+    const yearly = this.showEarlyYearly() ? getEarlyAdopterYearly(p) : p.yearly;
     return this.i18n
       .pricingUi()
-      .proPlan.billedAnnually.replace('{amount}', this.formatAmount(p.yearly))
+      .proPlan.billedAnnually.replace('{amount}', this.formatAmount(yearly))
       .replace('{currency}', p.currency);
+  });
+
+  proCatalogYearlyLabel = computed(() => {
+    const p = this.proPricing();
+    return formatSubscriptionPrice(p.yearly, p.currency, this.i18n.localeId());
   });
 
   subscriptionLabel = computed(() => {
@@ -164,18 +215,69 @@ export class PricingComponent implements OnInit, OnDestroy {
 
   downgradeDialogBody = computed(() => {
     const t = this.t;
-    return this.downgradeTarget() === 'basis' ? t.downgradeToBasisBody : t.downgradeToFreeBody;
+    if (this.downgradeTarget() === 'basis') {
+      return t.downgradeToBasisBody
+        .replace('{current_period_end}', this.periodEndDateLabel())
+        .replace('{basis_price}', this.basisDowngradePriceLabel());
+    }
+    return t.downgradeToFreeBody;
   });
 
+  /** Left action label (Free keep / unused when Basis uses leading). */
+  downgradeDialogCancel = computed(() => {
+    const t = this.t;
+    if (this.downgradeLoading() || this.downgradeTarget() === 'basis') {
+      return null;
+    }
+    return t.downgradeKeep;
+  });
+
+  /** Left muted action for Pro → Basis (switch). */
+  downgradeDialogLeading = computed(() => {
+    const t = this.t;
+    if (this.downgradeLoading() || this.downgradeTarget() !== 'basis') {
+      return null;
+    }
+    return t.downgradeToBasisConfirm;
+  });
+
+  /** Right / primary: stay on Pro (Basis) or confirm Free schedule. */
   downgradeDialogConfirm = computed(() => {
     const t = this.t;
     if (this.downgradeLoading()) {
       return t.downgradeLoading;
     }
-    return this.downgradeTarget() === 'basis'
-      ? t.downgradeToBasisConfirm
-      : t.downgradeToFreeConfirm;
+    return this.downgradeTarget() === 'basis' ? t.downgradeKeepPro : t.downgradeToFreeConfirm;
   });
+
+  downgradePreferSafePrimary = computed(() => this.downgradeTarget() === 'basis');
+
+  onDowngradeDialogCancel(): void {
+    this.closeDowngradeConfirm();
+  }
+
+  onDowngradeDialogLeading(): void {
+    this.confirmDowngrade();
+  }
+
+  onDowngradeDialogConfirm(): void {
+    if (this.downgradeLoading()) {
+      return;
+    }
+    if (this.downgradeTarget() === 'basis') {
+      this.closeDowngradeConfirm();
+      return;
+    }
+    this.confirmDowngrade();
+  }
+
+  private formatDateLabel(raw: string): string {
+    return new Intl.DateTimeFormat(this.i18n.localeId(), {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(raw));
+  }
 
   private formatAmount(amount: number): string {
     const fractionDigits = Number.isFinite(amount) && !Number.isInteger(amount) ? 2 : 0;
@@ -215,6 +317,18 @@ export class PricingComponent implements OnInit, OnDestroy {
         queryParamsHandling: 'merge',
         replaceUrl: true,
       });
+    } else if (billingResult === 'cancel') {
+      this.userSvc.invalidateProfile();
+      this.billingSvc.syncSubscription().subscribe({
+        next: (user) => this.userSvc.cacheProfile(user),
+        error: () => undefined,
+      });
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { billing: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
     }
 
     const gate = this.route.snapshot.queryParamMap.get('gate');
@@ -241,6 +355,47 @@ export class PricingComponent implements OnInit, OnDestroy {
     this.billingInterval.set(interval);
   }
 
+  onPlansScroll(event: Event): void {
+    const track = event.currentTarget as HTMLElement;
+    const cards = track.querySelectorAll<HTMLElement>('.pricing-plan');
+    if (!cards.length) {
+      return;
+    }
+
+    const trackRect = track.getBoundingClientRect();
+    const center = trackRect.left + trackRect.width / 2;
+    let best = 0;
+    let bestDist = Number.POSITIVE_INFINITY;
+
+    cards.forEach((card, index) => {
+      const rect = card.getBoundingClientRect();
+      const dist = Math.abs(rect.left + rect.width / 2 - center);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = index;
+      }
+    });
+
+    if (this.plansScrollIndex() !== best) {
+      this.plansScrollIndex.set(best);
+    }
+  }
+
+  scrollToPlan(index: number): void {
+    const track = this.plansTrack()?.nativeElement;
+    if (!track || window.matchMedia('(min-width: 1024px)').matches) {
+      return;
+    }
+
+    const card = track.querySelectorAll<HTMLElement>('.pricing-plan')[index];
+    if (!card) {
+      return;
+    }
+
+    card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    this.plansScrollIndex.set(index);
+  }
+
   toggleFaq(index: number): void {
     this.openFaqIndex.update((current) => (current === index ? null : index));
   }
@@ -258,7 +413,7 @@ export class PricingComponent implements OnInit, OnDestroy {
         return;
       }
     } else if (target === 'basis') {
-      if (!this.isProOrTrial()) {
+      if (!this.isProOrTrial() || this.basisDowngradeScheduled()) {
         return;
       }
     }
@@ -309,20 +464,8 @@ export class PricingComponent implements OnInit, OnDestroy {
     if (plan === 'pro' && !this.canBuyPro()) return;
     if (this.isProOrTrial()) return;
 
-    this.checkoutLoading.set(plan);
-    this.error.set(null);
-    this.billingSvc.createCheckoutSession(this.billingInterval(), plan).subscribe({
-      next: ({ url }) => {
-        this.checkoutLoading.set(null);
-        if (url) {
-          markBillingCheckoutPending();
-          window.location.href = url;
-        }
-      },
-      error: (err) => {
-        this.checkoutLoading.set(null);
-        this.error.set(err?.error?.message ?? this.i18n.accountUi().saveError);
-      },
+    void this.router.navigate(['/app/payment'], {
+      queryParams: { plan, interval: this.billingInterval() },
     });
   }
 

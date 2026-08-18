@@ -19,10 +19,6 @@
     <p class="account-page__error">{{ error() }}</p>
   }
 
-  @if (saved()) {
-    <p class="account-page__success">{{ i18n.accountUi().saved }}</p>
-  }
-
   <form class="account-form" (ngSubmit)="save()" autocomplete="on">
     @if (profile()?.email; as accountEmail) {
       <input
@@ -45,6 +41,22 @@
           <span class="account-plan-chip__label">{{ i18n.accountUi().subscriptionStatus }}</span>
           <strong class="account-plan-chip__value">{{ subscriptionLabel() }}</strong>
         </div>
+
+        @if (referralLink()) {
+          <div class="account-referral">
+            <p class="account-hint"><strong>{{ i18n.accountUi().referralSection }}</strong></p>
+            <p class="account-hint">{{ i18n.accountUi().referralHint }}</p>
+            <div class="account-referral__row">
+              <input class="app-input" type="text" readonly [value]="referralLink()" />
+              <button type="button" class="btn-secondary" (click)="copyReferralLink()">
+                {{ referralCopied() ? i18n.accountUi().referralCopied : i18n.accountUi().referralCopy }}
+              </button>
+            </div>
+            @if (referralCreditText(); as credit) {
+              <p class="account-hint">{{ credit }}</p>
+            }
+          </div>
+        }
 
         @if (cancelScheduled()) {
           <p class="account-hint account-hint--warn">{{ cancelScheduledHint() }}</p>
@@ -284,3 +296,21 @@
 >
   <p>{{ i18n.accountUi().cancelSubscriptionConfirmBody }}</p>
 </app-dialog>
+
+@if (toastMessage(); as toast) {
+  <div
+    class="account-toast"
+    [class.account-toast--error]="toastKind() === 'error'"
+    [attr.role]="toastKind() === 'error' ? 'alert' : 'status'"
+  >
+    <span>{{ toast }}</span>
+    <button
+      type="button"
+      class="account-toast__close"
+      (click)="dismissToast()"
+      [attr.aria-label]="i18n.authUi().close"
+    >
+      ×
+    </button>
+  </div>
+}

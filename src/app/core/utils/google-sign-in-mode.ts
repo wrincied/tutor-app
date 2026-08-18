@@ -4,8 +4,8 @@ import { environment } from '@environment';
  * Выбор способа входа через Google.
  *
  * На GitHub Pages (wrincied.github.io) используем popup:
- * signInWithRedirect возвращает браузер на URL без #/...,
- * а у нас hash-routing — OAuth-цикл не завершается.
+ * signInWithRedirect часто возвращает на origin без /tutor-app/dev/,
+ * и OAuth-цикл не завершается.
  *
  * На Firebase Hosting (simple4u-64822.web.app) оставляем redirect — там он работает штатно.
  */

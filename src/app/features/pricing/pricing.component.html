@@ -2,7 +2,7 @@
   class="page app-scroll-page pricing-page"
   [class.pricing-page--guest]="isGuest()"
 >
-  <header class="page-header pricing-page__header">
+  <header class="page-header pricing-page__header u-rise">
     <div class="pricing-page__intro">
       @if (isGuest()) {
         <a class="pricing-page__back" routerLink="/">← {{ i18n.authUi().backHome }}</a>
@@ -15,16 +15,21 @@
 
   <div class="scrollable-content">
     @if (loading()) {
-      <div class="pricing-page__status" role="status" aria-live="polite">
-        <span class="pricing-spinner pricing-spinner--lg" aria-hidden="true"></span>
-        <span>{{ i18n.sharedUi().loadingContent }}</span>
+      <div class="pricing-page__skeleton" aria-busy="true" aria-live="polite">
+        <div class="skeleton pricing-page__sk-toggle"></div>
+        <div class="pricing-page__sk-plans">
+          <div class="skeleton pricing-page__sk-plan"></div>
+          <div class="skeleton pricing-page__sk-plan"></div>
+          <div class="skeleton pricing-page__sk-plan"></div>
+        </div>
+        <div class="skeleton pricing-page__sk-faq"></div>
       </div>
     } @else {
       @if (error()) {
         <p class="pricing-page__error" role="alert">{{ error() }}</p>
       }
 
-      <div class="pricing-billing" role="group" [attr.aria-label]="t.toggleMonthly">
+      <div class="pricing-billing u-rise u-rise-delay-1" role="group" [attr.aria-label]="t.toggleMonthly">
         <button
           type="button"
           class="pricing-billing__option"
@@ -44,7 +49,8 @@
         </button>
       </div>
 
-      <div class="pricing-plans">
+      <div class="pricing-plans-wrap u-rise u-rise-delay-2">
+      <div class="pricing-plans" #plansTrack (scroll)="onPlansScroll($event)">
         <!-- Free -->
         <article
           class="pricing-plan pricing-plan--free"
@@ -52,7 +58,7 @@
         >
           <div class="pricing-plan__badge-slot" aria-hidden="true"></div>
           <h2 class="pricing-plan__name">{{ t.freePlan.name }}</h2>
-          <p class="pricing-plan__subtitle pricing-plan__subtitle--spacer" aria-hidden="true">&nbsp;</p>
+          <p class="pricing-plan__subtitle">{{ t.freePlan.subtitle }}</p>
 
           <div class="pricing-plan__price">
             <div class="pricing-plan__price-row">
@@ -153,6 +159,13 @@
                 {{ t.currentPlanCta }}
               </button>
               <div class="pricing-plan__footer-note" aria-hidden="true"></div>
+            } @else if (basisDowngradeScheduled()) {
+              <button type="button" class="pricing-plan__cta pricing-plan__cta--muted" disabled>
+                {{ basisScheduledCtaLabel() }}
+              </button>
+              <div class="pricing-plan__footer-note">
+                <p class="pricing-plan__stripe">{{ basisScheduledHintLabel() }}</p>
+              </div>
             } @else if (isProOrTrial()) {
               <button
                 type="button"
@@ -204,7 +217,11 @@
           [class.pricing-plan--current]="isProOrTrial()"
         >
           <div class="pricing-plan__badge-slot">
-            <span class="pricing-plan__badge">{{ t.proValueBadge }}</span>
+            @if (showEarlyYearly()) {
+              <span class="pricing-plan__badge">{{ t.earlyPriceBadge }}</span>
+            } @else {
+              <span class="pricing-plan__badge">{{ t.proValueBadge }}</span>
+            }
           </div>
           <h2 class="pricing-plan__name">{{ t.proPlan.name }}</h2>
           <p class="pricing-plan__subtitle">{{ t.proPlan.trialBadge }}</p>
@@ -217,6 +234,12 @@
             <span class="pricing-plan__period">/ {{ proPeriodLabel() }}</span>
             @if (proBilledAnnuallyLabel(); as billed) {
               <span class="pricing-plan__billed">{{ billed }}</span>
+            }
+            @if (showEarlyYearly()) {
+              <span class="pricing-plan__strike">{{ proCatalogYearlyLabel() }}</span>
+            }
+            @if (showReferralHint()) {
+              <span class="pricing-plan__billed">{{ t.referralDiscountHint }}</span>
             }
           </div>
 
@@ -272,7 +295,22 @@
         </article>
       </div>
 
-      <section class="pricing-faq" aria-labelledby="pricing-faq-title">
+      <div class="pricing-plans-dots" role="tablist" [attr.aria-label]="t.title">
+        @for (dot of planDots(); track dot.id; let i = $index) {
+          <button
+            type="button"
+            class="pricing-plans-dots__dot"
+            role="tab"
+            [class.pricing-plans-dots__dot--active]="plansScrollIndex() === i"
+            [attr.aria-selected]="plansScrollIndex() === i"
+            [attr.aria-label]="dot.label"
+            (click)="scrollToPlan(i)"
+          ></button>
+        }
+      </div>
+      </div>
+
+      <section class="pricing-faq u-rise u-rise-delay-3" aria-labelledby="pricing-faq-title">
         <h2 id="pricing-faq-title" class="pricing-faq__title">{{ t.faq.title }}</h2>
         <div class="pricing-faq__list">
           @for (item of t.faq.items; track item.q; let i = $index) {
@@ -286,11 +324,11 @@
                 <span>{{ item.q }}</span>
                 <span class="pricing-faq__icon" aria-hidden="true"></span>
               </button>
-              @if (isFaqOpen(i)) {
-                <div class="pricing-faq__answer">
+              <div class="pricing-faq__answer" [class.pricing-faq__answer--open]="isFaqOpen(i)">
+                <div class="pricing-faq__answer-inner">
                   <p>{{ item.a }}</p>
                 </div>
-              }
+              </div>
             </div>
           }
         </div>
@@ -302,17 +340,21 @@
 <app-dialog
   [open]="downgradeConfirmOpen()"
   [title]="downgradeDialogTitle()"
-  [cancelLabel]="downgradeLoading() ? null : t.downgradeKeep"
+  [leadingLabel]="downgradeDialogLeading()"
+  [cancelLabel]="downgradeDialogCancel()"
   [confirmLabel]="downgradeDialogConfirm()"
+  [cancelMuted]="downgradePreferSafePrimary()"
+  [actionsStackMobile]="downgradePreferSafePrimary()"
   [confirmDisabled]="downgradeLoading()"
   [closeOnOverlay]="!downgradeLoading()"
-  (cancel)="closeDowngradeConfirm()"
-  (confirm)="confirmDowngrade()"
+  (leading)="onDowngradeDialogLeading()"
+  (cancel)="onDowngradeDialogCancel()"
+  (confirm)="onDowngradeDialogConfirm()"
 >
   <div class="pricing-downgrade-dialog" [class.pricing-downgrade-dialog--busy]="downgradeLoading()">
     @if (downgradeLoading()) {
       <span class="pricing-spinner pricing-spinner--lg" aria-hidden="true"></span>
     }
-    <p>{{ downgradeDialogBody() }}</p>
+    <p class="pricing-downgrade-dialog__body">{{ downgradeDialogBody() }}</p>
   </div>
 </app-dialog>

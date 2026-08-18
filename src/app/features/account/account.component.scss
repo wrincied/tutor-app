@@ -225,12 +225,16 @@
     color: var(--text-secondary);
   }
 
-  > input:not([type='checkbox']):not([type='radio']):not([type='color']) {
+  > input:not([type='checkbox']):not([type='radio']):not([type='color']),
+  > textarea {
+    width: 100%;
+    box-sizing: border-box;
     padding: 11px 14px;
     border: 1px solid var(--border-color, var(--input-border, #e2e8f0));
     border-radius: 10px;
     background: #fff;
     color: var(--text-primary);
+    font: inherit;
     font-size: 14px;
     line-height: 1.4;
     min-height: 2.65rem;
@@ -249,6 +253,11 @@
       background: #fff;
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--moss, #0f3d34) 14%, transparent);
     }
+  }
+
+  > textarea {
+    min-height: 7rem;
+    resize: vertical;
   }
 
   > app-select {
@@ -314,6 +323,23 @@
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--moss, #0f3d34);
+}
+
+.account-referral {
+  margin: 0.25rem 0 1rem;
+}
+
+.account-referral__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+
+  .app-input {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
 }
 
 .account-readonly {
@@ -497,6 +523,64 @@
   }
 }
 
+.account-toast {
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: max(1.25rem, env(safe-area-inset-right, 0px));
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: max-content;
+  max-width: min(22rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: 0.85rem 0.95rem;
+  border-radius: 10px;
+  background: #0d382c;
+  color: #fff;
+  box-shadow: 0 12px 32px rgb(7 23 20 / 0.22);
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: account-toast-in 0.22s ease-out;
+
+  @media (max-width: 768px), (max-height: 440px) {
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  &--error {
+    background: #9b1c1c;
+    box-shadow: 0 12px 32px rgb(155 28 28 / 0.28);
+  }
+}
+
+.account-toast__close {
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 0;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(255 255 255 / 0.2);
+  }
+}
+
+@keyframes account-toast-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 [data-theme='dark'] {
   .account-panel {
     background: color-mix(in srgb, var(--nav-bg) 92%, #000);
@@ -505,6 +589,7 @@
 
   .account-select,
   .field--stack > input:not([type='checkbox']):not([type='radio']):not([type='color']),
+  .field--stack > textarea,
   .account-workspace__day {
     background: color-mix(in srgb, var(--page-bg) 70%, #000);
   }

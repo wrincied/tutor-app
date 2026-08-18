@@ -58,7 +58,7 @@
     <nav class="landing__footer-nav" [attr.aria-label]="i18n.authUi().footerRights">
       <a routerLink="/legal/data-processing">{{ i18n.authUi().footerDatenschutz }}</a>
       <a routerLink="/legal/impressum">{{ i18n.authUi().footerImpressum }}</a>
-      <a [href]="'mailto:' + contactEmail()">{{ i18n.authUi().footerKontakt }}</a>
+      <a routerLink="/help">{{ i18n.authUi().footerHelpCenter }}</a>
       <a routerLink="/legal/cookies">{{ i18n.authUi().footerCookies }}</a>
     </nav>
     <p class="landing__footer-copy">{{ i18n.authUi().footerRights }}</p>

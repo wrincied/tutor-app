@@ -119,16 +119,13 @@ app-navbar {
 }
 
 // Плавное появление страниц при навигации (@starting-style; модалки — соседи .page/.cal-page)
+// Без transform: иначе position:fixed (toast и т.п.) цепляется к странице, а не к вьюпорту.
 @mixin route-view-enter {
   opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 
   @starting-style {
     opacity: 0;
-    transform: translateY(0.375rem);
   }
 }
 

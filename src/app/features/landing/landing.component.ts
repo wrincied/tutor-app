@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+﻿import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { I18nService } from '../../core/services/i18n.service';
 import { PublicContentService } from '../../core/services/public-content.service';
@@ -13,7 +13,7 @@ export class LandingComponent implements OnInit {
   readonly i18n = inject(I18nService);
   private readonly publicContent = inject(PublicContentService);
 
-  readonly contactEmail = signal('support@simple4u.com');
+  readonly contactEmail = signal('support@simple4u.at');
 
   ngOnInit(): void {
     this.publicContent.getContact().subscribe({

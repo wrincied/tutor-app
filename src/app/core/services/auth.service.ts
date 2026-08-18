@@ -11,6 +11,9 @@ import { Router } from '@angular/router';
 import {
   Auth,
   authState,
+  applyActionCode,
+  checkActionCode,
+  confirmPasswordReset,
   createUserWithEmailAndPassword,
   EmailAuthProvider,
   fetchSignInMethodsForEmail,
@@ -18,16 +21,15 @@ import {
   reauthenticateWithCredential,
   reauthenticateWithPopup,
   signInWithPopup,
-  sendEmailVerification,
-  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithRedirect,
   getRedirectResult,
   signOut,
   updateEmail,
   updatePassword,
+  verifyPasswordResetCode,
 } from '@angular/fire/auth';
-import type { ActionCodeSettings, User } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import {
   catchError,
   from,
@@ -43,8 +45,8 @@ import {
   getFirebaseAuthErrorCode,
   GoogleSignInRequiredError,
 } from '../utils/auth-errors';
+import { isBlockedBrandEmail } from '../utils/brand-email';
 
-import { environment } from '@environment';
 import { apiUrl } from '../config/api-url';
 import type { UserProfile } from '@interfaces';
 import { postAuthPath } from '../utils/post-auth-navigation';
@@ -97,29 +99,15 @@ export class AuthService {
     () => this.sessionSignInProvider() === GoogleAuthProvider.PROVIDER_ID,
   );
 
-  private appBaseUrl(): string {
-    return (
-      environment.appUrl?.replace(/\/$/, '') ||
-      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4200')
-    );
-  }
-
-  private verificationActionCodeSettings(): ActionCodeSettings {
-    return {
-      url: `${this.appBaseUrl()}/login?verify=success`,
-      handleCodeInApp: false,
-    };
-  }
-
-  private passwordResetActionCodeSettings(): ActionCodeSettings {
-    return {
-      url: `${this.appBaseUrl()}/login`,
-      handleCodeInApp: false,
-    };
-  }
-
   private fromAuth<T>(fn: () => Promise<T>): Observable<T> {
     return from(runInInjectionContext(this.injector, fn));
+  }
+
+  /** Resend SMTP + SPA /auth/action (same pattern as password reset). */
+  private requestVerificationEmail(): Observable<void> {
+    return this.http
+      .post<{ ok: boolean }>(`${API}/auth/send-verification-email`, {})
+      .pipe(map(() => undefined));
   }
 
   sendPasswordReset(email: string): Observable<void> {
@@ -127,13 +115,40 @@ export class AuthService {
     if (!normalized) {
       throw new Error('Email is required');
     }
-    return this.fromAuth(() =>
-      sendPasswordResetEmail(this.auth, normalized, this.passwordResetActionCodeSettings()),
+    // Backend rewrites Firebase oob links to /auth/action (Console custom action URL is blocked).
+    return this.http
+      .post<{ ok: boolean }>(`${API}/auth/password-reset`, { email: normalized })
+      .pipe(map(() => undefined));
+  }
+
+  /** Resolve email for a password-reset oobCode (throws if invalid/expired). */
+  verifyPasswordResetCode(oobCode: string): Observable<string> {
+    return this.fromAuth(() => verifyPasswordResetCode(this.auth, oobCode));
+  }
+
+  confirmPasswordReset(oobCode: string, newPassword: string): Observable<void> {
+    return this.fromAuth(() => confirmPasswordReset(this.auth, oobCode, newPassword));
+  }
+
+  /** verifyEmail / recoverEmail / verifyAndChangeEmail */
+  applyActionCode(oobCode: string): Observable<void> {
+    return this.fromAuth(() => applyActionCode(this.auth, oobCode));
+  }
+
+  checkActionCode(oobCode: string): Observable<{ operation: string; email: string | null }> {
+    return this.fromAuth(() => checkActionCode(this.auth, oobCode)).pipe(
+      map((info) => ({
+        operation: String(info.operation || ''),
+        email: info.data.email ?? info.data.previousEmail ?? null,
+      })),
     );
   }
 
   register(email: string, password: string): Observable<User> {
     const normalized = email.trim().toLowerCase();
+    if (isBlockedBrandEmail(normalized)) {
+      return throwError(() => new EmailAlreadyRegisteredError([]));
+    }
     return this.fromAuth(() => fetchSignInMethodsForEmail(this.auth, normalized)).pipe(
       switchMap((methods) => {
         if (methods.length > 0) {
@@ -142,11 +157,11 @@ export class AuthService {
         return this.fromAuth(() => createUserWithEmailAndPassword(this.auth, normalized, password));
       }),
       switchMap((cred) =>
-        this.fromAuth(() =>
-          sendEmailVerification(cred.user, this.verificationActionCodeSettings()),
-        ).pipe(map(() => cred.user)),
+        this.bootstrapProfile().pipe(
+          switchMap(() => this.requestVerificationEmail()),
+          map(() => cred.user),
+        ),
       ),
-      switchMap((user) => this.bootstrapProfile().pipe(map(() => user))),
     );
   }
 
@@ -220,24 +235,24 @@ export class AuthService {
     const returnUrl =
       typeof tree.queryParams['returnUrl'] === 'string' ? tree.queryParams['returnUrl'] : null;
     const path = postAuthPath(profile, user.emailVerified === true, returnUrl);
-    if (profile.data_consent_accepted === false) {
-      void this.router.navigate(['/login'], { queryParams: { consent: 'declined' } });
-      return;
-    }
     void this.router.navigateByUrl(path);
   }
 
-  /** Вызываем bootstrap для создания/синхронизации профиля на бэкенде Node.js */
+  /** Вызов bootstrap для создания/синхронизации профиля на бэкенде Node.js */
   private afterFirebaseSignIn(user: User): Observable<User> {
+    if (isBlockedBrandEmail(user.email)) {
+      return this.fromAuth(() => signOut(this.auth)).pipe(
+        switchMap(() => throwError(() => new EmailAlreadyRegisteredError([]))),
+      );
+    }
     return this.bootstrapProfile().pipe(map(() => user));
   }
 
   resendVerificationEmail(): Observable<void> {
-    const user = this.auth.currentUser;
-    if (!user) {
+    if (!this.auth.currentUser) {
       throw new Error('Not signed in');
     }
-    return this.fromAuth(() => sendEmailVerification(user, this.verificationActionCodeSettings()));
+    return this.requestVerificationEmail();
   }
 
   reloadUser(): Observable<User | null> {
@@ -280,10 +295,8 @@ export class AuthService {
     provider.setCustomParameters({ prompt: 'none' });
     return this.fromAuth(() => reauthenticateWithPopup(user, provider)).pipe(
       switchMap(() => this.fromAuth(() => updateEmail(user, normalized))),
-      switchMap(() =>
-        this.fromAuth(() => sendEmailVerification(user, this.verificationActionCodeSettings())),
-      ),
-      switchMap(() => this.fromAuth(() => user.reload())),
+      switchMap(() => this.reloadUser()),
+      switchMap(() => this.requestVerificationEmail()),
       map(() => this.auth.currentUser),
     );
   }
@@ -309,13 +322,12 @@ export class AuthService {
         }
         return tasks.length ? this.fromAuth(() => Promise.all(tasks)) : from(Promise.resolve());
       }),
+      switchMap(() => this.reloadUser()),
       switchMap(() => {
         if (options.newEmail) {
-          return this.fromAuth(() =>
-            sendEmailVerification(user, this.verificationActionCodeSettings()),
-          ).pipe(switchMap(() => this.fromAuth(() => user.reload())));
+          return this.requestVerificationEmail();
         }
-        return this.fromAuth(() => user.reload());
+        return of(undefined);
       }),
       map(() => this.auth.currentUser),
     );

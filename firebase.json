@@ -1,5 +1,6 @@
 {
   "firestore": {
+    "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
   "functions": [
@@ -43,6 +44,20 @@
     ],
     "headers": [
       {
+        "source": "**",
+        "headers": [
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "X-Frame-Options", "value": "DENY" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+          { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com https://checkout.stripe.com https://js.stripe.com https://tribute.tg; script-src 'self' 'sha256-ao8QnaF3ajn970lEjjl1qBhx3VGbYvi7ZicO5RdlNis=' 'sha256-1f7wUwY/tJkDT/ESgk4Pa+4vlXm1FC8bZJLYy9/92VM=' https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://tagmanager.google.com https://js.stripe.com https://apis.google.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com https://www.googletagmanager.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com data:; img-src 'self' data: blob: https:; media-src 'none'; worker-src 'self' blob:; frame-src 'self' https://accounts.google.com https://tutorassis.firebaseapp.com https://simple4u.at https://www.google.com https://www.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://www.googletagmanager.com https://js.stripe.com https://checkout.stripe.com https://hooks.stripe.com https://tribute.tg; connect-src 'self' https://tutor-app-backend--tutorassis.europe-west4.hosted.app https://simple4u.at https://www.simple4u.at https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://apis.google.com https://accounts.google.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaselogging.googleapis.com https://firebaselogging-pa.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://analytics.google.com https://stats.g.doubleclick.net https://www.googleadservices.com https://api.stripe.com https://r.stripe.com https://m.stripe.com https://q.stripe.com https://checkout.stripe.com https://tribute.tg; upgrade-insecure-requests"
+          }
+        ]
+      },
+      {
         "source": "**/*.@(js|css|woff2|svg|png|jpg|jpeg|gif|webp|ico)",
         "headers": [
           {
@@ -66,6 +81,41 @@
           {
             "key": "Cache-Control",
             "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/google280c6bf42ae00d1a.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "/robots.txt",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
+      },
+      {
+        "source": "/sitemap.xml",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/xml; charset=utf-8"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
           }
         ]
       }

@@ -330,6 +330,34 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     margin-left: auto;
   }
 
+  &--actions-stack-mobile {
+    @media (max-width: $dialog-mobile-max) {
+      .app-dialog__actions {
+        width: 100%;
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 0.35rem;
+      }
+
+      .app-dialog__actions-end {
+        width: 100%;
+        margin-left: 0;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .app-dialog__btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .app-dialog__btn--primary {
+        min-height: 3.15rem;
+        order: -1;
+      }
+    }
+  }
+
   &__btn {
     min-height: 3rem;
     min-width: 2.75rem;
@@ -353,6 +381,19 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
         background: #f8fafc;
         color: #0f172a;
         transition: all 0.15s ease;
+      }
+    }
+
+    &--muted {
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #64748b;
+      font-weight: 500;
+
+      &:hover {
+        background: #f8fafc;
+        color: #475569;
       }
     }
 
@@ -380,12 +421,32 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     &--primary {
       border: none;
       border-radius: 8px;
-      background: var(--btn-primary-bg, #052e16);
-      color: var(--btn-primary-fg, #ffffff);
+      background: #0d382c;
+      color: #ffffff;
 
       &:hover {
-        background-color: var(--btn-primary-hover, #022c22);
+        background-color: #0a2e24;
         box-shadow: none;
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+    }
+
+    &--outline {
+      border: 1.5px solid var(--nav-accent, #0f3d34);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--nav-accent, #0f3d34);
+
+      &:hover {
+        background: color-mix(in srgb, var(--nav-accent, #0f3d34) 8%, transparent);
       }
 
       &:active {

@@ -4,21 +4,27 @@ import { from, of } from 'rxjs';
 import { catchError, map, switchMap, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
+import { isAdminAllowlistedEmail } from '../utils/brand-email';
 
 function firebaseClaimsFromJwt(token: string): {
   sign_in_provider?: string;
+  email?: string;
 } {
   try {
     const payload = JSON.parse(atob(token.split('.')[1] ?? '')) as {
+      email?: string;
       firebase?: { sign_in_provider?: string };
     };
-    return payload.firebase ?? {};
+    return {
+      sign_in_provider: payload.firebase?.sign_in_provider,
+      email: payload.email,
+    };
   } catch {
     return {};
   }
 }
 
-/** Super-admin UI: role + GitHub provider on ID token (2FA via GitHub account). */
+/** Super-admin UI: role + password provider + allowlisted admin email. */
 export const adminGuard: CanActivateFn = () => {
   const userService = inject(UserService);
   const auth = inject(AuthService);
@@ -36,7 +42,10 @@ export const adminGuard: CanActivateFn = () => {
             return router.createUrlTree(['/admin-login']);
           }
           const claims = firebaseClaimsFromJwt(token);
-          if (claims.sign_in_provider !== 'github.com') {
+          if (claims.sign_in_provider !== 'password') {
+            return router.createUrlTree(['/admin-login']);
+          }
+          if (!isAdminAllowlistedEmail(claims.email || profile.email)) {
             return router.createUrlTree(['/admin-login']);
           }
           return true;

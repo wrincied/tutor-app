@@ -8,6 +8,7 @@
 @use './styles/shared';
 @use './styles/app-pages';
 @use './styles/skeleton';
+@use './styles/reveal';
 /* После Tailwind/base — чтобы оверрайды flatpickr не проигрывали cascade */
 @use './styles/flatpickr-calendar';
 @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@600;700&family=Inter:wght@400;500&display=swap');

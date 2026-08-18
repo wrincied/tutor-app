@@ -1,0 +1,80 @@
+<section class="account-panel account-support">
+  <div class="account-section">
+    <h2 class="account-section__title">{{ i18n.helpFormUi().formTitle }}</h2>
+    <p class="account-hint">
+      {{ mailHintText() }}
+      ·
+      <a [href]="mailtoHref()">{{ i18n.helpFormUi().mailCta }}</a>
+    </p>
+
+    @if (success()) {
+      <p class="account-page__success" role="status">{{ i18n.helpFormUi().success }}</p>
+    }
+
+    @if (error()) {
+      <p class="account-page__error" role="alert">{{ error() }}</p>
+    }
+
+    <form class="account-form account-support__form" (ngSubmit)="submit()">
+      <div class="field field--stack">
+        <label for="account-support-name">{{ i18n.helpFormUi().nameLabel }}</label>
+        <input
+          id="account-support-name"
+          type="text"
+          name="name"
+          autocomplete="name"
+          required
+          maxlength="120"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+        />
+      </div>
+
+      <div class="field field--stack">
+        <label for="account-support-email">{{ i18n.helpFormUi().emailLabel }}</label>
+        <input
+          id="account-support-email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          required
+          maxlength="200"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+        />
+      </div>
+
+      <div class="field field--stack">
+        <label for="account-support-subject">{{ i18n.helpFormUi().subjectLabel }}</label>
+        <input
+          id="account-support-subject"
+          type="text"
+          name="subject"
+          required
+          maxlength="160"
+          [ngModel]="subject()"
+          (ngModelChange)="subject.set($event)"
+        />
+      </div>
+
+      <div class="field field--stack">
+        <label for="account-support-message">{{ i18n.helpFormUi().messageLabel }}</label>
+        <textarea
+          id="account-support-message"
+          name="message"
+          rows="5"
+          required
+          maxlength="4000"
+          [ngModel]="message()"
+          (ngModelChange)="message.set($event)"
+        ></textarea>
+      </div>
+
+      <div class="account-form__footer">
+        <button type="submit" class="btn-primary account-form__submit" [disabled]="submitting()">
+          {{ submitting() ? i18n.helpFormUi().sending : i18n.helpFormUi().submit }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

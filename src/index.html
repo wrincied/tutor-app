@@ -1,13 +1,118 @@
-<!doctype html>
-<html lang="en">
+﻿<!doctype html>
+<html lang="de">
   <head>
     <meta charset="utf-8" />
-    <title>Simple4U</title>
+    <title>Simple4U | CRM &amp; Terminplaner für Nachhilfelehrer</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Simple4U (simple4u.at) ist das CRM und der Terminplaner für Nachhilfelehrer in Österreich und der EU. Kalender, Schüler und Finanzen — nicht die US-Firma simple4u.io."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Simple4U, Graz, Austria" />
+    <link rel="canonical" href="https://simple4u.at/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Simple4U" />
+    <meta property="og:locale" content="de_AT" />
+    <meta property="og:url" content="https://simple4u.at/" />
+    <meta property="og:title" content="Simple4U | CRM &amp; Terminplaner für Nachhilfelehrer" />
+    <meta
+      property="og:description"
+      content="All-in-One Plattform für private Tutoren: Unterricht planen, Schüler führen, Finanzen im Blick. Standort Graz, Österreich. simple4u.at"
+    />
+    <meta property="og:image" content="https://simple4u.at/assets/brand/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://simple4u.at/assets/brand/og-image.png" />
+    <meta name="theme-color" content="#0f3d34" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://simple4u.at/#organization",
+            "name": "Simple4U",
+            "legalName": "Arsen Mileuski",
+            "url": "https://simple4u.at",
+            "email": "support@simple4u.at",
+            "telephone": "+43-664-93290516",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Köflacher Gasse 9, Tür 218.2",
+              "addressLocality": "Graz",
+              "postalCode": "8020",
+              "addressCountry": "AT"
+            }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Simple4U",
+            "alternateName": "Simple4U Tutor CRM",
+            "url": "https://simple4u.at",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "description": "CRM and lesson planner for private tutors in Austria and the EU (simple4u.at). Not affiliated with simple4u.io."
+          },
+          {
+            "@type": "WebSite",
+            "url": "https://simple4u.at",
+            "name": "Simple4U",
+            "alternateName": "simple4u.at"
+          }
+        ]
+      }
+    </script>
+    <script>
+      (function () {
+        var hash = location.hash || '';
+        if (hash.indexOf('#/') !== 0) {
+          return;
+        }
+        var rest = hash.slice(1);
+        var path = rest.split('?')[0];
+        var hashQuery = rest.indexOf('?') >= 0 ? rest.slice(rest.indexOf('?') + 1) : '';
+        var baseEl = document.querySelector('base');
+        var baseHref = (baseEl && baseEl.getAttribute('href')) || '/';
+        if (baseHref !== '/' && path.indexOf(baseHref.replace(/\/$/, '')) !== 0) {
+          path = baseHref.replace(/\/$/, '') + path;
+        }
+        var params = new URLSearchParams(location.search || '');
+        var extra = new URLSearchParams(hashQuery);
+        extra.forEach(function (value, key) {
+          if (!params.has(key)) {
+            params.set(key, value);
+          }
+        });
+        var query = params.toString();
+        history.replaceState(null, '', path + (query ? '?' + query : ''));
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>
+    <noscript>
+      <main>
+        <h1>Simple4U (simple4u.at)</h1>
+        <p>
+          CRM und Terminplaner für Nachhilfelehrer in Österreich und der EU. Unterricht, Schüler und
+          Finanzen in einer Web-App — Graz, Österreich.
+        </p>
+        <p>
+          Simple4U.at is a tutor CRM. It is not the US engineering company
+          <a href="https://simple4u.io">simple4u.io</a>.
+        </p>
+        <ul>
+          <li><a href="https://simple4u.at/">Start</a></li>
+          <li><a href="https://simple4u.at/pricing">Tarife</a></li>
+          <li><a href="https://simple4u.at/register">Konto erstellen</a></li>
+          <li><a href="https://simple4u.at/legal/impressum">Impressum</a></li>
+        </ul>
+      </main>
+    </noscript>
   </body>
 </html>

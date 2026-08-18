@@ -1,12 +1,11 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Auth } from '@angular/fire/auth';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { from, of } from 'rxjs';
 import type { User } from 'firebase/auth';
 
 import { resolveFirebaseUser } from '../utils/resolve-firebase-user';
-import { UserService } from '../services/user.service';
 
 /** Session: skip reload+force token after first successful verified check per UID. */
 const verifiedUidSession = new Set<string>();
@@ -26,10 +25,6 @@ export const authGuard: CanActivateFn = (_route, state) => {
   );
 };
 
-function isGithubUser(user: { providerData: { providerId: string }[] }): boolean {
-  return user.providerData.some((p) => p.providerId === 'github.com');
-}
-
 function refreshIdToken(user: User) {
   return from(user.getIdToken(true)).pipe(
     map(() => {
@@ -42,7 +37,6 @@ function refreshIdToken(user: User) {
 export const emailVerifiedGuard: CanActivateFn = (_route, state) => {
   const auth = inject(Auth);
   const router = inject(Router);
-  const userService = inject(UserService);
 
   return resolveFirebaseUser(auth).pipe(
     switchMap((user) => {
@@ -61,18 +55,7 @@ export const emailVerifiedGuard: CanActivateFn = (_route, state) => {
             // Без force refresh JWT ещё с email_verified: false → 403 на API.
             return refreshIdToken(user);
           }
-          // Only GitHub super-admins skip Firebase emailVerified (admin UID allowlist).
-          if (!isGithubUser(user)) {
-            return of(router.createUrlTree(['/app/verify-email-notice']));
-          }
-          return userService.ensureProfile().pipe(
-            switchMap((profile) =>
-              profile.role === 'super_admin'
-                ? refreshIdToken(user)
-                : of(router.createUrlTree(['/app/verify-email-notice'])),
-            ),
-            catchError(() => of(router.createUrlTree(['/app/verify-email-notice']))),
-          );
+          return of(router.createUrlTree(['/app/verify-email-notice']));
         }),
       );
     }),

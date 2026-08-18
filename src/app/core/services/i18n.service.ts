@@ -116,6 +116,8 @@ export class I18nService {
   readonly activityLogUi = computed(() => this.requirePack().activityLog);
   readonly homeUi = computed(() => this.requirePack().home);
   readonly pricingUi = computed(() => this.requirePack().pricing);
+  readonly paymentUi = computed(() => this.requirePack().payment);
+  readonly helpFormUi = computed(() => this.requirePack().helpForm);
   readonly adminUi = computed(() => this.requirePack().admin);
 
   readonly allLangs = ALL_LANGS;
@@ -156,6 +158,19 @@ export class I18nService {
 
   labelForLang(code: Lang): string {
     return LANG_LABEL[code];
+  }
+
+  /** Short badge in language pickers (UA for Ukrainian — not ISO `UK`). */
+  codeForLang(code: Lang): string {
+    const map: Record<Lang, string> = {
+      de: 'DE',
+      en: 'EN',
+      by: 'BY',
+      uk: 'UA',
+      ru: 'RU',
+      kz: 'KZ',
+    };
+    return map[code];
   }
 
   currencyLabel(code: RateCurrency): string {

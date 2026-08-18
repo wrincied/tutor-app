@@ -34,14 +34,12 @@ export function postAuthPath(
   emailVerified: boolean,
   returnUrl?: string | null,
 ): string {
-  // Admin console is only via /admin-login + GitHub — never auto-route here.
+  // Admin console is only via /admin-login + password — never auto-route here.
   if (!emailVerified) {
     return '/app/verify-email-notice';
   }
-  if (profile.data_consent_accepted === false) {
-    return '/login';
-  }
-  if (!profile.onboarding_completed) {
+  // Declined earlier: allow signing in again and re-running onboarding to accept.
+  if (profile.data_consent_accepted === false || !profile.onboarding_completed) {
     return '/app/onboarding';
   }
   return safeReturnUrl(returnUrl) ?? '/app/home';

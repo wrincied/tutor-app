@@ -654,7 +654,7 @@
           <div class="cal-lesson-form-v2__field">
             <span class="cal-lesson-form-v2__field-label">{{ i18n.calendarUi().durationLabel }}</span>
             <div class="cal-chips cal-lesson-form-v2__chips">
-              @for (presetMinutes of durationPresets; track presetMinutes) {
+              @for (presetMinutes of durationPresets(); track presetMinutes) {
                 <button
                   type="button"
                   class="cal-chip"
@@ -666,7 +666,31 @@
                   {{ formatDurationPresetLabel(presetMinutes) }}
                 </button>
               }
+              <button
+                type="button"
+                class="cal-chip"
+                [class.cal-chip--active]="durationChipMode() === 'custom'"
+                (click)="selectDurationCustom()"
+              >
+                {{ i18n.accountUi().workspaceDurationCustom }}
+              </button>
             </div>
+            @if (durationChipMode() === 'custom') {
+              <div class="cal-duration-custom">
+                <input
+                  type="number"
+                  class="app-input cal-duration-custom__input"
+                  name="lessonDurationCustom"
+                  [min]="durationMin"
+                  [max]="durationMax"
+                  step="5"
+                  [ngModel]="duration()"
+                  (ngModelChange)="onCustomDurationInput($event)"
+                  [attr.aria-label]="i18n.accountUi().workspaceDurationCustomHint"
+                />
+                <span class="cal-duration-custom__suffix">{{ i18n.calendarUi().durationMinShort }}</span>
+              </div>
+            }
           </div>
 
           <ng-container *ngTemplateOutlet="lessonFormRecurrenceTemplate"></ng-container>
@@ -1092,16 +1116,19 @@
                   <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
                 }
               </button>
-              <div class="field field--date cal-recurrence-end-list__field">
-                <label for="recurrenceUntilDetails">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
-                <app-date-input
-                  id="recurrenceUntilDetails"
-                  name="recurrenceUntilDetails"
-                  inputClass="app-input"
-                  [ngModel]="recurrenceConfig().untilDate"
-                  (ngModelChange)="onRecurrenceConfigUntilChange($event); onRecurrenceConfigEndModeChange('until')"
-                />
-              </div>
+              @if (recurrenceConfig().endMode === 'until') {
+                <div class="field field--date cal-recurrence-end-list__field">
+                  <label for="recurrenceUntilDetails">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
+                  <app-date-input
+                    id="recurrenceUntilDetails"
+                    name="recurrenceUntilDetails"
+                    inputClass="app-input"
+                    [minDate]="recurrenceUntilMinDate()"
+                    [ngModel]="recurrenceConfig().untilDate"
+                    (ngModelChange)="onRecurrenceConfigUntilChange($event); onRecurrenceConfigEndModeChange('until')"
+                  />
+                </div>
+              }
             </div>
           } @else {
             <div
@@ -1123,24 +1150,26 @@
                   <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
                 }
               </button>
-              <div class="cal-recurrence-interval cal-recurrence-end-list__field">
-                <label class="cal-recurrence-interval__label" for="recurrenceCountDetails">
-                  {{ i18n.calendarUi().recurrenceCountLabel }}
-                </label>
-                <input
-                  id="recurrenceCountDetails"
-                  class="app-input cal-recurrence-interval__input"
-                  type="number"
-                  min="1"
-                  max="999"
-                  name="recurrenceCountDetails"
-                  [ngModel]="recurrenceConfig().count"
-                  (ngModelChange)="onRecurrenceConfigCountChange($event); onRecurrenceConfigEndModeChange('count')"
-                />
-                <span class="cal-recurrence-interval__unit">
-                  {{ i18n.calendarUi().recurrenceUnitOccurrences }}
-                </span>
-              </div>
+              @if (recurrenceConfig().endMode === 'count') {
+                <div class="cal-recurrence-interval cal-recurrence-end-list__field">
+                  <label class="cal-recurrence-interval__label" for="recurrenceCountDetails">
+                    {{ i18n.calendarUi().recurrenceCountLabel }}
+                  </label>
+                  <input
+                    id="recurrenceCountDetails"
+                    class="app-input cal-recurrence-interval__input"
+                    type="number"
+                    min="1"
+                    max="999"
+                    name="recurrenceCountDetails"
+                    [ngModel]="recurrenceConfig().count"
+                    (ngModelChange)="onRecurrenceConfigCountChange($event); onRecurrenceConfigEndModeChange('count')"
+                  />
+                  <span class="cal-recurrence-interval__unit">
+                    {{ i18n.calendarUi().recurrenceUnitOccurrences }}
+                  </span>
+                </div>
+              }
             </div>
           }
         }
@@ -1160,12 +1189,13 @@
       </div>
 
       @if (recurrenceConfig().endMode === 'until') {
-        <div class="field field--date">
+        <div class="field field--date cal-recurrence-until-field">
           <label for="recurrenceUntilDesktop">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
           <app-date-input
             id="recurrenceUntilDesktop"
             name="recurrenceUntilDesktop"
             inputClass="app-input"
+            [minDate]="recurrenceUntilMinDate()"
             [ngModel]="recurrenceConfig().untilDate"
             (ngModelChange)="onRecurrenceConfigUntilChange($event)"
           />

@@ -58,4 +58,8 @@ export class FinanceService {
   removeExpense(id: string) {
     return this.http.delete(`${API}/expenses/${id}`);
   }
+
+  logReportExport(kind: 'pdf' | 'excel' | 'csv' = 'pdf') {
+    return this.http.post<{ ok: boolean; kind: string }>(`${API}/report-export`, { kind });
+  }
 }

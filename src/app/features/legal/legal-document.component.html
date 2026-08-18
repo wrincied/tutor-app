@@ -1,19 +1,19 @@
 <article class="legal-page">
-  <header class="legal-page__header">
+  <header class="legal-page__header u-rise">
     <button type="button" class="legal-page__back" (click)="goBack()">{{ i18n.legalUi().back }}</button>
     <p class="legal-page__updated">{{ i18n.legalUi().lastUpdated }}</p>
   </header>
 
   @if (isCookies()) {
-    <h1>{{ i18n.legalCookiesUi().title }}</h1>
-    <p class="legal-page__intro">{{ i18n.legalCookiesUi().intro }}</p>
+    <h1 class="u-rise u-rise-delay-1">{{ i18n.legalCookiesUi().title }}</h1>
+    <p class="legal-page__intro u-rise u-rise-delay-2">{{ i18n.legalCookiesUi().intro }}</p>
 
-    <section>
+    <section appReveal>
       <h2>{{ i18n.legalCookiesUi().definitionTitle }}</h2>
       <p>{{ i18n.legalCookiesUi().definitionBody }}</p>
     </section>
 
-    <section>
+    <section appReveal class="u-reveal-stagger-1">
       <h2>{{ i18n.legalCookiesUi().categoriesTitle }}</h2>
       <h3>{{ i18n.legalCookiesUi().essentialTitle }}</h3>
       <p>{{ i18n.legalCookiesUi().essentialBody }}</p>
@@ -23,7 +23,7 @@
       <p>{{ i18n.legalCookiesUi().analyticsBody }}</p>
     </section>
 
-    <section>
+    <section appReveal class="u-reveal-stagger-2">
       <h2>{{ i18n.legalCookiesUi().tableTitle }}</h2>
       <div class="legal-page__table-wrap">
         <table class="legal-page__table">
@@ -51,51 +51,58 @@
       </div>
     </section>
 
-    <section>
+    <section appReveal class="u-reveal-stagger-3">
       <h2>{{ i18n.legalCookiesUi().withdrawTitle }}</h2>
       <p>{{ i18n.legalCookiesUi().withdrawBody }}</p>
       <p>{{ i18n.legalCookiesUi().contactBody }}</p>
     </section>
   } @else if (isTerms()) {
-    <h1>{{ i18n.legalTermsUi().title }}</h1>
-    <p class="legal-page__intro">{{ i18n.legalTermsUi().intro }}</p>
+    <h1 class="u-rise u-rise-delay-1">{{ i18n.legalTermsUi().title }}</h1>
+    <p class="legal-page__intro u-rise u-rise-delay-2">{{ i18n.legalTermsUi().intro }}</p>
 
     @for (section of termsSections(); track section.title) {
-      <section>
+      <section appReveal>
         <h2>{{ section.title }}</h2>
         <p>{{ section.body }}</p>
       </section>
     }
   } @else if (isCmsDoc()) {
     @if (cmsLoading()) {
-      <p>{{ i18n.sharedUi().loadingContent }}</p>
+      <div class="legal-page__skeleton" aria-busy="true">
+        <div class="skeleton skeleton--line-lg legal-page__sk-title"></div>
+        <div class="skeleton skeleton--line legal-page__sk-line"></div>
+        <div class="skeleton skeleton--line legal-page__sk-line"></div>
+        <div class="skeleton skeleton--line legal-page__sk-line legal-page__sk-line--short"></div>
+        <div class="skeleton legal-page__sk-block"></div>
+        <div class="skeleton legal-page__sk-block"></div>
+      </div>
     } @else if (cmsHtml()) {
-      <h1>{{ cmsTitle() }}</h1>
-      <div class="legal-page__cms" [innerHTML]="cmsHtml()"></div>
+      <h1 class="u-rise u-rise-delay-1">{{ cmsTitle() }}</h1>
+      <div class="legal-page__cms u-rise u-rise-delay-2" appReveal [innerHTML]="cmsHtml()"></div>
     } @else {
       @if (documentId() === 'impressum') {
-        <h1>Impressum</h1>
-        <p class="legal-page__intro">Content temporarily unavailable.</p>
+        <h1 class="u-rise">{{ i18n.legalUi().impressumTitle }}</h1>
+        <p class="legal-page__intro u-rise u-rise-delay-1">{{ i18n.legalUi().impressumUnavailable }}</p>
       } @else {
-        <h1>{{ i18n.legalDataUi().title }}</h1>
-        <p class="legal-page__intro">{{ i18n.legalDataUi().intro }}</p>
-        <section>
+        <h1 class="u-rise">{{ i18n.legalDataUi().title }}</h1>
+        <p class="legal-page__intro u-rise u-rise-delay-1">{{ i18n.legalDataUi().intro }}</p>
+        <section appReveal>
           <h2>{{ i18n.legalDataUi().section1Title }}</h2>
           <p>{{ i18n.legalDataUi().section1Body }}</p>
         </section>
-        <section>
+        <section appReveal>
           <h2>{{ i18n.legalDataUi().section2Title }}</h2>
           <p>{{ i18n.legalDataUi().section2Body }}</p>
         </section>
-        <section>
+        <section appReveal>
           <h2>{{ i18n.legalDataUi().section3Title }}</h2>
           <p>{{ i18n.legalDataUi().section3Body }}</p>
         </section>
-        <section>
+        <section appReveal>
           <h2>{{ i18n.legalDataUi().section4Title }}</h2>
           <p>{{ i18n.legalDataUi().section4Body }}</p>
         </section>
-        <section>
+        <section appReveal>
           <h2>{{ i18n.legalDataUi().section5Title }}</h2>
           <p>{{ i18n.legalDataUi().section5Body }}</p>
         </section>
