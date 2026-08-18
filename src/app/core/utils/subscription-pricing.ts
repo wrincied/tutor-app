@@ -63,3 +63,13 @@ export function formatSubscriptionPrice(amount: number, currency: string, locale
   const fractionDigits = Number.isFinite(amount) && !Number.isInteger(amount) ? 2 : 0;
   return formatMoneyWithCode(amount, currency, locale, fractionDigits);
 }
+
+export const EARLY_ADOPTER_YEARLY_EUR = 59.99;
+const STANDARD_YEARLY_EUR = 99.99;
+
+export function getEarlyAdopterYearly(pricing: SubscriptionPricing): number {
+  if (String(pricing.currency).toUpperCase() === 'EUR') {
+    return EARLY_ADOPTER_YEARLY_EUR;
+  }
+  return Math.round(pricing.yearly * (EARLY_ADOPTER_YEARLY_EUR / STANDARD_YEARLY_EUR) * 100) / 100;
+}

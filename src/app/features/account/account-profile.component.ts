@@ -56,6 +56,7 @@ export class AccountProfileComponent implements OnInit, OnDestroy, CanComponentD
   hasUnsavedTaxChange = signal(false);
   cancelConfirmOpen = signal(false);
   billingActionLoading = signal(false);
+  referralCopied = signal(false);
 
   firstName = '';
   lastName = '';
@@ -86,6 +87,26 @@ export class AccountProfileComponent implements OnInit, OnDestroy, CanComponentD
       pro: t.subscriptionPro,
       trial: t.subscriptionTrial,
     });
+  });
+
+  referralLink = computed(() => {
+    const code = String(this.profile()?.referralCode || '').trim();
+    if (!code) {
+      return '';
+    }
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://simple4u.at';
+    return `${origin}/register?ref=${code}`;
+  });
+
+  referralCreditText = computed(() => {
+    const notice = this.profile()?.stripe_credit_notice;
+    if (!notice) {
+      return null;
+    }
+    return this.i18n
+      .accountUi()
+      .referralCreditNotice.replace('{amount}', String(notice.amount))
+      .replace('{currency}', notice.currency);
   });
 
   isPaidPlan = computed(() => {
@@ -181,6 +202,20 @@ export class AccountProfileComponent implements OnInit, OnDestroy, CanComponentD
       this.toastTimer = null;
     }
     this.toastMessage.set(null);
+  }
+
+  copyReferralLink(): void {
+    const link = this.referralLink();
+    if (!link) {
+      return;
+    }
+    void navigator.clipboard.writeText(link).then(
+      () => {
+        this.referralCopied.set(true);
+        window.setTimeout(() => this.referralCopied.set(false), 2000);
+      },
+      () => undefined,
+    );
   }
 
   canDeactivate(): Observable<boolean> | boolean {

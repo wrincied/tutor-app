@@ -65,6 +65,8 @@ export interface PricingStrings {
   basisBadge: string;
   /** Strong highlight on Pro (e.g. “Pays for itself”). */
   proValueBadge: string;
+  earlyPriceBadge: string;
+  referralDiscountHint: string;
   freePlan: PricingPlanCopy;
   basisPlan: PricingPaidPlanCopy;
   proPlan: PricingPaidPlanCopy;
@@ -119,6 +121,10 @@ export interface PaymentStrings {
   timelineToday: string;
   /** Placeholders: {days}, {amount}, {currency} */
   timelineCharge: string;
+  /** Shown under Pro yearly for early adopters. */
+  thenYearTwo: string;
+  referralDiscountLine: string;
+  earlyPriceBadge: string;
   features: [string, string, string];
   methodsTitle: string;
   methodsSubtitle: string;
@@ -327,6 +333,15 @@ export interface UserProfile {
   pending_plan_at?: string | null;
   /** Whether a Stripe subscription id is linked. */
   has_stripe_subscription?: boolean;
+  isEarlyAdopter?: boolean;
+  proExpiresAt?: string | null;
+  referralCode?: string | null;
+  referredBy?: string | null;
+  stripe_credit_notice?: {
+    amount: number;
+    currency: string;
+    source?: string;
+  } | null;
   /** Feature gates derived from subscription_status. */
   plan_entitlements?: PlanEntitlements;
   email_verified?: boolean;
@@ -355,6 +370,8 @@ export type AdminDashboardWidgetId =
   | 'kpi-trial-users'
   | 'kpi-conversion'
   | 'kpi-mrr'
+  | 'kpi-core-activation'
+  | 'kpi-finance-adoption'
   | 'segments'
   | 'activation-funnel'
   | 'alerts'
@@ -402,6 +419,14 @@ export interface AdminProductUsage {
   financeUsersPercent: number;
 }
 
+export interface AdminActivationMetrics {
+  totalKpiUsers: number;
+  coreUsers: number;
+  corePercent: number;
+  financeUsers: number;
+  financePercent: number;
+}
+
 export interface AdminDashboardPayload {
   stats: AdminStats;
   segments: AdminDashboardSegments;
@@ -409,6 +434,11 @@ export interface AdminDashboardPayload {
   alerts: AdminDashboardAlert[];
   geography: AdminGeographyRow[];
   productUsage: AdminProductUsage;
+  activation?: AdminActivationMetrics;
+  kpiCoverage?: {
+    included: number;
+    total: number;
+  };
 }
 
 export interface AdminPreferences {
@@ -435,6 +465,11 @@ export interface AdminUserRow {
   country_settings?: string;
   role?: UserRole | string;
   studentsCount?: number;
+  /** Resolved: this tutor counts in admin KPI / product usage. */
+  include_in_kpi?: boolean;
+  isEarlyAdopter?: boolean;
+  proExpiresAt?: string | null;
+  referralCode?: string | null;
 }
 
 export interface AdminStrings {
@@ -476,6 +511,8 @@ export interface AdminStrings {
   widgetKpiTrialUsers: string;
   widgetKpiConversion: string;
   widgetKpiMrr: string;
+  widgetKpiCoreActivation: string;
+  widgetKpiFinanceAdoption: string;
   widgetSegments: string;
   widgetActivationFunnel: string;
   widgetAlerts: string;
@@ -489,6 +526,12 @@ export interface AdminStrings {
   metricTrialUsers: string;
   metricConversion: string;
   metricRevenue: string;
+  metricCoreActivation: string;
+  metricCoreActivationCaption: string;
+  metricCoreActivationHint: string;
+  metricFinanceAdoption: string;
+  metricFinanceAdoptionCaption: string;
+  metricFinanceAdoptionHint: string;
   revenueHint: string;
   paidBreakdownHint: string;
   signedInAs: string;
@@ -518,6 +561,7 @@ export interface AdminStrings {
   productTotalStudents: string;
   productAvgStudents: string;
   productFinanceUsers: string;
+  productFinanceUsersHint: string;
   lastVisitsTitle: string;
   lastVisitsHint: string;
   tableEmail: string;
@@ -529,6 +573,17 @@ export interface AdminStrings {
   tableActions: string;
   tableCountry: string;
   tableStudents: string;
+  kpiInclude: string;
+  kpiIncludeHint: string;
+  kpiCoverageHint: string;
+  kpiSaveError: string;
+  earlyAdopter: string;
+  earlyAdopterHint: string;
+  grantEarlyPro: string;
+  grantingEarlyPro: string;
+  grantEarlyProSuccess: string;
+  grantEarlyProError: string;
+  proExpiresUntil: string;
   noVisits: string;
   noAlerts: string;
   never: string;
@@ -609,6 +664,11 @@ export interface AccountStrings {
   currentPasswordIncorrect: string;
   saveError: string;
   subscriptionManagedByPayment: string;
+  referralSection: string;
+  referralCopy: string;
+  referralCopied: string;
+  referralHint: string;
+  referralCreditNotice: string;
   taxModeRequiredHint: string;
   taxModeChangeHint: string;
   taxModeConfirmTitle: string;

@@ -306,6 +306,7 @@ export class FinanceBreakdownComponent implements OnInit {
     this.exportingPdf.set(true);
     try {
       await downloadFinanceBreakdownPdf(this.buildPdfOptions(summary));
+      this.financeSvc.logReportExport('pdf').subscribe({ error: () => undefined });
     } catch {
       this.error.set(this.t.exportPdfError);
     } finally {

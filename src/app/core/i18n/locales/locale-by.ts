@@ -67,6 +67,11 @@ export const ACCOUNT_BY: AccountStrings = {
   currentPasswordIncorrect: 'Няправільны бягучы пароль',
   saveError: 'Памылка захавання',
   subscriptionManagedByPayment: 'Тарыф змяняецца праз «Тарыфы» або Stripe. Актыўны план тут уручную не пераключаецца.',
+  referralSection: 'Рэферальная спасылка',
+  referralCopy: 'Капіяваць',
+  referralCopied: 'Спасылка скапіявана',
+  referralHint: 'Сябар атрымае −20% на першае спісанне. Вам — месяц Pro пасля яго аплаты.',
+  referralCreditNotice: 'На балансе {amount} {currency}: наступны рахунак будзе меншы.',
   taxModeRequiredHint: 'Пакажыце падатковы рэжым — без гэтага купля падпіскі недаступная.',
   taxModeChangeHint:
     'Можна змяніць у любы момант. Нета ў Фінансах пералічыцца па новым рэжыме (гэта ацэнка, не дэкларацыя).',

@@ -37,6 +37,19 @@ export function peekCheckoutSessionId(): string | null {
 }
 
 /**
+ * Read session_id before consume/clear. Home used to wipe the query string first,
+ * then confirmCheckout never ran and the Trial modal never opened.
+ */
+export function takeBillingReturn(): {
+  kind: BillingReturnKind | null;
+  sessionId: string | null;
+} {
+  const sessionId = readCheckoutSessionId();
+  const kind = consumeBillingReturnFlag();
+  return { kind, sessionId: kind === 'success' ? sessionId : null };
+}
+
+/**
  * Success ONLY with Stripe redirect: billing=success + session_id=cs_…
  * Browser Back / pending storage must never unlock Pro/Trial.
  */

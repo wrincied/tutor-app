@@ -13,7 +13,7 @@ import {
   resolvePaymentProvider,
   type PaymentProviderId,
 } from '../../core/utils/payment-provider';
-import { getPlanPricing } from '../../core/utils/subscription-pricing';
+import { getPlanPricing, getEarlyAdopterYearly } from '../../core/utils/subscription-pricing';
 import {
   canPurchaseSubscription,
   isTaxModeConfigured,
@@ -100,6 +100,20 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   readonly pricing = computed(() => getPlanPricing(this.plan(), this.country()));
 
+  readonly isEarlyYearly = computed(
+    () =>
+      this.plan() === 'pro' &&
+      this.interval() === 'yearly' &&
+      this.profile()?.isEarlyAdopter === true,
+  );
+
+  readonly hasReferralDiscount = computed(
+    () =>
+      this.plan() === 'pro' &&
+      Boolean(this.profile()?.referredBy) &&
+      !this.isEarlyYearly(),
+  );
+
   readonly amountLabel = computed(() => this.formatAmount(this.planAmount()));
 
   readonly zeroLabel = computed(() => this.formatAmount(0));
@@ -121,6 +135,17 @@ export class PaymentComponent implements OnInit, OnDestroy {
       currency: this.pricing().currency,
       period,
       days: this.trialDays(),
+    });
+  });
+
+  readonly thenYearTwoText = computed(() => {
+    if (!this.isEarlyYearly()) {
+      return null;
+    }
+    const p = this.pricing();
+    return fill(this.t().thenYearTwo, {
+      amount: this.formatAmount(p.yearly),
+      currency: p.currency,
     });
   });
 
@@ -294,6 +319,17 @@ export class PaymentComponent implements OnInit, OnDestroy {
   }
 
   private planAmount(): number {
+    const p = this.pricing();
+    if (this.isEarlyYearly()) {
+      return getEarlyAdopterYearly(p);
+    }
+    if (this.hasReferralDiscount()) {
+      return Math.round(this.catalogAmount() * 0.8 * 100) / 100;
+    }
+    return this.catalogAmount();
+  }
+
+  private catalogAmount(): number {
     const p = this.pricing();
     return this.interval() === 'yearly' ? p.yearly : p.monthly;
   }

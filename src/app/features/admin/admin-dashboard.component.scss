@@ -44,14 +44,21 @@
   }
 }
 
+.admin-kpi__coverage {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #64748b);
+}
+
 .admin-kpi__card {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   padding: 1rem 1.125rem;
-  border: 1px solid var(--nav-border);
-  border-radius: 0.75rem;
-  background: var(--nav-bg);
+  border: 1px solid var(--nav-border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--nav-bg, #fff);
 
   &--wide {
     @media (max-width: 899px) {

@@ -13,7 +13,7 @@ import {
   resolvePricingCountry,
   subscriptionStatusLabel,
 } from '../../core/utils/user-profile.utils';
-import { getPlanPricing, getSubscriptionPricing, formatSubscriptionPrice } from '../../core/utils/subscription-pricing';
+import { getPlanPricing, getSubscriptionPricing, formatSubscriptionPrice, getEarlyAdopterYearly } from '../../core/utils/subscription-pricing';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 
 export type BillingInterval = 'monthly' | 'yearly';
@@ -80,6 +80,14 @@ export class PricingComponent implements OnInit, OnDestroy {
   isPro = computed(() => this.subscriptionStatus() === 'pro');
   isTrial = computed(() => this.subscriptionStatus() === 'trial');
   isProOrTrial = computed(() => this.isPro() || this.isTrial());
+  readonly isEarlyAdopter = computed(() => this.profile()?.isEarlyAdopter === true);
+  readonly hasReferral = computed(() => Boolean(this.profile()?.referredBy));
+  readonly showEarlyYearly = computed(
+    () => !this.isGuest() && this.isEarlyAdopter() && this.billingInterval() === 'yearly',
+  );
+  readonly showReferralHint = computed(
+    () => !this.isGuest() && this.hasReferral() && !this.isEarlyAdopter(),
+  );
   cancelScheduled = computed(() => this.profile()?.cancel_at_period_end === true);
   basisDowngradeScheduled = computed(() => this.profile()?.pending_plan === 'basis');
 
@@ -153,6 +161,9 @@ export class PricingComponent implements OnInit, OnDestroy {
 
   proAmountLabel = computed(() => {
     const p = this.proPricing();
+    if (this.showEarlyYearly()) {
+      return this.formatAmount(getEarlyAdopterYearly(p) / 12);
+    }
     const amount = this.billingInterval() === 'yearly' ? p.yearly / 12 : p.monthly;
     return this.formatAmount(amount);
   });
@@ -172,10 +183,16 @@ export class PricingComponent implements OnInit, OnDestroy {
   proBilledAnnuallyLabel = computed(() => {
     if (this.billingInterval() !== 'yearly') return null;
     const p = this.proPricing();
+    const yearly = this.showEarlyYearly() ? getEarlyAdopterYearly(p) : p.yearly;
     return this.i18n
       .pricingUi()
-      .proPlan.billedAnnually.replace('{amount}', this.formatAmount(p.yearly))
+      .proPlan.billedAnnually.replace('{amount}', this.formatAmount(yearly))
       .replace('{currency}', p.currency);
+  });
+
+  proCatalogYearlyLabel = computed(() => {
+    const p = this.proPricing();
+    return formatSubscriptionPrice(p.yearly, p.currency, this.i18n.localeId());
   });
 
   subscriptionLabel = computed(() => {

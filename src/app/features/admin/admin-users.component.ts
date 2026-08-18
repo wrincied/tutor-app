@@ -39,6 +39,9 @@ export class AdminUsersComponent implements OnInit {
 
   readonly search = signal('');
   readonly sortKey = signal<UsersSortKey>('registered');
+  readonly kpiSavingId = signal<string | null>(null);
+  readonly earlySavingId = signal<string | null>(null);
+  readonly grantingEarlyId = signal<string | null>(null);
 
   readonly editOpen = signal(false);
   readonly editingUser = signal<AdminUserRow | null>(null);
@@ -99,6 +102,16 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 
+  readonly kpiIncludedCount = computed(
+    () => this.users().filter((user) => user.include_in_kpi !== false).length,
+  );
+
+  readonly kpiCoverageHint = computed(() =>
+    this.t()
+      .kpiCoverageHint.replace('{included}', `${this.kpiIncludedCount()}`)
+      .replace('{total}', `${this.users().length}`),
+  );
+
   t() {
     return this.i18n.adminUi();
   }
@@ -125,6 +138,64 @@ export class AdminUsersComponent implements OnInit {
     return `${this.t().tableStudents}: ${count ?? 0}`;
   }
 
+  onKpiToggle(user: AdminUserRow, include: boolean): void {
+    if (this.kpiSavingId() || user.include_in_kpi === include) {
+      return;
+    }
+    this.kpiSavingId.set(user._id);
+    this.actionError.set(null);
+    this.adminSvc.setKpiInclusion(user._id, include).subscribe({
+      next: (res) => {
+        this.users.update((rows) =>
+          rows.map((row) => (row._id === user._id ? { ...row, ...res.user } : row)),
+        );
+        this.kpiSavingId.set(null);
+      },
+      error: () => {
+        this.actionError.set(this.t().kpiSaveError);
+        this.kpiSavingId.set(null);
+      },
+    });
+  }
+
+  onEarlyAdopterToggle(user: AdminUserRow, checked: boolean): void {
+    if (this.earlySavingId() || user.isEarlyAdopter === checked) {
+      return;
+    }
+    this.earlySavingId.set(user._id);
+    this.actionError.set(null);
+    this.adminSvc.setEarlyAdopter(user._id, checked).subscribe({
+      next: (res) => {
+        this.applyUserUpdate(res.user);
+        this.earlySavingId.set(null);
+      },
+      error: () => {
+        this.actionError.set(this.t().grantEarlyProError);
+        this.earlySavingId.set(null);
+      },
+    });
+  }
+
+  grantEarlyPro(user: AdminUserRow): void {
+    if (this.grantingEarlyId() || this.giftingUserId() || this.savingUserId()) {
+      return;
+    }
+    this.actionMessage.set(null);
+    this.actionError.set(null);
+    this.grantingEarlyId.set(user._id);
+    this.adminSvc.grantEarlyPro(user._id).subscribe({
+      next: (res) => {
+        this.applyUserUpdate(res.user);
+        this.actionMessage.set(this.t().grantEarlyProSuccess);
+        this.grantingEarlyId.set(null);
+      },
+      error: () => {
+        this.actionError.set(this.t().grantEarlyProError);
+        this.grantingEarlyId.set(null);
+      },
+    });
+  }
+
   openUserDetail(user: AdminUserRow): void {
     this.detailOpen.set(true);
     this.detailLoading.set(true);
@@ -149,7 +220,7 @@ export class AdminUsersComponent implements OnInit {
 
   exportCsv(): void {
     const rows = this.filteredUsers();
-    const header = ['email', 'status', 'country', 'registered', 'last_visit', 'students'];
+    const header = ['email', 'status', 'country', 'registered', 'last_visit', 'students', 'kpi'];
     const lines = rows.map((user) =>
       [
         user.email,
@@ -158,6 +229,7 @@ export class AdminUsersComponent implements OnInit {
         user.createdAt ?? '',
         user.last_login_at ?? '',
         user.studentsCount ?? 0,
+        user.include_in_kpi !== false ? '1' : '0',
       ]
         .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
         .join(','),

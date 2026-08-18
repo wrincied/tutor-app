@@ -26,6 +26,15 @@
         @if (thenAfterTrialText(); as thenText) {
           <p class="pay__then">{{ thenText }}</p>
         }
+        @if (thenYearTwoText(); as yearTwo) {
+          <p class="pay__then">{{ yearTwo }}</p>
+        }
+        @if (isEarlyYearly()) {
+          <p class="pay__then">{{ t().earlyPriceBadge }}</p>
+        }
+        @if (hasReferralDiscount()) {
+          <p class="pay__then">{{ t().referralDiscountLine }}</p>
+        }
 
         @if (hasTrial()) {
           <ol class="pay__timeline">

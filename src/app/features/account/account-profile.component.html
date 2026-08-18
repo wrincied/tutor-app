@@ -42,6 +42,22 @@
           <strong class="account-plan-chip__value">{{ subscriptionLabel() }}</strong>
         </div>
 
+        @if (referralLink()) {
+          <div class="account-referral">
+            <p class="account-hint"><strong>{{ i18n.accountUi().referralSection }}</strong></p>
+            <p class="account-hint">{{ i18n.accountUi().referralHint }}</p>
+            <div class="account-referral__row">
+              <input class="app-input" type="text" readonly [value]="referralLink()" />
+              <button type="button" class="btn-secondary" (click)="copyReferralLink()">
+                {{ referralCopied() ? i18n.accountUi().referralCopied : i18n.accountUi().referralCopy }}
+              </button>
+            </div>
+            @if (referralCreditText(); as credit) {
+              <p class="account-hint">{{ credit }}</p>
+            }
+          </div>
+        }
+
         @if (cancelScheduled()) {
           <p class="account-hint account-hint--warn">{{ cancelScheduledHint() }}</p>
           <div class="account-subscription-actions">

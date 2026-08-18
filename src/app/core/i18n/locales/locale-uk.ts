@@ -67,6 +67,11 @@ export const ACCOUNT_UK: AccountStrings = {
   currentPasswordIncorrect: 'Невірний поточний пароль',
   saveError: 'Помилка збереження',
   subscriptionManagedByPayment: 'Тариф змінюється через «Тарифи» або Stripe. Активний план тут вручну не перемикається.',
+  referralSection: 'Реферальне посилання',
+  referralCopy: 'Копіювати',
+  referralCopied: 'Посилання скопійовано',
+  referralHint: 'Друг отримає −20% на перше списання. Вам — місяць Pro після його оплати.',
+  referralCreditNotice: 'На балансі {amount} {currency}: наступний рахунок буде меншим.',
   taxModeRequiredHint: 'Вкажіть податковий режим — без цього покупка підписки недоступна.',
   taxModeChangeHint:
     'Можна змінити будь-коли. Нетто у Фінансах перерахується за новим режимом (це оцінка, не декларація).',

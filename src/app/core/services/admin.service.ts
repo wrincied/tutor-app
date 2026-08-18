@@ -58,6 +58,28 @@ export class AdminService {
     return this.http.get<AdminUserRow[]>(`${API}/users`);
   }
 
+  setKpiInclusion(
+    userId: string,
+    includeInKpi: boolean,
+  ): Observable<AdminSubscriptionResponse> {
+    return this.http.put<AdminSubscriptionResponse>(`${API}/users/${userId}/kpi`, {
+      include_in_kpi: includeInKpi,
+    });
+  }
+
+  setEarlyAdopter(
+    userId: string,
+    isEarlyAdopter: boolean,
+  ): Observable<AdminSubscriptionResponse> {
+    return this.http.put<AdminSubscriptionResponse>(`${API}/users/${userId}/early-adopter`, {
+      isEarlyAdopter,
+    });
+  }
+
+  grantEarlyPro(userId: string): Observable<AdminSubscriptionResponse> {
+    return this.http.post<AdminSubscriptionResponse>(`${API}/users/${userId}/grant-early-pro`, {});
+  }
+
   updateSubscription(
     userId: string,
     payload: UpdateSubscriptionPayload,

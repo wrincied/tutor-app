@@ -6,6 +6,7 @@ import {
   BILLING_RETURN_STORAGE_KEY,
   consumeBillingReturnFlag,
   markBillingCheckoutPending,
+  takeBillingReturn,
 } from './billing-return';
 
 describe('billing-return', () => {
@@ -41,5 +42,17 @@ describe('billing-return', () => {
     sessionStorage.setItem('simple4u_billing_return_v1', 'pending');
     window.history.replaceState({}, '', '/app/payment');
     expect(consumeBillingReturnFlag()).toBe('cancel');
+  });
+
+  it('keeps checkout session id when consuming success', () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/app/home?billing=success&session_id=cs_test_123',
+    );
+    expect(takeBillingReturn()).toEqual({
+      kind: 'success',
+      sessionId: 'cs_test_123',
+    });
   });
 });

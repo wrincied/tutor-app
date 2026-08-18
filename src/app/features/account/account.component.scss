@@ -325,6 +325,23 @@
   color: var(--moss, #0f3d34);
 }
 
+.account-referral {
+  margin: 0.25rem 0 1rem;
+}
+
+.account-referral__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+
+  .app-input {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+}
+
 .account-readonly {
   display: flex;
   flex-wrap: wrap;

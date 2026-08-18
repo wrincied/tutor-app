@@ -10,6 +10,8 @@ export const PRICING_RU: PricingStrings = {
   recommendedBadge: 'Рекомендуем',
   basisBadge: 'Для небольшой нагрузки',
   proValueBadge: 'Выбор профессионалов',
+  earlyPriceBadge: 'Спеццена первого года',
+  referralDiscountHint: '−20% на первое списание после триала',
   freePlan: {
     name: 'Free',
     priceLabel: '0',
@@ -126,6 +128,8 @@ export const PRICING_EN: PricingStrings = {
   recommendedBadge: 'Recommended',
   basisBadge: 'For lighter workloads',
   proValueBadge: "Professionals' choice",
+  earlyPriceBadge: 'First-year special',
+  referralDiscountHint: '−20% on the first charge after trial',
   freePlan: {
     name: 'Free',
     priceLabel: '0',
@@ -242,6 +246,8 @@ export const PRICING_DE: PricingStrings = {
   recommendedBadge: 'Empfohlen',
   basisBadge: 'Für kleinere Last',
   proValueBadge: 'Wahl der Profis',
+  earlyPriceBadge: 'Sonderpreis im ersten Jahr',
+  referralDiscountHint: '−20% auf die erste Abbuchung nach der Testphase',
   freePlan: {
     name: 'Free',
     priceLabel: '0',
@@ -359,6 +365,8 @@ export const PRICING_UK: PricingStrings = {
   recommendedBadge: 'Рекомендуємо',
   basisBadge: 'Для невеликого навантаження',
   proValueBadge: 'Вибір професіоналів',
+  earlyPriceBadge: 'Спецціна першого року',
+  referralDiscountHint: '−20% на перше списання після тріалу',
   freePlan: {
     ...PRICING_RU.freePlan,
     period: 'назавжди',
@@ -470,6 +478,8 @@ export const PRICING_BY: PricingStrings = {
   recommendedBadge: 'Рэкамендуем',
   basisBadge: 'Для невялікай нагрузкі',
   proValueBadge: 'Выбар прафесіяналаў',
+  earlyPriceBadge: 'Спеццана першага года',
+  referralDiscountHint: '−20% на першае спісанне пасля трыялу',
   freePlan: {
     ...PRICING_RU.freePlan,
     period: 'назаўжды',
@@ -506,6 +516,8 @@ export const PRICING_KZ: PricingStrings = {
   recommendedBadge: 'Ұсынылады',
   basisBadge: 'Жеңіл жүктемеге',
   proValueBadge: 'Кәсіби таңдау',
+  earlyPriceBadge: 'Бірінші жылдың арнайы бағасы',
+  referralDiscountHint: 'Триалдан кейінгі алғашқы төлемге −20%',
   freePlan: {
     ...PRICING_EN.freePlan,
     period: 'мәңгі',

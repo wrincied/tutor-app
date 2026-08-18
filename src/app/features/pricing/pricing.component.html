@@ -217,7 +217,11 @@
           [class.pricing-plan--current]="isProOrTrial()"
         >
           <div class="pricing-plan__badge-slot">
-            <span class="pricing-plan__badge">{{ t.proValueBadge }}</span>
+            @if (showEarlyYearly()) {
+              <span class="pricing-plan__badge">{{ t.earlyPriceBadge }}</span>
+            } @else {
+              <span class="pricing-plan__badge">{{ t.proValueBadge }}</span>
+            }
           </div>
           <h2 class="pricing-plan__name">{{ t.proPlan.name }}</h2>
           <p class="pricing-plan__subtitle">{{ t.proPlan.trialBadge }}</p>
@@ -230,6 +234,12 @@
             <span class="pricing-plan__period">/ {{ proPeriodLabel() }}</span>
             @if (proBilledAnnuallyLabel(); as billed) {
               <span class="pricing-plan__billed">{{ billed }}</span>
+            }
+            @if (showEarlyYearly()) {
+              <span class="pricing-plan__strike">{{ proCatalogYearlyLabel() }}</span>
+            }
+            @if (showReferralHint()) {
+              <span class="pricing-plan__billed">{{ t.referralDiscountHint }}</span>
             }
           </div>
 
