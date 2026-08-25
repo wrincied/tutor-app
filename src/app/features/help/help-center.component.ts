@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -7,12 +7,13 @@ import { switchMap } from 'rxjs/operators';
 import { I18nService } from '../../core/services/i18n.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { RecaptchaService } from '../../shared/recaptcha/recaptcha.service';
+import { RecaptchaLegalComponent } from '../../shared/recaptcha/recaptcha-legal.component';
 import { RevealDirective } from '../../shared/reveal/reveal.directive';
 
 @Component({
   selector: 'app-help-center',
   standalone: true,
-  imports: [RouterLink, FormsModule, RevealDirective],
+  imports: [RouterLink, FormsModule, RevealDirective, RecaptchaLegalComponent],
   templateUrl: './help-center.component.html',
   styleUrl: './help-center.component.scss',
 })

@@ -46,7 +46,12 @@
             }
 
             @if (!hideTitle()) {
-              <h2 id="app-dialog-title" class="app-dialog__title">{{ title() }}</h2>
+              <div class="app-dialog__titles">
+                <h2 id="app-dialog-title" class="app-dialog__title">{{ title() }}</h2>
+                @if (subtitle(); as sub) {
+                  <p class="app-dialog__subtitle" [attr.title]="sub">{{ sub }}</p>
+                }
+              </div>
             } @else {
               <span id="app-dialog-title" class="sr-only">{{ title() }}</span>
             }

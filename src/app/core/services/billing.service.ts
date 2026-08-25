@@ -32,6 +32,8 @@ export class BillingService {
     country: string;
     provider: 'stripe' | 'tribute';
     preferredProvider?: 'stripe' | 'tribute';
+    allowedProviders?: Array<'stripe' | 'tribute'>;
+    choiceAllowed?: boolean;
     fallbackUsed?: boolean;
     tributeReady: boolean;
     stripeReady: boolean;
@@ -41,6 +43,8 @@ export class BillingService {
       country: string;
       provider: 'stripe' | 'tribute';
       preferredProvider?: 'stripe' | 'tribute';
+      allowedProviders?: Array<'stripe' | 'tribute'>;
+      choiceAllowed?: boolean;
       fallbackUsed?: boolean;
       tributeReady: boolean;
       stripeReady: boolean;
@@ -69,13 +73,5 @@ export class BillingService {
   /** Verify Stripe Checkout session before showing Pro/Trial congrats. */
   confirmCheckoutSession(sessionId: string): Observable<UserProfile> {
     return this.http.post<UserProfile>(`${API}/billing/confirm-checkout-session`, { sessionId });
-  }
-
-  /** Ручное подтверждение оплаты (прод: admin secret в .env бэкенда). */
-  confirmPayment(plan: 'pro' | 'trial', adminSecret: string): Observable<UserProfile> {
-    return this.http.post<UserProfile>(`${API}/billing/confirm-payment`, {
-      plan,
-      adminSecret,
-    });
   }
 }

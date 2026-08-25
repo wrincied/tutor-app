@@ -26,8 +26,7 @@ import {
 import { dayKey } from '../../core/utils/day-key';
 import {
   clearBillingQueryFromUrl,
-  consumeBillingReturnFlag,
-  peekCheckoutSessionId,
+  takeBillingReturn,
 } from '../../core/utils/billing-return';
 import { hasTelegramAccess } from '../../core/utils/user-profile.utils';
 
@@ -190,11 +189,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    const billingReturn = consumeBillingReturnFlag();
-    if (billingReturn === 'success') {
-      clearBillingQueryFromUrl();
-      this.handleBillingSuccessReturn();
-    } else if (billingReturn === 'cancel') {
+    const { kind, sessionId } = takeBillingReturn();
+    if (kind === 'success') {
+      this.handleBillingSuccessReturn(sessionId);
+    } else if (kind === 'cancel') {
       clearBillingQueryFromUrl();
       this.handleBillingCancelReturn();
     } else {
@@ -362,8 +360,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  private handleBillingSuccessReturn(): void {
-    const sessionId = peekCheckoutSessionId();
+  private handleBillingSuccessReturn(sessionId: string | null): void {
     this.billingCongratsOpen.set(false);
     this.userSvc.invalidateProfile();
     this.billingPollSub?.unsubscribe();

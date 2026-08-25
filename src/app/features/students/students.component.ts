@@ -1,9 +1,7 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy, ViewChild, afterNextRender, Injector, PLATFORM_ID, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, signal, OnInit, OnDestroy, ViewChild, afterNextRender, Injector, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { fromEvent } from 'rxjs';
 import { StudentService, Student } from '../../core/services/student.service';
 import { BotUnlinkAlertService } from '../../core/services/bot-unlink-alert.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -14,7 +12,6 @@ import {
   type StudentBalanceAdjustReason,
   type StudentBillingType,
   type StudentRateUnit,
-  type StudentTelegramNotificationSettings,
   type UserProfile,
 } from '@interfaces';
 import {
@@ -23,19 +20,34 @@ import {
   generatePastelColor,
   hexToStoredColor,
 } from '../../core/utils/pastel-color';
+import { toTitleCaseName } from '../../core/utils/to-title-case';
 import {
-  DEFAULT_TELEGRAM_SETTINGS,
   normalizeTelegramSettings,
+  canSendTelegramReceipt,
 } from '../../core/utils/telegram-notification-settings';
 import { planEntitlementsFromProfile } from '../../core/utils/user-profile.utils';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { AppDateInputComponent } from '../../shared/app-date-input';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { HelpTipComponent } from '../../shared/help-tip/help-tip.component';
-import { TelegramCellComponent } from './telegram-cell/telegram-cell.component';
+import {
+  StudentCardComponent,
+} from './student-card/student-card.component';
+import type { StudentCardData, StudentCardLabels } from './student-card/student-card.model';
+import { NotificationSettingsComponent } from './notification-settings/notification-settings.component';
+
+const CURRENCY_SYMBOLS: Record<RateCurrency, string> = {
+  EUR: '€',
+  USD: '$',
+  PLN: 'zł',
+  RUB: '₽',
+  BYN: 'Br',
+  KZT: '₸',
+  UAH: '₴',
+};
 
 /** Fallback IANA when student.timezone is empty (bot/reminders use tutor TZ). */
 const DEFAULT_STUDENT_TIMEZONE = 'Europe/Vienna';
-const STUDENTS_DESKTOP_MQ = '(min-width: 1200px)';
 
 function resolveBillingType(raw?: string): StudentBillingType {
   if (raw === 'postpaid' || raw === 'per_lesson' || raw === 'single') {
@@ -54,7 +66,15 @@ function rateUnitSuffix(unit: StudentRateUnit, t: { perHour: string; perLesson: 
 
 @Component({
   selector: 'app-students',
-  imports: [FormsModule, AppDialogComponent, AppSelectComponent, HelpTipComponent, TelegramCellComponent],
+  imports: [
+    FormsModule,
+    AppDialogComponent,
+    AppDateInputComponent,
+    AppSelectComponent,
+    HelpTipComponent,
+    StudentCardComponent,
+    NotificationSettingsComponent,
+  ],
   templateUrl: './students.component.html',
   styleUrl: './students.component.scss',
 })
@@ -66,13 +86,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly destroyRef = inject(DestroyRef);
   @ViewChild('studentForm') studentFormRef?: NgForm;
   students = signal<Student[]>([]);
   profile = signal<UserProfile | null>(null);
   loading = signal(true);
-  /** Desktop table vs mobile cards — only one list in DOM. */
-  desktopLayout = signal(false);
   showForm = signal(false);
   editTarget = signal<Student | null>(null);
   /** Ученик, на которого пришли с главной — краткая подсветка. */
@@ -106,10 +123,14 @@ export class StudentsComponent implements OnInit, OnDestroy {
   deleteTargetId = signal<string | null>(null);
   topupTargetId = signal<string | null>(null);
   topupMoney = signal(0);
-  topupUnits = signal(1);
+  /** Text buffer for amount input — leading 0 replaced while typing; allows "0.". */
+  topupMoneyText = signal('0');
+  topupUnits = signal(0);
   topupPaidAt = signal('');
   topupSendReceipt = signal(false);
-  topupAmountSource = signal<'money' | 'units'>('units');
+  topupAmountSource = signal<'money' | 'units'>('money');
+  /** Active quick-amount chip: multiplier id (`1`/`2`/`3`) or `custom`. */
+  topupPreset = signal<'1' | '2' | '3' | 'custom'>('custom');
   adjustTarget = signal<Student | null>(null);
   adjustNextBalance = signal(0);
   adjustReason = signal<StudentBalanceAdjustReason>('typo');
@@ -125,10 +146,9 @@ export class StudentsComponent implements OnInit, OnDestroy {
   showManualChatId = signal(false);
   manualChatId = signal('');
   manualChatConsent = signal(false);
+  formInviteLoading = signal(false);
+  formInviteError = signal<string | null>(null);
   settingsStudent = signal<Student | null>(null);
-  settingsDraft = signal<StudentTelegramNotificationSettings>({ ...DEFAULT_TELEGRAM_SETTINGS });
-  settingsSaving = signal(false);
-  settingsIsMinor = signal(false);
   toastMessage = signal<string | null>(null);
   formSubmitted = signal(false);
   savingForm = signal(false);
@@ -138,24 +158,14 @@ export class StudentsComponent implements OnInit, OnDestroy {
   resyncPromptStudentId = signal<string | null>(null);
   resyncingLessons = signal(false);
   resyncMessage = signal<string | null>(null);
-  readonly colorToHexForPicker = colorToHexForPicker;
   readonly inviteDialogLink = computed(() => this.inviteDialogStudent()?.telegram_deep_link ?? '');
+  readonly formInviteLink = computed(() => this.editTarget()?.telegram_deep_link ?? '');
   readonly inviteQrSrc = computed(() => {
     const link = this.inviteDialogLink();
     if (!link) {
       return '';
     }
     return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`;
-  });
-  readonly telegramTogglesDisabled = computed(() => {
-    const student = this.settingsStudent() ?? this.editTarget();
-    if (!student?.telegram_user_id && !student?.telegram_chat_id) {
-      return true;
-    }
-    if (student.telegram_delivery_status === 'error') {
-      return true;
-    }
-    return false;
   });
 
   readonly planEntitlements = computed(() => planEntitlementsFromProfile(this.profile()));
@@ -204,10 +214,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   private linkCopiedTimer: ReturnType<typeof setTimeout> | null = null;
   private invitePollTimer: ReturnType<typeof setInterval> | null = null;
+  private formInvitePollTimer: ReturnType<typeof setInterval> | null = null;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit() {
-    this.bindDesktopLayoutMq();
     this.userSvc.invalidateProfile();
     this.userSvc.refreshProfile().subscribe({
       next: (profile) => this.profile.set(profile),
@@ -223,6 +233,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopInvitePolling();
+    this.stopFormInvitePolling();
     if (this.linkCopiedTimer) {
       clearTimeout(this.linkCopiedTimer);
     }
@@ -232,18 +243,6 @@ export class StudentsComponent implements OnInit, OnDestroy {
     if (this.highlightClearTimer !== null) {
       clearTimeout(this.highlightClearTimer);
     }
-  }
-
-  private bindDesktopLayoutMq(): void {
-    if (!isPlatformBrowser(this.platformId) || typeof window.matchMedia !== 'function') {
-      return;
-    }
-    const mq = window.matchMedia(STUDENTS_DESKTOP_MQ);
-    const sync = () => this.desktopLayout.set(mq.matches);
-    sync();
-    fromEvent(mq, 'change')
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => sync());
   }
 
   get t() {
@@ -265,6 +264,24 @@ export class StudentsComponent implements OnInit, OnDestroy {
       errorBotBlocked: t.tgErrorBotBlocked,
       errorChatNotFound: t.tgErrorChatNotFound,
       errorUserDeactivated: t.tgErrorUserDeactivated,
+    };
+  });
+
+  readonly studentCardLabels = computed((): StudentCardLabels => {
+    const t = this.t;
+    return {
+      balancePrefix: t.balanceLessons,
+      lastPaymentPrefix: t.lastPaidMeta,
+      topUp: `+ ${t.topup}`,
+      unitLesson: t.lessonsShort,
+      unitHour: t.hoursShort,
+      perLesson: t.perLesson,
+      perHour: t.perHour,
+      notificationsOn: t.botEnabled,
+      notificationsOff: t.botDisabled,
+      telegramConnected: t.tgConnected,
+      telegramDisconnected: t.tgNotConnected,
+      openDetails: t.quickActionsTitle,
     };
   });
 
@@ -304,17 +321,6 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   randomizeFormColor(): void {
     this.form.color_hex = generatePastelColor();
-  }
-
-  onTableColorChange(student: Student, event: Event): void {
-    event.stopPropagation();
-    const hex = (event.target as HTMLInputElement).value;
-    const color_hex = hexToStoredColor(hex);
-    this.svc.update(student._id, { color_hex }).subscribe({
-      next: (updated) => {
-        this.patchStudent(updated);
-      },
-    });
   }
 
   load() {
@@ -405,9 +411,82 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.rateUnit.set(unit);
   }
 
+  displayStudentName(name: string | null | undefined): string {
+    return toTitleCaseName(name);
+  }
+
   formatStudentRate(student: Student): string {
     const unit = resolveRateUnit(student.rate_unit);
-    return `${student.rate_per_hour} ${this.i18n.currencyLabel(this.rateCurrencyOf(student))}${rateUnitSuffix(unit, this.t)}`;
+    return `${student.rate_per_hour} ${this.i18n.currencyLabel(this.rateCurrencyOf(student))} ${rateUnitSuffix(unit, this.t)}`;
+  }
+
+  formatLastTopupDate(student: Student): string {
+    const at = student.last_topup?.at;
+    if (!at) {
+      return '';
+    }
+    return this.formatPaidShortDate(at);
+  }
+
+  toStudentCardData(student: Student): StudentCardData {
+    return {
+      id: student._id,
+      name: toTitleCaseName(student.name),
+      color: this.studentColor(student),
+      hasTelegram: this.isTelegramLinked(student),
+      rate: student.rate_per_hour,
+      rateType: resolveRateUnit(student.rate_unit),
+      currency: this.i18n.currencyLabel(this.rateCurrencyOf(student)),
+      remainingLessons: Number(student.balance_lessons) || 0,
+      lastPaymentDate: this.formatLastTopupDate(student) || null,
+      notificationsEnabled: this.studentRemindersOn(student),
+    };
+  }
+
+  studentRemindersOn(student: Student): boolean {
+    if (!this.canNotifyTelegram(student)) {
+      return false;
+    }
+    return normalizeTelegramSettings(student.telegram_notification_settings).lesson_reminder_enabled;
+  }
+
+  onStudentCardOpenDetails(id: string): void {
+    const student = this.students().find((item) => item._id === id);
+    if (student) {
+      this.openEdit(student);
+    }
+  }
+
+  onStudentCardTopUp(id: string): void {
+    this.openTopup(id);
+  }
+
+  onStudentCardToggleNotifications(id: string): void {
+    const student = this.students().find((item) => item._id === id);
+    if (!student) {
+      return;
+    }
+    if (!this.hasTelegramPlan()) {
+      this.planGateKind.set('telegram');
+      return;
+    }
+    if (this.isTelegramLinked(student)) {
+      this.openTelegramSettings(student);
+      return;
+    }
+    this.inviteStudentToBot(student);
+  }
+
+  onStudentCardTgConnect(id: string): void {
+    const student = this.students().find((item) => item._id === id);
+    if (!student) {
+      return;
+    }
+    if (!this.isTelegramLinked(student)) {
+      this.inviteStudentToBot(student);
+      return;
+    }
+    this.openTelegramSettings(student);
   }
 
   balanceUnitLabel(student: Student | null | undefined): string {
@@ -492,28 +571,48 @@ export class StudentsComponent implements OnInit, OnDestroy {
       : this.t.topupUnitsLabel;
   }
 
-  reminderOffsetOptions(): AppSelectOption[] {
-    return [
-      { value: '15', label: this.t.tgReminder15m },
-      { value: '60', label: this.t.tgReminder1h },
-      { value: '120', label: this.t.tgReminder2h },
-      { value: '1440', label: this.t.tgReminder24h },
-    ];
+  topupPresets(): Array<{ id: '1' | '2' | '3'; multiplier: number; label: string; money: number }> {
+    const student = this.topupStudent();
+    const rate = Number(student?.rate_per_hour) || 0;
+    if (!(rate > 0)) {
+      return [];
+    }
+    return ([1, 2, 3] as const).map((multiplier) => {
+      const money = this.roundMoney(rate * multiplier);
+      return {
+        id: String(multiplier) as '1' | '2' | '3',
+        multiplier,
+        money,
+        label: this.formatTopupMoneyLabel(money, student),
+      };
+    });
   }
 
-  reminderOffsetValue(): string {
-    return String(this.settingsDraft().lesson_reminder_offset_minutes);
+  formatTopupMoneyLabel(money: number, student: Student | null): string {
+    const pretty = Number.isInteger(money) ? String(money) : money.toFixed(2);
+    return pretty;
   }
 
-  formatLinkedAt(value?: string | null): string {
-    if (!value) {
-      return '—';
-    }
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return '—';
-    }
-    return date.toLocaleString();
+  currencySymbol(code: RateCurrency): string {
+    return CURRENCY_SYMBOLS[code] ?? code;
+  }
+
+  formatTopupUnits(student: Student): string {
+    const units = this.topupUnits();
+    const pretty = Number.isInteger(units) ? String(units) : String(Math.round(units * 100) / 100);
+    const unitLabel =
+      resolveRateUnit(student.rate_unit) === 'hour' ? this.t.hoursShort : this.t.lessonsShort;
+    return `${pretty} ${unitLabel}`;
+  }
+
+  selectTopupPreset(preset: { id: '1' | '2' | '3'; money: number }): void {
+    this.topupPreset.set(preset.id);
+    this.setTopupMoneyValue(preset.money);
+  }
+
+  selectTopupCustom(): void {
+    this.topupPreset.set('custom');
+    this.setTopupMoneyValue(0);
   }
 
   showToast(message: string): void {
@@ -600,6 +699,9 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.balanceLessons.set(0);
     this.creditLimit.set(0);
     this.editTarget.set(null);
+    this.stopFormInvitePolling();
+    this.formInviteLoading.set(false);
+    this.formInviteError.set(null);
     this.showForm.set(true);
   }
 
@@ -623,6 +725,13 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.creditLimit.set(Number(s.credit_limit) || 0);
     this.editTarget.set(s);
     this.showForm.set(true);
+    if (!this.isTelegramLinked(s) && this.hasTelegramPlan()) {
+      this.ensureFormInviteLink(s);
+    } else {
+      this.stopFormInvitePolling();
+      this.formInviteLoading.set(false);
+      this.formInviteError.set(null);
+    }
   }
 
   closeForm() {
@@ -633,6 +742,9 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   private resetFormDialog(): void {
+    this.stopFormInvitePolling();
+    this.formInviteLoading.set(false);
+    this.formInviteError.set(null);
     this.formSubmitted.set(false);
     this.formError.set(null);
     this.showForm.set(false);
@@ -750,8 +862,13 @@ export class StudentsComponent implements OnInit, OnDestroy {
         if (opts.inviteAfter) {
           void this.copyInviteLink(updated.telegram_deep_link || '');
         }
-        this.resetFormDialog();
+        const wasCreate = !target;
         this.load();
+        if (wasCreate) {
+          this.openEdit(updated);
+          return;
+        }
+        this.resetFormDialog();
         if (rateSnapshotChanged) {
           this.resyncPromptStudentId.set(updated._id);
         }
@@ -800,6 +917,120 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   telegramDeepLink(student?: Student | null): string {
     return (student ?? this.editTarget())?.telegram_deep_link || '';
+  }
+
+  connectTelegramFromForm(): void {
+    if (!this.hasTelegramPlan()) {
+      this.planGateKind.set('telegram');
+      return;
+    }
+    const target = this.editTarget();
+    if (!target) {
+      this.formError.set(this.t.botSaveToGetLink);
+      return;
+    }
+    this.ensureFormInviteLink(target);
+  }
+
+  async copyFormInviteLink(): Promise<void> {
+    const link = this.formInviteLink();
+    if (!link) {
+      return;
+    }
+    const copied = await this.copyInviteLink(link);
+    if (!copied) {
+      this.formInviteError.set(this.t.botInviteLinkFailed);
+    }
+  }
+
+  shareFormInviteLink(): void {
+    const link = this.formInviteLink();
+    if (!link || typeof window === 'undefined') {
+      return;
+    }
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}`;
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  openStudentTelegramChat(student?: Student | null): void {
+    const target = student ?? this.editTarget();
+    const username = target?.telegram_username?.replace(/^@/, '').trim();
+    if (!username || typeof window === 'undefined') {
+      return;
+    }
+    window.open(`https://t.me/${username}`, '_blank', 'noopener,noreferrer');
+  }
+
+  applyMeetingPreset(kind: 'meet' | 'zoom'): void {
+    this.form.meeting_link =
+      kind === 'meet' ? 'https://meet.google.com/' : 'https://zoom.us/j/';
+  }
+
+  meetingPresetActive(kind: 'meet' | 'zoom'): boolean {
+    const link = (this.form.meeting_link || '').toLowerCase();
+    return kind === 'meet' ? link.includes('meet.google.com') : link.includes('zoom.');
+  }
+
+  private ensureFormInviteLink(student: Student): void {
+    if (this.isTelegramLinked(student)) {
+      this.stopFormInvitePolling();
+      return;
+    }
+    this.form.bot_active = true;
+    this.startFormInvitePolling(student._id);
+    if (student.telegram_deep_link) {
+      this.formInviteLoading.set(false);
+      this.formInviteError.set(null);
+      return;
+    }
+    this.formInviteLoading.set(true);
+    this.formInviteError.set(null);
+    this.svc.update(student._id, { bot_active: true }).subscribe({
+      next: (updated) => {
+        this.formInviteLoading.set(false);
+        this.patchStudent(updated);
+        if (this.editTarget()?._id === updated._id) {
+          this.editTarget.set(updated);
+          this.form.bot_active = true;
+        }
+        if (!updated.telegram_deep_link) {
+          this.formInviteError.set(this.t.botInviteLinkFailed);
+        }
+      },
+      error: (err) => {
+        this.formInviteLoading.set(false);
+        this.formInviteError.set(this.apiErrorMessage(err));
+      },
+    });
+  }
+
+  private startFormInvitePolling(studentId: string): void {
+    this.stopFormInvitePolling();
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.formInvitePollTimer = setInterval(() => {
+      this.svc.getOne(studentId).subscribe({
+        next: (updated) => {
+          this.patchStudent(updated);
+          if (this.editTarget()?._id === updated._id) {
+            this.editTarget.set(updated);
+          }
+          if (updated.telegram_user_id || updated.telegram_chat_id) {
+            this.stopFormInvitePolling();
+            this.formInviteLoading.set(false);
+            this.formInviteError.set(null);
+          }
+        },
+      });
+    }, 3000);
+  }
+
+  private stopFormInvitePolling(): void {
+    if (this.formInvitePollTimer) {
+      clearInterval(this.formInvitePollTimer);
+      this.formInvitePollTimer = null;
+    }
   }
 
   private async copyInviteLink(link: string): Promise<boolean> {
@@ -943,94 +1174,24 @@ export class StudentsComponent implements OnInit, OnDestroy {
       });
   }
 
-  submitParentChatId(): void {
-    const student = this.settingsStudent();
-    const chatId = this.manualChatId().trim();
-    if (!student || !chatId || !this.manualChatConsent()) {
-      return;
-    }
-    this.settingsSaving.set(true);
-    this.svc
-      .linkTelegramManual(student._id, chatId, 'parent', { confirmRecipientConsent: true })
-      .subscribe({
-        next: (updated) => {
-          this.settingsSaving.set(false);
-          this.manualChatId.set('');
-          this.manualChatConsent.set(false);
-          this.patchStudent(updated);
-          this.settingsStudent.set(updated);
-          this.settingsIsMinor.set(true);
-        },
-        error: (err) => {
-          this.settingsSaving.set(false);
-          this.showToast(this.apiErrorMessage(err));
-        },
-      });
-  }
-
   openTelegramSettings(student: Student): void {
     if (!this.hasTelegramPlan()) {
       this.planGateKind.set('telegram');
       return;
     }
     this.closeQuickActions();
-    this.manualChatId.set('');
-    this.manualChatConsent.set(false);
     this.settingsStudent.set(student);
-    this.settingsDraft.set(normalizeTelegramSettings(student.telegram_notification_settings));
-    this.settingsIsMinor.set(Boolean(student.is_minor));
   }
 
   closeTelegramSettings(): void {
-    if (this.settingsSaving()) {
-      return;
-    }
     this.settingsStudent.set(null);
   }
 
-  updateSettingsDraft(patch: Partial<StudentTelegramNotificationSettings>): void {
-    this.settingsDraft.update((current) => normalizeTelegramSettings({ ...current, ...patch }));
-  }
-
-  setReminderOffset(value: string): void {
-    const n = Number(value);
-    if (n === 15 || n === 60 || n === 120 || n === 1440) {
-      this.updateSettingsDraft({ lesson_reminder_offset_minutes: n });
+  onNotificationStudentChange(updated: Student): void {
+    this.patchStudent(updated);
+    if (this.settingsStudent()?._id === updated._id) {
+      this.settingsStudent.set(updated);
     }
-  }
-
-  saveTelegramSettings(): void {
-    const student = this.settingsStudent();
-    if (!student || this.settingsSaving()) {
-      return;
-    }
-    this.settingsSaving.set(true);
-    const settings = normalizeTelegramSettings(this.settingsDraft());
-    this.svc
-      .update(student._id, {
-        telegram_notification_settings: settings,
-        is_minor: this.settingsIsMinor(),
-      })
-      .subscribe({
-        next: (updated) => {
-          this.settingsSaving.set(false);
-          this.patchStudent(updated);
-          this.settingsStudent.set(updated);
-          this.closeTelegramSettings();
-        },
-        error: (err) => {
-          this.settingsSaving.set(false);
-          this.showToast(this.apiErrorMessage(err));
-        },
-      });
-  }
-
-  requestDisconnectFromSettings(): void {
-    const student = this.settingsStudent();
-    if (!student) {
-      return;
-    }
-    this.requestTelegramDisconnect(student);
   }
 
   async copyInviteFromDialog(): Promise<void> {
@@ -1121,14 +1282,12 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   openTopup(id: string) {
     const student = this.students().find((item) => item._id === id) ?? null;
-    const step = resolveRateUnit(student?.rate_unit) === 'hour' ? 0.5 : 1;
-    const rate = Number(student?.rate_per_hour) || 0;
-    this.topupUnits.set(step);
-    this.topupMoney.set(rate > 0 ? this.roundMoney(rate * step) : 0);
-    this.topupPaidAt.set(this.todayInputDate());
-    this.topupAmountSource.set('units');
-    this.topupSendReceipt.set(false);
     this.topupTargetId.set(id);
+    this.topupPaidAt.set(this.todayInputDate());
+    this.topupAmountSource.set('money');
+    this.topupPreset.set('custom');
+    this.topupSendReceipt.set(student ? canSendTelegramReceipt(student) : false);
+    this.setTopupMoneyValue(0);
   }
 
   openTopupFromQuick(): void {
@@ -1146,13 +1305,75 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   onTopupMoneyChange(raw: number | string): void {
     const student = this.topupStudent();
-    const money = Number(raw);
-    this.topupMoney.set(Number.isFinite(money) ? money : 0);
+    const text = this.normalizeTopupMoneyText(raw);
+    this.topupMoneyText.set(text);
+    const money = text === '' || text === '.' ? 0 : Number(text);
+    const safeMoney = Number.isFinite(money) ? money : 0;
+    this.topupMoney.set(safeMoney);
     this.topupAmountSource.set('money');
+    this.topupPreset.set('custom');
     const rate = Number(student?.rate_per_hour) || 0;
-    if (rate > 0 && Number.isFinite(money) && money > 0) {
-      this.topupUnits.set(this.normalizeTopupUnits(money / rate, student));
+    if (rate > 0 && safeMoney > 0) {
+      this.topupUnits.set(this.normalizeTopupUnits(safeMoney / rate, student));
+      const matched = this.topupPresets().find(
+        (preset) => Math.abs(preset.money - safeMoney) < 0.005,
+      );
+      if (matched) {
+        this.topupPreset.set(matched.id);
+      }
+    } else {
+      this.topupUnits.set(0);
     }
+  }
+
+  private setTopupMoneyValue(money: number): void {
+    const safe = Number.isFinite(money) ? money : 0;
+    this.topupMoney.set(safe);
+    this.topupMoneyText.set(Number.isInteger(safe) ? String(safe) : String(safe));
+    this.topupAmountSource.set('money');
+    const student = this.topupStudent();
+    const rate = Number(student?.rate_per_hour) || 0;
+    if (rate > 0 && safe > 0) {
+      this.topupUnits.set(this.normalizeTopupUnits(safe / rate, student));
+    } else {
+      this.topupUnits.set(0);
+    }
+  }
+
+  /** Keep decimals typable; drop a stuck leading 0 when the next digit is typed. */
+  private normalizeTopupMoneyText(raw: number | string): string {
+    if (raw === null || raw === undefined) {
+      return '0';
+    }
+    let text = String(raw).trim().replace(',', '.');
+    text = text.replace(/[^\d.]/g, '');
+    const firstDot = text.indexOf('.');
+    if (firstDot !== -1) {
+      text =
+        text.slice(0, firstDot + 1) + text.slice(firstDot + 1).replace(/\./g, '');
+    }
+    if (text === '') {
+      return '';
+    }
+    if (/^0\d/.test(text)) {
+      text = text.replace(/^0+/, '');
+    }
+    return text;
+  }
+
+  onTopupMoneyFocus(event: FocusEvent): void {
+    this.topupPreset.set('custom');
+    const el = event.target as HTMLInputElement | null;
+    if (!el) {
+      return;
+    }
+    if (this.topupMoney() === 0 || this.topupMoneyText() === '0') {
+      queueMicrotask(() => el.select());
+    }
+  }
+
+  topupMoneyDisplay(): string {
+    return this.topupMoneyText();
   }
 
   onTopupUnitsChange(raw: number | string): void {
@@ -1162,7 +1383,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.topupAmountSource.set('units');
     const rate = Number(student?.rate_per_hour) || 0;
     if (rate > 0 && units > 0) {
-      this.topupMoney.set(this.roundMoney(rate * units));
+      this.setTopupMoneyValue(this.roundMoney(rate * units));
     }
   }
 
@@ -1173,7 +1394,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     if (!id || !(n > 0)) {
       return;
     }
-    const wantsReceipt = false;
+    const wantsReceipt = this.topupSendReceipt();
     this.svc
       .topup(id, {
         lessons: n,
@@ -1266,7 +1487,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
   deleteConfirmMessage(): string {
     const id = this.deleteTargetId();
     const student = this.students().find((item) => item._id === id);
-    const name = student?.name?.trim() || '—';
+    const name = toTitleCaseName(student?.name) || '—';
     return this.t.deleteConfirm.replace('{name}', name);
   }
 

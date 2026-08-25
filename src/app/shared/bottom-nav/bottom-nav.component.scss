@@ -1,0 +1,106 @@
+$nav-compact: '(max-width: 768px), (max-height: 440px)';
+
+:host {
+  display: contents;
+}
+
+.bottom-nav-shell {
+  display: none;
+
+  @media #{$nav-compact} {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-app-navbar);
+    padding: 0 var(--bottom-nav-island-gap)
+      calc(var(--bottom-nav-island-gap) + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+  }
+}
+
+.bottom-nav {
+  display: none;
+
+  @media #{$nav-compact} {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    width: 100%;
+    max-width: 22rem;
+    min-height: var(--bottom-nav-island-h);
+    margin: 0 auto;
+    padding: 0 0.875rem;
+    border: 1px solid color-mix(in srgb, var(--nav-border) 80%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--nav-bg) 88%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+      0 4px 24px rgb(15 23 42 / 0.1),
+      0 1px 2px rgb(15 23 42 / 0.06);
+    pointer-events: auto;
+    overflow: visible;
+  }
+}
+
+.bottom-link {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 3rem;
+  min-width: 3rem;
+  padding: 0;
+  color: color-mix(in srgb, var(--nav-text) 78%, #64748b);
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  &__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    transition:
+      transform 0.2s ease,
+      background-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    svg {
+      width: 1.4rem;
+      height: 1.4rem;
+    }
+  }
+
+  .nav-icon--students {
+    transform: translateX(0.12rem);
+  }
+
+  &:hover .bottom-link__icon {
+    color: var(--nav-accent);
+  }
+
+  &.active {
+    color: #fff;
+
+    .bottom-link__icon {
+      width: 3.25rem;
+      height: 3.25rem;
+      transform: translateY(calc(var(--bottom-nav-island-pop) * -1));
+      background: var(--ink, #111827);
+      color: #fff;
+      box-shadow: 0 6px 18px rgb(15 23 42 / 0.22);
+    }
+
+    .nav-icon--students {
+      transform: translateX(0.05rem);
+    }
+  }
+}

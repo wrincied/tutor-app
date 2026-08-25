@@ -1,12 +1,12 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type {
-  UserVacationSettings,
-  UserWorkingHoursSettings,
-  WorkspaceLessonDuration,
-} from '@interfaces';
+import type { UserVacationSettings, UserWorkingHoursSettings } from '@interfaces';
 import {
   WORKSPACE_LESSON_DURATIONS,
+  clampLessonDurationMinutes,
+  isWorkspaceDurationPreset,
+  LESSON_DURATION_MAX,
+  LESSON_DURATION_MIN,
   normalizeVacation,
   normalizeWorkingHours,
   type IsoWeekday,
@@ -17,6 +17,8 @@ import { AppSelectComponent, type AppSelectOption } from '../../shared/app-selec
 import { AppDateRangeComponent } from '../../shared/app-date-input';
 
 const ISO_WEEKDAYS: readonly IsoWeekday[] = [1, 2, 3, 4, 5, 6, 7];
+
+type DurationMode = 'preset' | 'custom';
 
 @Component({
   selector: 'app-workspace',
@@ -30,6 +32,10 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   readonly profileSettings = inject(UserProfileSettingsService);
 
   readonly isoWeekdays = ISO_WEEKDAYS;
+  readonly durationPresets = WORKSPACE_LESSON_DURATIONS;
+  readonly durationMin = LESSON_DURATION_MIN;
+  readonly durationMax = LESSON_DURATION_MAX;
+
   loading = signal(true);
   saving = signal(false);
   error = signal<string | null>(null);
@@ -37,7 +43,10 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   toastKind = signal<'success' | 'error'>('success');
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
-  duration: WorkspaceLessonDuration = 60;
+  durationMode: DurationMode = 'preset';
+  durationPreset = 60;
+  customDuration = 50;
+
   hoursStart = '08:00';
   hoursEnd = '21:00';
   workingDays: IsoWeekday[] = [1, 2, 3, 4, 5];
@@ -46,13 +55,6 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   vacationStart = '';
   vacationEnd = '';
   vacationMessage = '';
-
-  durationOptions = computed((): AppSelectOption[] =>
-    WORKSPACE_LESSON_DURATIONS.map((value) => ({
-      value: String(value),
-      label: `${value} ${this.i18n.calendarUi().durationMinShort}`,
-    })),
-  );
 
   workingHourOptions = computed((): AppSelectOption[] =>
     this.profileSettings.hourSelectOptions.map((opt) => ({
@@ -91,8 +93,16 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  onDurationChange(value: string): void {
-    this.duration = Number(value) as WorkspaceLessonDuration;
+  selectDurationPreset(minutes: number): void {
+    this.durationMode = 'preset';
+    this.durationPreset = minutes;
+  }
+
+  selectDurationCustom(): void {
+    if (this.durationMode === 'preset') {
+      this.customDuration = this.durationPreset;
+    }
+    this.durationMode = 'custom';
   }
 
   toggleWorkingDay(day: IsoWeekday): void {
@@ -130,9 +140,29 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
     this.toastMessage.set(null);
   }
 
+  private resolvedDurationMinutes(): number {
+    const raw = this.durationMode === 'custom' ? this.customDuration : this.durationPreset;
+    return clampLessonDurationMinutes(raw);
+  }
+
+  private isDurationDraftValid(): boolean {
+    const raw = this.durationMode === 'custom' ? Number(this.customDuration) : this.durationPreset;
+    if (!Number.isFinite(raw)) {
+      return false;
+    }
+    const minutes = Math.round(raw);
+    return minutes >= LESSON_DURATION_MIN && minutes <= LESSON_DURATION_MAX;
+  }
+
   saveAll(): void {
     const t = this.i18n.accountUi();
     this.error.set(null);
+
+    if (!this.isDurationDraftValid()) {
+      this.error.set(t.workspaceDurationInvalid);
+      this.showToast(t.workspaceDurationInvalid, 'error');
+      return;
+    }
 
     const vacation: UserVacationSettings = normalizeVacation({
       enabled: this.vacationEnabled,
@@ -163,7 +193,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
       .saveWorkspaceSettings({
         workspace: {
           ...this.profileSettings.workspace(),
-          defaultLessonDuration: this.duration,
+          defaultLessonDuration: this.resolvedDurationMinutes(),
         },
         workingHours,
         vacation,
@@ -186,7 +216,14 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
     const workspace = this.profileSettings.workspace();
     const hours = this.profileSettings.workingHours();
     const vacation = this.profileSettings.vacation();
-    this.duration = workspace.defaultLessonDuration;
+    const duration = workspace.defaultLessonDuration;
+    if (isWorkspaceDurationPreset(duration)) {
+      this.durationMode = 'preset';
+      this.durationPreset = duration;
+    } else {
+      this.durationMode = 'custom';
+      this.customDuration = duration;
+    }
     this.hoursStart = hours.start;
     this.hoursEnd = hours.end;
     this.workingDays = [...hours.days];

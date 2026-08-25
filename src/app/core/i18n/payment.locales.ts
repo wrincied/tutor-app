@@ -12,6 +12,9 @@ const PAYMENT_DE: PaymentStrings = {
   timelineToday: 'Heute — {days} Tage kostenlos testen',
   timelineCharge:
     'In {days} Tagen — erste Abbuchung {amount} {currency}. Jederzeit mit einem Klick kündbar',
+  thenYearTwo: 'Ab dem zweiten Jahr {amount} {currency} / Jahr',
+  referralDiscountLine: '−20% auf die erste Abbuchung nach der Testphase',
+  earlyPriceBadge: 'Sonderpreis im ersten Jahr',
   features: [
     'Unbegrenzte Schüler',
     'Auto-Erinnerungen in Telegram',
@@ -59,6 +62,9 @@ const PAYMENT_EN: PaymentStrings = {
   timelineToday: 'Today — {days}-day free trial',
   timelineCharge:
     'In {days} days — first charge of {amount} {currency}. Cancel anytime in one click',
+  thenYearTwo: 'From year two: {amount} {currency} / year',
+  referralDiscountLine: '−20% on the first charge after the trial',
+  earlyPriceBadge: 'First-year special',
   features: [
     'Unlimited students',
     'Auto-reminders in Telegram',
@@ -106,6 +112,9 @@ const PAYMENT_RU: PaymentStrings = {
   timelineToday: 'Сегодня — {days} дней бесплатного пробного периода',
   timelineCharge:
     'Через {days} дней — первое списание {amount} {currency}. Отмена в 1 клик в любое время',
+  thenYearTwo: 'Со второго года {amount} {currency} / год',
+  referralDiscountLine: '−20% на первое списание после триала',
+  earlyPriceBadge: 'Спеццена первого года',
   features: [
     'Безлимит учеников',
     'Авто-напоминания в Telegram',
@@ -152,6 +161,9 @@ const PAYMENT_BY: PaymentStrings = {
   timelineToday: 'Сёння — {days} дзён бясплатнага пробнага перыяду',
   timelineCharge:
     'Праз {days} дзён — першае спісанне {amount} {currency}. Адмена ў 1 клік у любы час',
+  thenYearTwo: 'З другога года {amount} {currency} / год',
+  referralDiscountLine: '−20% на першае спісанне пасля трыялу',
+  earlyPriceBadge: 'Спеццана першага года',
   features: [
     'Безліміт вучняў',
     'Аўта-нагадванні ў Telegram',
@@ -183,6 +195,9 @@ const PAYMENT_UK: PaymentStrings = {
   timelineToday: 'Сьогодні — {days} днів безкоштовного пробного періоду',
   timelineCharge:
     'Через {days} днів — перше списання {amount} {currency}. Скасування в 1 клік будь-коли',
+  thenYearTwo: 'З другого року {amount} {currency} / рік',
+  referralDiscountLine: '−20% на перше списання після тріалу',
+  earlyPriceBadge: 'Спецціна першого року',
   features: [
     'Безліміт учнів',
     'Авто-нагадування в Telegram',
@@ -220,6 +235,9 @@ const PAYMENT_KZ: PaymentStrings = {
   timelineToday: 'Бүгін — {days} күн тегін сынақ кезеңі',
   timelineCharge:
     '{days} күннен кейін — алғашқы есептен шығару {amount} {currency}. Кез келген уақытта 1 рет басып бас тарту',
+  thenYearTwo: 'Екінші жылдан бастап {amount} {currency} / жыл',
+  referralDiscountLine: 'Триалдан кейінгі алғашқы төлемге −20%',
+  earlyPriceBadge: 'Бірінші жылдың арнайы бағасы',
   features: [
     'Шексіз оқушылар',
     'Telegram-дағы авто-еске салулар',

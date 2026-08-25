@@ -22,9 +22,14 @@
       isEnabled('kpi-paid-users') ||
       isEnabled('kpi-trial-users') ||
       isEnabled('kpi-conversion') ||
-      isEnabled('kpi-mrr')
+      isEnabled('kpi-mrr') ||
+      isEnabled('kpi-core-activation') ||
+      isEnabled('kpi-finance-adoption')
     ) {
       <section class="admin-kpi" aria-label="Metrics">
+        @if (kpiCoverageHint(); as hint) {
+          <p class="admin-kpi__coverage">{{ hint }}</p>
+        }
         @if (isEnabled('kpi-total-users')) {
           <article class="admin-kpi__card">
             <span class="admin-kpi__label">{{ t().metricTotalUsers }}</span>
@@ -67,6 +72,20 @@
             <span class="admin-kpi__label">{{ t().metricRevenue }}</span>
             <strong class="admin-kpi__value admin-kpi__value--sm">{{ revenueLabel() }}</strong>
             <span class="admin-kpi__hint">{{ t().revenueHint }}</span>
+          </article>
+        }
+        @if (isEnabled('kpi-core-activation')) {
+          <article class="admin-kpi__card" [attr.title]="t().metricCoreActivationHint">
+            <span class="admin-kpi__label">{{ t().metricCoreActivation }}</span>
+            <strong class="admin-kpi__value">{{ coreActivationValue() }}</strong>
+            <span class="admin-kpi__hint">{{ coreActivationCaption() }}</span>
+          </article>
+        }
+        @if (isEnabled('kpi-finance-adoption')) {
+          <article class="admin-kpi__card" [attr.title]="t().metricFinanceAdoptionHint">
+            <span class="admin-kpi__label">{{ t().metricFinanceAdoption }}</span>
+            <strong class="admin-kpi__value">{{ financeAdoptionValue() }}</strong>
+            <span class="admin-kpi__hint">{{ financeAdoptionCaption() }}</span>
           </article>
         }
       </section>
@@ -203,10 +222,6 @@
             <article class="admin-segment">
               <span class="admin-segment__label">{{ t().productAvgStudents }}</span>
               <strong class="admin-segment__value">{{ d.productUsage.avgStudentsPerTutor }}</strong>
-            </article>
-            <article class="admin-segment">
-              <span class="admin-segment__label">{{ t().productFinanceUsers }}</span>
-              <strong class="admin-segment__value">{{ d.productUsage.financeUsersPercent }}%</strong>
             </article>
           </div>
         </section>

@@ -298,57 +298,38 @@
                                   [style.top.px]="phantomTopForColumn(col) ?? 0"
                                 >
                                   @if (draggedLesson(); as phantomLesson) {
-                                    <p class="cal-lesson-card__title">
-                                      <span
-                                        class="cal-lesson-card__student-dot"
-                                        [style.background]="
-                                          getStudentColor(phantomLesson.student_id)
-                                        "
-                                        aria-hidden="true"
-                                      ></span>
-                                      <span class="cal-lesson-card__student-name">
-                                        {{
-                                          phantomLesson.student_name ||
-                                            getStudentName(phantomLesson.student_id)
-                                        }}
-                                      </span>
-                                    </p>
-                                    @if (isBottomNavLayout() || lessonCardUseCompactMeta(phantomLesson)) {
-                                      <p class="cal-lesson-card__sub">
-                                        {{ formatLessonRegion(phantomLesson) }}
-                                        · {{ formatLessonSnapshotRate(phantomLesson) }}
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--top">
+                                      <p class="cal-lesson-card__title">
+                                        <span
+                                          class="cal-lesson-card__student-dot"
+                                          [style.background]="
+                                            getStudentColor(phantomLesson.student_id)
+                                          "
+                                          aria-hidden="true"
+                                        ></span>
+                                        <span class="cal-lesson-card__student-name">
+                                          {{
+                                            displayStudentName(phantomLesson.student_name) ||
+                                              getStudentName(phantomLesson.student_id)
+                                          }}
+                                        </span>
                                       </p>
-                                      <p class="cal-lesson-card__duration">
-                                        {{ formatLessonDuration(phantomLesson.lesson_duration) }}
-                                      </p>
-                                    } @else {
-                                      <div class="cal-lesson-card__details">
-                                        <p class="cal-lesson-card__detail">
-                                          <span class="cal-lesson-card__lbl">{{
-                                            i18n.calendarUi().regionLabel
-                                          }}</span>
-                                          <span>{{ formatLessonRegion(phantomLesson) }}</span>
-                                        </p>
-                                        <p class="cal-lesson-card__detail">
-                                          <span class="cal-lesson-card__lbl">{{
-                                            i18n.calendarUi().rateLabel
-                                          }}</span>
-                                          <span>{{ formatLessonSnapshotRate(phantomLesson) }}</span>
-                                        </p>
-                                        <p class="cal-lesson-card__detail">
-                                          <span class="cal-lesson-card__lbl">{{
-                                            i18n.calendarUi().durationLabel
-                                          }}</span>
-                                          <span>{{
-                                            formatLessonDuration(phantomLesson.lesson_duration)
-                                          }}</span>
-                                        </p>
-                                      </div>
-                                    }
+                                      <span class="cal-lesson-card__region">{{
+                                        formatLessonRegion(
+                                          phantomLesson,
+                                          currentDropTime() || displayScheduledAt(phantomLesson)
+                                        )
+                                      }}</span>
+                                    </div>
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--bottom">
+                                      <span class="cal-lesson-card__time lesson-phantom__time">{{
+                                        phantomDropTimeLabel() || formatLessonTimeRange(phantomLesson)
+                                      }}</span>
+                                      <span class="cal-lesson-card__rate">{{
+                                        formatLessonSnapshotRate(phantomLesson)
+                                      }}</span>
+                                    </div>
                                   }
-                                  <p class="cal-lesson-card__meta lesson-phantom__time">
-                                    {{ phantomDropTimeLabel() }}
-                                  </p>
                                 </div>
                               }
 
@@ -362,15 +343,10 @@
                                   [status]="lesson.status"
                                   [studentName]="getStudentName(lesson.student_id)"
                                   [studentColor]="getStudentColor(lesson.student_id)"
-                                  [compactMeta]="lessonCardUseCompactMeta(lesson)"
-                                  [denseMobile]="isBottomNavLayout()"
                                   [weekFit]="isWeekFitLayout()"
-                                  [regionLabel]="i18n.calendarUi().regionLabel"
-                                  [rateLabel]="i18n.calendarUi().rateLabel"
-                                  [durationLabel]="i18n.calendarUi().durationLabel"
                                   [regionText]="formatLessonRegion(lesson)"
                                   [rateText]="formatLessonSnapshotRate(lesson)"
-                                  [durationText]="formatLessonDuration(lesson.lesson_duration)"
+                                  [timeText]="formatLessonTimeRange(lesson)"
                                   [lastPaid]="!!lesson.isLastPaid"
                                   [dragging]="dragActiveLessonId() === lesson._id"
                                   [focusActive]="lessonCardFocusActive(lesson)"
@@ -440,7 +416,7 @@
                     aria-hidden="true"
                   ></span>
                   <span class="cal-sidebar__info">
-                    <span class="cal-sidebar__name">{{ sidebarStudent.name }}</span>
+                    <span class="cal-sidebar__name">{{ displayStudentName(sidebarStudent.name) }}</span>
                     <span class="cal-sidebar__meta">
                       <span
                         class="cal-sidebar__balance"
@@ -654,7 +630,7 @@
           <div class="cal-lesson-form-v2__field">
             <span class="cal-lesson-form-v2__field-label">{{ i18n.calendarUi().durationLabel }}</span>
             <div class="cal-chips cal-lesson-form-v2__chips">
-              @for (presetMinutes of durationPresets; track presetMinutes) {
+              @for (presetMinutes of durationPresets(); track presetMinutes) {
                 <button
                   type="button"
                   class="cal-chip"
@@ -666,7 +642,31 @@
                   {{ formatDurationPresetLabel(presetMinutes) }}
                 </button>
               }
+              <button
+                type="button"
+                class="cal-chip"
+                [class.cal-chip--active]="durationChipMode() === 'custom'"
+                (click)="selectDurationCustom()"
+              >
+                {{ i18n.accountUi().workspaceDurationCustom }}
+              </button>
             </div>
+            @if (durationChipMode() === 'custom') {
+              <div class="cal-duration-custom">
+                <input
+                  type="number"
+                  class="app-input cal-duration-custom__input"
+                  name="lessonDurationCustom"
+                  [min]="durationMin"
+                  [max]="durationMax"
+                  step="5"
+                  [ngModel]="duration()"
+                  (ngModelChange)="onCustomDurationInput($event)"
+                  [attr.aria-label]="i18n.accountUi().workspaceDurationCustomHint"
+                />
+                <span class="cal-duration-custom__suffix">{{ i18n.calendarUi().durationMinShort }}</span>
+              </div>
+            }
           </div>
 
           <ng-container *ngTemplateOutlet="lessonFormRecurrenceTemplate"></ng-container>
@@ -1092,16 +1092,19 @@
                   <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
                 }
               </button>
-              <div class="field field--date cal-recurrence-end-list__field">
-                <label for="recurrenceUntilDetails">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
-                <app-date-input
-                  id="recurrenceUntilDetails"
-                  name="recurrenceUntilDetails"
-                  inputClass="app-input"
-                  [ngModel]="recurrenceConfig().untilDate"
-                  (ngModelChange)="onRecurrenceConfigUntilChange($event); onRecurrenceConfigEndModeChange('until')"
-                />
-              </div>
+              @if (recurrenceConfig().endMode === 'until') {
+                <div class="field field--date cal-recurrence-end-list__field">
+                  <label for="recurrenceUntilDetails">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
+                  <app-date-input
+                    id="recurrenceUntilDetails"
+                    name="recurrenceUntilDetails"
+                    inputClass="app-input"
+                    [minDate]="recurrenceUntilMinDate()"
+                    [ngModel]="recurrenceConfig().untilDate"
+                    (ngModelChange)="onRecurrenceConfigUntilChange($event); onRecurrenceConfigEndModeChange('until')"
+                  />
+                </div>
+              }
             </div>
           } @else {
             <div
@@ -1123,24 +1126,26 @@
                   <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
                 }
               </button>
-              <div class="cal-recurrence-interval cal-recurrence-end-list__field">
-                <label class="cal-recurrence-interval__label" for="recurrenceCountDetails">
-                  {{ i18n.calendarUi().recurrenceCountLabel }}
-                </label>
-                <input
-                  id="recurrenceCountDetails"
-                  class="app-input cal-recurrence-interval__input"
-                  type="number"
-                  min="1"
-                  max="999"
-                  name="recurrenceCountDetails"
-                  [ngModel]="recurrenceConfig().count"
-                  (ngModelChange)="onRecurrenceConfigCountChange($event); onRecurrenceConfigEndModeChange('count')"
-                />
-                <span class="cal-recurrence-interval__unit">
-                  {{ i18n.calendarUi().recurrenceUnitOccurrences }}
-                </span>
-              </div>
+              @if (recurrenceConfig().endMode === 'count') {
+                <div class="cal-recurrence-interval cal-recurrence-end-list__field">
+                  <label class="cal-recurrence-interval__label" for="recurrenceCountDetails">
+                    {{ i18n.calendarUi().recurrenceCountLabel }}
+                  </label>
+                  <input
+                    id="recurrenceCountDetails"
+                    class="app-input cal-recurrence-interval__input"
+                    type="number"
+                    min="1"
+                    max="999"
+                    name="recurrenceCountDetails"
+                    [ngModel]="recurrenceConfig().count"
+                    (ngModelChange)="onRecurrenceConfigCountChange($event); onRecurrenceConfigEndModeChange('count')"
+                  />
+                  <span class="cal-recurrence-interval__unit">
+                    {{ i18n.calendarUi().recurrenceUnitOccurrences }}
+                  </span>
+                </div>
+              }
             </div>
           }
         }
@@ -1160,12 +1165,13 @@
       </div>
 
       @if (recurrenceConfig().endMode === 'until') {
-        <div class="field field--date">
+        <div class="field field--date cal-recurrence-until-field">
           <label for="recurrenceUntilDesktop">{{ i18n.calendarUi().recurrenceUntilLabel }}</label>
           <app-date-input
             id="recurrenceUntilDesktop"
             name="recurrenceUntilDesktop"
             inputClass="app-input"
+            [minDate]="recurrenceUntilMinDate()"
             [ngModel]="recurrenceConfig().untilDate"
             (ngModelChange)="onRecurrenceConfigUntilChange($event)"
           />

@@ -65,6 +65,8 @@ export interface PricingStrings {
   basisBadge: string;
   /** Strong highlight on Pro (e.g. “Pays for itself”). */
   proValueBadge: string;
+  earlyPriceBadge: string;
+  referralDiscountHint: string;
   freePlan: PricingPlanCopy;
   basisPlan: PricingPaidPlanCopy;
   proPlan: PricingPaidPlanCopy;
@@ -119,6 +121,10 @@ export interface PaymentStrings {
   timelineToday: string;
   /** Placeholders: {days}, {amount}, {currency} */
   timelineCharge: string;
+  /** Shown under Pro yearly for early adopters. */
+  thenYearTwo: string;
+  referralDiscountLine: string;
+  earlyPriceBadge: string;
   features: [string, string, string];
   methodsTitle: string;
   methodsSubtitle: string;
@@ -164,6 +170,12 @@ export interface HelpFormStrings {
   success: string;
   error: string;
   captchaRequired: string;
+  /** Shown when the floating reCAPTCHA badge is hidden (Google requirement). */
+  captchaLegalPrefix: string;
+  captchaPrivacy: string;
+  captchaLegalMid: string;
+  captchaTerms: string;
+  captchaLegalSuffix: string;
   rateLimited: string;
   /** Placeholder: {email} */
   mailHint: string;
@@ -267,7 +279,8 @@ export interface SubscriptionPricing {
   yearly: number;
 }
 
-export type WorkspaceLessonDuration = 45 | 60 | 90 | 120;
+/** Minutes; 5–480 (workspace presets are 45 / 60 / 90 / 120, custom values allowed). */
+export type WorkspaceLessonDuration = number;
 
 export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -275,6 +288,10 @@ export interface UserWorkspaceSettings {
   name: string;
   currency: WorkspaceCurrency;
   defaultLessonDuration: WorkspaceLessonDuration;
+  /** When true, lesson/rate amounts on calendar cards show as whole currency units. */
+  roundLessonPrices?: boolean;
+  /** Tutor-saved custom lesson-reminder offsets (minutes), excluding built-ins. */
+  customReminderOffsets?: number[];
 }
 
 export interface UserWorkingHoursSettings {
@@ -326,6 +343,15 @@ export interface UserProfile {
   pending_plan_at?: string | null;
   /** Whether a Stripe subscription id is linked. */
   has_stripe_subscription?: boolean;
+  isEarlyAdopter?: boolean;
+  proExpiresAt?: string | null;
+  referralCode?: string | null;
+  referredBy?: string | null;
+  stripe_credit_notice?: {
+    amount: number;
+    currency: string;
+    source?: string;
+  } | null;
   /** Feature gates derived from subscription_status. */
   plan_entitlements?: PlanEntitlements;
   email_verified?: boolean;
@@ -354,6 +380,8 @@ export type AdminDashboardWidgetId =
   | 'kpi-trial-users'
   | 'kpi-conversion'
   | 'kpi-mrr'
+  | 'kpi-core-activation'
+  | 'kpi-finance-adoption'
   | 'segments'
   | 'activation-funnel'
   | 'alerts'
@@ -401,6 +429,14 @@ export interface AdminProductUsage {
   financeUsersPercent: number;
 }
 
+export interface AdminActivationMetrics {
+  totalKpiUsers: number;
+  coreUsers: number;
+  corePercent: number;
+  financeUsers: number;
+  financePercent: number;
+}
+
 export interface AdminDashboardPayload {
   stats: AdminStats;
   segments: AdminDashboardSegments;
@@ -408,6 +444,11 @@ export interface AdminDashboardPayload {
   alerts: AdminDashboardAlert[];
   geography: AdminGeographyRow[];
   productUsage: AdminProductUsage;
+  activation?: AdminActivationMetrics;
+  kpiCoverage?: {
+    included: number;
+    total: number;
+  };
 }
 
 export interface AdminPreferences {
@@ -434,6 +475,11 @@ export interface AdminUserRow {
   country_settings?: string;
   role?: UserRole | string;
   studentsCount?: number;
+  /** Resolved: this tutor counts in admin KPI / product usage. */
+  include_in_kpi?: boolean;
+  isEarlyAdopter?: boolean;
+  proExpiresAt?: string | null;
+  referralCode?: string | null;
 }
 
 export interface AdminStrings {
@@ -475,6 +521,8 @@ export interface AdminStrings {
   widgetKpiTrialUsers: string;
   widgetKpiConversion: string;
   widgetKpiMrr: string;
+  widgetKpiCoreActivation: string;
+  widgetKpiFinanceAdoption: string;
   widgetSegments: string;
   widgetActivationFunnel: string;
   widgetAlerts: string;
@@ -488,6 +536,12 @@ export interface AdminStrings {
   metricTrialUsers: string;
   metricConversion: string;
   metricRevenue: string;
+  metricCoreActivation: string;
+  metricCoreActivationCaption: string;
+  metricCoreActivationHint: string;
+  metricFinanceAdoption: string;
+  metricFinanceAdoptionCaption: string;
+  metricFinanceAdoptionHint: string;
   revenueHint: string;
   paidBreakdownHint: string;
   signedInAs: string;
@@ -517,6 +571,7 @@ export interface AdminStrings {
   productTotalStudents: string;
   productAvgStudents: string;
   productFinanceUsers: string;
+  productFinanceUsersHint: string;
   lastVisitsTitle: string;
   lastVisitsHint: string;
   tableEmail: string;
@@ -528,6 +583,17 @@ export interface AdminStrings {
   tableActions: string;
   tableCountry: string;
   tableStudents: string;
+  kpiInclude: string;
+  kpiIncludeHint: string;
+  kpiCoverageHint: string;
+  kpiSaveError: string;
+  earlyAdopter: string;
+  earlyAdopterHint: string;
+  grantEarlyPro: string;
+  grantingEarlyPro: string;
+  grantEarlyProSuccess: string;
+  grantEarlyProError: string;
+  proExpiresUntil: string;
   noVisits: string;
   noAlerts: string;
   never: string;
@@ -579,6 +645,8 @@ export interface AccountStrings {
   firstName: string;
   lastName: string;
   language: string;
+  roundLessonPrices: string;
+  roundLessonPricesHint: string;
   themeDark: string;
   themeLight: string;
   emailSection: string;
@@ -608,6 +676,11 @@ export interface AccountStrings {
   currentPasswordIncorrect: string;
   saveError: string;
   subscriptionManagedByPayment: string;
+  referralSection: string;
+  referralCopy: string;
+  referralCopied: string;
+  referralHint: string;
+  referralCreditNotice: string;
   taxModeRequiredHint: string;
   taxModeChangeHint: string;
   taxModeConfirmTitle: string;
@@ -653,6 +726,9 @@ export interface AccountStrings {
   workspaceName: string;
   workspaceCurrency: string;
   workspaceDefaultDuration: string;
+  workspaceDurationCustom: string;
+  workspaceDurationCustomHint: string;
+  workspaceDurationInvalid: string;
   workingHoursSection: string;
   workingHoursSubtitle: string;
   workingHoursField: string;
@@ -1506,6 +1582,7 @@ export interface StudentStrings {
   autoTimezone: string;
   deleteConfirm: string;
   topupTitle: string;
+  topupSubtitle: string;
   topupHint: string;
   /** Top-up hint when rate_unit is hour */
   topupHintHours: string;
@@ -1518,6 +1595,13 @@ export interface StudentStrings {
   randomColor: string;
   /** Уведомления ученику через Telegram-бота */
   botNotifications: string;
+  /** Hint under Connect Telegram when student is not linked. */
+  tgNotificationsHint: string;
+  /** Section title: invite / linked student Telegram account */
+  studentTelegramTitle: string;
+  studentTelegramSendLink: string;
+  studentTelegramAfterStart: string;
+  tgOpenTelegram: string;
   /** Aria for Telegram help tip */
   botInfoAria: string;
   /** Temporary Telegram tip copy */
@@ -1545,8 +1629,13 @@ export interface StudentStrings {
   botTelegramUsername: string;
   botTelegramName: string;
   botSaveToGetLink: string;
+  /** Create-form inactive Telegram block. */
+  tgInviteAfterCreateHint: string;
+  tgShareInTelegram: string;
   meetingLinkLabel: string;
   meetingLinkPlaceholder: string;
+  meetingLinkMeet: string;
+  meetingLinkZoom: string;
   botUnlinkAlertTitle: string;
   botUnlinkAlertMessage: string;
   botUnlinkAlertOk: string;
@@ -1564,6 +1653,13 @@ export interface StudentStrings {
   topupUnitsLabelHours: string;
   topupDateLabel: string;
   topupSendReceipt: string;
+  topupReceiptHint: string;
+  /** Shown when student has no Telegram link — explains why receipt switch is off. */
+  topupReceiptDisconnected: string;
+  topupPresetsLabel: string;
+  topupCustom: string;
+  topupWillAdd: string;
+  topupRateLabel: string;
   topupPrimaryCta: string;
   balanceAdjustTitle: string;
   balanceAdjustCurrent: string;
@@ -1606,10 +1702,17 @@ export interface StudentStrings {
   tgTriggerLowBalance: string;
   tgTriggerPayment: string;
   tgReminder15m: string;
+  tgReminder30m: string;
   tgReminder1h: string;
   tgReminder2h: string;
   tgReminder24h: string;
+  tgReminderCustom: string;
+  tgReminderCustomMinutes: string;
+  tgReminderSaveCustom: string;
+  tgReminderDeleteCustom: string;
   tgLowBalanceThreshold: string;
+  tgLowBalanceThresholdPrefix: string;
+  tgLowBalanceThresholdSuffix: string;
   tgRoutingTitle: string;
   tgRoutingStudent: string;
   tgRoutingTutor: string;
@@ -1619,7 +1722,13 @@ export interface StudentStrings {
   tgIsMinor: string;
   tgParentAccount: string;
   tgBindParent: string;
+  tgParentInviteHint: string;
+  tgParentConnected: string;
+  tgParentOpenLink: string;
+  tgParentShareInvite: string;
+  tgParentDisconnect: string;
   tgRoutingParent: string;
+  tgStatusConnected: string;
   tgConfigure: string;
   quickActionsTitle: string;
   lessonsShort: string;
@@ -1774,7 +1883,8 @@ export interface CalendarLesson extends Lesson {
 /** Автоматические Telegram-триггеры и маршрутизация получателей. */
 export interface StudentTelegramNotificationSettings {
   lesson_reminder_enabled: boolean;
-  lesson_reminder_offset_minutes: 15 | 60 | 120 | 1440;
+  /** Minutes before lesson start (built-ins: 15 / 30 / 60 / 1440, or custom). */
+  lesson_reminder_offset_minutes: number;
   low_balance_enabled: boolean;
   low_balance_threshold: number;
   payment_receipt_enabled: boolean;
@@ -1849,6 +1959,10 @@ export interface Student {
   telegram_parent_chat_id?: string | null;
   telegram_parent_username?: string | null;
   telegram_parent_linked_at?: string | null;
+  /** Opaque token for parent t.me deep link */
+  telegram_parent_link_token?: string | null;
+  /** https://t.me/<bot>?start=<parentToken> */
+  telegram_parent_deep_link?: string | null;
   /** Zoom / Meet / custom call URL for lesson notifications */
   meeting_link?: string | null;
   createdAt: string;

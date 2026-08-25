@@ -8,11 +8,12 @@ import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { markBillingCheckoutPending } from '../../core/utils/billing-return';
 import {
+  allowedPaymentProviders,
   paymentProviderForCountry,
   resolvePaymentProvider,
   type PaymentProviderId,
 } from '../../core/utils/payment-provider';
-import { getPlanPricing } from '../../core/utils/subscription-pricing';
+import { getPlanPricing, getEarlyAdopterYearly } from '../../core/utils/subscription-pricing';
 import {
   canPurchaseSubscription,
   isTaxModeConfigured,
@@ -55,6 +56,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
   readonly stripeReady = signal(true);
   readonly selectedProvider = signal<PaymentProviderId>('stripe');
   readonly preferredProvider = signal<PaymentProviderId>('stripe');
+  readonly allowedProviders = signal<PaymentProviderId[]>(['stripe']);
   readonly consentAccepted = signal(false);
 
   readonly plan = signal<CheckoutPlan>('pro');
@@ -67,8 +69,13 @@ export class PaymentComponent implements OnInit, OnDestroy {
   );
 
   readonly fallbackUsed = computed(
-    () => this.preferredProvider() === 'tribute' && this.selectedProvider() === 'stripe',
+    () =>
+      this.preferredProvider() === 'tribute' &&
+      this.selectedProvider() === 'stripe' &&
+      !this.allowedProviders().includes('tribute'),
   );
+
+  readonly choiceAllowed = computed(() => this.allowedProviders().length > 1);
 
   readonly hasTrial = computed(() => this.plan() === 'pro');
 
@@ -93,6 +100,20 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   readonly pricing = computed(() => getPlanPricing(this.plan(), this.country()));
 
+  readonly isEarlyYearly = computed(
+    () =>
+      this.plan() === 'pro' &&
+      this.interval() === 'yearly' &&
+      this.profile()?.isEarlyAdopter === true,
+  );
+
+  readonly hasReferralDiscount = computed(
+    () =>
+      this.plan() === 'pro' &&
+      Boolean(this.profile()?.referredBy) &&
+      !this.isEarlyYearly(),
+  );
+
   readonly amountLabel = computed(() => this.formatAmount(this.planAmount()));
 
   readonly zeroLabel = computed(() => this.formatAmount(0));
@@ -114,6 +135,17 @@ export class PaymentComponent implements OnInit, OnDestroy {
       currency: this.pricing().currency,
       period,
       days: this.trialDays(),
+    });
+  });
+
+  readonly thenYearTwoText = computed(() => {
+    if (!this.isEarlyYearly()) {
+      return null;
+    }
+    const p = this.pricing();
+    return fill(this.t().thenYearTwo, {
+      amount: this.formatAmount(p.yearly),
+      currency: p.currency,
     });
   });
 
@@ -179,6 +211,11 @@ export class PaymentComponent implements OnInit, OnDestroy {
         this.profile.set(user);
         const preferred = paymentProviderForCountry(this.country());
         this.preferredProvider.set(preferred);
+        const initialAllowed = allowedPaymentProviders(this.country(), {
+          tributeReady: false,
+          stripeReady: true,
+        });
+        this.allowedProviders.set(initialAllowed);
         this.selectedProvider.set(
           resolvePaymentProvider(this.country(), {
             tributeReady: false,
@@ -193,13 +230,21 @@ export class PaymentComponent implements OnInit, OnDestroy {
             this.preferredProvider.set(
               opts.preferredProvider ?? paymentProviderForCountry(opts.country),
             );
-            this.selectedProvider.set(
+            const allowed =
+              opts.allowedProviders?.length
+                ? opts.allowedProviders
+                : allowedPaymentProviders(opts.country, {
+                    tributeReady: opts.tributeReady,
+                    stripeReady: opts.stripeReady,
+                  });
+            this.allowedProviders.set(allowed);
+            const next =
               opts.provider ??
-                resolvePaymentProvider(opts.country, {
-                  tributeReady: opts.tributeReady,
-                  stripeReady: opts.stripeReady,
-                }),
-            );
+              resolvePaymentProvider(opts.country, {
+                tributeReady: opts.tributeReady,
+                stripeReady: opts.stripeReady,
+              });
+            this.selectedProvider.set(allowed.includes(next) ? next : (allowed[0] ?? next));
           },
           error: () => undefined,
         });
@@ -217,6 +262,18 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   providerEnabled(id: PaymentProviderId): boolean {
     return id === 'tribute' ? this.tributeReady() : this.stripeReady();
+  }
+
+  providerVisible(id: PaymentProviderId): boolean {
+    return this.allowedProviders().includes(id);
+  }
+
+  selectProvider(id: PaymentProviderId): void {
+    if (!this.providerVisible(id) || !this.providerEnabled(id)) {
+      return;
+    }
+    this.selectedProvider.set(id);
+    this.error.set(null);
   }
 
   onConsentChange(event: Event): void {
@@ -262,6 +319,17 @@ export class PaymentComponent implements OnInit, OnDestroy {
   }
 
   private planAmount(): number {
+    const p = this.pricing();
+    if (this.isEarlyYearly()) {
+      return getEarlyAdopterYearly(p);
+    }
+    if (this.hasReferralDiscount()) {
+      return Math.round(this.catalogAmount() * 0.8 * 100) / 100;
+    }
+    return this.catalogAmount();
+  }
+
+  private catalogAmount(): number {
     const p = this.pricing();
     return this.interval() === 'yearly' ? p.yearly : p.monthly;
   }

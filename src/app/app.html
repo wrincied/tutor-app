@@ -1,11 +1,13 @@
 @if (showNavbar()) {
   <div class="app-shell">
     <app-navbar />
+    <app-header />
     <div class="app-content">
       <div class="app-page-host">
         <router-outlet />
       </div>
     </div>
+    <app-bottom-nav />
   </div>
 } @else {
   <div class="app-public-host">

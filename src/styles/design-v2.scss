@@ -58,14 +58,12 @@ html[data-design='v2'] {
   }
 
   .bottom-nav {
-    background: color-mix(in srgb, #f7fbf8 92%, #fff);
-    border-top: 1px solid var(--nav-border);
-    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, #f7fbf8 90%, #fff);
+    border-color: color-mix(in srgb, var(--nav-border) 75%, transparent);
   }
 
-  .bottom-link.active {
-    color: var(--moss, #0f3d34);
-    font-weight: 700;
+  .bottom-link.active .bottom-link__icon {
+    background: var(--ink, #071714);
   }
 }
 
@@ -75,9 +73,18 @@ html[data-design='v2'][data-theme='dark'] {
   --accent: #e7f5ef;
 
   .nav-link.active,
-  .sidebar-btn--account.active,
-  .bottom-link.active {
+  .sidebar-btn--account.active {
     color: var(--nav-accent);
+  }
+
+  .bottom-nav {
+    background: color-mix(in srgb, var(--nav-bg) 82%, #0a1f1b);
+    border-color: color-mix(in srgb, var(--nav-border) 70%, transparent);
+  }
+
+  .bottom-link.active .bottom-link__icon {
+    background: #f8fafc;
+    color: var(--ink, #071714);
   }
 }
 

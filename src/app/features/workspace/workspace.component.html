@@ -28,19 +28,54 @@
             </header>
 
             <div class="workspace-field">
-              <label class="workspace-label" for="workspace-duration">
-                {{ i18n.accountUi().workspaceDefaultDuration }}
-              </label>
-              <div class="workspace-duration">
-                <app-select
-                  id="workspace-duration"
-                  name="workspaceDuration"
-                  [ngModel]="duration + ''"
-                  (ngModelChange)="onDurationChange($event)"
-                  [options]="durationOptions()"
-                  menuPlacement="below"
-                />
+              <p class="workspace-label">{{ i18n.accountUi().workspaceDefaultDuration }}</p>
+              <div
+                class="workspace-duration-chips"
+                role="group"
+                [attr.aria-label]="i18n.accountUi().workspaceDefaultDuration"
+              >
+                @for (value of durationPresets; track value) {
+                  <button
+                    type="button"
+                    class="workspace-day"
+                    [class.workspace-day--active]="durationMode === 'preset' && durationPreset === value"
+                    (click)="selectDurationPreset(value)"
+                    [attr.aria-pressed]="durationMode === 'preset' && durationPreset === value"
+                  >
+                    {{ value }} {{ i18n.calendarUi().durationMinShort }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="workspace-day"
+                  [class.workspace-day--active]="durationMode === 'custom'"
+                  (click)="selectDurationCustom()"
+                  [attr.aria-pressed]="durationMode === 'custom'"
+                >
+                  {{ i18n.accountUi().workspaceDurationCustom }}
+                </button>
               </div>
+              @if (durationMode === 'custom') {
+                <div class="workspace-duration-custom">
+                  <input
+                    id="workspace-custom-duration"
+                    class="workspace-duration-custom__input"
+                    type="number"
+                    name="customDuration"
+                    [min]="durationMin"
+                    [max]="durationMax"
+                    step="5"
+                    [(ngModel)]="customDuration"
+                    [attr.aria-label]="i18n.accountUi().workspaceDurationCustomHint"
+                  />
+                  <span class="workspace-duration-custom__suffix">
+                    {{ i18n.calendarUi().durationMinShort }}
+                  </span>
+                </div>
+                <p class="workspace-duration-custom__hint">
+                  {{ i18n.accountUi().workspaceDurationCustomHint }}
+                </p>
+              }
             </div>
 
             <div class="workspace-field">

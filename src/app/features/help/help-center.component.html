@@ -97,6 +97,7 @@
         <button type="submit" class="help-page__cta help-page__cta--solid" [disabled]="submitting()">
           {{ submitting() ? i18n.helpFormUi().sending : i18n.helpFormUi().submit }}
         </button>
+        <app-recaptcha-legal />
       </form>
     </section>
   }

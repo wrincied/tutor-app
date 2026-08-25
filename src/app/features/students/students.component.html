@@ -28,7 +28,12 @@
   @if (toastMessage(); as toast) {
     <div class="students-toast" role="status">
       <span>{{ toast }}</span>
-      <button type="button" class="students-toast__close" (click)="dismissToast()" [attr.aria-label]="t.close">
+      <button
+        type="button"
+        class="students-toast__close"
+        (click)="dismissToast()"
+        [attr.aria-label]="t.close"
+      >
         ×
       </button>
     </div>
@@ -40,11 +45,10 @@
       <div class="skeleton-cards">
         @for (i of skeletonCardSlots; track i) {
           <div class="skeleton-card">
-            <span class="skeleton skeleton--circle" style="width: 0.5rem; height: 2.5rem"></span>
             <div class="skeleton-card__body">
-              <span class="skeleton skeleton--line" style="width: 72%"></span>
-              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 90%"></span>
-              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 40%"></span>
+              <span class="skeleton skeleton--line" style="width: 78%"></span>
+              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 64%"></span>
+              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 36%"></span>
             </div>
           </div>
         }
@@ -54,109 +58,19 @@
     <p class="hint">{{ t.emptyState }}</p>
   } @else {
     <div class="students-list">
-      @if (!desktopLayout()) {
-        <div class="students-cards" role="list">
-          @for (s of students(); track s._id) {
-            <button
-              type="button"
-              class="student-card"
-              role="listitem"
-              [attr.data-student-id]="s._id"
-              [class.student-card--highlight]="isStudentHighlighted(s._id)"
-              (click)="openQuickActions(s)"
-            >
-              <span
-                class="student-card__color"
-                [style.background-color]="studentColor(s)"
-                aria-hidden="true"
-              ></span>
-              <span class="student-card__body">
-                <span class="student-card__name">{{ s.name }}</span>
-                <span class="student-card__meta">{{ formatStudentRate(s) }}</span>
-                <span class="student-card__balance">{{ formatStudentBalance(s) }}</span>
-                <span class="student-card__paid">{{ formatLastPaid(s) }}</span>
-              </span>
-            </button>
-          }
-        </div>
-      } @else {
-        <div class="students-grid">
-          <div class="students-grid__head">
-            <span class="students-grid__col students-grid__col--name">{{ t.name }}</span>
-            <span class="students-grid__col students-grid__col--color">{{ t.calendarColor }}</span>
-            <span class="students-grid__col students-grid__col--rate">{{ t.rateColumn }}</span>
-            <span class="students-grid__col students-grid__col--paid">{{ t.totalPaidColumn }}</span>
-            <span class="students-grid__col students-grid__col--balance">{{ t.balanceLessons }}</span>
-            <span class="students-grid__col students-grid__col--bot">{{ t.botNotifications }}</span>
-            <span class="students-grid__col students-grid__col--actions"></span>
-          </div>
-
-          <div class="students-grid__body" role="list">
-            @for (s of students(); track s._id) {
-              <article
-                class="students-grid__row"
-                role="listitem"
-                [attr.data-student-id]="s._id"
-                [class.students-grid__row--highlight]="isStudentHighlighted(s._id)"
-              >
-              <div class="students-grid__col students-grid__col--name">
-                <span class="students-grid__name">{{ s.name }}</span>
-              </div>
-
-              <div class="students-grid__col students-grid__col--color">
-                <input
-                  type="color"
-                  class="student-color-input"
-                  [value]="colorToHexForPicker(s.color_hex)"
-                  (change)="onTableColorChange(s, $event)"
-                  [attr.aria-label]="t.calendarColor + ': ' + s.name"
-                />
-              </div>
-
-              <div class="students-grid__col students-grid__col--rate">
-                {{ formatStudentRate(s) }}
-              </div>
-
-              <div class="students-grid__col students-grid__col--paid">
-                <span class="students-grid__paid">{{ formatLastPaid(s) }}</span>
-                <button type="button" class="btn-link" (click)="openTopup(s._id)">
-                  + {{ t.topup }}
-                </button>
-              </div>
-
-              <div class="students-grid__col students-grid__col--balance">
-                <button
-                  type="button"
-                  class="btn-link students-grid__balance-btn"
-                  [attr.title]="t.balanceAdjustTooltip"
-                  (click)="openBalanceAdjust(s, $event)"
-                >
-                  {{ formatStudentBalance(s) }}
-                </button>
-              </div>
-
-              <div class="students-grid__col students-grid__col--bot">
-                <app-telegram-cell
-                  [student]="s"
-                  [labels]="telegramCellLabels()"
-                  (bindClick)="inviteStudentToBot($event)"
-                  (configureClick)="openTelegramSettings($event)"
-                />
-              </div>
-
-              <div class="students-grid__col students-grid__col--actions">
-                <div class="students-grid__actions">
-                  <button type="button" class="btn-link" (click)="openEdit(s)">{{ t.edit }}</button>
-                  <button type="button" class="btn-link danger" (click)="openDeleteConfirm(s._id)">
-                    {{ t.delete }}
-                  </button>
-                </div>
-              </div>
-            </article>
-          }
-        </div>
-        </div>
-      }
+      <div class="students-cards" role="list">
+        @for (s of students(); track s._id) {
+          <app-student-card
+            [student]="toStudentCardData(s)"
+            [labels]="studentCardLabels()"
+            [highlighted]="isStudentHighlighted(s._id)"
+            (openDetails)="onStudentCardOpenDetails($event)"
+            (topUp)="onStudentCardTopUp($event)"
+            (toggleNotifications)="onStudentCardToggleNotifications($event)"
+            (tgConnect)="onStudentCardTgConnect($event)"
+          />
+        }
+      </div>
     </div>
   }
 
@@ -176,9 +90,8 @@
 <app-dialog
   [open]="!!quickActionsStudent()"
   layout="sheet"
-  [title]="quickActionsStudent()?.name ?? t.quickActionsTitle"
+  [title]="displayStudentName(quickActionsStudent()?.name) || t.quickActionsTitle"
   [hideTitle]="true"
-  [showHandle]="true"
   (cancel)="closeQuickActions()"
 >
   @if (quickActionsStudent(); as student) {
@@ -190,7 +103,7 @@
           aria-hidden="true"
         ></span>
         <div class="student-sheet__heading">
-          <h2 class="student-sheet__name">{{ student.name }}</h2>
+          <h2 class="student-sheet__name">{{ displayStudentName(student.name) }}</h2>
           <p class="student-sheet__meta">
             {{ formatStudentRate(student) }} ·
             <button
@@ -225,18 +138,30 @@
           <span class="student-sheet__tg-cta">{{ t.tgStatusConfigure }}</span>
         </button>
       } @else {
-        <button type="button" class="student-sheet__tg student-sheet__tg--off" (click)="inviteFromQuick()">
+        <button
+          type="button"
+          class="student-sheet__tg student-sheet__tg--off"
+          (click)="inviteFromQuick()"
+        >
           <span class="student-sheet__tg-text">{{ t.tgStatusDisconnected }}</span>
           <span class="student-sheet__tg-cta">{{ t.tgStatusBind }}</span>
         </button>
       }
 
-      <button type="button" class="btn-primary student-sheet__primary" (click)="openTopupFromQuick()">
+      <button
+        type="button"
+        class="btn-primary student-sheet__primary"
+        (click)="openTopupFromQuick()"
+      >
         {{ t.topupPrimaryCta }}
       </button>
 
       <div class="student-sheet__row">
-        <button type="button" class="btn-secondary student-sheet__secondary" (click)="openEdit(student)">
+        <button
+          type="button"
+          class="btn-secondary student-sheet__secondary"
+          (click)="openEdit(student)"
+        >
           {{ t.edit }}
         </button>
         <button
@@ -279,7 +204,12 @@
 <app-dialog
   [open]="!!inviteDialogStudent()"
   size="lg"
-  [title]="inviteDialogStudent() ? (t.tgLinkTitle + ' — ' + inviteDialogStudent()!.name) : t.botInviteDialogTitle"
+  [stackOnTop]="true"
+  [title]="
+    inviteDialogStudent()
+      ? t.tgLinkTitle + ' — ' + displayStudentName(inviteDialogStudent()!.name)
+      : t.botInviteDialogTitle
+  "
   [cancelLabel]="t.close"
   (cancel)="closeInviteDialog()"
 >
@@ -314,240 +244,19 @@
           <span class="invite-dialog__pulse" aria-hidden="true"></span>
           {{ t.tgWaitingActivation }}
         </p>
-        <button type="button" class="btn-link invite-dialog__advanced" (click)="toggleManualChatId()">
-          {{ t.tgManualChatId }}
-        </button>
-        @if (showManualChatId()) {
-          <div class="invite-dialog__manual">
-            <p class="invite-dialog__hint">{{ t.tgManualChatIdHint }}</p>
-            <input
-              type="text"
-              inputmode="numeric"
-              [ngModel]="manualChatId()"
-              (ngModelChange)="manualChatId.set($event)"
-              [attr.aria-label]="t.tgManualChatId"
-              placeholder="123456789"
-            />
-            <label class="invite-dialog__consent">
-              <input
-                type="checkbox"
-                [checked]="manualChatConsent()"
-                (change)="manualChatConsent.set($any($event.target).checked)"
-              />
-              <span>{{ t.tgManualChatConsent }}</span>
-            </label>
-            <button
-              type="button"
-              class="btn btn--secondary"
-              [disabled]="!manualChatConsent() || !manualChatId().trim()"
-              (click)="submitManualChatId()"
-            >
-              {{ t.tgManualChatIdSubmit }}
-            </button>
-          </div>
-        }
       }
     </div>
   }
 </app-dialog>
 
-<app-dialog
-  [open]="!!settingsStudent()"
-  layout="drawer"
-  [title]="settingsStudent() ? (t.tgSettingsTitle + ' — ' + settingsStudent()!.name) : t.tgSettingsTitle"
-  [cancelLabel]="t.cancel"
-  [confirmLabel]="settingsSaving() ? t.saving : t.save"
-  [leadingLabel]="t.botDisconnect"
-  [leadingDanger]="true"
-  (cancel)="closeTelegramSettings()"
-  (confirm)="saveTelegramSettings()"
-  (leading)="requestDisconnectFromSettings()"
->
-  @if (settingsStudent(); as student) {
-    <div class="tg-settings">
-      <section class="tg-settings__section">
-        <h3 class="tg-settings__heading">{{ t.tgActiveAccount }}</h3>
-        <dl class="telegram-profile">
-          <div>
-            <dt>{{ t.botTelegramUid }}</dt>
-            <dd>{{ student.telegram_user_id || student.telegram_chat_id || '—' }}</dd>
-          </div>
-          <div>
-            <dt>{{ t.botTelegramUsername }}</dt>
-            <dd>
-              @if (student.telegram_username) {
-                &#64;{{ student.telegram_username }}
-              } @else {
-                —
-              }
-            </dd>
-          </div>
-          <div>
-            <dt>{{ t.tgLinkedAt }}</dt>
-            <dd>{{ formatLinkedAt(student.telegram_linked_at) }}</dd>
-          </div>
-        </dl>
-        @if (student.telegram_delivery_status === 'error') {
-          <p class="form-error" role="alert">{{ telegramErrorTooltip(student) }}</p>
-        }
-        <button
-          type="button"
-          class="bot-toggle bot-toggle--form"
-          [class.bot-toggle--on]="student.bot_active"
-          (click)="requestBotToggle(student)"
-        >
-          {{ student.bot_active ? t.botEnabled : t.botDisabled }}
-        </button>
-      </section>
-
-      <section class="tg-settings__section" [class.tg-settings__section--disabled]="telegramTogglesDisabled()">
-        <h3 class="tg-settings__heading">{{ t.tgTriggersTitle }}</h3>
-        @if (telegramTogglesDisabled()) {
-          <p class="tg-settings__hint">{{ t.tgNeedsLinkHint }}</p>
-        }
-        <label class="tg-toggle-row">
-          <span>{{ t.tgTriggerReminder }}</span>
-          <input
-            type="checkbox"
-            role="switch"
-            [disabled]="telegramTogglesDisabled()"
-            [checked]="settingsDraft().lesson_reminder_enabled"
-            (change)="updateSettingsDraft({ lesson_reminder_enabled: $any($event.target).checked })"
-          />
-        </label>
-        @if (settingsDraft().lesson_reminder_enabled) {
-          <div class="field">
-            <app-select
-              size="compact"
-              [ngModel]="reminderOffsetValue()"
-              (ngModelChange)="setReminderOffset($event)"
-              [options]="reminderOffsetOptions()"
-              [disabled]="telegramTogglesDisabled()"
-            />
-          </div>
-        }
-        <label class="tg-toggle-row">
-          <span>{{ t.tgTriggerLowBalance }}</span>
-          <input
-            type="checkbox"
-            role="switch"
-            [disabled]="telegramTogglesDisabled()"
-            [checked]="settingsDraft().low_balance_enabled"
-            (change)="updateSettingsDraft({ low_balance_enabled: $any($event.target).checked })"
-          />
-        </label>
-        @if (settingsDraft().low_balance_enabled) {
-          <div class="field">
-            <label>{{ t.tgLowBalanceThreshold }}</label>
-            <input
-              type="number"
-              min="1"
-              max="99"
-              [disabled]="telegramTogglesDisabled()"
-              [ngModel]="settingsDraft().low_balance_threshold"
-              (ngModelChange)="updateSettingsDraft({ low_balance_threshold: +$event || 1 })"
-            />
-          </div>
-        }
-        <label class="tg-toggle-row">
-          <span>{{ t.tgTriggerPayment }}</span>
-          <input
-            type="checkbox"
-            role="switch"
-            [disabled]="telegramTogglesDisabled()"
-            [checked]="settingsDraft().payment_receipt_enabled"
-            (change)="updateSettingsDraft({ payment_receipt_enabled: $any($event.target).checked })"
-          />
-        </label>
-      </section>
-
-      <section class="tg-settings__section" [class.tg-settings__section--disabled]="telegramTogglesDisabled()">
-        <h3 class="tg-settings__heading">{{ t.tgRoutingTitle }}</h3>
-        <label class="tg-radio-row">
-          <input
-            type="radio"
-            name="tg-routing"
-            value="student"
-            [disabled]="telegramTogglesDisabled()"
-            [checked]="settingsDraft().routing === 'student'"
-            (change)="updateSettingsDraft({ routing: 'student' })"
-          />
-          <span>{{ t.tgRoutingStudent }}</span>
-        </label>
-        <label class="tg-radio-row">
-          <input
-            type="radio"
-            name="tg-routing"
-            value="tutor"
-            [disabled]="telegramTogglesDisabled()"
-            [checked]="settingsDraft().routing === 'tutor'"
-            (change)="updateSettingsDraft({ routing: 'tutor' })"
-          />
-          <span>{{ t.tgRoutingTutor }}</span>
-        </label>
-        <label class="tg-radio-row">
-          <input
-            type="radio"
-            name="tg-routing"
-            value="both"
-            [disabled]="telegramTogglesDisabled()"
-            [checked]="settingsDraft().routing === 'both'"
-            (change)="updateSettingsDraft({ routing: 'both' })"
-          />
-          <span>{{ t.tgRoutingBoth }}</span>
-        </label>
-      </section>
-
-      <section class="tg-settings__section">
-        <label class="tg-toggle-row">
-          <span>{{ t.tgIsMinor }}</span>
-          <input
-            type="checkbox"
-            [checked]="settingsIsMinor()"
-            (change)="settingsIsMinor.set($any($event.target).checked)"
-          />
-        </label>
-        @if (settingsIsMinor()) {
-          <div class="tg-settings__parent">
-            <p class="tg-settings__heading">{{ t.tgParentAccount }}</p>
-            @if (student.telegram_parent_chat_id) {
-              <p class="tg-settings__hint">ID: {{ student.telegram_parent_chat_id }}</p>
-            } @else {
-              <p class="tg-settings__hint">{{ t.tgNotConnected }}</p>
-              <div class="invite-dialog__manual">
-                <p class="tg-settings__hint">{{ t.tgManualChatIdHint }}</p>
-                <input
-                  type="text"
-                  inputmode="numeric"
-                  [ngModel]="manualChatId()"
-                  (ngModelChange)="manualChatId.set($event)"
-                  [attr.aria-label]="t.tgManualChatId"
-                  placeholder="123456789"
-                />
-                <label class="invite-dialog__consent">
-                  <input
-                    type="checkbox"
-                    [checked]="manualChatConsent()"
-                    (change)="manualChatConsent.set($any($event.target).checked)"
-                  />
-                  <span>{{ t.tgManualChatConsent }}</span>
-                </label>
-                <button
-                  type="button"
-                  class="btn btn--secondary"
-                  [disabled]="!manualChatConsent() || !manualChatId().trim() || settingsSaving()"
-                  (click)="submitParentChatId()"
-                >
-                  {{ t.tgBindParent }}
-                </button>
-              </div>
-            }
-          </div>
-        }
-      </section>
-    </div>
-  }
-</app-dialog>
+<app-notification-settings
+  [student]="settingsStudent()"
+  (studentChange)="onNotificationStudentChange($event)"
+  (closed)="closeTelegramSettings()"
+  (requestBotToggle)="requestBotToggle($event)"
+  (requestDisconnect)="requestTelegramDisconnect($event)"
+  (toast)="showToast($event)"
+/>
 
 <app-dialog
   [open]="showForm()"
@@ -715,59 +424,92 @@
       }
     </fieldset>
 
-    <div class="field telegram-block">
-      <p class="telegram-block__title">{{ t.botNotifications }}</p>
+    <fieldset
+      class="field billing-section"
+      [class.billing-section--inactive]="!editTarget() && !isTelegramLinked()"
+    >
+      <legend>{{ t.botNotifications }}</legend>
       @if (isTelegramLinked()) {
-        <dl class="telegram-profile">
-          <div>
-            <dt>{{ t.botTelegramUid }}</dt>
-            <dd>{{ editTarget()?.telegram_user_id || editTarget()?.telegram_chat_id }}</dd>
-          </div>
-          <div>
-            <dt>{{ t.botTelegramUsername }}</dt>
-            <dd>
-              @if (editTarget()?.telegram_username) {
-                &#64;{{ editTarget()?.telegram_username }}
-              } @else {
-                —
-              }
-            </dd>
-          </div>
-          <div>
-            <dt>{{ t.botTelegramName }}</dt>
-            <dd>{{ editTarget()?.telegram_display_name || '—' }}</dd>
-          </div>
-        </dl>
+        <p class="field-hint">
+          <span class="tg-status-dot" aria-hidden="true"></span>
+          {{ t.tgConnected }}
+          @if (editTarget()?.telegram_username; as username) {
+            · &#64;{{ username }}
+          }
+        </p>
         @if (editTarget()?.telegram_delivery_status === 'error') {
           <p class="form-error" role="alert">{{ telegramErrorTooltip(editTarget()!) }}</p>
         }
-        <button
-          type="button"
-          class="btn btn--secondary telegram-invite__cta"
-          (click)="openTelegramSettings(editTarget()!)"
-        >
-          {{ t.tgConfigure }}
-        </button>
-        <button
-          type="button"
-          class="btn btn--secondary telegram-disconnect"
-          (click)="requestTelegramDisconnect()"
-        >
-          {{ t.botDisconnect }}
-        </button>
+        <div class="telegram-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            [disabled]="!editTarget()?.telegram_username"
+            (click)="openStudentTelegramChat()"
+          >
+            {{ t.tgOpenTelegram }}
+          </button>
+          <button type="button" class="btn-link danger" (click)="requestTelegramDisconnect()">
+            {{ t.botDisconnectConfirm }}
+          </button>
+        </div>
+      } @else if (!editTarget()) {
+        <p class="field-hint">{{ t.tgInviteAfterCreateHint }}</p>
       } @else {
-        <p class="telegram-block__hint">{{ t.botInviteHint }}</p>
-        <p class="telegram-block__status">{{ t.tgNeedsLinkHint }}</p>
+        <p class="field-hint">{{ t.tgNotConnected }}</p>
+        @if (formInviteLoading()) {
+          <p class="field-hint" aria-live="polite">{{ t.saving }}</p>
+        } @else if (formInviteError(); as err) {
+          <p class="form-error" role="alert">{{ err }}</p>
+          <button type="button" class="btn-secondary" (click)="connectTelegramFromForm()">
+            {{ t.tgStatusBind }}
+          </button>
+        } @else if (formInviteLink(); as link) {
+          <label [attr.for]="'st-tg-invite'">{{ t.studentTelegramSendLink }}</label>
+          <div class="telegram-invite">
+            <input
+              id="st-tg-invite"
+              type="text"
+              readonly
+              [value]="link"
+              class="input-readonly"
+            />
+            <button type="button" class="btn-secondary" (click)="copyFormInviteLink()">
+              {{ linkCopied() ? t.botLinkCopied : t.botCopyLink }}
+            </button>
+          </div>
+          <button type="button" class="btn-secondary" (click)="shareFormInviteLink()">
+            {{ t.tgShareInTelegram }}
+          </button>
+        } @else {
+          <button type="button" class="btn-secondary" (click)="connectTelegramFromForm()">
+            {{ t.tgStatusBind }}
+          </button>
+        }
+      }
+    </fieldset>
+
+    <fieldset class="field billing-section">
+      <legend>{{ t.meetingLinkLabel }}</legend>
+      <div class="video-call-presets" role="group" [attr.aria-label]="t.meetingLinkLabel">
         <button
           type="button"
-          class="btn btn--secondary telegram-invite__cta"
-          (click)="inviteStudentToBot()"
+          class="video-call-presets__btn"
+          [class.video-call-presets__btn--active]="meetingPresetActive('meet')"
+          (click)="applyMeetingPreset('meet')"
         >
-          {{ t.tgBind }}
+          {{ t.meetingLinkMeet }}
         </button>
-      }
-
-      <label for="st-meeting">{{ t.meetingLinkLabel }}</label>
+        <button
+          type="button"
+          class="video-call-presets__btn"
+          [class.video-call-presets__btn--active]="meetingPresetActive('zoom')"
+          (click)="applyMeetingPreset('zoom')"
+        >
+          {{ t.meetingLinkZoom }}
+        </button>
+      </div>
+      <label class="sr-only" for="st-meeting">{{ t.meetingLinkLabel }}</label>
       <input
         id="st-meeting"
         type="url"
@@ -775,7 +517,7 @@
         name="meeting_link"
         [placeholder]="t.meetingLinkPlaceholder"
       />
-    </div>
+    </fieldset>
   </form>
 </app-dialog>
 
@@ -797,49 +539,147 @@
   size="md"
   layout="sheet"
   [stackOnTop]="true"
-  [showHandle]="true"
   [closeOnOverlay]="false"
   [title]="t.topupTitle"
+  [subtitle]="t.topupSubtitle"
   [cancelLabel]="t.cancel"
   [confirmLabel]="t.topupApply"
   (cancel)="closeTopup()"
   (confirm)="applyTopup()"
 >
   @if (topupStudent(); as student) {
-    <div class="topup-form">
-      <div class="field">
-        <label for="topup-money">{{ t.topupAmountLabel }} ({{ i18n.currencyLabel(rateCurrencyOf(student)) }})</label>
-        <input
-          id="topup-money"
-          type="number"
-          min="0"
-          step="0.01"
-          inputmode="decimal"
-          [ngModel]="topupMoney()"
-          (ngModelChange)="onTopupMoneyChange($event)"
-        />
-      </div>
-      <div class="field">
-        <label for="topup-units">{{ topupUnitsLabel() }}</label>
-        <input
-          id="topup-units"
-          type="number"
-          [min]="topupStep()"
-          [step]="topupStep()"
-          inputmode="decimal"
-          [ngModel]="topupUnits()"
-          (ngModelChange)="onTopupUnitsChange($event)"
-        />
-      </div>
-      <div class="field">
-        <label for="topup-date">{{ t.topupDateLabel }}</label>
-        <input
-          id="topup-date"
-          type="date"
-          [ngModel]="topupPaidAt()"
-          (ngModelChange)="topupPaidAt.set($event)"
-        />
-      </div>
+    <div class="topup">
+      <section class="topup__hero">
+        <label class="topup__amount" for="topup-money">
+          <span class="topup__amount-label">{{ t.topupAmountLabel }}</span>
+          <span class="topup__amount-row">
+            <span class="topup__currency-symbol" aria-hidden="true">{{
+              currencySymbol(rateCurrencyOf(student))
+            }}</span>
+            <input
+              id="topup-money"
+              class="topup__amount-input"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              [ngModel]="topupMoneyDisplay()"
+              (ngModelChange)="onTopupMoneyChange($event)"
+              (focus)="onTopupMoneyFocus($event)"
+            />
+            <span class="topup__currency">{{ i18n.currencyLabel(rateCurrencyOf(student)) }}</span>
+          </span>
+        </label>
+
+        <div class="topup__presets" role="group" [attr.aria-label]="t.topupPresetsLabel">
+          @for (preset of topupPresets(); track preset.id) {
+            <button
+              type="button"
+              class="topup__chip"
+              [class.topup__chip--active]="topupPreset() === preset.id"
+              (click)="selectTopupPreset(preset)"
+            >
+              {{ preset.label }}
+            </button>
+          }
+          <button
+            type="button"
+            class="topup__chip"
+            [class.topup__chip--active]="topupPreset() === 'custom'"
+            (click)="selectTopupCustom()"
+          >
+            {{ t.topupCustom }}
+          </button>
+        </div>
+      </section>
+
+      <section class="topup__summary" aria-live="polite">
+        <p class="topup__summary-label">{{ t.topupWillAdd }}</p>
+        <div class="topup__units">
+          <svg
+            class="topup__icon topup__icon--accent"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          <span class="topup__units-value">{{ formatTopupUnits(student) }}</span>
+        </div>
+        <p class="topup__rate">
+          <span class="topup__rate-label">{{ t.topupRateLabel }}</span>
+          <span class="topup__rate-value">{{ formatStudentRate(student) }}</span>
+        </p>
+      </section>
+
+      <section class="topup__field">
+        <label class="topup__field-label" for="topup-date">{{ t.topupDateLabel }}</label>
+        <div class="topup__date">
+          <svg
+            class="topup__icon topup__icon--muted"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M16 3v4M8 3v4M3 11h18" />
+          </svg>
+          <app-date-input
+            id="topup-date"
+            mode="date"
+            inputClass="topup__date-input"
+            [ariaLabel]="t.topupDateLabel"
+            [ngModel]="topupPaidAt()"
+            (ngModelChange)="topupPaidAt.set($event)"
+          />
+        </div>
+      </section>
+
+      <section class="topup__receipt">
+        <label class="topup__toggle" [class.topup__toggle--disabled]="!isTelegramLinked(student)">
+          <span class="topup__toggle-copy">
+            <span class="topup__toggle-title">{{ t.topupSendReceipt }}</span>
+            @if (isTelegramLinked(student)) {
+              <span class="topup__toggle-hint">{{ t.topupReceiptHint }}</span>
+            } @else {
+              <span class="topup__toggle-hint topup__toggle-hint--warn">{{
+                t.topupReceiptDisconnected
+              }}</span>
+              <button
+                type="button"
+                class="topup__link-btn"
+                (click)="openInviteDialog(student); $event.preventDefault(); $event.stopPropagation()"
+              >
+                {{ t.tgStatusBind }}
+              </button>
+            }
+          </span>
+          <span class="topup__switch">
+            <input
+              type="checkbox"
+              role="switch"
+              [checked]="topupSendReceipt()"
+              [disabled]="!isTelegramLinked(student)"
+              (change)="topupSendReceipt.set($any($event.target).checked)"
+            />
+            <span class="topup__switch-track" aria-hidden="true">
+              <span class="topup__switch-thumb"></span>
+            </span>
+          </span>
+        </label>
+      </section>
     </div>
   }
 </app-dialog>
@@ -849,7 +689,6 @@
   size="md"
   layout="sheet"
   [stackOnTop]="true"
-  [showHandle]="true"
   [title]="t.balanceAdjustTitle"
   [cancelLabel]="t.cancel"
   [confirmLabel]="adjustSaving() ? t.saving : t.save"

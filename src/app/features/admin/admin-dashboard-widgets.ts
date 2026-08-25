@@ -14,6 +14,8 @@ export const ADMIN_DASHBOARD_WIDGETS: AdminDashboardWidgetDef[] = [
   { id: 'kpi-trial-users', labelKey: 'widgetKpiTrialUsers', group: 'kpi' },
   { id: 'kpi-conversion', labelKey: 'widgetKpiConversion', group: 'kpi' },
   { id: 'kpi-mrr', labelKey: 'widgetKpiMrr', group: 'kpi' },
+  { id: 'kpi-core-activation', labelKey: 'widgetKpiCoreActivation', group: 'kpi' },
+  { id: 'kpi-finance-adoption', labelKey: 'widgetKpiFinanceAdoption', group: 'kpi' },
   { id: 'segments', labelKey: 'widgetSegments', group: 'analytics' },
   { id: 'activation-funnel', labelKey: 'widgetActivationFunnel', group: 'analytics' },
   { id: 'alerts', labelKey: 'widgetAlerts', group: 'analytics' },

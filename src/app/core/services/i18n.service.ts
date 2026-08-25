@@ -11,23 +11,35 @@ const STORAGE_KEY = 'tutor_lang';
 const LANG_LABEL: Record<Lang, string> = {
   de: 'Deutsch',
   en: 'English',
-  by: 'Беларуская',
-  uk: 'Українська',
   ru: 'Русский',
-  kz: 'Қазақша',
+  by: 'Русский',
+  uk: 'Русский',
+  kz: 'Русский',
 };
 
-const ALL_LANGS: Lang[] = ['de', 'en', 'by', 'uk', 'ru', 'kz'];
+/** UI picker: EN / DE / RU. Other packs stay in the repo for later. */
+const ALL_LANGS: Lang[] = ['en', 'de', 'ru'];
 
 const LOCALE_TO_LANG: Record<string, Lang> = {
   ru: 'ru',
   en: 'en',
   de: 'de',
-  kk: 'kz',
-  kz: 'kz',
-  uk: 'uk',
-  be: 'by',
+  kk: 'ru',
+  kz: 'ru',
+  uk: 'ru',
+  be: 'ru',
 };
+
+function coerceUiLang(raw: string | null | undefined): Lang | null {
+  const value = String(raw ?? '').trim().toLowerCase();
+  if (value === 'en' || value === 'de' || value === 'ru') {
+    return value;
+  }
+  if (value === 'uk' || value === 'by' || value === 'kz' || value === 'kk' || value === 'be') {
+    return 'ru';
+  }
+  return null;
+}
 
 function mapLocaleToLang(tag: string): Lang | null {
   const primary = tag.trim().toLowerCase().split(/[-_]/)[0];
@@ -40,7 +52,7 @@ function detectDeviceLang(): Lang {
   }
   const candidates = [...(navigator.languages ?? []), navigator.language].filter(Boolean);
   for (const tag of candidates) {
-    const lang = mapLocaleToLang(tag);
+    const lang = coerceUiLang(mapLocaleToLang(tag));
     if (lang) {
       return lang;
     }
@@ -65,9 +77,12 @@ function syncDocumentLang(lang: Lang): void {
 
 function readStoredLang(): Lang {
   if (typeof localStorage !== 'undefined') {
-    const v = localStorage.getItem(STORAGE_KEY);
-    if (v && (ALL_LANGS as string[]).includes(v)) {
-      return v as Lang;
+    const stored = coerceUiLang(localStorage.getItem(STORAGE_KEY));
+    if (stored) {
+      if (localStorage.getItem(STORAGE_KEY) !== stored) {
+        localStorage.setItem(STORAGE_KEY, stored);
+      }
+      return stored;
     }
   }
   return detectDeviceLang();
@@ -143,17 +158,18 @@ export class I18nService {
   }
 
   async setLangAsync(lang: Lang): Promise<void> {
+    const uiLang = coerceUiLang(lang) ?? 'en';
     const seq = ++this.loadSeq;
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, lang);
+      localStorage.setItem(STORAGE_KEY, uiLang);
     }
-    syncDocumentLang(lang);
-    const pack = await loadLocalePack(lang);
+    syncDocumentLang(uiLang);
+    const pack = await loadLocalePack(uiLang);
     if (seq !== this.loadSeq) {
       return;
     }
     this._pack.set(pack);
-    this._lang.set(lang);
+    this._lang.set(uiLang);
   }
 
   labelForLang(code: Lang): string {

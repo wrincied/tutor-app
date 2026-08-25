@@ -8,7 +8,10 @@
   left: 0.25rem;
   right: 0.25rem;
   z-index: 10;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.125rem;
   overflow: hidden;
   box-sizing: border-box;
   cursor: grab;
@@ -42,7 +45,8 @@
   font-size: 9px;
 
   .cal-lesson-card__student-dot {
-    display: none;
+    width: 6px;
+    height: 6px;
   }
 
   .cal-lesson-card__title {
@@ -55,15 +59,11 @@
     line-height: 1.15;
   }
 
-  .cal-lesson-card__sub,
-  .cal-lesson-card__duration {
+  .cal-lesson-card__region,
+  .cal-lesson-card__time,
+  .cal-lesson-card__rate {
     font-size: 8px;
     line-height: 1.2;
-    white-space: normal;
-  }
-
-  .cal-lesson-card__duration {
-    margin-top: 0;
   }
 }
 
@@ -110,11 +110,20 @@
   opacity: 1;
 }
 
+.cal-lesson-card__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 .cal-lesson-card__title {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
+  flex: 1 1 auto;
   margin: 0;
   font-weight: 600;
   line-height: 1.25;
@@ -149,58 +158,35 @@
   text-decoration: none;
 }
 
-.cal-lesson-card__meta,
-.cal-lesson-card__sub,
-.cal-lesson-card__duration {
+.cal-lesson-card__region,
+.cal-lesson-card__time,
+.cal-lesson-card__rate {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   margin: 0;
-  opacity: 0.85;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
 
-.cal-lesson-card__sub {
-  margin-top: 0.0625rem;
+.cal-lesson-card__region,
+.cal-lesson-card__rate {
+  flex: 0 1 auto;
+  max-width: 48%;
+  text-align: right;
   font-weight: 500;
   opacity: 0.9;
 }
 
-.cal-lesson-card__duration {
-  opacity: 0.75;
+.cal-lesson-card__time {
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 500;
+  opacity: 0.85;
 }
 
-.cal-lesson-card__details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.0625rem;
-  margin-top: 0.0625rem;
-  line-height: 1.15;
-}
-
-.cal-lesson-card__detail {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.25rem;
-  overflow: hidden;
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-
-  span:last-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: right;
-    font-weight: 500;
-  }
-}
-
-.cal-lesson-card__lbl {
-  flex-shrink: 0;
-  opacity: 0.65;
-  font-size: 0.85em;
+.cal-lesson-card__rate {
+  opacity: 0.85;
 }
 
 @keyframes cal-lesson-route-pulse {

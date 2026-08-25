@@ -12,6 +12,8 @@ import {
 import { filter, interval } from 'rxjs';
 import { environment } from '../environments/environment';
 import { NavbarComponent } from './shared/navbar/navbar.component';
+import { BottomNavComponent } from './shared/bottom-nav/bottom-nav.component';
+import { AppHeaderComponent } from './shared/app-header/app-header.component';
 import { AppDialogComponent } from './shared/app-dialog/app-dialog.component';
 import { CookieConsentBannerComponent } from './shared/cookie-consent-banner/cookie-consent-banner.component';
 import { LandingSkeletonComponent } from './features/landing/landing-skeleton.component';
@@ -22,7 +24,7 @@ import { I18nService } from './core/services/i18n.service';
 import { SeoService } from './core/services/seo.service';
 import { ThemeService } from './core/services/theme.service';
 import { purgeStaleOverlayLayers } from './core/utils/purge-stale-overlay-layers';
-import { consumeBillingReturnFlag } from './core/utils/billing-return';
+import { takeBillingReturn } from './core/utils/billing-return';
 import { BillingService } from './core/services/billing.service';
 import { UserService } from './core/services/user.service';
 
@@ -31,6 +33,8 @@ import { UserService } from './core/services/user.service';
   imports: [
     RouterOutlet,
     NavbarComponent,
+    BottomNavComponent,
+    AppHeaderComponent,
     AppDialogComponent,
     LandingSkeletonComponent,
     CookieConsentBannerComponent,
@@ -66,15 +70,19 @@ export class App {
 
     // Stripe returns to /app/home?billing=success (legacy: /?billing=success#/…).
     // Browser Back leaves sessionStorage=pending — treat as cancel and force Free if no Stripe sub.
-    const billingReturn = consumeBillingReturnFlag();
-    if (billingReturn === 'success') {
+    const billingReturn = takeBillingReturn();
+    if (billingReturn.kind === 'success') {
       const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
       const path = typeof window !== 'undefined' ? window.location.pathname : '';
       const alreadyHome = path.includes('/app/home') || hash.includes('/app/home');
       if (!alreadyHome) {
-        void this.router.navigateByUrl('/app/home?billing=success');
+        const qs = new URLSearchParams({ billing: 'success' });
+        if (billingReturn.sessionId) {
+          qs.set('session_id', billingReturn.sessionId);
+        }
+        void this.router.navigateByUrl(`/app/home?${qs.toString()}`);
       }
-    } else if (billingReturn === 'cancel' && this.auth.isLoggedIn()) {
+    } else if (billingReturn.kind === 'cancel' && this.auth.isLoggedIn()) {
       this.userSvc.invalidateProfile();
       this.billingSvc.syncSubscription().subscribe({
         next: (user) => this.userSvc.cacheProfile(user),

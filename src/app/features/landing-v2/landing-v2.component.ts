@@ -1,7 +1,5 @@
-﻿import {
+import {
   Component,
-  ElementRef,
-  HostListener,
   OnDestroy,
   OnInit,
   computed,
@@ -9,12 +7,12 @@
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import type { Lang } from '@interfaces';
 import { I18nService } from '../../core/services/i18n.service';
 import { MarketingConsentService } from '../../core/services/marketing-consent.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { SystemStatusService } from '../../core/services/system-status.service';
 import { getPlanPricing } from '../../core/utils/subscription-pricing';
+import { LangSwitcherComponent } from '../../shared/lang-switcher/lang-switcher.component';
 
 const DEMO_AUTOPLAY_MS = 10_000;
 
@@ -24,7 +22,7 @@ export type LandingBillingInterval = 'monthly' | 'yearly';
 @Component({
   selector: 'app-landing-v2',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LangSwitcherComponent],
   templateUrl: './landing-v2.component.html',
   styleUrl: './landing-v2.component.scss',
 })
@@ -34,14 +32,11 @@ export class LandingV2Component implements OnInit, OnDestroy {
   readonly systemStatus = inject(SystemStatusService);
   private readonly publicContent = inject(PublicContentService);
   private readonly router = inject(Router);
-  private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly contactEmail = signal('support@simple4u.at');
   readonly demoSlide = signal(0);
   readonly demoSlideCount = 3;
-  readonly langMenuOpen = signal(false);
   readonly billingInterval = signal<LandingBillingInterval>('monthly');
-  readonly currentLangCode = computed(() => this.i18n.codeForLang(this.i18n.lang()));
 
   /** Landing teaser uses AT pricing (primary market). */
   private readonly landingProPricing = computed(() => getPlanPricing('pro', 'AT'));
@@ -171,36 +166,6 @@ export class LandingV2Component implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopDemoAutoplay();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.langMenuOpen()) {
-      return;
-    }
-    const langRoot = this.host.nativeElement.querySelector('.landing-v2__lang');
-    const target = event.target as Node | null;
-    if (langRoot && target && !langRoot.contains(target)) {
-      this.langMenuOpen.set(false);
-    }
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.langMenuOpen.set(false);
-  }
-
-  toggleLangMenu(): void {
-    this.langMenuOpen.update((open) => !open);
-  }
-
-  pickLang(lang: Lang): void {
-    this.i18n.setLang(lang);
-    this.langMenuOpen.set(false);
-  }
-
-  isLang(lang: Lang): boolean {
-    return this.i18n.lang() === lang;
   }
 
   setDemoSlide(index: number, restartAutoplay = true): void {

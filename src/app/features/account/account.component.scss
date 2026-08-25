@@ -104,10 +104,24 @@
 }
 
 .account-setting__hint {
-  margin: 0;
+  display: block;
+  margin: 0.25rem 0 0;
   font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.account-setting--toggle {
+  align-items: flex-start;
+
+  input[type='checkbox'] {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: 0.2rem;
+    accent-color: var(--moss, #0f3d34);
+  }
 }
 
 .account-setting__label {
@@ -147,9 +161,9 @@
 .account-lang-select {
   flex: 1 0 0;
   min-width: 0;
-  max-width: 100%;
+  max-width: 16rem;
 
-  app-select {
+  app-lang-switcher {
     display: block;
     width: 100%;
   }
@@ -323,6 +337,23 @@
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--moss, #0f3d34);
+}
+
+.account-referral {
+  margin: 0.25rem 0 1rem;
+}
+
+.account-referral__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+
+  .app-input {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
 }
 
 .account-readonly {
@@ -529,7 +560,7 @@
   animation: account-toast-in 0.22s ease-out;
 
   @media (max-width: 768px), (max-height: 440px) {
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-reserve) + 0.5rem);
   }
 
   &--error {

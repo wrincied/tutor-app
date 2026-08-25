@@ -99,6 +99,16 @@ export class StudentService {
       })
       .pipe(tap(() => this.invalidateListCache()));
   }
+  ensureParentTelegramInvite(id: string) {
+    return this.http
+      .post<Student>(`${API}/${id}/telegram-parent-invite`, {})
+      .pipe(tap(() => this.invalidateListCache()));
+  }
+  disconnectParentTelegram(id: string) {
+    return this.http
+      .post<Student>(`${API}/${id}/telegram-parent-disconnect`, {})
+      .pipe(tap(() => this.invalidateListCache()));
+  }
   saveTelegramSettings(id: string, settings: StudentTelegramNotificationSettings) {
     return this.http
       .put<Student>(`${API}/${id}/telegram-settings`, settings)

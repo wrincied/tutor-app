@@ -118,7 +118,7 @@ export const routes: Routes = [
         data: { title: 'onboarding' satisfies PageTitleKey },
       },
       {
-        // Admin console: GitHub + role only — no email verify / onboarding / consent gates
+        // Admin console: password + role only — no email verify / onboarding / consent gates
         path: 'admin',
         canActivate: [adminGuard],
         loadComponent: () =>

@@ -34,7 +34,7 @@ export function postAuthPath(
   emailVerified: boolean,
   returnUrl?: string | null,
 ): string {
-  // Admin console is only via /admin-login + GitHub — never auto-route here.
+  // Admin console is only via /admin-login + password — never auto-route here.
   if (!emailVerified) {
     return '/app/verify-email-notice';
   }

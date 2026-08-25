@@ -215,7 +215,7 @@ firebase deploy --only hosting --project tutorassis
 firebase deploy --only apphosting:tutor-app-backend --project tutorassis
 ```
 
-CORS для локальных origin’ов: `backend/src/utils/corsOrigins.js` и `backend/apphosting.yaml` (`FRONTEND_URL`) — `localhost:4200`, `:4300`, `:4400` (+ production-домены). После смены списка CORS нужен redeploy API.
+CORS: production `FRONTEND_URL` is only `simple4u.at` / `www` / Firebase Hosting. `localhost` is stripped when `NODE_ENV=production` (`backend/src/utils/corsOrigins.js`). After changing CORS, redeploy the API.
 
 ---
 
@@ -223,8 +223,12 @@ CORS для локальных origin’ов: `backend/src/utils/corsOrigins.js`
 
 | Папка | Отдельный git | Remote |
 |-------|---------------|--------|
-| `backend/` | да | `tutor-app-backend` |
+| `backend/` | **submodule** (gitlink SHA) | `https://github.com/wrincied/tutor-app-backend.git` |
 | `bot/` | да | `tutor-app-bot` |
+
+Фронт держит конкретный SHA бэкенда (не «latest master»). CI чекаутит submodule (`submodules: recursive`) и гоняет `npm test --prefix backend`.
+
+Перед продом: закоммитить и задеплоить API (`apphosting:tutor-app-backend`), затем обновить gitlink в фронт-репо. Бот деплоится отдельно.
 
 Коммиты/PR в nested-репо — отдельно от фронта. Не путать ветки: фронт → `dev`/`master`, backend обычно → `master`.
 

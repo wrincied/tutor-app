@@ -62,9 +62,56 @@ export class AdminOverviewComponent implements OnInit {
 
   readonly recentVisits = computed(() =>
     [...this.users()]
+      .filter((user) => user.include_in_kpi !== false)
       .sort((left, right) => parseTimestamp(right.last_login_at) - parseTimestamp(left.last_login_at))
       .slice(0, 25),
   );
+
+  readonly kpiCoverageHint = computed(() => {
+    const coverage = this.dashboard()?.kpiCoverage;
+    if (!coverage || coverage.total <= 0) {
+      return '';
+    }
+    return this.t()
+      .kpiCoverageHint.replace('{included}', `${coverage.included}`)
+      .replace('{total}', `${coverage.total}`);
+  });
+
+  readonly coreActivationValue = computed(() => {
+    const a = this.dashboard()?.activation;
+    if (!a) {
+      return '—';
+    }
+    return `${a.coreUsers} · ${a.corePercent}%`;
+  });
+
+  readonly coreActivationCaption = computed(() => {
+    const a = this.dashboard()?.activation;
+    if (!a) {
+      return '';
+    }
+    return this.t()
+      .metricCoreActivationCaption.replace('{n}', `${a.coreUsers}`)
+      .replace('{total}', `${a.totalKpiUsers}`);
+  });
+
+  readonly financeAdoptionValue = computed(() => {
+    const a = this.dashboard()?.activation;
+    if (!a) {
+      return '—';
+    }
+    return `${a.financeUsers} · ${a.financePercent}%`;
+  });
+
+  readonly financeAdoptionCaption = computed(() => {
+    const a = this.dashboard()?.activation;
+    if (!a) {
+      return '';
+    }
+    return this.t()
+      .metricFinanceAdoptionCaption.replace('{n}', `${a.financeUsers}`)
+      .replace('{activated}', `${a.coreUsers}`);
+  });
 
   ngOnInit(): void {
     this.layout.load().subscribe({

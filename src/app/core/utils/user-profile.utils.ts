@@ -65,8 +65,11 @@ export function canPurchaseSubscription(profile: UserProfile | null | undefined)
 export function normalizeSubscriptionStatus(
   status: string | null | undefined,
 ): SubscriptionStatus {
-  if (status === 'pro' || status === 'trial' || status === 'basis' || status === 'free') {
-    return status;
+  const normalized = String(status ?? 'free')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'pro' || normalized === 'trial' || normalized === 'basis' || normalized === 'free') {
+    return normalized;
   }
   return 'free';
 }
