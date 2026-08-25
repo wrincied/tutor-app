@@ -19,6 +19,19 @@
   --z-app-tooltip: 1200;
   --z-app-dropdown-top: 1300;
 
+  /* Floating bottom nav island (mobile) */
+  // --bottom-nav-island-h: 58px;
+  --bottom-nav-island-gap: 14px;
+  --bottom-nav-island-pop: 8px;
+  --bottom-nav-reserve: calc(
+    var(--bottom-nav-island-h) + var(--bottom-nav-island-gap) * 2 + var(--bottom-nav-island-pop) +
+      env(safe-area-inset-bottom, 0px)
+  );
+
+  /* Mobile app header (profile avatar) */
+  --app-header-h: 52px;
+  --app-header-reserve: calc(var(--app-header-h) + env(safe-area-inset-top, 0px));
+
   /* Landing / Simple4U brand tokens */
   --ink: #071714;
   --moss: #0f3d34;

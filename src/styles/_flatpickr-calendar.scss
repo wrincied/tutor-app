@@ -1,6 +1,6 @@
-/* 1. Основной контейнер */
+/* 1. Основной контейнер — modal surface (white), not --page-bg (mint #f4faf7) */
 .flatpickr-calendar {
-  background: var(--nav-bg) !important;
+  background: var(--modal-bg, #fff) !important;
   border: 1px solid var(--nav-border) !important;
   border-radius: 1.5rem !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2) !important;
@@ -10,12 +10,12 @@
 
   &.arrowTop:before,
   &.arrowTop:after {
-    border-bottom-color: var(--nav-bg) !important;
+    border-bottom-color: var(--modal-bg, #fff) !important;
   }
 
   &.arrowBottom:before,
   &.arrowBottom:after {
-    border-top-color: var(--nav-bg) !important;
+    border-top-color: var(--modal-bg, #fff) !important;
   }
 }
 
@@ -72,14 +72,14 @@
     height: 2rem !important;
     margin: 0 !important;
     padding: 2px !important;
-    background: var(--nav-hover) !important;
+    background: var(--modal-bg) !important;
     border: 1px solid var(--nav-border) !important;
     border-radius: 999px !important;
     box-sizing: border-box;
 
-    &:hover {
-      background: var(--nav-active-bg) !important;
-    }
+    // &:hover {
+    //   background: var(--nav-active-bg) !important;
+    // }
 
     input.cur-year {
       order: 2;
@@ -198,28 +198,31 @@
   }
 
   &.today {
-    border-color: var(--nav-accent) !important;
-    color: var(--nav-accent) !important;
+    border-color: var(--text-primary) !important;
+    color: var(--text-primary) !important;
     font-weight: bold;
 
     &:hover {
-      background: var(--nav-active-bg) !important;
-      color: var(--nav-accent) !important;
+      background: var(--nav-hover) !important;
+      color: var(--text-primary) !important;
     }
   }
 
   &.selected,
   &.selected:hover,
   &.selected:focus,
+  &.today.selected,
+  &.today.selected:hover,
+  &.today.selected:focus,
   &.startRange,
   &.startRange:hover,
   &.startRange:focus,
   &.endRange,
   &.endRange:hover,
   &.endRange:focus {
-    background: var(--nav-accent) !important;
-    border-color: var(--nav-accent) !important;
-    color: var(--page-bg) !important;
+    background: var(--text-primary) !important;
+    border-color: var(--text-primary) !important;
+    color: var(--modal-bg, #fff) !important;
     font-weight: 600;
   }
 
@@ -440,7 +443,7 @@
   border-radius: 50%;
   color: var(--text-secondary) !important;
   fill: var(--text-secondary) !important;
-  background: var(--nav-hover) !important;
+  background: var(--modal-bg) !important;
   transition:
     background 0.15s ease,
     fill 0.15s ease;

@@ -37,6 +37,7 @@ import {
   normalizeLessonPriceMode,
 } from '../../core/utils/lesson-amount';
 import { DEFAULT_STUDENT_BORDER_COLOR } from '../../core/utils/pastel-color';
+import { toTitleCaseName } from '../../core/utils/to-title-case';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { AppDateInputComponent } from '../../shared/app-date-input';
@@ -427,7 +428,7 @@ export class CalendarComponent implements OnInit {
         startMs: interval.start,
         endMs: interval.end,
         timeLabel: this.formatOccupancyTimeRange(interval.start, interval.end),
-        studentName: student?.name?.trim() || '—',
+        studentName: toTitleCaseName(student?.name) || '—',
         conflict: false,
       });
     }
@@ -454,7 +455,7 @@ export class CalendarComponent implements OnInit {
           endMs: draftInterval.end,
           timeLabel: this.formatOccupancyTimeRange(draftInterval.start, draftInterval.end),
           studentName:
-            student?.name?.trim() || this.i18n.calendarUi().newLessonSlotLabel,
+            toTitleCaseName(student?.name) || this.i18n.calendarUi().newLessonSlotLabel,
           conflict,
         });
       }
@@ -1390,7 +1391,7 @@ export class CalendarComponent implements OnInit {
 
   monthLessonBadgeLabel(lesson: CalendarLesson): string {
     const student = this.students().find((s) => s._id === lesson.student_id);
-    const name = student?.name?.trim() || '—';
+    const name = toTitleCaseName(student?.name) || '—';
     const scheduledAt = lesson.scheduledAt;
     if (!scheduledAt) {
       return name;
@@ -1614,7 +1615,12 @@ export class CalendarComponent implements OnInit {
     if (!studentId) {
       return '(без ученика)';
     }
-    return this.students().find((x) => x._id === studentId)?.name ?? '(без ученика)';
+    const name = this.students().find((x) => x._id === studentId)?.name;
+    return name ? toTitleCaseName(name) : '(без ученика)';
+  }
+
+  displayStudentName(name: string | null | undefined): string {
+    return toTitleCaseName(name);
   }
 
   isPackageLastBalance(student: Student): boolean {
@@ -1949,24 +1955,61 @@ export class CalendarComponent implements OnInit {
     return Number(lesson.lesson_price) > 0;
   }
 
-  /** Компактная строка на низких карточках (< ~50 мин по высоте сетки). */
-  lessonCardUseCompactMeta(lesson: Lesson): boolean {
-    return lesson.lesson_duration < 50;
+  formatLessonRegion(lesson: Lesson, scheduledAt?: string): string {
+    const tz = this.lessonTimezone(lesson);
+    const region = tz
+      ? this.formatTimezoneLabel(tz)
+      : (CalendarComponent.CURRENCY_REGION[lesson.lesson_currency] ??
+        lesson.lesson_currency ??
+        '—');
+    const regionTime = this.formatClockInTimezone(
+      scheduledAt ?? this.displayScheduledAt(lesson),
+      tz,
+    );
+    if (!regionTime) {
+      return region;
+    }
+    return `${region} ${regionTime}`;
   }
 
-  formatLessonRegion(lesson: Lesson): string {
-    const tz =
+  formatLessonTimeRange(lesson: Lesson): string {
+    const startIso = this.displayScheduledAt(lesson);
+    const start = new Date(startIso);
+    if (Number.isNaN(start.getTime())) {
+      return '—';
+    }
+    const end = new Date(start.getTime() + lesson.lesson_duration * 60_000);
+    return this.formatOccupancyTimeRange(start.getTime(), end.getTime());
+  }
+
+  private lessonTimezone(lesson: Lesson): string {
+    return (
       lesson.student_timezone?.trim() ||
       this.students()
         .find((s) => s._id === lesson.student_id)
         ?.timezone?.trim() ||
-      '';
-    if (tz) {
-      return this.formatTimezoneLabel(tz);
-    }
-    return (
-      CalendarComponent.CURRENCY_REGION[lesson.lesson_currency] ?? lesson.lesson_currency ?? '—'
+      ''
     );
+  }
+
+  private formatClockInTimezone(iso: string | undefined, timeZone: string): string {
+    if (!iso || !timeZone) {
+      return '';
+    }
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    try {
+      return new Intl.DateTimeFormat(this.i18n.localeId(), {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone,
+      }).format(date);
+    } catch {
+      return '';
+    }
   }
 
   formatTimezoneLabel(tz: string): string {
@@ -1987,11 +2030,7 @@ export class CalendarComponent implements OnInit {
       lesson.lesson_duration,
       priceMode,
     );
-    const formatted = new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: lesson.lesson_currency || 'EUR',
-      maximumFractionDigits: 0,
-    }).format(amount);
+    const formatted = this.formatMoneyAmount(amount, lesson.lesson_currency || 'EUR');
     if (priceMode === 'fixed') {
       return `${formatted}${this.i18n.studentsUi().perLesson}`;
     }
@@ -2012,11 +2051,7 @@ export class CalendarComponent implements OnInit {
       durationMinutes ?? this.duration(),
       priceMode,
     );
-    const formatted = new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: student.rate_currency || 'EUR',
-      maximumFractionDigits: 0,
-    }).format(amount);
+    const formatted = this.formatMoneyAmount(amount, student.rate_currency || 'EUR');
     const unit =
       priceMode === 'fixed'
         ? this.i18n.studentsUi().perLesson
@@ -2031,30 +2066,15 @@ export class CalendarComponent implements OnInit {
     if (!this.lessonHasSnapshotRate(lesson)) {
       return '—';
     }
-    const formatted = new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: lesson.lesson_currency || 'EUR',
-      maximumFractionDigits: 0,
-    }).format(Number(lesson.lesson_price));
+    const formatted = this.formatMoneyAmount(
+      Number(lesson.lesson_price),
+      lesson.lesson_currency || 'EUR',
+    );
     const unit =
       this.lessonPriceMode(lesson) === 'fixed'
         ? this.i18n.studentsUi().perLesson
         : this.i18n.studentsUi().perHour;
     return `${formatted}${unit}`;
-  }
-
-  formatLessonDuration(minutes: number): string {
-    const t = this.i18n.calendarUi();
-    if (minutes >= 60 && minutes % 60 === 0) {
-      const h = minutes / 60;
-      return h === 1 ? t.durationOneHour : `${h} ${t.durationHourShort}`;
-    }
-    if (minutes >= 60) {
-      const h = Math.floor(minutes / 60);
-      const m = minutes % 60;
-      return `${h} ${t.durationHourShort} ${m} ${t.durationMinShort}`;
-    }
-    return `${minutes} ${t.durationMinShort}`;
   }
 
   /** Ученик в форме изменён — при сохранении ставка переснимется на сервере. */
@@ -2123,7 +2143,7 @@ export class CalendarComponent implements OnInit {
   }
 
   formatStudentSelectLabel(student: Student): string {
-    const name = student.name?.trim() || '—';
+    const name = toTitleCaseName(student.name) || '—';
     const rate = this.formatStudentSelectRate(student);
     return `${name} · ${rate}`;
   }
@@ -2131,16 +2151,25 @@ export class CalendarComponent implements OnInit {
   /** Базовая ставка для label в select: сумма + /час или /урок. */
   formatStudentSelectRate(student: Student): string {
     const priceMode = normalizeLessonPriceMode(null, student.rate_unit);
-    const formatted = new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: student.rate_currency || 'EUR',
-      maximumFractionDigits: 0,
-    }).format(Number(student.rate_per_hour));
+    const formatted = this.formatMoneyAmount(
+      Number(student.rate_per_hour),
+      student.rate_currency || 'EUR',
+    );
     const unit =
       priceMode === 'fixed'
         ? this.i18n.studentsUi().perLesson
         : this.i18n.studentsUi().perHour;
     return `${formatted}${unit}`;
+  }
+
+  private formatMoneyAmount(amount: number, currency: string): string {
+    const round = this.profileSettings.roundLessonPrices();
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency || 'EUR',
+      minimumFractionDigits: round ? 0 : 2,
+      maximumFractionDigits: round ? 0 : 2,
+    }).format(Number.isFinite(amount) ? amount : 0);
   }
 
   lessonFormStudentMetaRate(student: Student): string {

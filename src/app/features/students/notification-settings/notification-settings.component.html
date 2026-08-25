@@ -1,0 +1,237 @@
+<app-dialog
+  [open]="open()"
+  layout="drawer"
+  [title]="t().tgSettingsTitle"
+  [subtitle]="subtitle()"
+  [cancelLabel]="t().cancel"
+  [confirmLabel]="saving() ? t().saving : t().save"
+  [leadingLabel]="t().botDisconnect"
+  [leadingDanger]="true"
+  (cancel)="onClose()"
+  (confirm)="onSave()"
+  (leading)="onDisconnectStudent()"
+>
+  @if (student(); as student) {
+    @let labels = t();
+    @let disabled = togglesDisabled();
+
+    <div class="ns">
+      <section class="ns__section ns__section--status">
+        <div class="ns__status-row">
+          <div class="ns__account">
+            @if (student.telegram_username) {
+              <span class="ns__username">&#64;{{ student.telegram_username }}</span>
+            } @else if (student.telegram_display_name) {
+              <span class="ns__username">{{ student.telegram_display_name }}</span>
+            } @else {
+              <span class="ns__username ns__username--muted">{{ labels.tgNotConnected }}</span>
+            }
+            @if (student.telegram_linked_at) {
+              <span class="ns__meta">{{ formatLinkedAt(student.telegram_linked_at) }}</span>
+            }
+          </div>
+          @if (student.bot_active && (student.telegram_user_id || student.telegram_chat_id)) {
+            <span class="ns__badge ns__badge--ok">{{ labels.tgStatusConnected }}</span>
+          } @else {
+            <label class="ns-switch" [attr.aria-label]="labels.botEnabled">
+              <input
+                type="checkbox"
+                role="switch"
+                [checked]="student.bot_active"
+                (click)="onBotToggle($event)"
+              />
+              <span class="ns-switch__track" aria-hidden="true">
+                <span class="ns-switch__thumb"></span>
+              </span>
+            </label>
+          }
+        </div>
+        @if (deliveryError(); as err) {
+          <p class="form-error" role="alert">{{ err }}</p>
+        }
+      </section>
+
+      <section class="ns__section" [class.ns__section--disabled]="disabled">
+        <header class="ns__section-head">
+          <h3 class="ns__heading">{{ labels.tgTriggersTitle }}</h3>
+          @if (disabled) {
+            <p class="ns__hint">{{ labels.tgNeedsLinkHint }}</p>
+          }
+        </header>
+
+        <div class="ns-stack">
+          <div class="ns-row">
+            <label class="ns-toggle">
+              <span class="ns-toggle__text">{{ labels.tgTriggerReminder }}</span>
+              <span class="ns-switch">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  [disabled]="disabled"
+                  [checked]="draft().lesson_reminder_enabled"
+                  (change)="patchDraft({ lesson_reminder_enabled: $any($event.target).checked })"
+                />
+                <span class="ns-switch__track" aria-hidden="true">
+                  <span class="ns-switch__thumb"></span>
+                </span>
+              </span>
+            </label>
+
+            @if (draft().lesson_reminder_enabled) {
+              <div class="ns-detail">
+                <div class="ns-field">
+                  <app-select
+                    size="compact"
+                    [ngModel]="reminderOffsetValue()"
+                    (ngModelChange)="setReminderOffset($event)"
+                    [options]="reminderOffsetOptions()"
+                    [disabled]="disabled"
+                  />
+                </div>
+                @if (reminderOffsetMode() === 'custom') {
+                  <div class="ns-field ns-reminder-custom">
+                    <label for="ns-reminder-custom-min">{{ labels.tgReminderCustomMinutes }}</label>
+                    <div class="ns-reminder-custom__row">
+                      <input
+                        id="ns-reminder-custom-min"
+                        type="number"
+                        [min]="reminderOffsetMin"
+                        [max]="reminderOffsetMax"
+                        [disabled]="disabled"
+                        [ngModel]="reminderCustomMinutes()"
+                        (ngModelChange)="reminderCustomMinutes.set(+$event || reminderOffsetMin)"
+                      />
+                      <button
+                        type="button"
+                        class="btn-secondary"
+                        [disabled]="disabled"
+                        (click)="applyCustomReminderOffset()"
+                      >
+                        {{ labels.tgReminderSaveCustom }}
+                      </button>
+                    </div>
+                  </div>
+                } @else if (reminderCanDeleteCustom()) {
+                  <button
+                    type="button"
+                    class="btn-link ns-reminder-custom__delete"
+                    [disabled]="disabled"
+                    (click)="deleteSelectedCustomReminder()"
+                  >
+                    {{ labels.tgReminderDeleteCustom }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="ns-row">
+            <label class="ns-toggle">
+              <span class="ns-toggle__text">{{ labels.tgTriggerLowBalance }}</span>
+              <span class="ns-switch">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  [disabled]="disabled"
+                  [checked]="draft().low_balance_enabled"
+                  (change)="patchDraft({ low_balance_enabled: $any($event.target).checked })"
+                />
+                <span class="ns-switch__track" aria-hidden="true">
+                  <span class="ns-switch__thumb"></span>
+                </span>
+              </span>
+            </label>
+
+            @if (draft().low_balance_enabled) {
+              <div class="ns-detail">
+                <div class="ns-threshold" role="group" [attr.aria-label]="labels.tgLowBalanceThreshold">
+                  <label class="ns-threshold__prefix" for="ns-low-balance-threshold">
+                    {{ labels.tgLowBalanceThresholdPrefix }}
+                  </label>
+                  <input
+                    id="ns-low-balance-threshold"
+                    class="ns-threshold__input"
+                    type="number"
+                    min="1"
+                    max="10"
+                    [disabled]="disabled"
+                    [ngModel]="draft().low_balance_threshold"
+                    (ngModelChange)="patchDraft({ low_balance_threshold: +$event || 1 })"
+                  />
+                  <span class="ns-threshold__suffix">{{ labels.tgLowBalanceThresholdSuffix }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="ns-row">
+            <label class="ns-toggle">
+              <span class="ns-toggle__text">{{ labels.tgTriggerPayment }}</span>
+              <span class="ns-switch">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  [disabled]="disabled"
+                  [checked]="draft().payment_receipt_enabled"
+                  (change)="patchDraft({ payment_receipt_enabled: $any($event.target).checked })"
+                />
+                <span class="ns-switch__track" aria-hidden="true">
+                  <span class="ns-switch__thumb"></span>
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="ns__section" [class.ns__section--disabled]="disabled">
+        <header class="ns__section-head">
+          <h3 class="ns__heading">{{ labels.tgRoutingTitle }}</h3>
+        </header>
+
+        <div class="ns-stack">
+          <div class="ns-row">
+            <label class="ns-toggle">
+              <span class="ns-toggle__text">
+                {{ labels.tgRoutingStudent }}
+                @if (student.telegram_username) {
+                  <span class="ns-toggle__meta">&#64;{{ student.telegram_username }}</span>
+                }
+              </span>
+              <span class="ns-switch">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  [disabled]="disabled"
+                  [checked]="hasRoutingTarget('student')"
+                  (change)="toggleRoutingTarget('student', $any($event.target).checked, $event)"
+                />
+                <span class="ns-switch__track" aria-hidden="true">
+                  <span class="ns-switch__thumb"></span>
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <div class="ns-row">
+            <label class="ns-toggle">
+              <span class="ns-toggle__text">{{ labels.tgRoutingTutor }}</span>
+              <span class="ns-switch">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  [disabled]="disabled"
+                  [checked]="hasRoutingTarget('tutor')"
+                  (change)="toggleRoutingTarget('tutor', $any($event.target).checked, $event)"
+                />
+                <span class="ns-switch__track" aria-hidden="true">
+                  <span class="ns-switch__thumb"></span>
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </section>
+    </div>
+  }
+</app-dialog>

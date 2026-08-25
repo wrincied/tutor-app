@@ -298,57 +298,38 @@
                                   [style.top.px]="phantomTopForColumn(col) ?? 0"
                                 >
                                   @if (draggedLesson(); as phantomLesson) {
-                                    <p class="cal-lesson-card__title">
-                                      <span
-                                        class="cal-lesson-card__student-dot"
-                                        [style.background]="
-                                          getStudentColor(phantomLesson.student_id)
-                                        "
-                                        aria-hidden="true"
-                                      ></span>
-                                      <span class="cal-lesson-card__student-name">
-                                        {{
-                                          phantomLesson.student_name ||
-                                            getStudentName(phantomLesson.student_id)
-                                        }}
-                                      </span>
-                                    </p>
-                                    @if (isBottomNavLayout() || lessonCardUseCompactMeta(phantomLesson)) {
-                                      <p class="cal-lesson-card__sub">
-                                        {{ formatLessonRegion(phantomLesson) }}
-                                        · {{ formatLessonSnapshotRate(phantomLesson) }}
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--top">
+                                      <p class="cal-lesson-card__title">
+                                        <span
+                                          class="cal-lesson-card__student-dot"
+                                          [style.background]="
+                                            getStudentColor(phantomLesson.student_id)
+                                          "
+                                          aria-hidden="true"
+                                        ></span>
+                                        <span class="cal-lesson-card__student-name">
+                                          {{
+                                            displayStudentName(phantomLesson.student_name) ||
+                                              getStudentName(phantomLesson.student_id)
+                                          }}
+                                        </span>
                                       </p>
-                                      <p class="cal-lesson-card__duration">
-                                        {{ formatLessonDuration(phantomLesson.lesson_duration) }}
-                                      </p>
-                                    } @else {
-                                      <div class="cal-lesson-card__details">
-                                        <p class="cal-lesson-card__detail">
-                                          <span class="cal-lesson-card__lbl">{{
-                                            i18n.calendarUi().regionLabel
-                                          }}</span>
-                                          <span>{{ formatLessonRegion(phantomLesson) }}</span>
-                                        </p>
-                                        <p class="cal-lesson-card__detail">
-                                          <span class="cal-lesson-card__lbl">{{
-                                            i18n.calendarUi().rateLabel
-                                          }}</span>
-                                          <span>{{ formatLessonSnapshotRate(phantomLesson) }}</span>
-                                        </p>
-                                        <p class="cal-lesson-card__detail">
-                                          <span class="cal-lesson-card__lbl">{{
-                                            i18n.calendarUi().durationLabel
-                                          }}</span>
-                                          <span>{{
-                                            formatLessonDuration(phantomLesson.lesson_duration)
-                                          }}</span>
-                                        </p>
-                                      </div>
-                                    }
+                                      <span class="cal-lesson-card__region">{{
+                                        formatLessonRegion(
+                                          phantomLesson,
+                                          currentDropTime() || displayScheduledAt(phantomLesson)
+                                        )
+                                      }}</span>
+                                    </div>
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--bottom">
+                                      <span class="cal-lesson-card__time lesson-phantom__time">{{
+                                        phantomDropTimeLabel() || formatLessonTimeRange(phantomLesson)
+                                      }}</span>
+                                      <span class="cal-lesson-card__rate">{{
+                                        formatLessonSnapshotRate(phantomLesson)
+                                      }}</span>
+                                    </div>
                                   }
-                                  <p class="cal-lesson-card__meta lesson-phantom__time">
-                                    {{ phantomDropTimeLabel() }}
-                                  </p>
                                 </div>
                               }
 
@@ -362,15 +343,10 @@
                                   [status]="lesson.status"
                                   [studentName]="getStudentName(lesson.student_id)"
                                   [studentColor]="getStudentColor(lesson.student_id)"
-                                  [compactMeta]="lessonCardUseCompactMeta(lesson)"
-                                  [denseMobile]="isBottomNavLayout()"
                                   [weekFit]="isWeekFitLayout()"
-                                  [regionLabel]="i18n.calendarUi().regionLabel"
-                                  [rateLabel]="i18n.calendarUi().rateLabel"
-                                  [durationLabel]="i18n.calendarUi().durationLabel"
                                   [regionText]="formatLessonRegion(lesson)"
                                   [rateText]="formatLessonSnapshotRate(lesson)"
-                                  [durationText]="formatLessonDuration(lesson.lesson_duration)"
+                                  [timeText]="formatLessonTimeRange(lesson)"
                                   [lastPaid]="!!lesson.isLastPaid"
                                   [dragging]="dragActiveLessonId() === lesson._id"
                                   [focusActive]="lessonCardFocusActive(lesson)"
@@ -440,7 +416,7 @@
                     aria-hidden="true"
                   ></span>
                   <span class="cal-sidebar__info">
-                    <span class="cal-sidebar__name">{{ sidebarStudent.name }}</span>
+                    <span class="cal-sidebar__name">{{ displayStudentName(sidebarStudent.name) }}</span>
                     <span class="cal-sidebar__meta">
                       <span
                         class="cal-sidebar__balance"

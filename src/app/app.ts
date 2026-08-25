@@ -12,6 +12,8 @@ import {
 import { filter, interval } from 'rxjs';
 import { environment } from '../environments/environment';
 import { NavbarComponent } from './shared/navbar/navbar.component';
+import { BottomNavComponent } from './shared/bottom-nav/bottom-nav.component';
+import { AppHeaderComponent } from './shared/app-header/app-header.component';
 import { AppDialogComponent } from './shared/app-dialog/app-dialog.component';
 import { CookieConsentBannerComponent } from './shared/cookie-consent-banner/cookie-consent-banner.component';
 import { LandingSkeletonComponent } from './features/landing/landing-skeleton.component';
@@ -31,6 +33,8 @@ import { UserService } from './core/services/user.service';
   imports: [
     RouterOutlet,
     NavbarComponent,
+    BottomNavComponent,
+    AppHeaderComponent,
     AppDialogComponent,
     LandingSkeletonComponent,
     CookieConsentBannerComponent,

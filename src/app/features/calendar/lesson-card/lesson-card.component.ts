@@ -67,17 +67,11 @@ export class LessonCardComponent {
   readonly status = input<LessonStatus>('scheduled');
   readonly studentName = input.required<string>();
   readonly studentColor = input('rgb(148 163 184)');
-  readonly compactMeta = input(false);
-  /** Мобильная плотность: без подписей «Регион/Ставка/Длит.». */
-  readonly denseMobile = input(false);
-  /** Узкие колонки недели на телефоне: только имя. */
+  /** Узкие колонки недели на телефоне. */
   readonly weekFit = input(false);
-  readonly regionLabel = input('');
-  readonly rateLabel = input('');
-  readonly durationLabel = input('');
   readonly regionText = input('');
   readonly rateText = input('');
-  readonly durationText = input('');
+  readonly timeText = input('');
   readonly lastPaid = input(false);
   readonly dragging = input(false);
   readonly focusActive = input(false);

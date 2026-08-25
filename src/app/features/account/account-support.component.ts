@@ -7,11 +7,12 @@ import { I18nService } from '../../core/services/i18n.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { UserService } from '../../core/services/user.service';
 import { RecaptchaService } from '../../shared/recaptcha/recaptcha.service';
+import { RecaptchaLegalComponent } from '../../shared/recaptcha/recaptcha-legal.component';
 
 @Component({
   selector: 'app-account-support',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RecaptchaLegalComponent],
   templateUrl: './account-support.component.html',
   styleUrls: ['./account-page-host.scss', './account-support.component.scss'],
 })

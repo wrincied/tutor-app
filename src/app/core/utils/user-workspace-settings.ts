@@ -1,4 +1,5 @@
 import { WORKSPACE_CURRENCIES, type WorkspaceCurrency } from '../constants/currencies';
+import { normalizeCustomReminderOffsets } from './telegram-notification-settings';
 
 export type { WorkspaceCurrency };
 export { WORKSPACE_CURRENCIES };
@@ -17,6 +18,10 @@ export interface UserWorkspaceSettings {
   name: string;
   currency: WorkspaceCurrency;
   defaultLessonDuration: WorkspaceLessonDuration;
+  /** When true, calendar rate labels round to whole currency units. */
+  roundLessonPrices: boolean;
+  /** Tutor-saved custom lesson-reminder offsets in minutes. */
+  customReminderOffsets: number[];
 }
 
 export interface UserWorkingHoursSettings {
@@ -36,6 +41,8 @@ export const DEFAULT_WORKSPACE: UserWorkspaceSettings = {
   name: '',
   currency: 'EUR',
   defaultLessonDuration: 60,
+  roundLessonPrices: false,
+  customReminderOffsets: [],
 };
 
 export const DEFAULT_WORKING_HOURS: UserWorkingHoursSettings = {
@@ -88,6 +95,8 @@ export function normalizeWorkspace(raw: unknown): UserWorkspaceSettings {
     name: String(data['name'] ?? '').trim().slice(0, 120),
     currency,
     defaultLessonDuration,
+    roundLessonPrices: data['roundLessonPrices'] === true,
+    customReminderOffsets: normalizeCustomReminderOffsets(data['customReminderOffsets']),
   };
 }
 

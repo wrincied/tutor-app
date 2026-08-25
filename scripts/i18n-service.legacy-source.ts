@@ -1,3 +1,8 @@
+// @ts-nocheck
+/**
+ * Legacy text snapshot for `scripts/split-i18n-packs.mjs` only — not compiled by the app.
+ * Imports below are historical; the splitter reads this file as source text.
+ */
 import { Injectable, computed, signal } from '@angular/core';
 import type {
   Lang,
@@ -264,8 +269,7 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     saveError: 'Ошибка сохранения',
     subscriptionManagedByPayment:
       'Тариф меняется только после оплаты. Вручную изменить его нельзя.',
-    taxModeRequiredHint:
-      'Укажите налоговый режим — без этого покупка подписки недоступна.',
+    taxModeRequiredHint: 'Укажите налоговый режим — без этого покупка подписки недоступна.',
     taxModeChangeHint:
       'Можно сменить в любой момент. Нетто в Финансах пересчитается по новому режиму (это оценка, не декларация).',
     taxModeConfirmTitle: 'Подтверждение налогового режима',
@@ -298,7 +302,8 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     accountTab: 'Аккаунт',
     administrationTab: 'Администрирование',
     activityLogSection: 'Журнал изменений',
-    activityLogEmpty: 'Пока нет записей. Здесь появятся списания, изменения ставок, типа оплаты и расходы.',
+    activityLogEmpty:
+      'Пока нет записей. Здесь появятся списания, изменения ставок, типа оплаты и расходы.',
     administrationIntro:
       'История важных действий в вашем workspace: баланс учеников, уроки, ставки, расходы.',
     workspaceSection: 'Рабочее пространство',
@@ -345,8 +350,7 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     saveError: 'Could not save',
     subscriptionManagedByPayment:
       'Your plan only changes after payment. It cannot be edited manually.',
-    taxModeRequiredHint:
-      'Set your tax regime — subscription purchase is unavailable until then.',
+    taxModeRequiredHint: 'Set your tax regime — subscription purchase is unavailable until then.',
     taxModeChangeHint:
       'You can change this anytime. Net profit in Finance will recalculate for the new regime (an estimate, not a tax return).',
     taxModeConfirmTitle: 'Confirm tax regime',
@@ -427,8 +431,7 @@ const ACCOUNT: Record<Lang, AccountStrings> = {
     saveError: 'Speichern fehlgeschlagen',
     subscriptionManagedByPayment:
       'Der Tarif ändert sich nur nach Zahlung. Manuelle Änderung ist nicht möglich.',
-    taxModeRequiredHint:
-      'Legen Sie das Steuerregime fest — ohne dies ist kein Abo-Kauf möglich.',
+    taxModeRequiredHint: 'Legen Sie das Steuerregime fest — ohne dies ist kein Abo-Kauf möglich.',
     taxModeChangeHint:
       'Jederzeit änderbar. Der Nettogewinn unter Finanzen wird neu berechnet (Schätzung, keine Steuererklärung).',
     taxModeConfirmTitle: 'Steuerregime bestätigen',
@@ -615,7 +618,8 @@ const AUTH: Record<Lang, AuthStrings> = {
     landingMockTaxSpendable: 'После оценки',
     landingMockTaxSvs: 'SVS (~18,12%)',
     landingMockTaxEst: 'Einkommensteuer',
-    landingMockTaxHint: 'Ориентир, не декларация. В кабинете — тот же расчёт по вашим урокам и расходам.',
+    landingMockTaxHint:
+      'Ориентир, не декларация. В кабинете — тот же расчёт по вашим урокам и расходам.',
     landingBookingTitle: 'Ссылка для самостоятельной записи',
     landingBookingBody:
       'Персональная ссылка на свободные окна из календаря Simple4U. Ученик выбирает слот сам — урок бронируется без переписки «а в четверг в 15?»',
@@ -780,7 +784,8 @@ const AUTH: Record<Lang, AuthStrings> = {
     landingMockTaxSpendable: 'After estimate',
     landingMockTaxSvs: 'SVS (~18.12%)',
     landingMockTaxEst: 'Einkommensteuer',
-    landingMockTaxHint: 'Indicative, not a tax return. In the app the same math runs on your lessons and expenses.',
+    landingMockTaxHint:
+      'Indicative, not a tax return. In the app the same math runs on your lessons and expenses.',
     landingBookingTitle: 'Self-booking calendar link',
     landingBookingBody:
       'A personal link to free slots from your Simple4U calendar. Students pick a time themselves — the lesson books without “can you do Thursday at 3?”',
@@ -942,7 +947,8 @@ const AUTH: Record<Lang, AuthStrings> = {
     landingMockTaxSpendable: 'Nach Schätzung',
     landingMockTaxSvs: 'SVS (~18,12 %)',
     landingMockTaxEst: 'Einkommensteuer',
-    landingMockTaxHint: 'Orientierung, keine Steuererklärung. Im Kabinett dieselbe Rechnung aus Unterricht und Ausgaben.',
+    landingMockTaxHint:
+      'Orientierung, keine Steuererklärung. Im Kabinett dieselbe Rechnung aus Unterricht und Ausgaben.',
     landingBookingTitle: 'Link zur Selbstbuchung',
     landingBookingBody:
       'Persönlicher Link zu freien Fenstern aus dem Simple4U-Kalender. Schüler wählen selbst — der Unterricht wird gebucht ohne „Schafft ihr Donnerstag um 15?“',
@@ -970,7 +976,8 @@ const AUTH: Record<Lang, AuthStrings> = {
     creating: 'Wird erstellt...',
     backHome: 'Zur Startseite',
     notFoundTitle: 'Seite nicht gefunden',
-    notFoundBody: 'Diese Adresse gibt es nicht. Prüfen Sie den Link oder kehren Sie zum Arbeitsbereich zurück.',
+    notFoundBody:
+      'Diese Adresse gibt es nicht. Prüfen Sie den Link oder kehren Sie zum Arbeitsbereich zurück.',
     notFoundGoApp: 'Zum Arbeitsbereich',
     hasAccount: 'Bereits ein Konto',
     noAccount: 'Konto erstellen',
@@ -1066,8 +1073,7 @@ const AUTH: Record<Lang, AuthStrings> = {
     landingFeatureStudentsBody:
       'Байланыс, ставка және тарих бір жерде. Сабақ алдында керек оқушыны тез табыңыз.',
     landingFeatureFinanceTitle: 'Қаржы',
-    landingFeatureFinanceBody:
-      'Табыс, салық және төлемдерді бір көріністе есептеңіз — кестесіз.',
+    landingFeatureFinanceBody: 'Табыс, салық және төлемдерді бір көріністе есептеңіз — кестесіз.',
     landingHowTitle: 'Қалай жұмыс істейді',
     landingHowBody:
       'Аккаунт құрыңыз, email растаңыз, қысқа профиль толтырыңыз — содан кейін күнтізбе, оқушылар және қаржы бар кабинетке өтесіз.',
@@ -1107,7 +1113,8 @@ const AUTH: Record<Lang, AuthStrings> = {
     landingMockTaxSpendable: 'Бағалаудан кейін',
     landingMockTaxSvs: 'SVS (~18,12%)',
     landingMockTaxEst: 'Einkommensteuer',
-    landingMockTaxHint: 'Бағдар, декларация емес. Кабинетте — сол есеп сіздің сабақ пен шығындарыңыздан.',
+    landingMockTaxHint:
+      'Бағдар, декларация емес. Кабинетте — сол есеп сіздің сабақ пен шығындарыңыздан.',
     landingBookingTitle: 'Өз бетінше жазылу сілтемесі',
     landingBookingBody:
       'Simple4U күнтізбесінен бос терезелерге жеке сілтеме. Оқушы өзі таңдайды — «бейсенбі сағат 15 бола ма?» хат-хабарсыз.',
@@ -2388,7 +2395,8 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     incomeBreakdownIntro:
       'Оқушы ставкасы × сабақ ұзақтығы. Өткізілген — нақты кіріс, жоспарланған — күтілетін. Валюталар Орталық банк курсымен айырбасталады.',
     expensesBreakdownTitle: 'Шығын қалай есептеледі',
-    expensesBreakdownIntro: 'Кезеңдегі барлық шығын жазбалары қосылады және есеп валютасына айырбасталады.',
+    expensesBreakdownIntro:
+      'Кезеңдегі барлық шығын жазбалары қосылады және есеп валютасына айырбасталады.',
     grossProfitBreakdownTitle: 'Салыққа дейінгі пайда',
     grossProfitBreakdownIntro:
       'Тек өткізілген сабақтар кірісі минус шығын. Жоспарланған сабақтар кірмейді.',
@@ -2413,8 +2421,7 @@ const FINANCE: Record<Lang, FinanceStrings> = {
     breakdownBack: 'Қаржыға оралу',
     breakdownHiddenNoSchedule:
       'Кестеде уақыты жоқ сабақ — кестеде көрінбейді және сомаларға кірмейді.',
-    breakdownHiddenBrokenRecurrence:
-      'Қайталанатын сабақта ереже қатесі — кестеде көрінбейді.',
+    breakdownHiddenBrokenRecurrence: 'Қайталанатын сабақта ереже қатесі — кестеде көрінбейді.',
     breakdownScheduleDerived:
       'Нақты уақыт сақталмаған — жасалған күні көрсетіледі. Кестеде уақытты орнатыңыз.',
     exportPdf: 'PDF жүктеу',
@@ -2575,7 +2582,8 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     botDisableMessage: 'Ученик перестанет получать сообщения от бота в Telegram.',
     botEnableConfirm: 'Включить',
     botDisableConfirm: 'Отключить',
-    botInviteHint: 'Отправьте ученику ссылку — после Start в боте здесь появятся его данные Telegram.',
+    botInviteHint:
+      'Отправьте ученику ссылку — после Start в боте здесь появятся его данные Telegram.',
     botInviteLinkLabel: 'Ссылка для подключения',
     botInviteButton: 'Пригласить в бот',
     botInviteDialogTitle: 'Пригласить в Telegram-бот',
@@ -2621,7 +2629,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     tgNotifySkipped: 'Сохранено. Уведомление в Telegram не отправлено (клиент не подключен)',
     tgStatusDisconnected: 'Telegram не подключен',
     tgStatusConfigure: 'Настроить уведомления',
-    tgStatusBind: 'Привязать',
+    tgStatusBind: 'Привязать Telegram',
     tgConnected: 'Подключён',
     tgNotConnected: 'Не подключён',
     tgError: 'Ошибка',
@@ -2747,7 +2755,8 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     botInviteButton: 'Invite to bot',
     botInviteDialogTitle: 'Invite to Telegram bot',
     botOpenInTelegram: 'Open in Telegram',
-    botInviteLinkFailed: 'Could not get the invite link. Check that the bot and backend are running.',
+    botInviteLinkFailed:
+      'Could not get the invite link. Check that the bot and backend are running.',
     botCopyLink: 'Copy',
     botLinkCopied: 'Copied',
     botNotLinked: 'Not linked yet',
@@ -2788,7 +2797,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     tgNotifySkipped: 'Saved. Telegram notification was not sent (client not linked)',
     tgStatusDisconnected: 'Telegram not linked',
     tgStatusConfigure: 'Notification settings',
-    tgStatusBind: 'Link',
+    tgStatusBind: 'Connect Telegram',
     tgConnected: 'Connected',
     tgNotConnected: 'Not connected',
     tgError: 'Error',
@@ -2826,8 +2835,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     tgRoutingTutor: 'Me only (tutor)',
     tgRoutingBoth: 'Both',
     tgNeedsLinkHint: 'Telegram link required',
-    tgTopupReceiptSkipped:
-      'Payment saved. Receipt was not sent to Telegram (client not connected)',
+    tgTopupReceiptSkipped: 'Payment saved. Receipt was not sent to Telegram (client not connected)',
     tgIsMinor: 'Minor (student + parent)',
     tgParentAccount: 'Parent Telegram',
     tgBindParent: 'Link parent',
@@ -2956,7 +2964,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     tgNotifySkipped: 'Gespeichert. Telegram-Benachrichtigung nicht gesendet (nicht verknüpft)',
     tgStatusDisconnected: 'Telegram nicht verknüpft',
     tgStatusConfigure: 'Benachrichtigungen einstellen',
-    tgStatusBind: 'Verknüpfen',
+    tgStatusBind: 'Telegram verknüpfen',
     tgConnected: 'Verbunden',
     tgNotConnected: 'Nicht verbunden',
     tgError: 'Fehler',
@@ -3122,7 +3130,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     tgNotifySkipped: 'Сақталды. Telegram хабарламасы жіберілмеді (байланыс жоқ)',
     tgStatusDisconnected: 'Telegram қосылмаған',
     tgStatusConfigure: 'Хабарландыруларды баптау',
-    tgStatusBind: 'Байланыстыру',
+    tgStatusBind: 'Telegram байланыстыру',
     tgConnected: 'Қосылған',
     tgNotConnected: 'Қосылмаған',
     tgError: 'Қате',
@@ -3160,8 +3168,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     tgRoutingTutor: 'Тек маған',
     tgRoutingBoth: 'Екеуіне де',
     tgNeedsLinkHint: 'Telegram байланысы қажет',
-    tgTopupReceiptSkipped:
-      'Төлем сақталды. Чек Telegram-ға жіберілмеді (қосылмаған)',
+    tgTopupReceiptSkipped: 'Төлем сақталды. Чек Telegram-ға жіберілмеді (қосылмаған)',
     tgIsMinor: 'Кәмелетке толмаған (оқушы + ата-ана)',
     tgParentAccount: 'Ата-ана Telegram',
     tgBindParent: 'Ата-ананы байланыстыру',
@@ -3176,8 +3183,7 @@ const STUDENTS: Record<Lang, StudentStrings> = {
     billingInfoAria: 'Абонемент пен кейін төлеу деген не',
     billingInfoPackage:
       'Абонемент: алдын ала төленген көлем. Сабақ бойынша −1; сағат бойынша −ұзақтық÷60.',
-    billingInfoPostpaid:
-      'Кейін төлеу: сабақтан кейін қарыз +1 сабақ немесе сағаттар (ұзақтық÷60).',
+    billingInfoPostpaid: 'Кейін төлеу: сабақтан кейін қарыз +1 сабақ немесе сағаттар (ұзақтық÷60).',
     balanceLessonsField: 'Баланста қалған сабақтар',
     balanceHoursField: 'Баланста қалған сағаттар',
     balanceNegativeHint:

@@ -376,7 +376,7 @@
   animation: workspace-toast-in 0.22s ease-out;
 
   @media (max-width: 768px), (max-height: 440px) {
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-reserve) + 0.5rem);
   }
 
   &--error {

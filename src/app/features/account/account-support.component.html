@@ -74,6 +74,7 @@
         <button type="submit" class="btn-primary account-form__submit" [disabled]="submitting()">
           {{ submitting() ? i18n.helpFormUi().sending : i18n.helpFormUi().submit }}
         </button>
+        <app-recaptcha-legal />
       </div>
     </form>
   </div>

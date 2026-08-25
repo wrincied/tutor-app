@@ -170,6 +170,12 @@ export interface HelpFormStrings {
   success: string;
   error: string;
   captchaRequired: string;
+  /** Shown when the floating reCAPTCHA badge is hidden (Google requirement). */
+  captchaLegalPrefix: string;
+  captchaPrivacy: string;
+  captchaLegalMid: string;
+  captchaTerms: string;
+  captchaLegalSuffix: string;
   rateLimited: string;
   /** Placeholder: {email} */
   mailHint: string;
@@ -282,6 +288,10 @@ export interface UserWorkspaceSettings {
   name: string;
   currency: WorkspaceCurrency;
   defaultLessonDuration: WorkspaceLessonDuration;
+  /** When true, lesson/rate amounts on calendar cards show as whole currency units. */
+  roundLessonPrices?: boolean;
+  /** Tutor-saved custom lesson-reminder offsets (minutes), excluding built-ins. */
+  customReminderOffsets?: number[];
 }
 
 export interface UserWorkingHoursSettings {
@@ -635,6 +645,8 @@ export interface AccountStrings {
   firstName: string;
   lastName: string;
   language: string;
+  roundLessonPrices: string;
+  roundLessonPricesHint: string;
   themeDark: string;
   themeLight: string;
   emailSection: string;
@@ -1570,6 +1582,7 @@ export interface StudentStrings {
   autoTimezone: string;
   deleteConfirm: string;
   topupTitle: string;
+  topupSubtitle: string;
   topupHint: string;
   /** Top-up hint when rate_unit is hour */
   topupHintHours: string;
@@ -1582,6 +1595,13 @@ export interface StudentStrings {
   randomColor: string;
   /** Уведомления ученику через Telegram-бота */
   botNotifications: string;
+  /** Hint under Connect Telegram when student is not linked. */
+  tgNotificationsHint: string;
+  /** Section title: invite / linked student Telegram account */
+  studentTelegramTitle: string;
+  studentTelegramSendLink: string;
+  studentTelegramAfterStart: string;
+  tgOpenTelegram: string;
   /** Aria for Telegram help tip */
   botInfoAria: string;
   /** Temporary Telegram tip copy */
@@ -1609,8 +1629,13 @@ export interface StudentStrings {
   botTelegramUsername: string;
   botTelegramName: string;
   botSaveToGetLink: string;
+  /** Create-form inactive Telegram block. */
+  tgInviteAfterCreateHint: string;
+  tgShareInTelegram: string;
   meetingLinkLabel: string;
   meetingLinkPlaceholder: string;
+  meetingLinkMeet: string;
+  meetingLinkZoom: string;
   botUnlinkAlertTitle: string;
   botUnlinkAlertMessage: string;
   botUnlinkAlertOk: string;
@@ -1628,6 +1653,13 @@ export interface StudentStrings {
   topupUnitsLabelHours: string;
   topupDateLabel: string;
   topupSendReceipt: string;
+  topupReceiptHint: string;
+  /** Shown when student has no Telegram link — explains why receipt switch is off. */
+  topupReceiptDisconnected: string;
+  topupPresetsLabel: string;
+  topupCustom: string;
+  topupWillAdd: string;
+  topupRateLabel: string;
   topupPrimaryCta: string;
   balanceAdjustTitle: string;
   balanceAdjustCurrent: string;
@@ -1670,10 +1702,17 @@ export interface StudentStrings {
   tgTriggerLowBalance: string;
   tgTriggerPayment: string;
   tgReminder15m: string;
+  tgReminder30m: string;
   tgReminder1h: string;
   tgReminder2h: string;
   tgReminder24h: string;
+  tgReminderCustom: string;
+  tgReminderCustomMinutes: string;
+  tgReminderSaveCustom: string;
+  tgReminderDeleteCustom: string;
   tgLowBalanceThreshold: string;
+  tgLowBalanceThresholdPrefix: string;
+  tgLowBalanceThresholdSuffix: string;
   tgRoutingTitle: string;
   tgRoutingStudent: string;
   tgRoutingTutor: string;
@@ -1683,7 +1722,13 @@ export interface StudentStrings {
   tgIsMinor: string;
   tgParentAccount: string;
   tgBindParent: string;
+  tgParentInviteHint: string;
+  tgParentConnected: string;
+  tgParentOpenLink: string;
+  tgParentShareInvite: string;
+  tgParentDisconnect: string;
   tgRoutingParent: string;
+  tgStatusConnected: string;
   tgConfigure: string;
   quickActionsTitle: string;
   lessonsShort: string;
@@ -1838,7 +1883,8 @@ export interface CalendarLesson extends Lesson {
 /** Автоматические Telegram-триггеры и маршрутизация получателей. */
 export interface StudentTelegramNotificationSettings {
   lesson_reminder_enabled: boolean;
-  lesson_reminder_offset_minutes: 15 | 60 | 120 | 1440;
+  /** Minutes before lesson start (built-ins: 15 / 30 / 60 / 1440, or custom). */
+  lesson_reminder_offset_minutes: number;
   low_balance_enabled: boolean;
   low_balance_threshold: number;
   payment_receipt_enabled: boolean;
@@ -1913,6 +1959,10 @@ export interface Student {
   telegram_parent_chat_id?: string | null;
   telegram_parent_username?: string | null;
   telegram_parent_linked_at?: string | null;
+  /** Opaque token for parent t.me deep link */
+  telegram_parent_link_token?: string | null;
+  /** https://t.me/<bot>?start=<parentToken> */
+  telegram_parent_deep_link?: string | null;
   /** Zoom / Meet / custom call URL for lesson notifications */
   meeting_link?: string | null;
   createdAt: string;

@@ -1,0 +1,36 @@
+<div
+  class="lang-switcher"
+  [class.lang-switcher--landing]="variant() === 'landing'"
+  [class.lang-switcher--account]="variant() === 'account'"
+  [class.lang-switcher--open]="menuOpen()"
+>
+  <button
+    type="button"
+    class="lang-switcher__trigger"
+    [attr.aria-expanded]="menuOpen()"
+    [attr.aria-label]="i18n.accountUi().language"
+    aria-haspopup="listbox"
+    (click)="toggleMenu($event)"
+  >
+    <app-lang-flag [code]="i18n.lang()" />
+    <span class="lang-switcher__code">{{ i18n.codeForLang(i18n.lang()) }}</span>
+    <span class="lang-switcher__caret" aria-hidden="true"></span>
+  </button>
+  @if (menuOpen()) {
+    <ul class="lang-switcher__menu" role="listbox">
+      @for (code of i18n.allLangs; track code) {
+        <li role="option" [attr.aria-selected]="i18n.lang() === code">
+          <button
+            type="button"
+            class="lang-switcher__option"
+            [class.lang-switcher__option--active]="i18n.lang() === code"
+            (click)="pickLang(code)"
+          >
+            <app-lang-flag [code]="code" />
+            <span class="lang-switcher__name">{{ i18n.labelForLang(code) }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

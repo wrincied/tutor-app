@@ -1,38 +1,19 @@
-<p class="cal-lesson-card__title">
-  <span
-    class="cal-lesson-card__student-dot"
-    [style.background]="studentColor()"
-    aria-hidden="true"
-  ></span>
-  <span class="cal-lesson-card__student-name">{{ studentName() }}</span>
-</p>
-
-@if (weekFit() || denseMobile()) {
-  <p class="cal-lesson-card__sub">
-    {{ regionText() }}
-    @if (regionText() && rateText()) {
-      <span aria-hidden="true"> · </span>
-    }
-    {{ rateText() }}
+<div class="cal-lesson-card__row cal-lesson-card__row--top">
+  <p class="cal-lesson-card__title">
+    <span
+      class="cal-lesson-card__student-dot"
+      [style.background]="studentColor()"
+      aria-hidden="true"
+    ></span>
+    <span class="cal-lesson-card__student-name">{{ studentName() }}</span>
   </p>
-  <p class="cal-lesson-card__duration">{{ durationText() }}</p>
-} @else if (compactMeta()) {
-  <p class="cal-lesson-card__meta">
-    {{ regionText() }} · {{ rateText() }} · {{ durationText() }}
-  </p>
-} @else {
-  <div class="cal-lesson-card__details">
-    <p class="cal-lesson-card__detail">
-      <span class="cal-lesson-card__lbl">{{ regionLabel() }}</span>
-      <span>{{ regionText() }}</span>
-    </p>
-    <p class="cal-lesson-card__detail">
-      <span class="cal-lesson-card__lbl">{{ rateLabel() }}</span>
-      <span>{{ rateText() }}</span>
-    </p>
-    <p class="cal-lesson-card__detail">
-      <span class="cal-lesson-card__lbl">{{ durationLabel() }}</span>
-      <span>{{ durationText() }}</span>
-    </p>
-  </div>
-}
+  @if (regionText()) {
+    <span class="cal-lesson-card__region">{{ regionText() }}</span>
+  }
+</div>
+<div class="cal-lesson-card__row cal-lesson-card__row--bottom">
+  <span class="cal-lesson-card__time">{{ timeText() }}</span>
+  @if (rateText()) {
+    <span class="cal-lesson-card__rate">{{ rateText() }}</span>
+  }
+</div>
