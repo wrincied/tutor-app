@@ -570,6 +570,28 @@ export class CalendarComponent implements OnInit {
     }).format(now);
   });
 
+  /** Hover-индикатор времени (15 мин) — позиция линии в px от верха сетки. */
+  readonly hoverLineTopPx = signal<number | null>(null);
+  /** День колонки, над которой сейчас hover-индикатор. */
+  readonly hoverDayKey = signal<string | null>(null);
+
+  /** Подпись времени на оси для hover-индикатора. */
+  hoverTimeLabel = computed(() => {
+    const top = this.hoverLineTopPx();
+    if (top === null) {
+      return '';
+    }
+    const snappedMinutes = top / this.minuteHeightPx();
+    const totalMinutes = this.gridStartHour() * 60 + snappedMinutes;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return new Intl.DateTimeFormat(this.i18n.localeId(), {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(new Date(2000, 0, 1, hours, minutes));
+  });
+
   /** Календарная неделя (ISO) для текущего якоря даты, напр. «KW 12». */
   calendarWeekLabel = computed(() => {
     this.i18n.lang();
@@ -975,10 +997,11 @@ export class CalendarComponent implements OnInit {
 
   filteredStudentsForSidebar = computed(() => {
     const query = this.studentsSidebarQuery().trim().toLowerCase();
+    const active = this.students().filter((student) => !student.archived_at);
     if (!query) {
-      return this.students();
+      return active;
     }
-    return this.students().filter((student) => student.name.toLowerCase().includes(query));
+    return active.filter((student) => student.name.toLowerCase().includes(query));
   });
 
   private readonly gridScrollRef = viewChild<ElementRef<HTMLElement>>('gridScroll');
@@ -1666,12 +1689,6 @@ export class CalendarComponent implements OnInit {
 
   formatDurationPresetLabel(minutes: number): string {
     const t = this.i18n.calendarUi();
-    if (minutes === 60) {
-      return t.durationOneHour;
-    }
-    if (minutes === 90) {
-      return `1.5 ${t.durationHourShort}`;
-    }
     return `${minutes} ${t.durationMinShort}`;
   }
 
@@ -2286,6 +2303,40 @@ export class CalendarComponent implements OnInit {
     return this.calculateTop(preview.scheduledAt);
   }
 
+  onGridHoverMove(event: MouseEvent): void {
+    if (this.isMonthOverview() || !this.useNativeLessonDrag()) {
+      return;
+    }
+    if (this.dragActiveLessonId() || this.draggedLesson()) {
+      this.clearHoverIndicator();
+      return;
+    }
+    const column = (event.target as HTMLElement).closest('.cal-day-column') as HTMLElement | null;
+    if (!column) {
+      this.clearHoverIndicator();
+      return;
+    }
+    const dayKey = column.dataset['dayKey'];
+    if (!dayKey) {
+      this.clearHoverIndicator();
+      return;
+    }
+    const rect = column.getBoundingClientRect();
+    const rawY = event.clientY - rect.top;
+    const y = Math.max(0, Math.min(this.gridHeightPx(), rawY));
+    this.hoverDayKey.set(dayKey);
+    this.hoverLineTopPx.set(this.snapOffsetYFromGridTop(y));
+  }
+
+  onGridHoverLeave(): void {
+    this.clearHoverIndicator();
+  }
+
+  private clearHoverIndicator(): void {
+    this.hoverLineTopPx.set(null);
+    this.hoverDayKey.set(null);
+  }
+
   onDayColumnClick(col: Date, event: MouseEvent): void {
     const target = event.currentTarget as HTMLElement;
     if ((event.target as HTMLElement).closest('.cal-lesson-card')) {
@@ -2478,6 +2529,7 @@ export class CalendarComponent implements OnInit {
     this.dragOriginScheduledAt.set(session.originScheduledAt);
     this.dragPreview.set({ lessonId: session.lessonId, scheduledAt: session.originScheduledAt });
     this.draggedLesson.set(lesson);
+    this.clearHoverIndicator();
     this.currentDropTime.set(session.originScheduledAt);
     this.dragGhost.set({
       x: session.startX - session.grabOffsetX,
@@ -2510,6 +2562,7 @@ export class CalendarComponent implements OnInit {
     this.dragGhost.set(null);
     this.draggedLesson.set(null);
     this.currentDropTime.set(null);
+    this.clearHoverIndicator();
     this.document.documentElement.classList.remove(CALENDAR_DRAGGING_CLASS);
   }
 
@@ -2519,6 +2572,7 @@ export class CalendarComponent implements OnInit {
     this.nativeDragState = null;
     this.dragActiveLessonId.set(null);
     this.dragOriginScheduledAt.set(null);
+    this.clearHoverIndicator();
   }
 
   onLessonDragStart(event: DragEvent, lesson: CalendarLesson): void {
@@ -2535,6 +2589,7 @@ export class CalendarComponent implements OnInit {
     this.currentDropTime.set(lesson.scheduledAt);
     this.dragActiveLessonId.set(lesson._id);
     this.dragOriginScheduledAt.set(lesson.scheduledAt);
+    this.clearHoverIndicator();
     this.document.documentElement.classList.add(CALENDAR_DRAGGING_CLASS);
 
     event.dataTransfer.effectAllowed = 'move';
@@ -3087,6 +3142,13 @@ export class CalendarComponent implements OnInit {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return new Date(y, m - 1, d, hours, minutes, 0, 0).toISOString();
+  }
+
+  private snapOffsetYFromGridTop(rawOffsetY: number): number {
+    const maxMinutes = Math.max(0, (this.gridEndHour() - this.gridStartHour()) * 60);
+    const rawMinutes = Math.max(0, Math.min(maxMinutes, rawOffsetY / this.minuteHeightPx()));
+    const snappedMinutes = Math.round(rawMinutes / 15) * 15;
+    return snappedMinutes * this.minuteHeightPx();
   }
 
   private openNewLessonAt(scheduledAt: string): void {

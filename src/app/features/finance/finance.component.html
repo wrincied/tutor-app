@@ -9,9 +9,34 @@
           }
         </h1>
         <p class="finance-header__period">
-          <span class="finance-header__preset">{{ periodPresetLabel() }}</span>
-          @if (periodRangeLabel(); as range) {
-            <span class="finance-header__range">{{ range }}</span>
+          @if (periodPreset() === 'all') {
+            <span class="finance-header__preset">{{ periodPresetLabel() }}</span>
+          } @else {
+            <span class="finance-period-nav">
+              <button
+                type="button"
+                class="finance-period-nav__btn"
+                (click)="shiftPeriod(-1)"
+                [attr.aria-label]="i18n.calendarUi().prev"
+              >
+                ‹
+              </button>
+              <span class="finance-period-nav__label">
+                <span class="finance-header__preset">{{ periodNavLabel() }}</span>
+                @if (periodRangeLabel(); as range) {
+                  <span class="finance-header__range">{{ range }}</span>
+                }
+              </span>
+              <button
+                type="button"
+                class="finance-period-nav__btn"
+                (click)="shiftPeriod(1)"
+                [disabled]="!canShiftPeriodForward()"
+                [attr.aria-label]="i18n.calendarUi().next"
+              >
+                ›
+              </button>
+            </span>
           }
         </p>
       </div>
@@ -224,33 +249,13 @@
 
         <p class="finance-note finance-note--muted">{{ t.markCompletedHint }}</p>
 
-        @if (showMixedCurrencyNote()) {
-          <p class="finance-note">{{ t.mixedCurrencyNote }}</p>
-          <ul class="finance-currency-list">
-            @for (row of incomeByCurrencyRows(); track row[0]) {
-              <li>
-                <span>{{ row[0] }}</span>
-                <span class="finance-currency-list__original">
-                  {{ formatMoney(row[1], row[0]) }}
-                  <span class="finance-currency-list__muted">({{ t.originalInCurrency }})</span>
-                </span>
-                @if (row[0] !== displayCurrency()) {
-                  <strong class="finance-currency-list__converted">
-                    ≈ {{ formatMoney(convertToReport(row[1], row[0])) }}
-                  </strong>
-                }
-              </li>
-            }
-          </ul>
-        }
-
         <section class="finance-card">
           <h2>{{ t.taxSection }}</h2>
           @if (s.tax; as tax) {
             <dl class="finance-dl">
               <div>
-                <dt>{{ t.taxableBase }}</dt>
-                <dd>{{ formatMoney(tax.taxableBase) }}</dd>
+                <dt>{{ t.grossProfit }}</dt>
+                <dd>{{ formatMoney(s.income.grossProfit) }}</dd>
               </div>
               @if (tax.socialInsuranceRate > 0 || tax.socialInsurance > 0) {
                 <div>
@@ -258,6 +263,10 @@
                   <dd>−{{ formatMoney(tax.socialInsurance) }}</dd>
                 </div>
               }
+              <div>
+                <dt>{{ t.incomeTaxBase }}</dt>
+                <dd>{{ formatMoney(tax.taxableBase) }}</dd>
+              </div>
               <div>
                 <dt>{{ t.incomeTax }}</dt>
                 <dd>−{{ formatMoney(tax.incomeTax) }}</dd>
@@ -345,7 +354,7 @@
 
 <app-dialog
   [open]="expenseFormOpen()"
-  size="md"
+  size="sm"
   [closeOnOverlay]="false"
   [title]="expenseEditTarget() ? t.editExpense : t.addExpense"
   [cancelLabel]="t.cancel"
@@ -354,25 +363,34 @@
   (confirm)="saveExpense()"
 >
   <form class="finance-expense-form" (ngSubmit)="saveExpense()">
-    <div class="field field--float">
-      <input type="text" [(ngModel)]="expenseForm.title" name="expTitle" required placeholder=" " />
-      <label>{{ t.expenseTitle }}</label>
+    <div class="field finance-expense-form__field">
+      <label for="expTitle">{{ t.expenseTitle }}</label>
+      <input
+        id="expTitle"
+        type="text"
+        class="app-input"
+        [(ngModel)]="expenseForm.title"
+        name="expTitle"
+        required
+      />
     </div>
+
     <div class="finance-expense-form__amount-row">
-      <div class="field field--float finance-expense-form__amount">
+      <div class="field finance-expense-form__field finance-expense-form__amount">
+        <label for="expAmount">{{ t.expenseAmount }}</label>
         <input
+          id="expAmount"
           type="number"
+          class="app-input"
           [(ngModel)]="expenseForm.amount"
           name="expAmount"
           min="0"
           step="0.01"
           required
-          placeholder=" "
         />
-        <label>{{ t.expenseAmount }}</label>
       </div>
-      <div class="finance-expense-form__currency">
-        <label class="finance-expense-form__currency-label" for="expCurrency">{{ t.expenseCurrency }}</label>
+      <div class="field finance-expense-form__field finance-expense-form__currency">
+        <label for="expCurrency">{{ t.expenseCurrency }}</label>
         <app-select
           id="expCurrency"
           size="compact"
@@ -382,19 +400,28 @@
         />
       </div>
     </div>
-    <div class="field field--float">
+
+    <div class="field finance-expense-form__field">
+      <label for="expDate">{{ t.expenseDate }}</label>
       <input
+        id="expDate"
         type="date"
+        class="app-input finance-expense-form__date"
         [(ngModel)]="expenseForm.expense_date"
         name="expDate"
         required
-        placeholder=" "
       />
-      <label>{{ t.expenseDate }}</label>
     </div>
-    <div class="field field--float">
-      <input type="text" [(ngModel)]="expenseForm.category" name="expCategory" placeholder=" " />
-      <label>{{ t.expenseCategory }}</label>
+
+    <div class="field finance-expense-form__field">
+      <label for="expCategory">{{ t.expenseCategory }}</label>
+      <input
+        id="expCategory"
+        type="text"
+        class="app-input"
+        [(ngModel)]="expenseForm.category"
+        name="expCategory"
+      />
     </div>
   </form>
 </app-dialog>

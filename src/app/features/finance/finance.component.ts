@@ -8,13 +8,20 @@ import {
   FINANCE_REPORT_CURRENCIES,
   type Expense,
   type FinanceExpenseBreakdown,
+  type FinanceStrings,
   type FinanceSummary,
 } from '@interfaces';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import {
+  financeAnchorFromQuery,
+  financeCanShiftForward,
+  financeCurrentAnchor,
+  financeIsCurrentPeriod,
   financePeriodRange,
+  financeShiftAnchor,
+  type FinancePeriodAnchor,
   type FinancePeriodPreset,
 } from '../../core/utils/finance-period';
 import { convertWithEurRates } from '../../core/utils/finance-currency';
@@ -71,6 +78,7 @@ export class FinanceComponent implements OnInit {
   upgradeModalOpen = signal(false);
 
   periodPreset = signal<FinancePeriodPreset>('month');
+  periodAnchor = signal<FinancePeriodAnchor>(financeCurrentAnchor());
   reportCurrency = signal(this.readStoredReportCurrency());
 
   displayCurrency = computed(() => this.reportCurrency() || this.summary()?.currency || 'EUR');
@@ -86,19 +94,6 @@ export class FinanceComponent implements OnInit {
     expense_date: new Date().toISOString().slice(0, 10),
     category: '',
   };
-
-  incomeByCurrencyRows = computed(() => {
-    const by = this.summary()?.income.byCurrency ?? {};
-    return Object.entries(by)
-      .filter(([, amount]) => amount > 0)
-      .sort(([a], [b]) => a.localeCompare(b));
-  });
-
-  showMixedCurrencyNote = computed(() => {
-    const codes = Object.keys(this.summary()?.income.byCurrency ?? {});
-    const report = this.displayCurrency();
-    return codes.length > 1 || codes.some((c) => c !== report);
-  });
 
   combinedIncome = computed(() => {
     const s = this.summary();
@@ -120,14 +115,38 @@ export class FinanceComponent implements OnInit {
 
   periodPresetLabel = computed(() => {
     const preset = this.periodPreset();
-    if (preset === 'month') {
-      return this.t.periodMonth;
+    if (preset === 'all') {
+      return this.t.periodAll;
     }
-    if (preset === 'year') {
-      return this.t.periodYear;
+    if (financeIsCurrentPeriod(preset, this.periodAnchor())) {
+      return preset === 'month' ? this.t.periodMonth : this.t.periodYear;
     }
-    return this.t.periodAll;
+    return this.periodNavLabel();
   });
+
+  periodNavLabel = computed(() => {
+    this.i18n.lang();
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return '';
+    }
+    const anchor = this.periodAnchor();
+    if (financeIsCurrentPeriod(preset, anchor)) {
+      return preset === 'month' ? this.t.periodMonth : this.t.periodYear;
+    }
+    const locale = this.i18n.localeId();
+    if (preset === 'year') {
+      return String(anchor.year);
+    }
+    return new Date(anchor.year, anchor.month - 1, 1).toLocaleDateString(locale, {
+      month: 'long',
+      year: 'numeric',
+    });
+  });
+
+  canShiftPeriodForward = computed(() =>
+    financeCanShiftForward(this.periodPreset(), this.periodAnchor()),
+  );
 
   periodRangeLabel = computed(() => {
     this.i18n.lang();
@@ -135,12 +154,12 @@ export class FinanceComponent implements OnInit {
     if (preset === 'all') {
       return '';
     }
-    const range = financePeriodRange(preset);
+    const range = financePeriodRange(preset, this.periodAnchor());
     if (!range.from || !range.to) {
       return '';
     }
     if (preset === 'year') {
-      return String(new Date(`${range.from}T12:00:00`).getFullYear());
+      return '';
     }
     const locale = this.i18n.localeId();
     const fmt = (iso: string) =>
@@ -155,7 +174,7 @@ export class FinanceComponent implements OnInit {
   });
 
   filteredExpenses = computed(() => {
-    const range = financePeriodRange(this.periodPreset());
+    const range = financePeriodRange(this.periodPreset(), this.periodAnchor());
     const items = this.expenses();
     if (!range.from && !range.to) {
       return items;
@@ -180,6 +199,11 @@ export class FinanceComponent implements OnInit {
     if (isFinancePeriodPreset(periodParam)) {
       this.periodPreset.set(periodParam);
     }
+    const atParam = this.route.snapshot.queryParamMap.get('at');
+    const parsedAnchor = financeAnchorFromQuery(atParam, this.periodPreset());
+    if (parsedAnchor) {
+      this.periodAnchor.set(parsedAnchor);
+    }
     const currencyParam = this.route.snapshot.queryParamMap.get('currency');
     if (currencyParam) {
       this.reportCurrency.set(currencyParam);
@@ -188,12 +212,28 @@ export class FinanceComponent implements OnInit {
     this.reload();
   }
 
-  get t() {
+  get t(): FinanceStrings {
     return this.i18n.financeUi();
   }
 
   setPeriod(preset: FinancePeriodPreset): void {
+    if (preset !== 'all' && this.periodPreset() === 'all') {
+      this.periodAnchor.set(financeCurrentAnchor());
+    }
     this.periodPreset.set(preset);
+    this.syncRouteQuery();
+    this.reload();
+  }
+
+  shiftPeriod(delta: -1 | 1): void {
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return;
+    }
+    if (delta === 1 && !this.canShiftPeriodForward()) {
+      return;
+    }
+    this.periodAnchor.set(financeShiftAnchor(preset, this.periodAnchor(), delta));
     this.syncRouteQuery();
     this.reload();
   }
@@ -228,7 +268,11 @@ export class FinanceComponent implements OnInit {
   private syncRouteQuery(): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+      queryParams: financeRouteQueryParams(
+        this.periodPreset(),
+        this.reportCurrency(),
+        this.periodAnchor(),
+      ),
       replaceUrl: true,
     });
   }
@@ -271,7 +315,7 @@ export class FinanceComponent implements OnInit {
 
   /** One /summary call — expenses come from expensesBreakdown (no second RTT). */
   private fetchLiveSummary$() {
-    const range = financePeriodRange(this.periodPreset());
+    const range = financePeriodRange(this.periodPreset(), this.periodAnchor());
     const currency = this.reportCurrency();
     const summaryQuery = {
       ...range,
@@ -386,7 +430,11 @@ export class FinanceComponent implements OnInit {
   openBreakdown(panel: FinanceBreakdownPanel): void {
     this.gateOrRun(() => {
       void this.router.navigate(['/app/finance/breakdown', panel], {
-        queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+        queryParams: financeRouteQueryParams(
+        this.periodPreset(),
+        this.reportCurrency(),
+        this.periodAnchor(),
+      ),
       });
     });
   }

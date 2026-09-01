@@ -1,4 +1,5 @@
-import type { FinancePeriodPreset } from './finance-period';
+import type { FinancePeriodAnchor, FinancePeriodPreset } from './finance-period';
+import { financeAnchorToQuery } from './finance-period';
 
 export type FinanceBreakdownPanel = 'income' | 'expenses' | 'gross' | 'net' | 'lessons';
 
@@ -24,9 +25,12 @@ export function isFinancePeriodPreset(
 export function financeRouteQueryParams(
   period: FinancePeriodPreset,
   currency: string,
-): { period: FinancePeriodPreset; currency?: string } {
+  anchor?: FinancePeriodAnchor | null,
+): { period: FinancePeriodPreset; currency?: string; at?: string } {
+  const at = anchor ? financeAnchorToQuery(anchor, period) : undefined;
   return {
     period,
     ...(currency ? { currency } : {}),
+    ...(at ? { at } : {}),
   };
 }

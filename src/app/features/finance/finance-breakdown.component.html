@@ -7,9 +7,34 @@
       <div class="finance-breakdown-header__titles">
         <h1 class="finance-breakdown-header__title">{{ pageTitle() }}</h1>
         <p class="finance-breakdown-header__period">
-          <span>{{ periodPresetLabel() }}</span>
-          @if (periodRangeLabel(); as range) {
-            <span>{{ range }}</span>
+          @if (periodPreset() === 'all') {
+            <span>{{ periodPresetLabel() }}</span>
+          } @else {
+            <span class="finance-period-nav">
+              <button
+                type="button"
+                class="finance-period-nav__btn"
+                (click)="shiftPeriod(-1)"
+                [attr.aria-label]="i18n.calendarUi().prev"
+              >
+                ‹
+              </button>
+              <span class="finance-period-nav__label">
+                <span>{{ periodNavLabel() }}</span>
+                @if (periodRangeLabel(); as range) {
+                  <span>{{ range }}</span>
+                }
+              </span>
+              <button
+                type="button"
+                class="finance-period-nav__btn"
+                (click)="shiftPeriod(1)"
+                [disabled]="!canShiftPeriodForward()"
+                [attr.aria-label]="i18n.calendarUi().next"
+              >
+                ›
+              </button>
+            </span>
           }
           @if (displayCurrency(); as currency) {
             <span>· {{ currency }}</span>

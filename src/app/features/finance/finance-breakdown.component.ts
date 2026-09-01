@@ -4,7 +4,16 @@ import type { FinanceExpenseBreakdown, FinanceLessonBreakdown, FinanceSummary } 
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
-import { financePeriodRange, type FinancePeriodPreset } from '../../core/utils/finance-period';
+import {
+  financeAnchorFromQuery,
+  financeCanShiftForward,
+  financeCurrentAnchor,
+  financeIsCurrentPeriod,
+  financePeriodRange,
+  financeShiftAnchor,
+  type FinancePeriodAnchor,
+  type FinancePeriodPreset,
+} from '../../core/utils/finance-period';
 import {
   FINANCE_CURRENCY_STORAGE_KEY,
   financeRouteQueryParams,
@@ -38,6 +47,7 @@ export class FinanceBreakdownComponent implements OnInit {
 
   readonly panel = signal<FinanceBreakdownPanel>('income');
   readonly periodPreset = signal<FinancePeriodPreset>('month');
+  readonly periodAnchor = signal<FinancePeriodAnchor>(financeCurrentAnchor());
   readonly reportCurrency = signal(this.readStoredReportCurrency());
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -50,18 +60,43 @@ export class FinanceBreakdownComponent implements OnInit {
 
   readonly backLink = computed(() => ({
     path: ['/app/finance'] as const,
-    queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+    queryParams: financeRouteQueryParams(
+      this.periodPreset(),
+      this.reportCurrency(),
+      this.periodAnchor(),
+    ),
   }));
+
+  readonly periodNavLabel = computed(() => {
+    this.i18n.lang();
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return '';
+    }
+    const anchor = this.periodAnchor();
+    if (financeIsCurrentPeriod(preset, anchor)) {
+      return preset === 'month' ? this.t.periodMonth : this.t.periodYear;
+    }
+    const locale = this.i18n.localeId();
+    if (preset === 'year') {
+      return String(anchor.year);
+    }
+    return new Date(anchor.year, anchor.month - 1, 1).toLocaleDateString(locale, {
+      month: 'long',
+      year: 'numeric',
+    });
+  });
+
+  readonly canShiftPeriodForward = computed(() =>
+    financeCanShiftForward(this.periodPreset(), this.periodAnchor()),
+  );
 
   readonly periodPresetLabel = computed(() => {
     const preset = this.periodPreset();
-    if (preset === 'month') {
-      return this.t.periodMonth;
+    if (preset === 'all') {
+      return this.t.periodAll;
     }
-    if (preset === 'year') {
-      return this.t.periodYear;
-    }
-    return this.t.periodAll;
+    return this.periodNavLabel();
   });
 
   readonly periodRangeLabel = computed(() => {
@@ -70,12 +105,12 @@ export class FinanceBreakdownComponent implements OnInit {
     if (preset === 'all') {
       return '';
     }
-    const range = financePeriodRange(preset);
+    const range = financePeriodRange(preset, this.periodAnchor());
     if (!range.from || !range.to) {
       return '';
     }
     if (preset === 'year') {
-      return String(new Date(`${range.from}T12:00:00`).getFullYear());
+      return '';
     }
     const locale = this.i18n.localeId();
     const fmt = (iso: string) =>
@@ -117,6 +152,12 @@ export class FinanceBreakdownComponent implements OnInit {
     const periodParam = this.route.snapshot.queryParamMap.get('period');
     if (isFinancePeriodPreset(periodParam)) {
       this.periodPreset.set(periodParam);
+    }
+
+    const atParam = this.route.snapshot.queryParamMap.get('at');
+    const parsedAnchor = financeAnchorFromQuery(atParam, this.periodPreset());
+    if (parsedAnchor) {
+      this.periodAnchor.set(parsedAnchor);
     }
 
     const currencyParam = this.route.snapshot.queryParamMap.get('currency');
@@ -165,6 +206,27 @@ export class FinanceBreakdownComponent implements OnInit {
     }
   }
 
+  shiftPeriod(delta: -1 | 1): void {
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return;
+    }
+    if (delta === 1 && !this.canShiftPeriodForward()) {
+      return;
+    }
+    this.periodAnchor.set(financeShiftAnchor(preset, this.periodAnchor(), delta));
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: financeRouteQueryParams(
+        this.periodPreset(),
+        this.reportCurrency(),
+        this.periodAnchor(),
+      ),
+      replaceUrl: true,
+    });
+    this.reload();
+  }
+
   private readStoredReportCurrency(): string {
     if (typeof localStorage === 'undefined') {
       return '';
@@ -180,7 +242,11 @@ export class FinanceBreakdownComponent implements OnInit {
       next: (profile) => {
         if (!planEntitlementsFromProfile(profile).hasFinance) {
           void this.router.navigate(['/app/finance'], {
-            queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+            queryParams: financeRouteQueryParams(
+              this.periodPreset(),
+              this.reportCurrency(),
+              this.periodAnchor(),
+            ),
           });
           return;
         }
@@ -193,7 +259,7 @@ export class FinanceBreakdownComponent implements OnInit {
   }
 
   private loadSummary(): void {
-    const range = financePeriodRange(this.periodPreset());
+    const range = financePeriodRange(this.periodPreset(), this.periodAnchor());
     const currency = this.reportCurrency();
     const summaryQuery = {
       ...range,

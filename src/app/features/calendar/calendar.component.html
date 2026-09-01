@@ -260,6 +260,8 @@
                         <div
                           class="cal-days-grid"
                           [style.grid-template-columns]="gridTemplateColumns()"
+                          (mousemove)="onGridHoverMove($event)"
+                          (mouseleave)="onGridHoverLeave()"
                         >
                           @for (col of columns(); track dayKey(col)) {
                             <div
@@ -278,6 +280,13 @@
                               }
                               @for (hour of gridHours(); track hour) {
                                 <div class="cal-hour-line" [style.height.px]="hourHeightPx()"></div>
+                              }
+
+                              @if (hoverDayKey() === dayKey(col) && hoverLineTopPx(); as hoverTop) {
+                                <div class="cal-hover-indicator" [style.top.px]="hoverTop">
+                                  <span class="cal-hover-marker">{{ hoverTimeLabel() }}</span>
+                                  <span class="cal-hover-line" aria-hidden="true"></span>
+                                </div>
                               }
 
                               @if (showPhantomInColumn(col)) {
@@ -403,11 +412,6 @@
                   class="cal-sidebar__item-btn"
                   [class.cal-sidebar__item-btn--active]="focusedStudentId() === sidebarStudent._id"
                   [class.cal-sidebar__item-btn--empty-balance]="isPackageEmptyBalance(sidebarStudent)"
-                  [style.border-left-color]="
-                    focusedStudentId() === sidebarStudent._id
-                      ? getStudentColor(sidebarStudent._id)
-                      : null
-                  "
                   (click)="selectSidebarStudent(sidebarStudent._id)"
                 >
                   <span
@@ -417,7 +421,7 @@
                   ></span>
                   <span class="cal-sidebar__info">
                     <span class="cal-sidebar__name">{{ displayStudentName(sidebarStudent.name) }}</span>
-                    <span class="cal-sidebar__meta">
+                    <span class="cal-sidebar__row">
                       <span
                         class="cal-sidebar__balance"
                         [class.cal-sidebar__balance--last]="isPackageLastBalance(sidebarStudent)"

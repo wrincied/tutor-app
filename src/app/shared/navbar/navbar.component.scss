@@ -41,6 +41,9 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
 }
 
 .sidebar-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: 18px;
   font-weight: 700;
@@ -53,6 +56,19 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
   @media (max-width: 890px) {
     display: none;
   }
+}
+
+.sidebar-logo__mark {
+  display: block;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: contain;
+}
+
+.sidebar-logo__text {
+  line-height: 1;
+  padding-top: 0.05em;
 }
 
 .sidebar-logo-toggle {

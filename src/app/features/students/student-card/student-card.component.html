@@ -19,14 +19,16 @@
   <span class="student-card__rate">{{ rateText() }}</span>
 </div>
 
-<div class="student-card__metrics">
-  <p class="student-card__metric" [class.student-card__metric--warning]="balanceWarning()">
-    <span class="student-card__metric-label">{{ labels().balancePrefix }}:</span>
-    <span class="student-card__metric-value">{{ balanceValue() }} {{ balanceUnit() }}</span>
+<div class="student-card__body">
+  <p
+    class="student-card__balance"
+    [class.student-card__balance--empty]="balanceTone() === 'empty'"
+    [class.student-card__balance--warning]="balanceTone() === 'warning'"
+  >
+    {{ balanceValue() }} {{ balanceUnit() }}
   </p>
-  <p class="student-card__metric">
-    <span class="student-card__metric-label">{{ labels().lastPaymentPrefix }}:</span>
-    <span class="student-card__metric-value">{{ lastPaymentText() }}</span>
+  <p class="student-card__last-paid">
+    {{ labels().lastPaymentPrefix }}: {{ lastPaymentText() }}
   </p>
 </div>
 

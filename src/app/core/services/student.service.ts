@@ -80,6 +80,16 @@ export class StudentService {
   remove(id: string) {
     return this.http.delete(`${API}/${id}`).pipe(tap(() => this.invalidateListCache()));
   }
+  archive(id: string) {
+    return this.http
+      .post<Student>(`${API}/${id}/archive`, {})
+      .pipe(tap(() => this.invalidateListCache()));
+  }
+  unarchive(id: string) {
+    return this.http
+      .post<Student>(`${API}/${id}/unarchive`, {})
+      .pipe(tap(() => this.invalidateListCache()));
+  }
   disconnectTelegram(id: string) {
     return this.http
       .post<Student>(`${API}/${id}/telegram-disconnect`, {})

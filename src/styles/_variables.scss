@@ -20,12 +20,14 @@
   --z-app-dropdown-top: 1300;
 
   /* Floating bottom nav island (mobile) */
-  // --bottom-nav-island-h: 58px;
-  --bottom-nav-island-gap: 14px;
-  --bottom-nav-island-pop: 8px;
+  --bottom-nav-island-h: 58px;
+  --bottom-nav-island-gap: 18px;
+  // --bottom-nav-island-pop: 10px;
+  /** Visible gap between page content and the nav pill (tune this first). */
+  --bottom-nav-content-clearance: 0.5rem;
   --bottom-nav-reserve: calc(
     var(--bottom-nav-island-h) + var(--bottom-nav-island-gap) * 2 + var(--bottom-nav-island-pop) +
-      env(safe-area-inset-bottom, 0px)
+      var(--bottom-nav-content-clearance) + env(safe-area-inset-bottom, 0px)
   );
 
   /* Mobile app header (profile avatar) */

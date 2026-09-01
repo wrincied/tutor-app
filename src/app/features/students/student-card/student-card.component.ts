@@ -52,7 +52,16 @@ export class StudentCardComponent {
     return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
   });
 
-  readonly balanceWarning = computed(() => this.student().remainingLessons <= 1);
+  readonly balanceTone = computed((): 'empty' | 'warning' | 'normal' => {
+    const balance = this.student().remainingLessons;
+    if (balance <= 0) {
+      return 'empty';
+    }
+    if (balance <= 2) {
+      return 'warning';
+    }
+    return 'normal';
+  });
 
   readonly lastPaymentText = computed(() => this.student().lastPaymentDate?.trim() || '—');
 

@@ -78,10 +78,53 @@
 .finance-breakdown-header__period {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.35rem 0.5rem;
   margin: 0;
   font-size: 0.8125rem;
   color: var(--text-secondary);
+}
+
+.finance-period-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.finance-period-nav__btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--nav-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--nav-accent);
+    color: var(--nav-accent);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.finance-period-nav__label {
+  display: inline-flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
 }
 
 .finance-detail {

@@ -56,7 +56,17 @@
         <section class="home-card home-card--schedule" aria-labelledby="home-schedule-title">
           <div class="home-schedule__head">
             <h2 id="home-schedule-title" class="home-card__title">{{ scheduleTitle() }}</h2>
-            <div class="home-schedule__nav" role="group" [attr.aria-label]="t.scheduleTitle">
+            <div class="home-schedule__head-actions">
+              @if (dayLessons().length > 0) {
+                <a
+                  routerLink="/app/calendar"
+                  [queryParams]="newLessonQuery()"
+                  class="home-schedule__plan-link"
+                >
+                  {{ t.lessonsEmptyCta }}
+                </a>
+              }
+              <div class="home-schedule__nav" role="group" [attr.aria-label]="t.scheduleTitle">
               <button type="button" class="home-schedule__nav-btn" (click)="shiftDay(-1)" aria-label="←">
                 ‹
               </button>
@@ -71,6 +81,7 @@
               <button type="button" class="home-schedule__nav-btn" (click)="shiftDay(1)" aria-label="→">
                 ›
               </button>
+            </div>
             </div>
           </div>
 

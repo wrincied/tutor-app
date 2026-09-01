@@ -246,6 +246,8 @@ export interface NavStrings {
   account: string;
   admin: string;
   pricing: string;
+  /** Bottom nav “More” menu */
+  more: string;
 }
 
 export type TaxMode =
@@ -1360,6 +1362,8 @@ export interface FinanceStrings {
   socialInsurance: string;
   incomeTax: string;
   taxableBase: string;
+  /** Income tax base after social insurance (AT self-employed) */
+  incomeTaxBase: string;
   expensesSection: string;
   addExpense: string;
   editExpense: string;
@@ -1375,6 +1379,8 @@ export interface FinanceStrings {
   cancel: string;
   deleteConfirm: string;
   disclaimer: string;
+  /** Expandable guide explaining KPI formulas */
+  calculationsGuideTitle: string;
   mixedCurrencyNote: string;
   conversionNote: string;
   reportCurrency: string;
@@ -1547,12 +1553,34 @@ export interface FinanceSummary {
 export interface StudentStrings {
   addButton: string;
   emptyState: string;
+  /** Placeholder for student search input */
+  searchPlaceholder: string;
+  /** Shown when search has no matches */
+  searchNoResults: string;
+  /** Danger zone title in edit drawer */
+  dangerZoneTitle: string;
+  /** Tab: active students */
+  tabActive: string;
+  /** Tab: archived students */
+  tabArchive: string;
+  /** Archive action (swipe / danger zone) */
+  archive: string;
+  /** Confirm dialog title for archiving */
+  archiveStudentTitle: string;
+  /** Confirm dialog body — {name} */
+  archiveConfirm: string;
+  /** Restore archived student */
+  unarchive: string;
+  /** Empty state for archive tab */
+  archiveEmptyState: string;
   loading: string;
   newStudent: string;
   editModalTitle: string;
   name: string;
   ratePerLesson: string;
   ratePerHour: string;
+  /** Rate amount field label when hourly basis is selected */
+  rateHourLabel: string;
   rateUnitTitle: string;
   /** Aria for rate-unit help tip */
   rateUnitInfoAria: string;
@@ -1591,6 +1619,8 @@ export interface StudentStrings {
   currency: string;
   /** Цвет карточки урока в календаре */
   calendarColor: string;
+  /** Hint explaining calendar color is shown on lessons */
+  calendarColorHint: string;
   /** Кнопка случайного пастельного цвета */
   randomColor: string;
   /** Уведомления ученику через Telegram-бота */
@@ -1659,6 +1689,8 @@ export interface StudentStrings {
   topupPresetsLabel: string;
   topupCustom: string;
   topupWillAdd: string;
+  /** Compact summary line, e.g. "+1 Std. werden gutgeschrieben" */
+  topupSummaryLine: string;
   topupRateLabel: string;
   topupPrimaryCta: string;
   balanceAdjustTitle: string;
@@ -1670,6 +1702,18 @@ export interface StudentStrings {
   balanceAdjustReasonTypo: string;
   balanceAdjustNotify: string;
   balanceAdjustTooltip: string;
+  /** Step 1: balance change in edit modal (payment settings) */
+  balanceChangeConfirmTitle: string;
+  /** {from} {to} {unit} */
+  balanceChangeConfirmIntro: string;
+  balanceChangeNotifyAlways: string;
+  balanceChangeContinue: string;
+  /** Step 2: final confirm */
+  balanceChangeFinalTitle: string;
+  /** {from} {to} {unit} */
+  balanceChangeFinalBody: string;
+  balanceChangeApply: string;
+  balanceChangeBack: string;
   tgNotifySkipped: string;
   tgStatusDisconnected: string;
   tgStatusConfigure: string;
@@ -1965,5 +2009,7 @@ export interface Student {
   telegram_parent_deep_link?: string | null;
   /** Zoom / Meet / custom call URL for lesson notifications */
   meeting_link?: string | null;
+  /** ISO timestamp when tutor archived the student (hidden from active list). */
+  archived_at?: string | null;
   createdAt: string;
 }
