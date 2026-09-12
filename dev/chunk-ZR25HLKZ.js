@@ -1,0 +1,1 @@
+import{db as n}from"./chunk-TT5GNO7J.js";import"./chunk-IFGU66OU.js";var o=class t{static \u0275fac=function(e){return new(e||t)};static \u0275cmp=n({type:t,selectors:[["app-account-section-stub"]],decls:0,vars:0,template:function(e,a){},encapsulation:2})};export{o as AccountSectionStubComponent};
