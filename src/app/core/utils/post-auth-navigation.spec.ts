@@ -28,7 +28,8 @@ describe('postAuthPath', () => {
   });
 
   it('falls back to home without returnUrl', () => {
-    expect(postAuthPath(profile, true, null, 'uk')).toBe('/uk/app/home');
+    // UI lang `uk` maps to URL lang `ru`.
+    expect(postAuthPath(profile, true, null, 'uk')).toBe('/ru/app/home');
   });
 
   it('sends declined consent back to onboarding so the user can accept', () => {

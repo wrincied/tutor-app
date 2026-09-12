@@ -62,9 +62,20 @@ export class App {
     inject(AnalyticsService);
     void this._theme;
     if ((environment as { designMode?: boolean }).designMode) {
-      this.document.documentElement.dataset['design'] = 'v2';
+      // Domino/SSR documentElement may lack `dataset`; only set in the browser.
+      const root = this.document.documentElement;
+      if (root?.dataset) {
+        root.dataset['design'] = 'v2';
+      } else {
+        root?.setAttribute?.('data-design', 'v2');
+      }
     } else {
-      delete this.document.documentElement.dataset['design'];
+      const root = this.document.documentElement;
+      if (root?.dataset) {
+        delete root.dataset['design'];
+      } else {
+        root?.removeAttribute?.('data-design');
+      }
     }
     // После HMR могут остаться невидимые слои select — они блокируют клики по всему UI
     purgeStaleOverlayLayers(this.document);

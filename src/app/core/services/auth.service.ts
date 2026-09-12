@@ -220,6 +220,9 @@ export class AuthService {
    * Bootstrap профиля — в UserService.ensureProfile() на странице login/register.
    */
   handleRedirectResult(): Observable<User | null> {
+    if (typeof window === 'undefined') {
+      return of(null);
+    }
     if (!this.redirectResult$) {
       this.redirectResult$ = this.fromAuth(() => getRedirectResult(this.auth)).pipe(
         map((cred) => cred?.user ?? null),

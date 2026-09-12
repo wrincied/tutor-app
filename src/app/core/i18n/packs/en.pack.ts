@@ -187,22 +187,31 @@ export const LOCALE_PACK = {
   auth: {
     landingHeadline: 'Lessons and students in one place',
     landingSubtitle:
-      'Instead of WhatsApp and spreadsheets: schedule, students, and finance in one calm space.',
+      'Instead of WhatsApp and spreadsheets: schedule, student CRM, and finance in one calm space.',
     join: 'Start for free',
     landingSignIn: 'Already have an account? Sign in',
     landingFeaturesTitle: 'Everything your lessons need',
-    landingFeatureScheduleTitle: 'Schedule',
+    landingFeatureScheduleTitle: 'Schedule & timetable',
     landingFeatureScheduleBody:
-      'Plan sessions, recurring lessons, and statuses — without chasing notes across chats.',
-    landingFeatureStudentsTitle: 'Students',
+      'Plan sessions, recurring lessons, and statuses — your timetable stays clear without chasing chats.',
+    landingFeatureStudentsTitle: 'Student management',
     landingFeatureStudentsBody:
-      'Keep contacts, rates, and history close. Find the right student before class starts.',
-    landingFeatureFinanceTitle: 'Finance',
+      'Contacts, rates, packages, and history close at hand. Find the right student before class starts.',
+    landingFeatureFinanceTitle: 'Billing & finance',
     landingFeatureFinanceBody:
-      'Track income, tax, and lesson payments in one clear view — no spreadsheet scramble.',
+      'Income, expenses, and a tax cushion in one view — bill tutoring hours without spreadsheet chaos.',
     landingHowTitle: 'How it works',
     landingHowBody:
       'Create an account, confirm your email, finish a short profile — then open your workspace with calendar, students, and finance.',
+    landingUseCasesTitle: 'Built for private tutors’ daily work',
+    landingUseCasesLead:
+      'Simple4U connects timetable, student management, and billing — software for private tutors teaching independently in Austria and the EU.',
+    landingUseCaseSoftwareTitle: 'Software for private tutors',
+    landingUseCaseSoftwareBody:
+      'Calendar, lesson status, and reminders in one place. Made for freelancers and small businesses — not large school systems.',
+    landingUseCaseStudentsTitle: 'Student CRM without Excel',
+    landingUseCaseStudentsBody:
+      'Add students, track package balances, and open the right contact before class — with optional Telegram notes for lessons and payments.',
     landingClosingTitle: 'Teach with less chaos',
     landingClosingCta: 'Start for free',
     landingNavSignIn: 'Sign in',
@@ -311,6 +320,12 @@ export const LOCALE_PACK = {
     landingFaq6Q: 'What happens if I reach 9 students on Basis?',
     landingFaq6A:
       'The app will offer an upgrade to Pro with unlimited students and automatic Telegram reminders.',
+    landingFaq7Q: 'Is Simple4U software for private tutors?',
+    landingFaq7A:
+      'Yes. Simple4U is a web CRM and lesson planner for private tutors — focused on Austria and the EU, not large schools.',
+    landingFaq8Q: 'Can I bill tutoring hours with it?',
+    landingFaq8A:
+      'Yes. Finance shows income and expenses; packages and rates help you bill lessons clearly. You can use the numbers as a base for invoices or fee notes.',
     footerDatenschutz: 'Privacy Policy',
     footerImpressum: 'Imprint',
     footerKontakt: 'Contact',

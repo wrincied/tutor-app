@@ -1,6 +1,8 @@
-import { ApplicationConfig, provideAppInitializer } from '@angular/core';
+import { ApplicationConfig, PLATFORM_ID, provideAppInitializer, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideAnalytics, getAnalytics } from '@angular/fire/analytics';
 import { provideAuth, getAuth } from '@angular/fire/auth';
@@ -16,12 +18,21 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideI18nInitializer(),
     provideAppInitializer(() => {
-      captureReferralFromLocation();
+      if (isPlatformBrowser(inject(PLATFORM_ID))) {
+        captureReferralFromLocation();
+      }
     }),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor, emailVerificationInterceptor])),
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
-    provideAnalytics(() => getAnalytics()),
+    provideAnalytics(() => {
+      // Analytics is browser-only; skip during prerender/SSR.
+      if (!isPlatformBrowser(inject(PLATFORM_ID))) {
+        return null as never;
+      }
+      return getAnalytics();
+    }),
     provideAuth(() => getAuth()),
+    provideClientHydration(withEventReplay()),
   ],
 };

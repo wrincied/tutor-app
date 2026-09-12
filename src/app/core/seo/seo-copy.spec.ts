@@ -14,9 +14,10 @@ describe('seo-copy', () => {
     expect(isNoindexPage('/app/payment', 'payment')).toBe(true);
   });
 
-  it('mentions simple4u.at and disambiguates .io in default copy', () => {
+  it('mentions simple4u.at in landing meta without competitor brand spam', () => {
     const de = pageDescription('landing', 'de');
     expect(de.toLowerCase()).toContain('simple4u.at');
-    expect(de.toLowerCase()).toContain('simple4u.io');
+    expect(de.toLowerCase()).not.toContain('simple4u.io');
+    expect(de.toLowerCase()).toContain('österreich');
   });
 });

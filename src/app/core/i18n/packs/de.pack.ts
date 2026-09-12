@@ -186,22 +186,31 @@ export const LOCALE_PACK = {
   auth: {
     landingHeadline: 'Unterricht und Schüler an einem Ort',
     landingSubtitle:
-      'Statt WhatsApp und Excel: Terminplaner, Schüler und Finanzen in einem ruhigen Raum.',
+      'Statt WhatsApp und Excel: Terminplaner, Schülerverwaltung und Finanzen in einem ruhigen Raum.',
     join: 'Kostenlos starten',
     landingSignIn: 'Bereits ein Konto? Anmelden',
     landingFeaturesTitle: 'Alles für Ihren Unterricht',
-    landingFeatureScheduleTitle: 'Terminplaner',
+    landingFeatureScheduleTitle: 'Stundenplan & Termine',
     landingFeatureScheduleBody:
-      'Planen Sie Unterricht, Wiederholungen und Status — ohne Chaos in Notizen und Chats.',
-    landingFeatureStudentsTitle: 'Schüler',
+      'Unterricht, Wiederholungen und Status planen — der Stundenplan bleibt klar, ohne Chaos in Notizen und Chats.',
+    landingFeatureStudentsTitle: 'Schülerverwaltung',
     landingFeatureStudentsBody:
-      'Kontakte, Tarife und Verlauf griffbereit. Finden Sie den richtigen Schüler vor dem Unterricht.',
-    landingFeatureFinanceTitle: 'Finanzen',
+      'Kontakte, Tarife, Pakete und Verlauf griffbereit. Den richtigen Schüler finden Sie vor dem Unterricht in Sekunden.',
+    landingFeatureFinanceTitle: 'Abrechnung & Finanzen',
     landingFeatureFinanceBody:
-      'Einkommen, Steuern und Zahlungen auf einen Blick — ohne Tabellen-Chaos.',
+      'Einnahmen, Ausgaben und Steuerpolster auf einen Blick — Nachhilfestunden abrechnen ohne Tabellen-Chaos.',
     landingHowTitle: 'So funktioniert’s',
     landingHowBody:
       'Konto erstellen, E-Mail bestätigen, kurzes Profil ausfüllen — und Sie sind im Arbeitsbereich mit Kalender, Schülern und Finanzen.',
+    landingUseCasesTitle: 'Für den Alltag als Nachhilfelehrer',
+    landingUseCasesLead:
+      'Simple4U verbindet Stundenplan, Schülerverwaltung und Abrechnung — Software für Nachhilfelehrer, die in Österreich und der EU selbstständig unterrichten.',
+    landingUseCaseSoftwareTitle: 'Software für Nachhilfelehrer',
+    landingUseCaseSoftwareBody:
+      'Kalender, Stundenstatus und Erinnerungen an einem Ort. Gemacht für Einzelunternehmer:innen und Kleinunternehmer — nicht für große Schulsysteme.',
+    landingUseCaseStudentsTitle: 'Schülerverwaltung ohne Excel',
+    landingUseCaseStudentsBody:
+      'Schüler anlegen, Paketstände führen und vor dem Unterricht schnell den richtigen Kontakt öffnen — optional mit Telegram-Hinweisen zu Terminen und Zahlungen.',
     landingClosingTitle: 'Ruhiger unterrichten',
     landingClosingCta: 'Kostenlos starten',
     landingNavSignIn: 'Anmelden',
@@ -249,7 +258,7 @@ export const LOCALE_PACK = {
     landingMockBookingSlot2: 'Fr · 18:00',
     landingMockBookingSlot3: 'Sa · 10:30',
     landingMockBookingConfirm: 'Gebucht',
-    landingAudience: 'Die All-in-One Plattform für private Tutoren & Lehrkräfte',
+    landingAudience: 'All-in-One Software für private Nachhilfelehrer in Österreich',
     landingCtaHint: 'Bis zu 3 Schüler gratis · jederzeit kündbar',
     landingNavPricing: 'Preise',
     landingPricingTitle: 'Transparente Preise für jeden Bedarf',
@@ -311,6 +320,12 @@ export const LOCALE_PACK = {
     landingFaq6Q: 'Was passiert, wenn ich auf Basis 9 Schüler habe?',
     landingFaq6A:
       'Der Service bietet einen Wechsel zu Pro mit unbegrenzter Schülerzahl und automatischen Telegram-Erinnerungen an.',
+    landingFaq7Q: 'Ist Simple4U eine Software für Nachhilfelehrer?',
+    landingFaq7A:
+      'Ja. Simple4U ist webbasiertes CRM und Terminplaner für private Nachhilfelehrer und Tutoren — mit Fokus auf Österreich und die EU, nicht auf große Schulen.',
+    landingFaq8Q: 'Kann ich Nachhilfestunden damit abrechnen?',
+    landingFaq8A:
+      'Ja. Im Finanzmodul sehen Sie Einnahmen und Ausgaben; Pakete und Stundensätze helfen, Nachhilfestunden nachvollziehbar abzurechnen. Für Honorarnoten können Sie die Zahlen als Basis nutzen.',
     footerDatenschutz: 'Datenschutzerklärung',
     footerImpressum: 'Impressum',
     footerKontakt: 'Kontakt',

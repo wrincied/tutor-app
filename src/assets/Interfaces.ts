@@ -775,6 +775,13 @@ export interface AuthStrings {
   landingFeatureFinanceBody: string;
   landingHowTitle: string;
   landingHowBody: string;
+  /** Long-tail use-case block (software / student CRM) below features. */
+  landingUseCasesTitle: string;
+  landingUseCasesLead: string;
+  landingUseCaseSoftwareTitle: string;
+  landingUseCaseSoftwareBody: string;
+  landingUseCaseStudentsTitle: string;
+  landingUseCaseStudentsBody: string;
   landingClosingTitle: string;
   landingClosingCta: string;
   /** Short nav CTA (Anmelden / Войти). Used by landing-v2 sticky header. */
@@ -868,6 +875,10 @@ export interface AuthStrings {
   landingFaq5A: string;
   landingFaq6Q: string;
   landingFaq6A: string;
+  landingFaq7Q: string;
+  landingFaq7A: string;
+  landingFaq8Q: string;
+  landingFaq8A: string;
   footerDatenschutz: string;
   footerImpressum: string;
   footerKontakt: string;
