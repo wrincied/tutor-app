@@ -71,10 +71,12 @@
       </div>
 
       <div class="account-form__footer">
-        <button type="submit" class="btn-primary account-form__submit" [disabled]="submitting()">
-          {{ submitting() ? i18n.helpFormUi().sending : i18n.helpFormUi().submit }}
-        </button>
-        <app-recaptcha-legal />
+        <div class="account-form__footer-actions">
+          <button type="submit" class="btn-primary account-form__submit" [disabled]="submitting()">
+            {{ submitting() ? i18n.helpFormUi().sending : i18n.helpFormUi().submit }}
+          </button>
+        </div>
+        <app-recaptcha-legal class="account-form__captcha" />
       </div>
     </form>
   </div>

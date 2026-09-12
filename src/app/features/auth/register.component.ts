@@ -7,6 +7,7 @@ import { UserService } from '../../core/services/user.service';
 import { resolveRegisterError } from '../../core/utils/auth-errors';
 import { shouldUseGoogleSignInPopup } from '../../core/utils/google-sign-in-mode';
 import { isBlockedBrandEmail } from '../../core/utils/brand-email';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-register',
@@ -18,6 +19,11 @@ export class RegisterComponent implements OnInit {
   private auth = inject(AuthService);
   private userSvc = inject(UserService);
   private router = inject(Router);
+  private localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   readonly i18n = inject(I18nService);
 
   email = '';
@@ -44,7 +50,7 @@ export class RegisterComponent implements OnInit {
 
         // Пользователь успешно авторизован через Google
         if (!user.emailVerified) {
-          void this.router.navigate(['/app/verify-email-notice']);
+          void this.localeRouter.navigate('/app/verify-email-notice');
           this.loading.set(false);
           return;
         }
@@ -81,7 +87,7 @@ export class RegisterComponent implements OnInit {
     this.auth.loginWithGooglePopup().subscribe({
       next: (user) => {
         if (!user.emailVerified) {
-          void this.router.navigate(['/app/verify-email-notice']);
+          void this.localeRouter.navigate('/app/verify-email-notice');
           this.loading.set(false);
           return;
         }
@@ -120,7 +126,7 @@ export class RegisterComponent implements OnInit {
     this.error.set('');
     this.loading.set(true);
     this.auth.register(this.email, this.password).subscribe({
-      next: () => void this.router.navigate(['/app/verify-email-notice']),
+      next: () => void this.localeRouter.navigate('/app/verify-email-notice'),
       error: (err) => {
         this.error.set(resolveRegisterError(err, this.i18n.authUi()));
         this.loading.set(false);

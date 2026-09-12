@@ -4,15 +4,20 @@ import { isNoindexPage, pageDescription } from './seo-copy';
 describe('seo-copy', () => {
   it('marks app shell as noindex', () => {
     expect(isNoindexPage('/app/home', 'home')).toBe(true);
+    expect(isNoindexPage('/de/app/home', 'home')).toBe(true);
     expect(isNoindexPage('/admin-login', 'adminLogin')).toBe(true);
+    expect(isNoindexPage('/en/admin-login', 'adminLogin')).toBe(true);
     expect(isNoindexPage('/', 'landing')).toBe(false);
+    expect(isNoindexPage('/de', 'landing')).toBe(false);
     expect(isNoindexPage('/pricing', 'pricing')).toBe(false);
+    expect(isNoindexPage('/de/pricing', 'pricing')).toBe(false);
     expect(isNoindexPage('/app/payment', 'payment')).toBe(true);
   });
 
-  it('mentions simple4u.at and disambiguates .io in default copy', () => {
+  it('mentions simple4u.at in landing meta without competitor brand spam', () => {
     const de = pageDescription('landing', 'de');
     expect(de.toLowerCase()).toContain('simple4u.at');
-    expect(de.toLowerCase()).toContain('simple4u.io');
+    expect(de.toLowerCase()).not.toContain('simple4u.io');
+    expect(de.toLowerCase()).toContain('österreich');
   });
 });

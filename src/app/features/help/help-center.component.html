@@ -1,6 +1,6 @@
 <article class="help-page">
   <header class="help-page__header u-rise">
-    <a routerLink="/" class="help-page__back">← {{ i18n.authUi().backHome }}</a>
+    <a [routerLink]="lp('/')" class="help-page__back">← {{ i18n.authUi().backHome }}</a>
   </header>
 
   @if (loading()) {

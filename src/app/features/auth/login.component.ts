@@ -11,6 +11,7 @@ import { resolveLoginError } from '../../core/utils/auth-errors';
 import { shouldUseGoogleSignInPopup } from '../../core/utils/google-sign-in-mode';
 import { resolveFirebaseUser } from '../../core/utils/resolve-firebase-user';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-login',
@@ -23,6 +24,11 @@ export class LoginComponent implements OnInit {
   private auth = inject(AuthService);
   private userSvc = inject(UserService);
   private router = inject(Router);
+  private localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private route = inject(ActivatedRoute);
   readonly i18n = inject(I18nService);
 
@@ -67,7 +73,7 @@ export class LoginComponent implements OnInit {
 
         // Пользователь только что успешно вернулся от Google
         if (!user.emailVerified) {
-          void this.router.navigate(['/app/verify-email-notice']);
+          void this.localeRouter.navigate('/app/verify-email-notice');
           this.loading.set(false);
           return;
         }
@@ -116,7 +122,7 @@ export class LoginComponent implements OnInit {
             return;
           }
           if (!user.emailVerified) {
-            void this.router.navigate(['/app/verify-email-notice']);
+            void this.localeRouter.navigate('/app/verify-email-notice');
             this.loading.set(false);
             return;
           }
@@ -143,7 +149,7 @@ export class LoginComponent implements OnInit {
       next: (user) => {
         this.loading.set(false);
         if (!user.emailVerified) {
-          void this.router.navigate(['/app/verify-email-notice']);
+          void this.localeRouter.navigate('/app/verify-email-notice');
           return;
         }
         this.userSvc.ensureProfile().subscribe({
@@ -192,7 +198,7 @@ export class LoginComponent implements OnInit {
     this.auth.loginWithGooglePopup().subscribe({
       next: (user) => {
         if (!user.emailVerified) {
-          void this.router.navigate(['/app/verify-email-notice']);
+          void this.localeRouter.navigate('/app/verify-email-notice');
           this.loading.set(false);
           return;
         }

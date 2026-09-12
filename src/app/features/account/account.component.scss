@@ -48,29 +48,28 @@
 }
 
 .account-panel {
-  padding: 1.25rem 1.35rem;
-  border: 1px solid var(--nav-border);
-  border-radius: 1.1rem;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, #fff 72%, var(--foam, #e7f5ef)) 0%, var(--nav-bg) 100%);
-  box-shadow: 0 10px 30px rgb(7 23 20 / 0.04);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .account-section {
   & + & {
     margin-top: 1.35rem;
     padding-top: 1.35rem;
-    border-top: 1px solid var(--border-light, var(--nav-border));
+    border-top: 1px solid color-mix(in srgb, var(--nav-border, #e2e8f0) 85%, transparent);
   }
 }
 
 .account-section__title {
   margin: 0 0 1rem;
   font-family: var(--font-heading, 'Figtree', sans-serif);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
 
   &--flush {
     margin-bottom: 0;
@@ -114,14 +113,6 @@
 
 .account-setting--toggle {
   align-items: flex-start;
-
-  input[type='checkbox'] {
-    flex-shrink: 0;
-    width: 1.125rem;
-    height: 1.125rem;
-    margin-top: 0.2rem;
-    accent-color: var(--moss, #0f3d34);
-  }
 }
 
 .account-setting__label {
@@ -404,30 +395,25 @@
 
 .account-mobile-logout {
   display: none;
-  flex: 0 0 auto;
-  width: 100%;
-  margin-top: 0;
-  padding-top: 1rem;
-  border-top: 1px solid var(--nav-border);
-
-  @media (max-width: 768px), (max-height: 440px) {
-    display: flex;
-    margin-bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
-  }
 }
 
 .account-logout-btn {
-  display: block;
-  width: 100%;
-  flex: 1 0 0;
-  min-width: 0;
-  padding: 0.8rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 8.5rem;
+  margin: 0;
+  padding: 0.7rem 1.15rem;
   border: 1px solid color-mix(in srgb, var(--danger, #dc2626) 35%, transparent);
   border-radius: 0.75rem;
   background: transparent;
   color: var(--danger, #c5221f);
   font-size: 0.9375rem;
   font-weight: 600;
+  line-height: 1.25;
   cursor: pointer;
   transition: background 0.15s;
 
@@ -597,7 +583,7 @@
 
 [data-theme='dark'] {
   .account-panel {
-    background: color-mix(in srgb, var(--nav-bg) 92%, #000);
+    background: transparent;
     box-shadow: none;
   }
 

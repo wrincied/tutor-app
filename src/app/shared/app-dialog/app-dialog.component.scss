@@ -110,7 +110,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
       margin-left: -1.25rem;
       margin-right: -1.25rem;
       padding: 0.875rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
-      border-top: 1px solid var(--nav-border, #e2e8f0);
+      // border-top: 1px solid var(--nav-border, #e2e8f0);
       background: var(--bg-surface, var(--modal-bg, #ffffff));
     }
   }
@@ -196,7 +196,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
       max-width: 100%;
     }
     border-color: rgb(254 202 202);
-    background: var(--nav-bg);
+    background: var(--modal-bg);
     color: white;
 
     .app-dialog__title {
@@ -583,8 +583,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
       justify-content: center;
       align-items: center;
       padding: max(0.5rem, env(safe-area-inset-top, 0px))
-        max(0.5rem, env(safe-area-inset-right, 0px))
-        max(0.5rem, env(safe-area-inset-bottom, 0px))
+        max(0.5rem, env(safe-area-inset-right, 0px)) max(0.5rem, env(safe-area-inset-bottom, 0px))
         max(0.5rem, env(safe-area-inset-left, 0px));
       overflow-y: auto;
     }

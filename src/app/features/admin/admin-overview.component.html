@@ -3,7 +3,7 @@
     <button type="button" class="btn-secondary" [disabled]="loading()" (click)="reload()">
       {{ t().refresh }}
     </button>
-    <a routerLink="/app/admin/settings" class="btn-secondary admin-overview__settings-link">
+    <a [routerLink]="lp('/app/admin/settings')" class="btn-secondary admin-overview__settings-link">
       {{ t().customizeDashboard }}
     </a>
   </div>

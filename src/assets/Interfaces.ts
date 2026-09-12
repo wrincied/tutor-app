@@ -246,6 +246,8 @@ export interface NavStrings {
   account: string;
   admin: string;
   pricing: string;
+  /** Bottom nav “More” menu */
+  more: string;
 }
 
 export type TaxMode =
@@ -773,6 +775,13 @@ export interface AuthStrings {
   landingFeatureFinanceBody: string;
   landingHowTitle: string;
   landingHowBody: string;
+  /** Long-tail use-case block (software / student CRM) below features. */
+  landingUseCasesTitle: string;
+  landingUseCasesLead: string;
+  landingUseCaseSoftwareTitle: string;
+  landingUseCaseSoftwareBody: string;
+  landingUseCaseStudentsTitle: string;
+  landingUseCaseStudentsBody: string;
   landingClosingTitle: string;
   landingClosingCta: string;
   /** Short nav CTA (Anmelden / Войти). Used by landing-v2 sticky header. */
@@ -866,6 +875,10 @@ export interface AuthStrings {
   landingFaq5A: string;
   landingFaq6Q: string;
   landingFaq6A: string;
+  landingFaq7Q: string;
+  landingFaq7A: string;
+  landingFaq8Q: string;
+  landingFaq8A: string;
   footerDatenschutz: string;
   footerImpressum: string;
   footerKontakt: string;
@@ -1360,6 +1373,8 @@ export interface FinanceStrings {
   socialInsurance: string;
   incomeTax: string;
   taxableBase: string;
+  /** Income tax base after social insurance (AT self-employed) */
+  incomeTaxBase: string;
   expensesSection: string;
   addExpense: string;
   editExpense: string;
@@ -1369,12 +1384,24 @@ export interface FinanceStrings {
   expenseCurrency: string;
   expenseDate: string;
   expenseCategory: string;
+  /** Short label for card action (left). */
+  editExpenseAction: string;
+  expenseCategoryHint: string;
+  /** Aria/title for removing a quick-category chip. */
+  removeExpenseCategory: string;
+  expenseCategoryColor: string;
+  expenseCatSoftware: string;
+  expenseCatMaterials: string;
+  expenseCatSpace: string;
+  expenseCatTransport: string;
   emptyExpenses: string;
   save: string;
   saving: string;
   cancel: string;
   deleteConfirm: string;
   disclaimer: string;
+  /** Expandable guide explaining KPI formulas */
+  calculationsGuideTitle: string;
   mixedCurrencyNote: string;
   conversionNote: string;
   reportCurrency: string;
@@ -1547,12 +1574,41 @@ export interface FinanceSummary {
 export interface StudentStrings {
   addButton: string;
   emptyState: string;
+  /** Placeholder for student search input */
+  searchPlaceholder: string;
+  /** Shown when search has no matches */
+  searchNoResults: string;
+  /** Danger zone title in edit drawer */
+  dangerZoneTitle: string;
+  /** Tab: active students */
+  tabActive: string;
+  /** Tab: archived students */
+  tabArchive: string;
+  /** Archive action (swipe / danger zone) */
+  archive: string;
+  /** Confirm dialog title for archiving */
+  archiveStudentTitle: string;
+  /** Confirm dialog body — {name} */
+  archiveConfirm: string;
+  /** Restore archived student */
+  unarchive: string;
+  /** Empty state for archive tab */
+  archiveEmptyState: string;
   loading: string;
   newStudent: string;
   editModalTitle: string;
+  /** Back link on student edit page */
+  backToStudents: string;
+  /** Anchor chip: main / profile section */
+  sectionMain: string;
+  /** Anchor + section: payment / top-up history */
+  paymentHistoryTitle: string;
+  paymentHistoryEmpty: string;
   name: string;
   ratePerLesson: string;
   ratePerHour: string;
+  /** Rate amount field label when hourly basis is selected */
+  rateHourLabel: string;
   rateUnitTitle: string;
   /** Aria for rate-unit help tip */
   rateUnitInfoAria: string;
@@ -1591,6 +1647,8 @@ export interface StudentStrings {
   currency: string;
   /** Цвет карточки урока в календаре */
   calendarColor: string;
+  /** Hint explaining calendar color is shown on lessons */
+  calendarColorHint: string;
   /** Кнопка случайного пастельного цвета */
   randomColor: string;
   /** Уведомления ученику через Telegram-бота */
@@ -1637,7 +1695,9 @@ export interface StudentStrings {
   meetingLinkMeet: string;
   meetingLinkZoom: string;
   botUnlinkAlertTitle: string;
-  botUnlinkAlertMessage: string;
+  botUnlinkAlertMessageLead: string;
+  botUnlinkAlertMessageTail: string;
+  botUnlinkAlertMessageNote: string;
   botUnlinkAlertOk: string;
   /** Tutor disconnects Telegram link for this student */
   botDisconnect: string;
@@ -1659,6 +1719,8 @@ export interface StudentStrings {
   topupPresetsLabel: string;
   topupCustom: string;
   topupWillAdd: string;
+  /** Compact summary line, e.g. "+1 Std. werden gutgeschrieben" */
+  topupSummaryLine: string;
   topupRateLabel: string;
   topupPrimaryCta: string;
   balanceAdjustTitle: string;
@@ -1670,6 +1732,18 @@ export interface StudentStrings {
   balanceAdjustReasonTypo: string;
   balanceAdjustNotify: string;
   balanceAdjustTooltip: string;
+  /** Step 1: balance change in edit modal (payment settings) */
+  balanceChangeConfirmTitle: string;
+  /** {from} {to} {unit} */
+  balanceChangeConfirmIntro: string;
+  balanceChangeNotifyAlways: string;
+  balanceChangeContinue: string;
+  /** Step 2: final confirm */
+  balanceChangeFinalTitle: string;
+  /** {from} {to} {unit} */
+  balanceChangeFinalBody: string;
+  balanceChangeApply: string;
+  balanceChangeBack: string;
   tgNotifySkipped: string;
   tgStatusDisconnected: string;
   tgStatusConfigure: string;
@@ -1965,5 +2039,7 @@ export interface Student {
   telegram_parent_deep_link?: string | null;
   /** Zoom / Meet / custom call URL for lesson notifications */
   meeting_link?: string | null;
+  /** ISO timestamp when tutor archived the student (hidden from active list). */
+  archived_at?: string | null;
   createdAt: string;
 }

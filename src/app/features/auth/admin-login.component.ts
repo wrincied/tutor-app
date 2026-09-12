@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { isAdminAllowlistedEmail } from '../../core/utils/brand-email';
 import { resolveLoginError } from '../../core/utils/auth-errors';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-admin-login',
@@ -20,6 +21,11 @@ export class AdminLoginComponent implements OnInit {
   private readonly auth = inject(Auth);
   private readonly authSvc = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   readonly i18n = inject(I18nService);
 
   email = 'admin@simple4u.at';
@@ -96,7 +102,7 @@ export class AdminLoginComponent implements OnInit {
         return;
       }
       this.loading.set(false);
-      void this.router.navigate(['/app/admin']);
+      void this.localeRouter.navigate('/app/admin');
     } catch (err) {
       console.error('[admin-login finish]', err);
       this.error.set(this.i18n.authUi().profileSyncError);

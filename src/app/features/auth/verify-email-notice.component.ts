@@ -4,6 +4,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import { isAdminAllowlistedEmail } from '../../core/utils/brand-email';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-verify-email-notice',
@@ -15,6 +16,7 @@ export class VerifyEmailNoticeComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly userSvc = inject(UserService);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
   readonly i18n = inject(I18nService);
 
   loading = signal(false);
@@ -34,7 +36,7 @@ export class VerifyEmailNoticeComponent implements OnInit {
     this.userSvc.ensureProfile().subscribe({
       next: (profile) => {
         if (profile.role === 'super_admin' && isPasswordAdmin) {
-          void this.router.navigate(['/app/admin']);
+          void this.localeRouter.navigate('/app/admin');
         }
       },
       error: () => {
@@ -72,7 +74,7 @@ export class VerifyEmailNoticeComponent implements OnInit {
               user?.providerData.some((p) => p.providerId === 'password') &&
               isAdminAllowlistedEmail(user.email)
             ) {
-              void this.router.navigate(['/app/admin']);
+              void this.localeRouter.navigate('/app/admin');
               return;
             }
             if (user?.emailVerified) {

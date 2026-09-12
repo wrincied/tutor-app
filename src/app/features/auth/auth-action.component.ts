@@ -6,6 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { getFirebaseAuthErrorCode } from '../../core/utils/auth-errors';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 type AuthActionMode = 'resetPassword' | 'verifyEmail' | 'recoverEmail' | 'verifyAndChangeEmail' | 'unknown';
 type AuthActionPhase = 'loading' | 'form' | 'signingIn' | 'success' | 'error';
@@ -22,6 +23,11 @@ export class AuthActionComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly userSvc = inject(UserService);
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
 
   readonly mode = signal<AuthActionMode>('unknown');
   readonly phase = signal<AuthActionPhase>('loading');

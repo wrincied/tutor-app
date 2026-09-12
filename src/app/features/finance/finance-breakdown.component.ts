@@ -4,7 +4,16 @@ import type { FinanceExpenseBreakdown, FinanceLessonBreakdown, FinanceSummary } 
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
-import { financePeriodRange, type FinancePeriodPreset } from '../../core/utils/finance-period';
+import {
+  financeAnchorFromQuery,
+  financeCanShiftForward,
+  financeCurrentAnchor,
+  financeIsCurrentPeriod,
+  financePeriodRange,
+  financeShiftAnchor,
+  type FinancePeriodAnchor,
+  type FinancePeriodPreset,
+} from '../../core/utils/finance-period';
 import {
   FINANCE_CURRENCY_STORAGE_KEY,
   financeRouteQueryParams,
@@ -21,6 +30,7 @@ import {
   type FinanceBreakdownPdfOptions,
   type FinanceBreakdownPdfSummaryLine,
 } from '../../core/utils/finance-breakdown-pdf';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-finance-breakdown',
@@ -34,10 +44,16 @@ export class FinanceBreakdownComponent implements OnInit {
   private readonly userSvc = inject(UserService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   readonly i18n = inject(I18nService);
 
   readonly panel = signal<FinanceBreakdownPanel>('income');
   readonly periodPreset = signal<FinancePeriodPreset>('month');
+  readonly periodAnchor = signal<FinancePeriodAnchor>(financeCurrentAnchor());
   readonly reportCurrency = signal(this.readStoredReportCurrency());
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -50,18 +66,43 @@ export class FinanceBreakdownComponent implements OnInit {
 
   readonly backLink = computed(() => ({
     path: ['/app/finance'] as const,
-    queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+    queryParams: financeRouteQueryParams(
+      this.periodPreset(),
+      this.reportCurrency(),
+      this.periodAnchor(),
+    ),
   }));
+
+  readonly periodNavLabel = computed(() => {
+    this.i18n.lang();
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return '';
+    }
+    const anchor = this.periodAnchor();
+    if (financeIsCurrentPeriod(preset, anchor)) {
+      return preset === 'month' ? this.t.periodMonth : this.t.periodYear;
+    }
+    const locale = this.i18n.localeId();
+    if (preset === 'year') {
+      return String(anchor.year);
+    }
+    return new Date(anchor.year, anchor.month - 1, 1).toLocaleDateString(locale, {
+      month: 'long',
+      year: 'numeric',
+    });
+  });
+
+  readonly canShiftPeriodForward = computed(() =>
+    financeCanShiftForward(this.periodPreset(), this.periodAnchor()),
+  );
 
   readonly periodPresetLabel = computed(() => {
     const preset = this.periodPreset();
-    if (preset === 'month') {
-      return this.t.periodMonth;
+    if (preset === 'all') {
+      return this.t.periodAll;
     }
-    if (preset === 'year') {
-      return this.t.periodYear;
-    }
-    return this.t.periodAll;
+    return this.periodNavLabel();
   });
 
   readonly periodRangeLabel = computed(() => {
@@ -70,12 +111,12 @@ export class FinanceBreakdownComponent implements OnInit {
     if (preset === 'all') {
       return '';
     }
-    const range = financePeriodRange(preset);
+    const range = financePeriodRange(preset, this.periodAnchor());
     if (!range.from || !range.to) {
       return '';
     }
     if (preset === 'year') {
-      return String(new Date(`${range.from}T12:00:00`).getFullYear());
+      return '';
     }
     const locale = this.i18n.localeId();
     const fmt = (iso: string) =>
@@ -109,7 +150,7 @@ export class FinanceBreakdownComponent implements OnInit {
   ngOnInit(): void {
     const panelParam = this.route.snapshot.paramMap.get('panel');
     if (!isFinanceBreakdownPanel(panelParam)) {
-      void this.router.navigate(['/app/finance']);
+      void this.localeRouter.navigate('/app/finance');
       return;
     }
     this.panel.set(panelParam);
@@ -117,6 +158,12 @@ export class FinanceBreakdownComponent implements OnInit {
     const periodParam = this.route.snapshot.queryParamMap.get('period');
     if (isFinancePeriodPreset(periodParam)) {
       this.periodPreset.set(periodParam);
+    }
+
+    const atParam = this.route.snapshot.queryParamMap.get('at');
+    const parsedAnchor = financeAnchorFromQuery(atParam, this.periodPreset());
+    if (parsedAnchor) {
+      this.periodAnchor.set(parsedAnchor);
     }
 
     const currencyParam = this.route.snapshot.queryParamMap.get('currency');
@@ -165,6 +212,27 @@ export class FinanceBreakdownComponent implements OnInit {
     }
   }
 
+  shiftPeriod(delta: -1 | 1): void {
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return;
+    }
+    if (delta === 1 && !this.canShiftPeriodForward()) {
+      return;
+    }
+    this.periodAnchor.set(financeShiftAnchor(preset, this.periodAnchor(), delta));
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: financeRouteQueryParams(
+        this.periodPreset(),
+        this.reportCurrency(),
+        this.periodAnchor(),
+      ),
+      replaceUrl: true,
+    });
+    this.reload();
+  }
+
   private readStoredReportCurrency(): string {
     if (typeof localStorage === 'undefined') {
       return '';
@@ -179,21 +247,25 @@ export class FinanceBreakdownComponent implements OnInit {
     this.userSvc.ensureProfile().subscribe({
       next: (profile) => {
         if (!planEntitlementsFromProfile(profile).hasFinance) {
-          void this.router.navigate(['/app/finance'], {
-            queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+          void this.localeRouter.navigate('/app/finance', {
+            queryParams: financeRouteQueryParams(
+              this.periodPreset(),
+              this.reportCurrency(),
+              this.periodAnchor(),
+            ),
           });
           return;
         }
         this.loadSummary();
       },
       error: () => {
-        void this.router.navigate(['/app/finance']);
+        void this.localeRouter.navigate('/app/finance');
       },
     });
   }
 
   private loadSummary(): void {
-    const range = financePeriodRange(this.periodPreset());
+    const range = financePeriodRange(this.periodPreset(), this.periodAnchor());
     const currency = this.reportCurrency();
     const summaryQuery = {
       ...range,
@@ -341,15 +413,13 @@ export class FinanceBreakdownComponent implements OnInit {
         this.t.breakdownLessonStudent,
         this.t.breakdownLessonStatus,
         this.t.breakdownLessonDuration,
-        this.t.breakdownLessonAmount,
-      ],
+        this.t.breakdownLessonAmount],
       lessons: [],
       expenseHeaders: [
         this.t.expenseDate,
         this.t.expenseTitle,
         this.t.expenseCategory,
-        this.t.expenseAmount,
-      ],
+        this.t.expenseAmount],
       expenses: [],
     };
 
@@ -387,16 +457,14 @@ export class FinanceBreakdownComponent implements OnInit {
               {
                 label: `${this.t.socialInsurance} (${this.formatPercent(tax.socialInsuranceRate)})`,
                 value: `−${this.formatMoney(tax.socialInsurance)}`,
-              },
-            ]
+              }]
           : []),
         { label: this.t.incomeTax, value: `−${this.formatMoney(tax.incomeTax)}` },
         {
           label: this.t.netProfit,
           value: this.formatMoney(tax.netProfit),
           highlight: true,
-        },
-      ];
+        }];
     }
 
     return options;
@@ -416,8 +484,7 @@ export class FinanceBreakdownComponent implements OnInit {
             highlight: true,
           },
           { label: this.t.incomeCompletedPart, value: this.formatMoney(income.totalIncome) },
-          { label: this.t.incomePlannedPart, value: this.formatMoney(income.scheduledIncome) },
-        ];
+          { label: this.t.incomePlannedPart, value: this.formatMoney(income.scheduledIncome) }];
       case 'expenses':
         return [
           {
@@ -425,8 +492,7 @@ export class FinanceBreakdownComponent implements OnInit {
             value: this.formatMoney(income.totalExpenses),
             highlight: true,
           },
-          { label: this.t.expensesCount, value: String(summary.totals.expenseCount) },
-        ];
+          { label: this.t.expensesCount, value: String(summary.totals.expenseCount) }];
       case 'gross':
         return [
           {
@@ -435,8 +501,7 @@ export class FinanceBreakdownComponent implements OnInit {
             highlight: true,
           },
           { label: this.t.totalIncome, value: this.formatMoney(income.totalIncome) },
-          { label: this.t.totalExpenses, value: this.formatMoney(income.totalExpenses) },
-        ];
+          { label: this.t.totalExpenses, value: this.formatMoney(income.totalExpenses) }];
       case 'net':
         if (summary.tax) {
           return [
@@ -445,16 +510,14 @@ export class FinanceBreakdownComponent implements OnInit {
               value: this.formatMoney(summary.tax.netProfit),
               highlight: true,
             },
-            { label: this.t.grossProfit, value: this.formatMoney(income.grossProfit) },
-          ];
+            { label: this.t.grossProfit, value: this.formatMoney(income.grossProfit) }];
         }
         return [
           {
             label: this.t.grossProfit,
             value: this.formatMoney(income.grossProfit),
             highlight: true,
-          },
-        ];
+          }];
       default:
         return [];
     }

@@ -212,24 +212,6 @@
               </span>
             </label>
           </div>
-
-          <div class="ns-row">
-            <label class="ns-toggle">
-              <span class="ns-toggle__text">{{ labels.tgRoutingTutor }}</span>
-              <span class="ns-switch">
-                <input
-                  type="checkbox"
-                  role="switch"
-                  [disabled]="disabled"
-                  [checked]="hasRoutingTarget('tutor')"
-                  (change)="toggleRoutingTarget('tutor', $any($event.target).checked, $event)"
-                />
-                <span class="ns-switch__track" aria-hidden="true">
-                  <span class="ns-switch__thumb"></span>
-                </span>
-              </span>
-            </label>
-          </div>
         </div>
       </section>
     </div>

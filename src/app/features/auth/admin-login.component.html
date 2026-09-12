@@ -1,9 +1,9 @@
 <div class="auth-split">
   <section class="auth-split__panel">
-    <a routerLink="/" class="auth-split__brand" aria-label="Simple4U">
+    <a [routerLink]="lp('/')" class="auth-split__brand" aria-label="Simple4U">
       <img
         class="auth-split__brand-mark"
-        src="assets/brand/LOGO_S4U.png"
+        src="assets/icons/LOGO_S4U_BLC.png"
         width="36"
         height="36"
         alt=""
@@ -53,7 +53,7 @@
         </button>
       </form>
 
-      <a routerLink="/app/home" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
+      <a [routerLink]="lp('/app/home')" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
     </div>
   </section>
 

@@ -1,4 +1,4 @@
-﻿import type { Lang, PageTitleKey } from '@interfaces';
+import type { Lang, PageTitleKey } from '@interfaces';
 
 export const SEO_CANONICAL_ORIGIN = 'https://simple4u.at';
 export const SEO_OG_IMAGE = `${SEO_CANONICAL_ORIGIN}/assets/brand/og-image.png`;
@@ -28,9 +28,9 @@ type SeoLang = 'de' | 'en';
 const DESCRIPTIONS: Record<SeoLang, Partial<Record<PageTitleKey, string>>> = {
   de: {
     default:
-      'Simple4U (simple4u.at) ist das CRM und der Terminplaner für Nachhilfelehrer in Österreich und der EU — Kalender, Schüler und Finanzen. Nicht die US-Firma simple4u.io.',
+      'Simple4U.at ist das CRM und der Terminplaner für Nachhilfelehrer in Österreich und der EU — Kalender, Schüler und Finanzen. SaaS aus Graz.',
     landing:
-      'Simple4U.at: All-in-One Plattform für private Tutoren in Österreich. Unterricht, Schüler, Finanzen. Nicht die US-Firma simple4u.io.',
+      'Simple4U.at: All-in-One Plattform für private Nachhilfelehrer in Österreich. Unterricht planen, Schüler führen und Finanzen im Blick – SaaS aus Graz.',
     pricing:
       'Tarife Simple4U.at: Free, Basis und Pro für Nachhilfelehrer. Kalender, Finanzen und Telegram-Erinnerungen. SaaS aus Österreich.',
     payment: 'Zahlung Simple4U.at — Stripe oder Tribute je nach Land.',
@@ -41,15 +41,14 @@ const DESCRIPTIONS: Record<SeoLang, Partial<Record<PageTitleKey, string>>> = {
     status: 'Betriebsstatus der Simple4U.at Plattform für Tutoren.',
     legalImpressum:
       'Impressum Simple4U.at: Arsen Mileuski, Graz, Österreich. SaaS für Nachhilfelehrer.',
-    legalDataProcessing:
-      'Datenschutzerklärung von Simple4U.at (DSGVO) für das Tutor-CRM.',
+    legalDataProcessing: 'Datenschutzerklärung von Simple4U.at (DSGVO) für das Tutor-CRM.',
     legalCookies: 'Cookie-Richtlinie von Simple4U.at nach österreichischem Recht.',
     legalTerms: 'AGB von Simple4U.at — SaaS für private Tutoren.',
     notFound: 'Seite nicht gefunden — Simple4U.at, CRM für Nachhilfelehrer.',
   },
   en: {
     default:
-      'Simple4U (simple4u.at) is a CRM and lesson planner for private tutors in Austria and the EU. Not the US engineering firm simple4u.io.',
+      'Simple4U.at is a CRM and lesson planner for private tutors in Austria and the EU — calendar, students, and finances. SaaS from Graz.',
     landing:
       'Simple4U.at: all-in-one workspace for private tutors — schedule, students, and finances. Based in Graz, Austria.',
     pricing:
@@ -77,7 +76,8 @@ export function pageDescription(key: PageTitleKey, lang: Lang): string {
 }
 
 export function isNoindexPage(path: string, titleKey: PageTitleKey | null): boolean {
-  if (path === '/admin-login' || path.startsWith('/app')) {
+  const normalized = path.replace(/^\/(de|en|ru|uk|by|kz)(?=\/|$)/, '') || '/';
+  if (normalized === '/admin-login' || normalized.startsWith('/app') || path.includes('/app/')) {
     return true;
   }
   return titleKey != null && PRIVATE_TITLE_KEYS.has(titleKey);
@@ -105,6 +105,12 @@ export function structuredDataJson(lang: Lang): string {
         },
         areaServed: ['AT', 'DE', 'EU'],
         description,
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer support',
+          email: SEO_SUPPORT_EMAIL,
+          availableLanguage: ['de', 'en', 'ru'],
+        },
       },
       {
         '@type': 'SoftwareApplication',
@@ -114,7 +120,7 @@ export function structuredDataJson(lang: Lang): string {
         url: SEO_CANONICAL_ORIGIN,
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
-        inLanguage: ['de', 'en'],
+        inLanguage: ['de', 'en', 'ru'],
         description,
         offers: {
           '@type': 'Offer',
@@ -132,6 +138,16 @@ export function structuredDataJson(lang: Lang): string {
         inLanguage: ['de', 'en', 'ru'],
         description,
         publisher: { '@id': `${SEO_CANONICAL_ORIGIN}/#organization` },
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${SEO_CANONICAL_ORIGIN}/#webpage`,
+        url: SEO_CANONICAL_ORIGIN,
+        name: 'Simple4U',
+        isPartOf: { '@id': `${SEO_CANONICAL_ORIGIN}/#website` },
+        about: { '@id': `${SEO_CANONICAL_ORIGIN}/#app` },
+        inLanguage: seoLang(lang) === 'en' ? 'en' : 'de-AT',
+        description,
       },
     ],
   };

@@ -2,7 +2,10 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { from, of } from 'rxjs';
 import { catchError, map, switchMap, take } from 'rxjs/operators';
+import { localeUrlTree } from '../i18n/locale-routing';
+import { asUrlLang } from '../i18n/locale-url';
 import { AuthService } from '../services/auth.service';
+import { I18nService } from '../services/i18n.service';
 import { UserService } from '../services/user.service';
 import { isAdminAllowlistedEmail } from '../utils/brand-email';
 
@@ -29,29 +32,30 @@ export const adminGuard: CanActivateFn = () => {
   const userService = inject(UserService);
   const auth = inject(AuthService);
   const router = inject(Router);
+  const lang = asUrlLang(inject(I18nService).lang());
 
   return userService.ensureProfile().pipe(
     take(1),
     switchMap((profile) => {
       if (profile.role !== 'super_admin') {
-        return of(router.createUrlTree(['/admin-login']));
+        return of(localeUrlTree(router, lang, '/admin-login'));
       }
       return from(auth.getIdToken()).pipe(
         map((token) => {
           if (!token) {
-            return router.createUrlTree(['/admin-login']);
+            return localeUrlTree(router, lang, '/admin-login');
           }
           const claims = firebaseClaimsFromJwt(token);
           if (claims.sign_in_provider !== 'password') {
-            return router.createUrlTree(['/admin-login']);
+            return localeUrlTree(router, lang, '/admin-login');
           }
           if (!isAdminAllowlistedEmail(claims.email || profile.email)) {
-            return router.createUrlTree(['/admin-login']);
+            return localeUrlTree(router, lang, '/admin-login');
           }
           return true;
         }),
       );
     }),
-    catchError(() => of(router.createUrlTree(['/admin-login']))),
+    catchError(() => of(localeUrlTree(router, lang, '/admin-login'))),
   );
 };

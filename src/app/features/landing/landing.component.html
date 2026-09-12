@@ -11,8 +11,8 @@
     <h1 class="landing__headline">{{ i18n.authUi().landingHeadline }}</h1>
     <p class="landing__subtitle">{{ i18n.authUi().landingSubtitle }}</p>
     <div class="landing__cta-row">
-      <a class="landing__cta" routerLink="/register">{{ i18n.authUi().join }}</a>
-      <a class="landing__sign-in" routerLink="/login">{{ i18n.authUi().landingSignIn }}</a>
+      <a class="landing__cta" [routerLink]="lp('/register')">{{ i18n.authUi().join }}</a>
+      <a class="landing__sign-in" [routerLink]="lp('/login')">{{ i18n.authUi().landingSignIn }}</a>
     </div>
   </header>
 
@@ -51,15 +51,15 @@
     <h2 id="landing-closing-heading" class="landing__closing-title">
       {{ i18n.authUi().landingClosingTitle }}
     </h2>
-    <a class="landing__cta" routerLink="/register">{{ i18n.authUi().landingClosingCta }}</a>
+    <a class="landing__cta" [routerLink]="lp('/register')">{{ i18n.authUi().landingClosingCta }}</a>
   </section>
 
   <footer class="landing__footer">
     <nav class="landing__footer-nav" [attr.aria-label]="i18n.authUi().footerRights">
-      <a routerLink="/legal/data-processing">{{ i18n.authUi().footerDatenschutz }}</a>
-      <a routerLink="/legal/impressum">{{ i18n.authUi().footerImpressum }}</a>
-      <a routerLink="/help">{{ i18n.authUi().footerHelpCenter }}</a>
-      <a routerLink="/legal/cookies">{{ i18n.authUi().footerCookies }}</a>
+      <a [routerLink]="lp('/legal/data-processing')">{{ i18n.authUi().footerDatenschutz }}</a>
+      <a [routerLink]="lp('/legal/impressum')">{{ i18n.authUi().footerImpressum }}</a>
+      <a [routerLink]="lp('/help')">{{ i18n.authUi().footerHelpCenter }}</a>
+      <a [routerLink]="lp('/legal/cookies')">{{ i18n.authUi().footerCookies }}</a>
     </nav>
     <p class="landing__footer-copy">{{ i18n.authUi().footerRights }}</p>
   </footer>

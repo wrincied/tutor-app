@@ -19,6 +19,7 @@ import {
   DEFAULT_TELEGRAM_SETTINGS,
   formatReminderOffsetLabel,
   isBuiltinReminderOffset,
+  isBlockingTelegramDeliveryError,
   normalizeTelegramSettings,
   REMINDER_OFFSET_MAX,
   REMINDER_OFFSET_MIN,
@@ -80,7 +81,7 @@ export class NotificationSettingsComponent implements OnDestroy {
     if (!s?.telegram_user_id && !s?.telegram_chat_id) {
       return true;
     }
-    return s.telegram_delivery_status === 'error';
+    return isBlockingTelegramDeliveryError(s);
   });
 
   readonly isParentConnected = computed(() => Boolean(this.student()?.telegram_parent_chat_id));
@@ -169,14 +170,8 @@ export class NotificationSettingsComponent implements OnDestroy {
 
   private hydrateFromStudent(student: Student): void {
     const settings = normalizeTelegramSettings(student.telegram_notification_settings);
-    // Parent recipient UI is hidden until infrastructure is ready.
-    const targets = (settings.routing_targets ?? []).filter((t) => t !== 'parent');
-    this.draft.set(
-      normalizeTelegramSettings({
-        ...settings,
-        routing_targets: targets.length ? targets : ['student'],
-      }),
-    );
+    const targets = settings.routing_targets ?? ['student'];
+    this.draft.set(normalizeTelegramSettings({ ...settings, routing_targets: targets }));
     const offset = settings.lesson_reminder_offset_minutes;
     if (
       isBuiltinReminderOffset(offset) ||
@@ -206,7 +201,7 @@ export class NotificationSettingsComponent implements OnDestroy {
 
   deliveryError(): string | null {
     const student = this.student();
-    if (student?.telegram_delivery_status !== 'error') {
+    if (!student || !isBlockingTelegramDeliveryError(student)) {
       return null;
     }
     const t = this.t();
@@ -232,8 +227,7 @@ export class NotificationSettingsComponent implements OnDestroy {
 
   toggleRoutingTarget(target: TelegramRoutingTarget, enabled: boolean, event?: Event): void {
     event?.stopPropagation();
-    if (target === 'parent') {
-      // Parent recipient UI is temporarily hidden.
+    if (target === 'parent' || target === 'tutor') {
       return;
     }
     const current = new Set(this.draft().routing_targets ?? []);
@@ -243,6 +237,7 @@ export class NotificationSettingsComponent implements OnDestroy {
       current.delete(target);
     }
     current.delete('parent');
+    current.delete('tutor');
     if (current.size === 0) {
       current.add('student');
     }

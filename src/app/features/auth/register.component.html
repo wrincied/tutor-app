@@ -1,9 +1,9 @@
 <div class="auth-split">
   <section class="auth-split__panel">
-    <a routerLink="/" class="auth-split__brand" aria-label="Simple4U">
+    <a [routerLink]="lp('/')" class="auth-split__brand" aria-label="Simple4U">
       <img
         class="auth-split__brand-mark"
-        src="assets/brand/LOGO_S4U.png"
+        src="assets/icons/LOGO_S4U_BLC.png"
         width="36"
         height="36"
         alt=""
@@ -12,11 +12,11 @@
     </a>
 
     <div class="auth-split__tabs" role="tablist">
-      <a routerLink="/login" class="auth-split__tab" role="tab" aria-selected="false">
+      <a [routerLink]="lp('/login')" class="auth-split__tab" role="tab" aria-selected="false">
         {{ i18n.authUi().login }}
       </a>
       <a
-        routerLink="/register"
+        [routerLink]="lp('/register')"
         class="auth-split__tab auth-split__tab--active"
         role="tab"
         aria-selected="true"
@@ -99,7 +99,7 @@
       </form>
     </div>
 
-    <a routerLink="/" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
+    <a [routerLink]="lp('/')" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
   </section>
 
   <aside class="auth-split__visual" aria-hidden="true">

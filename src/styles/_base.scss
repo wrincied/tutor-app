@@ -48,7 +48,8 @@ body {
   @media (max-width: 768px), (max-height: 440px) {
     margin-left: 0;
     height: calc(100dvh - var(--bottom-nav-reserve));
-    padding: 16px;
+    padding: 16px 16px calc(16px + var(--bottom-nav-content-clearance));
+    margin-bottom: 64px;
   }
 
   /* app-calendar живёт внутри .app-page-host, не как прямой потомок */
@@ -89,7 +90,7 @@ app-header {
   height: 100%;
   overflow: hidden;
   touch-action: none;
-  border-radius: 12px;
+  border-radius: 5px;
 
   > router-outlet {
     display: contents;
@@ -116,6 +117,10 @@ app-header {
   }
 
   > router-outlet > app-calendar {
+    touch-action: pan-y;
+  }
+
+  > router-outlet > app-students {
     touch-action: pan-y;
   }
 }

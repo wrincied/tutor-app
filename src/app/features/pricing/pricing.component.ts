@@ -15,6 +15,7 @@ import {
 } from '../../core/utils/user-profile.utils';
 import { getPlanPricing, getSubscriptionPricing, formatSubscriptionPrice, getEarlyAdopterYearly } from '../../core/utils/subscription-pricing';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 export type BillingInterval = 'monthly' | 'yearly';
 export type CheckoutPlan = 'basis' | 'pro';
@@ -33,6 +34,11 @@ export class PricingComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private billingPollSub: Subscription | null = null;
   private readonly plansTrack = viewChild<ElementRef<HTMLElement>>('plansTrack');
 
@@ -57,8 +63,7 @@ export class PricingComponent implements OnInit, OnDestroy {
     return [
       { id: 'free', label: t.freePlan.name },
       { id: 'basis', label: t.basisPlan.name },
-      { id: 'pro', label: t.proPlan.name },
-    ] as const;
+      { id: 'pro', label: t.proPlan.name }] as const;
   });
 
   taxModeConfigured = computed(() => {
@@ -464,7 +469,7 @@ export class PricingComponent implements OnInit, OnDestroy {
     if (plan === 'pro' && !this.canBuyPro()) return;
     if (this.isProOrTrial()) return;
 
-    void this.router.navigate(['/app/payment'], {
+    void this.localeRouter.navigate('/app/payment', {
       queryParams: { plan, interval: this.billingInterval() },
     });
   }
