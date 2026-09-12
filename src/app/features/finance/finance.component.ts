@@ -41,6 +41,19 @@ import { createFinanceTeaserDemo } from '../../core/utils/finance-teaser-demo';
 import { planEntitlementsFromProfile } from '../../core/utils/user-profile.utils';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
+import { Auth } from '@angular/fire/auth';
+import {
+  EXPENSE_CATEGORY_PALETTE,
+  loadExpenseHiddenCategories,
+  loadExpenseQuickCategories,
+  mergeExpenseCategoryOptions,
+  normalizeExpenseCategoryLabel,
+  rememberExpenseQuickCategory,
+  removeExpenseQuickCategory,
+  resolveExpenseCategoryColor,
+  type ExpenseQuickCategory,
+} from '../../core/utils/expense-quick-categories';
 
 function expensesFromSummaryBreakdown(rows: FinanceExpenseBreakdown[] | undefined): Expense[] {
   return (rows ?? []).map((row) => ({
@@ -64,8 +77,14 @@ export class FinanceComponent implements OnInit {
   private readonly financeSvc = inject(FinanceService);
   private readonly userSvc = inject(UserService);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly route = inject(ActivatedRoute);
   readonly i18n = inject(I18nService);
+  private readonly auth = inject(Auth);
 
   loading = signal(true);
   readonly skeletonKpiSlots = [0, 1, 2, 3];
@@ -94,6 +113,32 @@ export class FinanceComponent implements OnInit {
     expense_date: new Date().toISOString().slice(0, 10),
     category: '',
   };
+
+  /** Saved categories for chips (presets merged in computed). */
+  private quickCategoriesSaved = signal<ExpenseQuickCategory[]>([]);
+  private quickCategoriesHidden = signal<string[]>([]);
+  readonly expenseCategoryPalette = EXPENSE_CATEGORY_PALETTE;
+  readonly normalizeExpenseCategoryLabel = normalizeExpenseCategoryLabel;
+
+  expenseCategoryChips = computed(() => {
+    this.i18n.lang();
+    const t = this.t;
+    const presets = [
+      t.expenseCatSoftware,
+      t.expenseCatMaterials,
+      t.expenseCatSpace,
+      t.expenseCatTransport,
+    ];
+    const fromExpenses = this.expenses()
+      .map((e) => e.category ?? '')
+      .filter(Boolean);
+    return mergeExpenseCategoryOptions(
+      presets,
+      this.quickCategoriesSaved(),
+      fromExpenses,
+      this.quickCategoriesHidden(),
+    );
+  });
 
   combinedIncome = computed(() => {
     const s = this.summary();
@@ -209,7 +254,86 @@ export class FinanceComponent implements OnInit {
       this.reportCurrency.set(currencyParam);
     }
     this.syncRouteQuery();
+    this.reloadQuickCategories();
     this.reload();
+  }
+
+  private financeUserId(): string {
+    return this.auth.currentUser?.uid ?? '';
+  }
+
+  private reloadQuickCategories(): void {
+    const uid = this.financeUserId();
+    this.quickCategoriesSaved.set(loadExpenseQuickCategories(uid));
+    this.quickCategoriesHidden.set(loadExpenseHiddenCategories(uid));
+  }
+
+  isExpenseCategorySelected(category: string): boolean {
+    return (
+      normalizeExpenseCategoryLabel(this.expenseForm.category).toLowerCase() ===
+      normalizeExpenseCategoryLabel(category).toLowerCase()
+    );
+  }
+
+  selectExpenseCategory(category: string): void {
+    const label = normalizeExpenseCategoryLabel(category);
+    if (!label) {
+      return;
+    }
+    if (this.isExpenseCategorySelected(label)) {
+      this.expenseForm.category = '';
+      return;
+    }
+    this.expenseForm.category = label;
+    // Persist chip so color edits stick for presets / used-on-expense labels.
+    this.quickCategoriesSaved.set(
+      rememberExpenseQuickCategory(
+        this.financeUserId(),
+        label,
+        resolveExpenseCategoryColor(label, this.quickCategoriesSaved()),
+      ),
+    );
+  }
+
+  removeExpenseCategoryChip(category: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const label = normalizeExpenseCategoryLabel(category);
+    if (!label) {
+      return;
+    }
+    const next = removeExpenseQuickCategory(this.financeUserId(), label);
+    this.quickCategoriesSaved.set(next.categories);
+    this.quickCategoriesHidden.set(next.hidden);
+    if (this.isExpenseCategorySelected(label)) {
+      this.expenseForm.category = '';
+    }
+  }
+
+  expenseCategoryColor(label: string): string {
+    return resolveExpenseCategoryColor(label, this.quickCategoriesSaved());
+  }
+
+  setExpenseCategoryColor(color: string): void {
+    const label = normalizeExpenseCategoryLabel(this.expenseForm.category);
+    if (!label) {
+      return;
+    }
+    this.quickCategoriesSaved.set(
+      rememberExpenseQuickCategory(this.financeUserId(), label, color),
+    );
+  }
+
+  formatExpenseDate(isoDate: string): string {
+    const raw = String(isoDate ?? '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      return raw;
+    }
+    return new Date(`${raw}T12:00:00`).toLocaleDateString(this.i18n.localeId(), {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
   get t(): FinanceStrings {
@@ -429,7 +553,7 @@ export class FinanceComponent implements OnInit {
 
   openBreakdown(panel: FinanceBreakdownPanel): void {
     this.gateOrRun(() => {
-      void this.router.navigate(['/app/finance/breakdown', panel], {
+      void this.localeRouter.navigate(`/app/finance/breakdown/${panel}`, {
         queryParams: financeRouteQueryParams(
         this.periodPreset(),
         this.reportCurrency(),
@@ -488,8 +612,14 @@ export class FinanceComponent implements OnInit {
       amount,
       currency: this.expenseForm.currency,
       expense_date: this.expenseForm.expense_date,
-      category: this.expenseForm.category.trim() || undefined,
+      category: normalizeExpenseCategoryLabel(this.expenseForm.category) || undefined,
     };
+
+    if (payload.category) {
+      this.quickCategoriesSaved.set(
+        rememberExpenseQuickCategory(this.financeUserId(), payload.category),
+      );
+    }
 
     this.expenseSaving.set(true);
     const edit = this.expenseEditTarget();
@@ -542,6 +672,6 @@ export class FinanceComponent implements OnInit {
 
   goToPricing(): void {
     this.upgradeModalOpen.set(false);
-    void this.router.navigate(['/app/pricing']);
+    void this.localeRouter.navigate('/app/pricing');
   }
 }

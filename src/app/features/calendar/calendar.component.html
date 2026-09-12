@@ -49,7 +49,7 @@
         </div>
       </div>
     } @else {
-      @if (modesMenuOpen() || studentsSidebarOpen()) {
+      @if (modesMenuOpen() || (studentsSidebarOpen() && !desktopStudentsRail())) {
         <div
           class="cal-backdrop"
           role="presentation"
@@ -145,7 +145,11 @@
                             <div class="cal-month__weekday">{{ label }}</div>
                           }
                         </div>
-                        <div class="cal-month__grid" [style.--cal-month-weeks]="monthWeekRows()">
+                        <div
+                          class="cal-month__grid"
+                          [style.--cal-month-weeks]="monthWeekRows()"
+                          [attr.data-filter]="monthFilterRevision()"
+                        >
                           @for (cell of monthOverviewCells(); track dayKey(cell.date)) {
                             <button
                               type="button"
@@ -154,6 +158,9 @@
                               [class.cal-month__cell--today]="isToday(cell.date)"
                               [class.cal-month__cell--has-lessons]="
                                 lessonCountForDay(cell.date) > 0
+                              "
+                              [class.cal-month__cell--filter-empty]="
+                                monthCellFilterEmpty(cell.date)
                               "
                               (click)="openDayView(cell.date)"
                             >
@@ -165,6 +172,7 @@
                                 ) {
                                   <span
                                     class="cal-month__badge"
+                                    [class.cal-month__badge--focus]="lessonCardFocusActive(lesson)"
                                     [style.background]="monthLessonBadgeColor(lesson)"
                                     >{{ monthLessonBadgeLabel(lesson) }}</span
                                   >
@@ -388,8 +396,10 @@
         </section>
 
         <aside
-          class="cal-sidebar cal-sidebar--drawer"
-          [class.cal-sidebar--open]="studentsSidebarOpen()"
+          class="cal-sidebar"
+          [class.cal-sidebar--drawer]="!desktopStudentsRail()"
+          [class.cal-sidebar--docked]="desktopStudentsRail()"
+          [class.cal-sidebar--open]="studentsSidebarOpen() || desktopStudentsRail()"
         >
           <div class="cal-sidebar__head">
             <button type="button" class="cal-sidebar__clear" (click)="clearStudentFocus()">

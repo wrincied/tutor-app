@@ -1373,6 +1373,16 @@ export interface FinanceStrings {
   expenseCurrency: string;
   expenseDate: string;
   expenseCategory: string;
+  /** Short label for card action (left). */
+  editExpenseAction: string;
+  expenseCategoryHint: string;
+  /** Aria/title for removing a quick-category chip. */
+  removeExpenseCategory: string;
+  expenseCategoryColor: string;
+  expenseCatSoftware: string;
+  expenseCatMaterials: string;
+  expenseCatSpace: string;
+  expenseCatTransport: string;
   emptyExpenses: string;
   save: string;
   saving: string;
@@ -1576,6 +1586,13 @@ export interface StudentStrings {
   loading: string;
   newStudent: string;
   editModalTitle: string;
+  /** Back link on student edit page */
+  backToStudents: string;
+  /** Anchor chip: main / profile section */
+  sectionMain: string;
+  /** Anchor + section: payment / top-up history */
+  paymentHistoryTitle: string;
+  paymentHistoryEmpty: string;
   name: string;
   ratePerLesson: string;
   ratePerHour: string;
@@ -1667,7 +1684,9 @@ export interface StudentStrings {
   meetingLinkMeet: string;
   meetingLinkZoom: string;
   botUnlinkAlertTitle: string;
-  botUnlinkAlertMessage: string;
+  botUnlinkAlertMessageLead: string;
+  botUnlinkAlertMessageTail: string;
+  botUnlinkAlertMessageNote: string;
   botUnlinkAlertOk: string;
   /** Tutor disconnects Telegram link for this student */
   botDisconnect: string;

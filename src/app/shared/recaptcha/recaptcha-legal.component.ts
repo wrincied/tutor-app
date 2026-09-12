@@ -32,7 +32,7 @@ import { RecaptchaService } from './recaptcha.service';
     }
 
     .recaptcha-legal {
-      margin: 0.5rem 0 0;
+      margin: 0;
       font-size: 0.75rem;
       line-height: 1.45;
       font-weight: 400;

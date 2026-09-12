@@ -23,7 +23,7 @@ import {
 import { toTitleCaseName } from '../../core/utils/to-title-case';
 import {
   normalizeTelegramSettings,
-  canSendTelegramReceipt,
+  isBlockingTelegramDeliveryError,
 } from '../../core/utils/telegram-notification-settings';
 import { planEntitlementsFromProfile } from '../../core/utils/user-profile.utils';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
@@ -40,6 +40,7 @@ import {
   type StudentSwipeMovePayload,
   type StudentSwipeTouchPayload,
 } from './student-swipe-row.directive';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 const CURRENCY_SYMBOLS: Record<RateCurrency, string> = {
   EUR: '€',
@@ -90,6 +91,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
   private readonly userSvc = inject(UserService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
   private readonly injector = inject(Injector);
   private readonly platformId = inject(PLATFORM_ID);
   @ViewChild('studentForm') studentFormRef?: NgForm;
@@ -320,7 +322,12 @@ export class StudentsComponent implements OnInit, OnDestroy {
     };
   });
 
+  protected readonly isBlockingTelegramDeliveryError = isBlockingTelegramDeliveryError;
+
   telegramErrorTooltip(student: Student): string {
+    if (!isBlockingTelegramDeliveryError(student)) {
+      return this.t.tgConnected;
+    }
     switch (student.telegram_delivery_error) {
       case 'BOT_BLOCKED':
         return this.t.tgErrorBotBlocked;
@@ -556,14 +563,15 @@ export class StudentsComponent implements OnInit, OnDestroy {
     return this.swipedStudentId() === id ? this.studentSwipeOpenPx : 0;
   }
 
+  /** Keep the card full-width and slide it inside the clipped row. */
   studentSwipeTransform(id: string): string {
     if (this.swipeDraggingId() === id) {
-      return `translateX(${this.studentSwipeOffset()}px)`;
+      return `translate3d(${this.studentSwipeOffset()}px, 0, 0)`;
     }
     if (this.swipedStudentId() === id) {
-      return `translateX(${this.studentSwipeOpenPx}px)`;
+      return `translate3d(${this.studentSwipeOpenPx}px, 0, 0)`;
     }
-    return 'translateX(0)';
+    return 'translate3d(0, 0, 0)';
   }
 
   closeStudentSwipe(): void {
@@ -694,7 +702,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     if (!student.bot_active) {
       return false;
     }
-    if (student.telegram_delivery_status === 'error') {
+    if (isBlockingTelegramDeliveryError(student)) {
       return false;
     }
     return true;
@@ -858,32 +866,8 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   openEdit(s: Student) {
-    this.formSubmitted.set(false);
-    this.formError.set(null);
-    this.linkCopied.set(false);
     this.closeQuickActions();
-    this.form = {
-      name: s.name,
-      rate_per_hour: s.rate_per_hour,
-      rate_currency: s.rate_currency ?? 'EUR',
-      timezone: s.timezone || DEFAULT_STUDENT_TIMEZONE,
-      color_hex: s.color_hex || generatePastelColor(),
-      bot_active: Boolean(s.bot_active),
-      meeting_link: s.meeting_link || '',
-    };
-    this.billingType.set(resolveBillingType(s.billing_type));
-    this.rateUnit.set(resolveRateUnit(s.rate_unit));
-    this.balanceLessons.set(Number.isFinite(Number(s.balance_lessons)) ? Number(s.balance_lessons) : 0);
-    this.creditLimit.set(Number(s.credit_limit) || 0);
-    this.editTarget.set(s);
-    this.showForm.set(true);
-    if (!this.isTelegramLinked(s) && this.hasTelegramPlan()) {
-      this.ensureFormInviteLink(s);
-    } else {
-      this.stopFormInvitePolling();
-      this.formInviteLoading.set(false);
-      this.formInviteError.set(null);
-    }
+    void this.localeRouter.navigate(`/app/students/${s._id}`);
   }
 
   closeForm() {
@@ -1136,6 +1120,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
         const wasCreate = !target;
         this.load();
         if (wasCreate) {
+          this.resetFormDialog();
           this.openEdit(updated);
           return;
         }
@@ -1364,9 +1349,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.linkCopied.set(false);
     this.inviteDialogStudent.set(student);
     this.startInvitePolling(student._id);
-    if (!student.telegram_deep_link) {
-      this.loadInviteLink(student);
-    }
+    this.refreshInviteLink(student);
   }
 
   closeInviteDialog(): void {
@@ -1476,6 +1459,14 @@ export class StudentsComponent implements OnInit, OnDestroy {
     }
   }
 
+  openInviteLinkInTelegram(): void {
+    const link = this.inviteDialogLink();
+    if (!link || typeof window === 'undefined') {
+      return;
+    }
+    window.open(link, '_blank', 'noopener,noreferrer');
+  }
+
   private ensureInviteLinkFromForm(): void {
     if (this.isTelegramLinked() || this.savingForm()) {
       return;
@@ -1504,20 +1495,18 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.persistStudentForm({ openInviteDialog: true });
   }
 
-  private loadInviteLink(student: Student): void {
+  private refreshInviteLink(student: Student): void {
     if (this.isTelegramLinked(student)) {
-      return;
-    }
-    const link = student.telegram_deep_link || '';
-    if (link) {
       return;
     }
     this.inviteDialogLoading.set(true);
     this.inviteDialogError.set(null);
+    // PATCH bot_active re-runs ensureTelegramLink → registers token in bot Firestore.
     this.svc.update(student._id, { bot_active: true }).subscribe({
       next: (updated) => {
         this.inviteDialogLoading.set(false);
         this.patchStudent(updated);
+        this.inviteDialogStudent.set(updated);
         if (this.editTarget()?._id === updated._id) {
           this.editTarget.set(updated);
           this.form.bot_active = true;
@@ -1531,6 +1520,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
         this.inviteDialogError.set(this.apiErrorMessage(err));
       },
     });
+  }
+
+  private loadInviteLink(student: Student): void {
+    this.refreshInviteLink(student);
   }
 
 
@@ -1552,14 +1545,31 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   openTopup(id: string) {
-    const student = this.students().find((item) => item._id === id) ?? null;
     this.topupTargetId.set(id);
     this.topupPaidAt.set(this.todayInputDate());
     this.topupAmountSource.set('money');
     this.topupPreset.set('custom');
     this.topupSummaryVisible.set(false);
-    this.topupSendReceipt.set(student ? canSendTelegramReceipt(student) : false);
     this.setTopupMoneyValue(0);
+    this.svc.getOne(id).subscribe({
+      next: (student) => {
+        this.patchStudent(student);
+        const receiptDefault =
+          this.isTelegramLinked(student) &&
+          normalizeTelegramSettings(student.telegram_notification_settings).payment_receipt_enabled &&
+          !isBlockingTelegramDeliveryError(student);
+        this.topupSendReceipt.set(receiptDefault);
+      },
+      error: () => {
+        const student = this.students().find((item) => item._id === id) ?? null;
+        this.topupSendReceipt.set(
+          !!student &&
+            this.isTelegramLinked(student) &&
+            normalizeTelegramSettings(student.telegram_notification_settings).payment_receipt_enabled &&
+            !isBlockingTelegramDeliveryError(student),
+        );
+      },
+    });
   }
 
   openTopupFromQuick(): void {
@@ -1675,19 +1685,37 @@ export class StudentsComponent implements OnInit, OnDestroy {
     if (!id || !(n > 0)) {
       return;
     }
-    const wantsReceipt = this.topupSendReceipt();
+    const settings = student ? normalizeTelegramSettings(student.telegram_notification_settings) : null;
+    const linked = !!student && this.isTelegramLinked(student);
+    const autoReceipt =
+      linked &&
+      !!settings?.payment_receipt_enabled &&
+      !isBlockingTelegramDeliveryError(student!);
+    const payload: {
+      lessons: number;
+      money_amount: number;
+      paid_at?: string;
+      send_receipt?: boolean;
+    } = {
+      lessons: n,
+      money_amount: this.topupMoney(),
+      paid_at: this.topupPaidAt() || undefined,
+    };
+    if (autoReceipt) {
+      payload.send_receipt = this.topupSendReceipt();
+    }
+    const expectedReceipt = autoReceipt && payload.send_receipt === true;
     this.svc
-      .topup(id, {
-        lessons: n,
-        money_amount: this.topupMoney(),
-        paid_at: this.topupPaidAt() || undefined,
-        send_receipt: wantsReceipt,
-      })
+      .topup(id, payload)
       .subscribe({
         next: (updated) => {
           this.closeTopup();
           this.patchStudent(updated);
-          if (wantsReceipt && !updated.telegram_receipt_sent) {
+          const receiptAttempted = Boolean(
+            (updated as Student & { telegram_receipt_attempted?: boolean }).telegram_receipt_attempted,
+          );
+          const receiptSent = Boolean(updated.telegram_receipt_sent);
+          if ((expectedReceipt || receiptAttempted) && !receiptSent) {
             this.showToast(this.t.tgNotifySkipped);
           }
         },
@@ -1847,7 +1875,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   goToPricingFromGate(): void {
     this.planGateKind.set(null);
-    void this.router.navigate(['/app/pricing']);
+    void this.localeRouter.navigate('/app/pricing');
   }
 
   requestBotToggleFromQuick(): void {

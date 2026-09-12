@@ -2,7 +2,7 @@
   <div class="landing-v2__dither" aria-hidden="true"></div>
 
   <nav class="landing-v2__nav" [attr.aria-label]="i18n.authUi().footerRights">
-    <a class="landing-v2__nav-brand" routerLink="/" aria-label="Simple4U">
+    <a class="landing-v2__nav-brand" [routerLink]="lp('/')" aria-label="Simple4U">
       <img
         class="landing-v2__nav-brand-mark"
         src="assets/brand/LOGO_S4U.png"
@@ -13,9 +13,9 @@
       <span>Simple4U</span>
     </a>
     <div class="landing-v2__nav-actions">
-      <a class="landing-v2__nav-link" routerLink="/pricing">{{ i18n.authUi().landingNavPricing }}</a>
+      <a class="landing-v2__nav-link" [routerLink]="lp('/pricing')">{{ i18n.authUi().landingNavPricing }}</a>
       <app-lang-switcher variant="landing" />
-      <a class="landing-v2__nav-signin" routerLink="/login">{{ i18n.authUi().landingNavSignIn }}</a>
+      <a class="landing-v2__nav-signin" [routerLink]="lp('/login')">{{ i18n.authUi().landingNavSignIn }}</a>
     </div>
   </nav>
 
@@ -26,8 +26,8 @@
       <h1 class="landing-v2__headline">{{ i18n.authUi().landingHeadline }}</h1>
       <p class="landing-v2__subtitle">{{ i18n.authUi().landingSubtitle }}</p>
       <div class="landing-v2__cta-row">
-        <a class="landing-v2__cta" routerLink="/register">{{ i18n.authUi().join }}</a>
-        <a class="landing-v2__cta-secondary" routerLink="/login">{{ i18n.authUi().landingSignIn }}</a>
+        <a class="landing-v2__cta" [routerLink]="lp('/register')">{{ i18n.authUi().join }}</a>
+        <a class="landing-v2__cta-secondary" [routerLink]="lp('/login')">{{ i18n.authUi().landingSignIn }}</a>
       </div>
       <p class="landing-v2__cta-hint">{{ i18n.authUi().landingCtaHint }}</p>
     </div>
@@ -518,7 +518,7 @@
               <li>{{ feature }}</li>
             }
           </ul>
-          <a routerLink="/register" class="landing-v2__plan-cta landing-v2__plan-cta--ghost">{{
+          <a [routerLink]="lp('/register')" class="landing-v2__plan-cta landing-v2__plan-cta--ghost">{{
             i18n.authUi().landingPricingFreeCta
           }}</a>
         </article>
@@ -548,7 +548,7 @@
               <li>{{ feature }}</li>
             }
           </ul>
-          <a routerLink="/register" class="landing-v2__plan-cta landing-v2__plan-cta--ghost">{{
+          <a [routerLink]="lp('/register')" class="landing-v2__plan-cta landing-v2__plan-cta--ghost">{{
             i18n.authUi().landingPricingBasisCta
           }}</a>
         </article>
@@ -574,13 +574,13 @@
               <li>{{ feature }}</li>
             }
           </ul>
-          <a routerLink="/register" class="landing-v2__plan-cta landing-v2__plan-cta--solid">{{
+          <a [routerLink]="lp('/register')" class="landing-v2__plan-cta landing-v2__plan-cta--solid">{{
             i18n.authUi().landingPricingProCta
           }}</a>
         </article>
       </div>
 
-      <a class="landing-v2__text-link landing-v2__pricing-link" routerLink="/pricing">{{
+      <a class="landing-v2__text-link landing-v2__pricing-link" [routerLink]="lp('/pricing')">{{
         i18n.authUi().landingPricingLink
       }}</a>
     </div>
@@ -623,8 +623,8 @@
       {{ i18n.authUi().landingClosingTitle }}
     </h2>
     <div class="landing-v2__cta-row">
-      <a class="landing-v2__cta" routerLink="/register">{{ i18n.authUi().landingClosingCta }}</a>
-      <a class="landing-v2__cta-secondary landing-v2__cta-secondary--on-ink" routerLink="/login">{{
+      <a class="landing-v2__cta" [routerLink]="lp('/register')">{{ i18n.authUi().landingClosingCta }}</a>
+      <a class="landing-v2__cta-secondary landing-v2__cta-secondary--on-ink" [routerLink]="lp('/login')">{{
         i18n.authUi().landingNavSignIn
       }}</a>
     </div>
@@ -635,11 +635,11 @@
     <div class="landing-v2__footer-grid">
       <nav class="landing-v2__footer-col" [attr.aria-label]="i18n.authUi().footerColProduct">
         <h2 class="landing-v2__footer-heading">{{ i18n.authUi().footerColProduct }}</h2>
-        <a routerLink="/pricing">{{ i18n.authUi().landingNavPricing }}</a>
+        <a [routerLink]="lp('/pricing')">{{ i18n.authUi().landingNavPricing }}</a>
         <a href="#landing-v2-features" (click)="scrollToSection($event, 'landing-v2-features')">{{
           i18n.authUi().footerFeatures
         }}</a>
-        <a routerLink="/status" [class]="footerStatusClass()">
+        <a [routerLink]="lp('/status')" [class]="footerStatusClass()">
           <span
             class="landing-v2__footer-pulse"
             [attr.aria-label]="footerStatusLabel()"
@@ -650,7 +650,7 @@
 
       <nav class="landing-v2__footer-col" [attr.aria-label]="i18n.authUi().footerColCompany">
         <h2 class="landing-v2__footer-heading">{{ i18n.authUi().footerColCompany }}</h2>
-        <a routerLink="/help">{{ i18n.authUi().footerHelpCenter }}</a>
+        <a [routerLink]="lp('/help')">{{ i18n.authUi().footerHelpCenter }}</a>
         <a href="#landing-v2-faq" (click)="scrollToSection($event, 'landing-v2-faq')">{{
           i18n.authUi().footerFaq
         }}</a>
@@ -658,9 +658,9 @@
 
       <nav class="landing-v2__footer-col" [attr.aria-label]="i18n.authUi().footerColLegal">
         <h2 class="landing-v2__footer-heading">{{ i18n.authUi().footerColLegal }}</h2>
-        <a routerLink="/legal/data-processing">{{ i18n.authUi().footerDatenschutz }}</a>
-        <a routerLink="/legal/terms">{{ i18n.authUi().footerTerms }}</a>
-        <a routerLink="/legal/impressum">{{ i18n.authUi().footerImpressum }}</a>
+        <a [routerLink]="lp('/legal/data-processing')">{{ i18n.authUi().footerDatenschutz }}</a>
+        <a [routerLink]="lp('/legal/terms')">{{ i18n.authUi().footerTerms }}</a>
+        <a [routerLink]="lp('/legal/impressum')">{{ i18n.authUi().footerImpressum }}</a>
         <button type="button" class="landing-v2__footer-btn" (click)="openCookieSettings()">
           {{ i18n.authUi().footerCookieSettings }}
         </button>

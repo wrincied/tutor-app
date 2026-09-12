@@ -29,6 +29,7 @@ import {
   takeBillingReturn,
 } from '../../core/utils/billing-return';
 import { hasTelegramAccess } from '../../core/utils/user-profile.utils';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 const BETA_NOTICE_STORAGE_KEY = 'simple4u_beta_notice_v1';
 
@@ -44,6 +45,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly financeSvc = inject(FinanceService);
   private readonly billingSvc = inject(BillingService);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   readonly i18n = inject(I18nService);
 
   profile = signal<UserProfile | null>(null);
@@ -342,7 +348,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   goManageSubscription(): void {
     this.billingCongratsOpen.set(false);
-    void this.router.navigateByUrl('/app/account/profile');
+    void this.localeRouter.navigateByUrl('/app/account/profile');
   }
 
   private handleBillingCancelReturn(): void {

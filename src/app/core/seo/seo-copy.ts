@@ -1,4 +1,4 @@
-﻿import type { Lang, PageTitleKey } from '@interfaces';
+import type { Lang, PageTitleKey } from '@interfaces';
 
 export const SEO_CANONICAL_ORIGIN = 'https://simple4u.at';
 export const SEO_OG_IMAGE = `${SEO_CANONICAL_ORIGIN}/assets/brand/og-image.png`;
@@ -77,7 +77,12 @@ export function pageDescription(key: PageTitleKey, lang: Lang): string {
 }
 
 export function isNoindexPage(path: string, titleKey: PageTitleKey | null): boolean {
-  if (path === '/admin-login' || path.startsWith('/app')) {
+  const normalized = path.replace(/^\/(de|en|ru|uk|by|kz)(?=\/|$)/, '') || '/';
+  if (
+    normalized === '/admin-login' ||
+    normalized.startsWith('/app') ||
+    path.includes('/app/')
+  ) {
     return true;
   }
   return titleKey != null && PRIVATE_TITLE_KEYS.has(titleKey);
@@ -105,6 +110,12 @@ export function structuredDataJson(lang: Lang): string {
         },
         areaServed: ['AT', 'DE', 'EU'],
         description,
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer support',
+          email: SEO_SUPPORT_EMAIL,
+          availableLanguage: ['de', 'en', 'ru'],
+        },
       },
       {
         '@type': 'SoftwareApplication',
@@ -114,7 +125,7 @@ export function structuredDataJson(lang: Lang): string {
         url: SEO_CANONICAL_ORIGIN,
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
-        inLanguage: ['de', 'en'],
+        inLanguage: ['de', 'en', 'ru'],
         description,
         offers: {
           '@type': 'Offer',
@@ -132,6 +143,16 @@ export function structuredDataJson(lang: Lang): string {
         inLanguage: ['de', 'en', 'ru'],
         description,
         publisher: { '@id': `${SEO_CANONICAL_ORIGIN}/#organization` },
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${SEO_CANONICAL_ORIGIN}/#webpage`,
+        url: SEO_CANONICAL_ORIGIN,
+        name: 'Simple4U',
+        isPartOf: { '@id': `${SEO_CANONICAL_ORIGIN}/#website` },
+        about: { '@id': `${SEO_CANONICAL_ORIGIN}/#app` },
+        inLanguage: seoLang(lang) === 'en' ? 'en' : 'de-AT',
+        description,
       },
     ],
   };

@@ -2,7 +2,7 @@
   <!-- Left: order summary -->
   <aside class="pay__summary">
     <div class="pay__summary-inner">
-      <a routerLink="/app/pricing" class="pay__back">
+      <a [routerLink]="lp('/app/pricing')" class="pay__back">
         <svg class="pay__back-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <path
             fill="currentColor"
@@ -12,8 +12,8 @@
         {{ t().backToPricing }}
       </a>
 
-      <a routerLink="/" class="pay__brand" aria-label="Simple4U">
-        <img src="assets/brand/LOGO_S4U.png" width="28" height="28" alt="" />
+      <a [routerLink]="lp('/')" class="pay__brand" aria-label="Simple4U">
+        <img src="assets/icons/LOGO_S4U_BLC.png" width="28" height="28" alt="" />
         <span>Simple4U</span>
       </a>
 
@@ -166,7 +166,7 @@
         <div class="pay__actions">
           @if (!taxOk()) {
             <p class="pay__hint">{{ t().taxRequired }}</p>
-            <a routerLink="/app/account/profile" class="pay__btn">{{ t().accountLink }}</a>
+            <a [routerLink]="lp('/app/account/profile')" class="pay__btn">{{ t().accountLink }}</a>
           } @else {
             <label class="pay__consent">
               <input
@@ -177,11 +177,11 @@
               />
               <span class="pay__consent-text">
                 {{ t().legalBefore }}
-                <a routerLink="/legal/terms" (click)="$event.stopPropagation()">{{
+                <a [routerLink]="lp('/legal/terms')" (click)="$event.stopPropagation()">{{
                   t().legalTerms
                 }}</a>
                 {{ t().legalMid }}
-                <a routerLink="/legal/data-processing" (click)="$event.stopPropagation()">{{
+                <a [routerLink]="lp('/legal/data-processing')" (click)="$event.stopPropagation()">{{
                   t().legalPrivacy
                 }}</a>
                 {{ t().legalAfter }}

@@ -1,7 +1,9 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, Injector, computed, inject, signal } from '@angular/core';
 import { provideAppInitializer } from '@angular/core';
+import { Router } from '@angular/router';
 import type { Lang, RateCurrency, TaxMode } from '@interfaces';
 import { loadLocalePack, type LocalePack } from '../i18n/locale-pack';
+import { asUrlLang, langFromPath, localizePath, stripLocalePrefix } from '../i18n/locale-url';
 
 export type { Lang, RateCurrency } from '@interfaces';
 
@@ -13,12 +15,12 @@ const LANG_LABEL: Record<Lang, string> = {
   en: 'English',
   ru: 'Русский',
   by: 'Русский',
-  uk: 'Русский',
+  uk: 'Українська',
   kz: 'Русский',
 };
 
-/** UI picker: EN / DE / RU. Other packs stay in the repo for later. */
-const ALL_LANGS: Lang[] = ['en', 'de', 'ru'];
+/** UI picker + crawlable URL langs: DE / EN / RU. */
+const ALL_LANGS: Lang[] = ['de', 'en', 'ru'];
 
 const LOCALE_TO_LANG: Record<string, Lang> = {
   ru: 'ru',
@@ -35,6 +37,7 @@ function coerceUiLang(raw: string | null | undefined): Lang | null {
   if (value === 'en' || value === 'de' || value === 'ru') {
     return value;
   }
+  // Former UI langs map to Russian until packs are re-enabled.
   if (value === 'uk' || value === 'by' || value === 'kz' || value === 'kk' || value === 'be') {
     return 'ru';
   }
@@ -48,7 +51,7 @@ function mapLocaleToLang(tag: string): Lang | null {
 
 function detectDeviceLang(): Lang {
   if (typeof navigator === 'undefined') {
-    return 'en';
+    return 'de';
   }
   const candidates = [...(navigator.languages ?? []), navigator.language].filter(Boolean);
   for (const tag of candidates) {
@@ -57,7 +60,7 @@ function detectDeviceLang(): Lang {
       return lang;
     }
   }
-  return 'en';
+  return 'de';
 }
 
 function syncDocumentLang(lang: Lang): void {
@@ -85,11 +88,14 @@ function readStoredLang(): Lang {
       return stored;
     }
   }
-  return detectDeviceLang();
+  // Default for first visit: Austrian market → German.
+  return 'de';
 }
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
+  /** Lazy Router lookup — avoids I18n → Router → routes → components cycle. */
+  private readonly injector = inject(Injector);
   private readonly _lang = signal<Lang>(readStoredLang());
   private readonly _pack = signal<LocalePack | null>(null);
   private loadSeq = 0;
@@ -151,13 +157,13 @@ export class I18nService {
 
   /**
    * Switch UI language. Loads the pack on demand (cached after first fetch).
-   * Fire-and-forget safe: UI updates when the pack arrives.
+   * By default also rewrites the URL locale prefix (`/de/...` → `/en/...`).
    */
-  setLang(lang: Lang): void {
-    void this.setLangAsync(lang);
+  setLang(lang: Lang, opts?: { navigate?: boolean }): void {
+    void this.setLangAsync(lang, opts);
   }
 
-  async setLangAsync(lang: Lang): Promise<void> {
+  async setLangAsync(lang: Lang, opts?: { navigate?: boolean }): Promise<void> {
     const uiLang = coerceUiLang(lang) ?? 'en';
     const seq = ++this.loadSeq;
     if (typeof localStorage !== 'undefined') {
@@ -170,6 +176,30 @@ export class I18nService {
     }
     this._pack.set(pack);
     this._lang.set(uiLang);
+
+    if (opts?.navigate === false) {
+      return;
+    }
+    this.rewriteUrlLang(asUrlLang(uiLang));
+  }
+
+  /** Replace `/{oldLang}/...` with `/{newLang}/...` (keeps query + hash). */
+  rewriteUrlLang(nextLang: Lang): void {
+    const router = this.injector.get(Router);
+    const url = router.url;
+    const [pathPart, query = ''] = url.split('?');
+    const [pathOnly, hash = ''] = pathPart.split('#');
+    const current = langFromPath(pathOnly);
+    if (!current) {
+      return;
+    }
+    const next = asUrlLang(nextLang, current);
+    if (current === next) {
+      return;
+    }
+    const nextPath = localizePath(stripLocalePrefix(pathOnly), next);
+    const suffix = `${query ? `?${query}` : ''}${hash ? `#${hash}` : ''}`;
+    void router.navigateByUrl(`${nextPath}${suffix}`, { replaceUrl: true });
   }
 
   labelForLang(code: Lang): string {

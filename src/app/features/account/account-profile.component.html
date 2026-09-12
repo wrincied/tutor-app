@@ -74,7 +74,7 @@
               }}
             </button>
             <a
-              routerLink="/app/pricing"
+              [routerLink]="lp('/app/pricing')"
               class="btn-secondary account-subscription-actions__pricing"
               (click)="onPricingClick($event)"
             >
@@ -95,7 +95,7 @@
                 {{ i18n.accountUi().cancelSubscription }}
               </button>
               <a
-                routerLink="/app/pricing"
+                [routerLink]="lp('/app/pricing')"
                 class="btn-secondary account-subscription-actions__pricing"
                 (click)="onPricingClick($event)"
               >
@@ -105,7 +105,7 @@
           } @else {
             <div class="account-subscription-actions">
               <a
-                routerLink="/app/pricing"
+                [routerLink]="lp('/app/pricing')"
                 class="btn-secondary account-subscription-actions__pricing"
                 (click)="onPricingClick($event)"
               >

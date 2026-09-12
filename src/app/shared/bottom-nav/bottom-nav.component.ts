@@ -15,6 +15,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import type { UserProfile } from '@interfaces';
+import { stripLocalePrefix } from '../../core/i18n/locale-url';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 const MORE_ROUTES = ['/app/workspace', '/app/account', '/app/admin', '/app/pricing'];
 
@@ -33,6 +35,11 @@ export class BottomNavComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
 
   readonly profile = signal<UserProfile | null>(null);
   readonly moreOpen = signal(false);
@@ -40,7 +47,7 @@ export class BottomNavComponent {
   readonly isAdmin = computed(() => this.profile()?.role === 'super_admin');
 
   readonly isMoreRouteActive = computed(() => {
-    const url = this.router.url.split('?')[0] ?? '';
+    const url = stripLocalePrefix(this.router.url.split('?')[0] ?? '');
     return MORE_ROUTES.some((route) => url === route || url.startsWith(`${route}/`));
   });
 

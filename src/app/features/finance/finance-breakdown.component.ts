@@ -30,6 +30,7 @@ import {
   type FinanceBreakdownPdfOptions,
   type FinanceBreakdownPdfSummaryLine,
 } from '../../core/utils/finance-breakdown-pdf';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-finance-breakdown',
@@ -43,6 +44,11 @@ export class FinanceBreakdownComponent implements OnInit {
   private readonly userSvc = inject(UserService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   readonly i18n = inject(I18nService);
 
   readonly panel = signal<FinanceBreakdownPanel>('income');
@@ -144,7 +150,7 @@ export class FinanceBreakdownComponent implements OnInit {
   ngOnInit(): void {
     const panelParam = this.route.snapshot.paramMap.get('panel');
     if (!isFinanceBreakdownPanel(panelParam)) {
-      void this.router.navigate(['/app/finance']);
+      void this.localeRouter.navigate('/app/finance');
       return;
     }
     this.panel.set(panelParam);
@@ -241,7 +247,7 @@ export class FinanceBreakdownComponent implements OnInit {
     this.userSvc.ensureProfile().subscribe({
       next: (profile) => {
         if (!planEntitlementsFromProfile(profile).hasFinance) {
-          void this.router.navigate(['/app/finance'], {
+          void this.localeRouter.navigate('/app/finance', {
             queryParams: financeRouteQueryParams(
               this.periodPreset(),
               this.reportCurrency(),
@@ -253,7 +259,7 @@ export class FinanceBreakdownComponent implements OnInit {
         this.loadSummary();
       },
       error: () => {
-        void this.router.navigate(['/app/finance']);
+        void this.localeRouter.navigate('/app/finance');
       },
     });
   }
@@ -407,15 +413,13 @@ export class FinanceBreakdownComponent implements OnInit {
         this.t.breakdownLessonStudent,
         this.t.breakdownLessonStatus,
         this.t.breakdownLessonDuration,
-        this.t.breakdownLessonAmount,
-      ],
+        this.t.breakdownLessonAmount],
       lessons: [],
       expenseHeaders: [
         this.t.expenseDate,
         this.t.expenseTitle,
         this.t.expenseCategory,
-        this.t.expenseAmount,
-      ],
+        this.t.expenseAmount],
       expenses: [],
     };
 
@@ -453,16 +457,14 @@ export class FinanceBreakdownComponent implements OnInit {
               {
                 label: `${this.t.socialInsurance} (${this.formatPercent(tax.socialInsuranceRate)})`,
                 value: `−${this.formatMoney(tax.socialInsurance)}`,
-              },
-            ]
+              }]
           : []),
         { label: this.t.incomeTax, value: `−${this.formatMoney(tax.incomeTax)}` },
         {
           label: this.t.netProfit,
           value: this.formatMoney(tax.netProfit),
           highlight: true,
-        },
-      ];
+        }];
     }
 
     return options;
@@ -482,8 +484,7 @@ export class FinanceBreakdownComponent implements OnInit {
             highlight: true,
           },
           { label: this.t.incomeCompletedPart, value: this.formatMoney(income.totalIncome) },
-          { label: this.t.incomePlannedPart, value: this.formatMoney(income.scheduledIncome) },
-        ];
+          { label: this.t.incomePlannedPart, value: this.formatMoney(income.scheduledIncome) }];
       case 'expenses':
         return [
           {
@@ -491,8 +492,7 @@ export class FinanceBreakdownComponent implements OnInit {
             value: this.formatMoney(income.totalExpenses),
             highlight: true,
           },
-          { label: this.t.expensesCount, value: String(summary.totals.expenseCount) },
-        ];
+          { label: this.t.expensesCount, value: String(summary.totals.expenseCount) }];
       case 'gross':
         return [
           {
@@ -501,8 +501,7 @@ export class FinanceBreakdownComponent implements OnInit {
             highlight: true,
           },
           { label: this.t.totalIncome, value: this.formatMoney(income.totalIncome) },
-          { label: this.t.totalExpenses, value: this.formatMoney(income.totalExpenses) },
-        ];
+          { label: this.t.totalExpenses, value: this.formatMoney(income.totalExpenses) }];
       case 'net':
         if (summary.tax) {
           return [
@@ -511,16 +510,14 @@ export class FinanceBreakdownComponent implements OnInit {
               value: this.formatMoney(summary.tax.netProfit),
               highlight: true,
             },
-            { label: this.t.grossProfit, value: this.formatMoney(income.grossProfit) },
-          ];
+            { label: this.t.grossProfit, value: this.formatMoney(income.grossProfit) }];
         }
         return [
           {
             label: this.t.grossProfit,
             value: this.formatMoney(income.grossProfit),
             highlight: true,
-          },
-        ];
+          }];
       default:
         return [];
     }

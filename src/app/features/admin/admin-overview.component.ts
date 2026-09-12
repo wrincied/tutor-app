@@ -17,6 +17,7 @@ import {
   adminStatusLabel,
   parseTimestamp,
 } from './admin-subscription.helpers';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-admin-overview',
@@ -29,6 +30,11 @@ export class AdminOverviewComponent implements OnInit {
   private readonly adminSvc = inject(AdminService);
   readonly layout = inject(AdminDashboardLayoutService);
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
 
   readonly dashboard = signal<AdminDashboardPayload | null>(null);
   readonly users = signal<AdminUserRow[]>([]);

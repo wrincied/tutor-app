@@ -5,7 +5,7 @@
   <header class="page-header pricing-page__header u-rise">
     <div class="pricing-page__intro">
       @if (isGuest()) {
-        <a class="pricing-page__back" routerLink="/">← {{ i18n.authUi().backHome }}</a>
+        <a class="pricing-page__back" [routerLink]="lp('/')">← {{ i18n.authUi().backHome }}</a>
       }
       <p class="pricing-page__eyebrow">Simple4U</p>
       <h1>{{ t.title }}</h1>
@@ -79,7 +79,7 @@
 
           <div class="pricing-plan__footer">
             @if (isGuest()) {
-              <a routerLink="/register" class="pricing-plan__cta pricing-plan__cta--outline">{{
+              <a [routerLink]="lp('/register')" class="pricing-plan__cta pricing-plan__cta--outline">{{
                 t.freePlan.ctaGuest
               }}</a>
               <div class="pricing-plan__footer-note" aria-hidden="true"></div>
@@ -148,7 +148,7 @@
 
           <div class="pricing-plan__footer">
             @if (isGuest()) {
-              <a routerLink="/register" class="pricing-plan__cta pricing-plan__cta--outline">{{
+              <a [routerLink]="lp('/register')" class="pricing-plan__cta pricing-plan__cta--outline">{{
                 t.basisPlan.cta
               }}</a>
               <div class="pricing-plan__footer-note">
@@ -183,7 +183,7 @@
               </button>
               <div class="pricing-plan__footer-note" aria-hidden="true"></div>
             } @else if (!taxModeConfigured()) {
-              <a routerLink="/app/account/profile" class="pricing-plan__cta pricing-plan__cta--outline">{{
+              <a [routerLink]="lp('/app/account/profile')" class="pricing-plan__cta pricing-plan__cta--outline">{{
                 t.accountLink
               }}</a>
               <div class="pricing-plan__footer-note">
@@ -254,7 +254,7 @@
 
           <div class="pricing-plan__footer">
             @if (isGuest()) {
-              <a routerLink="/register" class="pricing-plan__cta pricing-plan__cta--solid">{{
+              <a [routerLink]="lp('/register')" class="pricing-plan__cta pricing-plan__cta--solid">{{
                 t.proPlan.cta
               }}</a>
               <div class="pricing-plan__footer-note">
@@ -266,7 +266,7 @@
               </button>
               <div class="pricing-plan__footer-note" aria-hidden="true"></div>
             } @else if (!taxModeConfigured()) {
-              <a routerLink="/app/account/profile" class="pricing-plan__cta pricing-plan__cta--outline">{{
+              <a [routerLink]="lp('/app/account/profile')" class="pricing-plan__cta pricing-plan__cta--outline">{{
                 t.accountLink
               }}</a>
               <div class="pricing-plan__footer-note">

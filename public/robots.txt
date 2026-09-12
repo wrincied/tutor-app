@@ -2,9 +2,13 @@
 User-agent: *
 Allow: /
 Disallow: /app/
+Disallow: /*/app/
 Disallow: /payment
+Disallow: /*/payment
 Disallow: /admin-login
+Disallow: /*/admin-login
 Disallow: /admin
+Disallow: /*/admin
 
 User-agent: Googlebot
 Allow: /

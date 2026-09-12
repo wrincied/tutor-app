@@ -123,7 +123,8 @@
       } @else if (summary(); as s) {
         <p class="finance-disclaimer">{{ t.disclaimer }}</p>
         <p class="finance-disclaimer finance-disclaimer--rates">
-          {{ t.conversionNote }} <strong>{{ displayCurrency() }}</strong>.
+          {{ t.conversionNote }} <strong>{{ displayCurrency() }}</strong
+          >.
           @if (exchangeRateAsOf(); as asOf) {
             {{ t.ratesAsOf }} {{ asOf }}.
             {{ t.ratesSource }}
@@ -135,9 +136,9 @@
             >
               {{ exchangeRateSourceLink().label }}
             </a>
-            @if (exchangeRatesSource(); as apiSource) {
+            <!-- @if (exchangeRatesSource(); as apiSource) {
               <span class="finance-disclaimer__api-source">({{ apiSource }})</span>
-            }
+            } -->
           }
         </p>
 
@@ -160,7 +161,7 @@
         } @else if (hiddenCalendarLessons().length > 0) {
           <p class="finance-note finance-note--warn">
             {{ t.breakdownHiddenInCalendar }}
-            <a routerLink="/app/calendar" class="finance-link">{{ t.breakdownOpenCalendar }}</a>
+            <a [routerLink]="lp('/app/calendar')" class="finance-link">{{ t.breakdownOpenCalendar }}</a>
           </p>
         }
 
@@ -240,7 +241,8 @@
             >
           }
           <span
-            >{{ t.lessonHours }}: <strong>{{ formatHours(s.totals.totalLessonHours) }}</strong></span
+            >{{ t.lessonHours }}:
+            <strong>{{ formatHours(s.totals.totalLessonHours) }}</strong></span
           >
           <span
             >{{ t.expensesCount }}: <strong>{{ s.totals.expenseCount }}</strong></span
@@ -280,7 +282,7 @@
             <p class="finance-note">{{ t.taxNotConfigured }}</p>
             <p class="finance-note">
               {{ t.taxConfigureHint }}
-              <a routerLink="/app/account" class="finance-link">{{ i18n.nav().account }}</a>
+              <a [routerLink]="lp('/app/account')" class="finance-link">{{ i18n.nav().account }}</a>
             </p>
             <p class="finance-note finance-note--muted">
               {{ i18n.accountUi().taxMode }}:
@@ -289,7 +291,7 @@
           }
         </section>
 
-        <section class="finance-card finance-expenses">
+        <section class="finance-expenses">
           <div class="finance-expenses__head">
             <h2>{{ t.expensesSection }}</h2>
             <button type="button" class="btn-primary" (click)="openExpenseCreate()">
@@ -303,31 +305,102 @@
             <div class="finance-expense-cards" role="list">
               @for (e of filteredExpenses(); track e._id) {
                 <article class="finance-expense-card" role="listitem">
-                  <div class="finance-expense-card__head">
-                    <strong class="finance-expense-card__title">{{ e.title }}</strong>
-                    <span class="finance-expense-card__amount">
-                      {{ formatExpenseAmount(e) }}
-                      @if (expenseOriginalLabel(e); as original) {
-                        <span class="finance-expense-card__amount-original">{{ original }}</span>
-                      }
+                  <div class="finance-expense-card__top">
+                    <span class="finance-expense-card__icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                          d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M8 7h8M8 11h8M8 15h5"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                        />
+                      </svg>
                     </span>
-                  </div>
-                  <div class="finance-expense-card__meta">
-                    <span>{{ e.expense_date }}</span>
+                    <span class="finance-expense-card__title">{{ e.title }}</span>
                     @if (e.category) {
-                      <span class="finance-expense-card__category">{{ e.category }}</span>
+                      <span
+                        class="finance-expense-card__category"
+                        [style.--expense-cat-color]="expenseCategoryColor(e.category)"
+                        >{{ e.category }}</span
+                      >
                     }
                   </div>
+
+                  <p class="finance-expense-card__amount">{{ formatExpenseAmount(e) }}</p>
+                  @if (expenseOriginalLabel(e); as original) {
+                    <p class="finance-expense-card__original">{{ original }}</p>
+                  }
+
+                  <time class="finance-expense-card__date" [attr.datetime]="e.expense_date">{{
+                    formatExpenseDate(e.expense_date)
+                  }}</time>
+
                   <div class="finance-expense-card__actions">
-                    <button type="button" class="btn-link" (click)="openExpenseEdit(e)">
-                      {{ t.editExpense }}
+                    <button
+                      type="button"
+                      class="finance-expense-card__icon-btn finance-expense-card__icon-btn--danger"
+                      (click)="confirmDeleteExpense(e._id)"
+                      [attr.aria-label]="t.deleteExpense"
+                      [attr.title]="t.deleteExpense"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M3 6h18"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                        />
+                        <path
+                          d="M8 6V4.75A1.75 1.75 0 0 1 9.75 3h4.5A1.75 1.75 0 0 1 16 4.75V6"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M19 6v12.25A1.75 1.75 0 0 1 17.25 20H6.75A1.75 1.75 0 0 1 5 18.25V6"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M10 10v6M14 10v6"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                        />
+                      </svg>
                     </button>
                     <button
                       type="button"
-                      class="btn-link danger"
-                      (click)="confirmDeleteExpense(e._id)"
+                      class="finance-expense-card__icon-btn"
+                      (click)="openExpenseEdit(e)"
+                      [attr.aria-label]="t.editExpense"
+                      [attr.title]="t.editExpense"
                     >
-                      {{ t.deleteExpense }}
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M12 20h9"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                        />
+                        <path
+                          d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
                     </button>
                   </div>
                 </article>
@@ -415,13 +488,63 @@
 
     <div class="field finance-expense-form__field">
       <label for="expCategory">{{ t.expenseCategory }}</label>
+      <div class="finance-expense-form__chips" role="list">
+        @for (chip of expenseCategoryChips(); track chip.label) {
+          <div
+            class="finance-expense-form__chip"
+            role="listitem"
+            [class.finance-expense-form__chip--active]="isExpenseCategorySelected(chip.label)"
+            [style.--expense-cat-color]="chip.color"
+          >
+            <button
+              type="button"
+              class="finance-expense-form__chip-select"
+              (click)="selectExpenseCategory(chip.label)"
+            >
+              {{ chip.label }}
+            </button>
+            <button
+              type="button"
+              class="finance-expense-form__chip-remove"
+              [attr.aria-label]="t.removeExpenseCategory"
+              [attr.title]="t.removeExpenseCategory"
+              (click)="removeExpenseCategoryChip(chip.label, $event)"
+            >
+              ×
+            </button>
+          </div>
+        }
+      </div>
       <input
         id="expCategory"
         type="text"
         class="app-input"
         [(ngModel)]="expenseForm.category"
         name="expCategory"
+        maxlength="64"
+        [attr.placeholder]="t.expenseCatSoftware"
       />
+      @if (normalizeExpenseCategoryLabel(expenseForm.category)) {
+        <div class="finance-expense-form__colors" role="group" [attr.aria-label]="t.expenseCategoryColor">
+          <span class="finance-expense-form__colors-label">{{ t.expenseCategoryColor }}</span>
+          <div class="finance-expense-form__swatches">
+            @for (swatch of expenseCategoryPalette; track swatch) {
+              <button
+                type="button"
+                class="finance-expense-form__swatch"
+                [class.finance-expense-form__swatch--active]="
+                  expenseCategoryColor(expenseForm.category).toLowerCase() === swatch
+                "
+                [style.--swatch-color]="swatch"
+                [attr.aria-label]="swatch"
+                [attr.title]="swatch"
+                (click)="setExpenseCategoryColor(swatch)"
+              ></button>
+            }
+          </div>
+        </div>
+      }
+      <p class="finance-expense-form__hint">{{ t.expenseCategoryHint }}</p>
     </div>
   </form>
 </app-dialog>

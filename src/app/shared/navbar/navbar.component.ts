@@ -7,6 +7,7 @@ import { UserService } from '../../core/services/user.service';
 import { PresenceService } from '../../core/services/presence.service';
 import { MarketingConsentService } from '../../core/services/marketing-consent.service';
 import type { UserProfile } from '@interfaces';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 const SIDEBAR_COLLAPSE_BTN_MAX = 890;
 
 @Component({
@@ -18,6 +19,11 @@ const SIDEBAR_COLLAPSE_BTN_MAX = 890;
 export class NavbarComponent implements OnInit {
   auth = inject(AuthService);
   i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly userSvc = inject(UserService);
   private readonly presence = inject(PresenceService);
   private readonly consent = inject(MarketingConsentService);

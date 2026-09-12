@@ -50,6 +50,8 @@ import { isBlockedBrandEmail } from '../utils/brand-email';
 import { apiUrl } from '../config/api-url';
 import type { UserProfile } from '@interfaces';
 import { postAuthPath } from '../utils/post-auth-navigation';
+import { asUrlLang, localizePath } from '../i18n/locale-url';
+import { I18nService } from './i18n.service';
 
 const API = apiUrl('');
 
@@ -58,6 +60,7 @@ export class AuthService {
   private readonly auth = inject(Auth);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
   private readonly injector = inject(EnvironmentInjector);
 
   /**
@@ -234,7 +237,7 @@ export class AuthService {
     const tree = this.router.parseUrl(this.router.url);
     const returnUrl =
       typeof tree.queryParams['returnUrl'] === 'string' ? tree.queryParams['returnUrl'] : null;
-    const path = postAuthPath(profile, user.emailVerified === true, returnUrl);
+    const path = postAuthPath(profile, user.emailVerified === true, returnUrl, this.i18n.lang());
     void this.router.navigateByUrl(path);
   }
 
@@ -336,7 +339,7 @@ export class AuthService {
   logout(): Observable<void> {
     return this.fromAuth(() => signOut(this.auth)).pipe(
       map(() => {
-        void this.router.navigate(['/login']);
+        void this.router.navigateByUrl(localizePath('/login', asUrlLang(this.i18n.lang())));
       }),
     );
   }

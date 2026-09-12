@@ -15,6 +15,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import type { UserProfile } from '@interfaces';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-header-profile-menu',
@@ -31,6 +32,11 @@ export class HeaderProfileMenuComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
 
   readonly profile = signal<UserProfile | null>(null);
   readonly menuOpen = signal(false);

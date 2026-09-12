@@ -12,7 +12,7 @@
 
   @if (menuOpen()) {
     <div class="profile-menu__panel" role="menu">
-      <a routerLink="/app/account" class="profile-menu__item" role="menuitem" (click)="closeMenu()">
+      <a [routerLink]="lp('/app/account')" class="profile-menu__item" role="menuitem" (click)="closeMenu()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
@@ -20,7 +20,7 @@
         <span>{{ i18n.nav().account }}</span>
       </a>
 
-      <a routerLink="/app/workspace" class="profile-menu__item" role="menuitem" (click)="closeMenu()">
+      <a [routerLink]="lp('/app/workspace')" class="profile-menu__item" role="menuitem" (click)="closeMenu()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <rect x="2" y="7" width="20" height="14" rx="2"/>
           <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
@@ -31,7 +31,7 @@
       </a>
 
       @if (isAdmin()) {
-        <a routerLink="/app/admin" class="profile-menu__item" role="menuitem" (click)="closeMenu()">
+        <a [routerLink]="lp('/app/admin')" class="profile-menu__item" role="menuitem" (click)="closeMenu()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M12 15v2"/>
             <path d="M12 3v2"/>

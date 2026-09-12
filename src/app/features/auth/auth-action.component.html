@@ -1,9 +1,9 @@
 <div class="auth-split">
   <section class="auth-split__panel">
-    <a routerLink="/" class="auth-split__brand" aria-label="Simple4U">
+    <a [routerLink]="lp('/')" class="auth-split__brand" aria-label="Simple4U">
       <img
         class="auth-split__brand-mark"
-        src="assets/brand/LOGO_S4U.png"
+        src="assets/icons/LOGO_S4U_BLC.png"
         width="36"
         height="36"
         alt=""
@@ -62,9 +62,7 @@
           </div>
           <button type="submit" class="auth-btn-primary" [disabled]="submitting()">
             {{
-              submitting()
-                ? i18n.authUi().authActionSaving
-                : i18n.authUi().authActionSavePassword
+              submitting() ? i18n.authUi().authActionSaving : i18n.authUi().authActionSavePassword
             }}
           </button>
         </form>
@@ -74,24 +72,28 @@
         <div class="auth-banner-success">
           {{ successMessage() }}
         </div>
-        <a routerLink="/login" class="auth-btn-primary auth-btn-primary--link">
+        <a [routerLink]="lp('/login')" class="auth-btn-primary auth-btn-primary--link">
           {{ i18n.authUi().goToLogin }}
         </a>
       }
 
       @if (phase() === 'error') {
         <div class="auth-actions auth-actions--stack">
-          <a routerLink="/login" class="auth-btn-primary auth-btn-primary--link">
+          <a [routerLink]="lp('/login')" class="auth-btn-primary auth-btn-primary--link">
             {{ i18n.authUi().goToLogin }}
           </a>
-          <a routerLink="/login" [queryParams]="{ reset: '1' }" class="auth-link-button auth-link-button--center">
+          <a
+            [routerLink]="lp('/login')"
+            [queryParams]="{ reset: '1' }"
+            class="auth-link-button auth-link-button--center"
+          >
             {{ i18n.authUi().forgotPassword }}
           </a>
         </div>
       }
     </div>
 
-    <a routerLink="/" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
+    <a [routerLink]="lp('/')" class="auth-split__home">{{ i18n.authUi().backHome }}</a>
   </section>
 
   <aside class="auth-split__visual" aria-hidden="true">

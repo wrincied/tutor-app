@@ -13,6 +13,7 @@ import { PublicContentService } from '../../core/services/public-content.service
 import { SystemStatusService } from '../../core/services/system-status.service';
 import { getPlanPricing } from '../../core/utils/subscription-pricing';
 import { LangSwitcherComponent } from '../../shared/lang-switcher/lang-switcher.component';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 const DEMO_AUTOPLAY_MS = 10_000;
 
@@ -28,6 +29,11 @@ export type LandingBillingInterval = 'monthly' | 'yearly';
 })
 export class LandingV2Component implements OnInit, OnDestroy {
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   readonly consent = inject(MarketingConsentService);
   readonly systemStatus = inject(SystemStatusService);
   private readonly publicContent = inject(PublicContentService);

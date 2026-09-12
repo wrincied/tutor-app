@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import type { UserProfile } from '@interfaces';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-admin-shell',
@@ -13,6 +14,11 @@ import { UserService } from '../../core/services/user.service';
 })
 export class AdminShellComponent implements OnInit {
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly userSvc = inject(UserService);
 
   readonly adminProfile = signal<UserProfile | null>(null);

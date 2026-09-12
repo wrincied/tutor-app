@@ -9,6 +9,7 @@ import { PublicContentService } from '../../core/services/public-content.service
 import { RecaptchaService } from '../../shared/recaptcha/recaptcha.service';
 import { RecaptchaLegalComponent } from '../../shared/recaptcha/recaptcha-legal.component';
 import { RevealDirective } from '../../shared/reveal/reveal.directive';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-help-center',
@@ -19,6 +20,11 @@ import { RevealDirective } from '../../shared/reveal/reveal.directive';
 })
 export class HelpCenterComponent implements OnInit {
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly publicContent = inject(PublicContentService);
   private readonly recaptcha = inject(RecaptchaService);
   private readonly router = inject(Router);

@@ -4,7 +4,7 @@
       <p class="home-dash__date">{{ todayDateLabel() }}</p>
       <h1 class="home-dash__greeting">{{ greeting() }}</h1>
     </div>
-    <a routerLink="/app/calendar" [queryParams]="newLessonQuery()" class="home-dash__new">
+    <a [routerLink]="lp('/app/calendar')" [queryParams]="newLessonQuery()" class="home-dash__new">
       {{ t.newLessonCta }}
     </a>
   </header>
@@ -26,7 +26,7 @@
       <p class="home-dash__error" role="alert">{{ error() }}</p>
     } @else {
       <div class="home-dash__stats" [attr.aria-label]="t.todaySection">
-        <a routerLink="/app/calendar" class="home-card home-card--stat">
+        <a [routerLink]="lp('/app/calendar')" class="home-card home-card--stat">
           <span class="home-card__label">{{ t.todayLessons }}</span>
           <span class="home-card__value">{{ todayLessonCount() }}</span>
           @if (todayLessonCount() > 0) {
@@ -40,13 +40,13 @@
           </span>
         </a>
 
-        <a routerLink="/app/finance" class="home-card home-card--stat">
+        <a [routerLink]="lp('/app/finance')" class="home-card home-card--stat">
           <span class="home-card__label">{{ t.todayIncomeToday }}</span>
           <span class="home-card__value home-card__value--money">{{ todayIncomeLabel() }}</span>
           <span class="home-card__hint">{{ weekIncomeHint() }}</span>
         </a>
 
-        <a routerLink="/app/calendar" class="home-card home-card--stat">
+        <a [routerLink]="lp('/app/calendar')" class="home-card home-card--stat">
           <span class="home-card__label">{{ t.todayHours }}</span>
           <span class="home-card__value">{{ todayHours() | number: '1.0-1' }}</span>
         </a>
@@ -59,7 +59,7 @@
             <div class="home-schedule__head-actions">
               @if (dayLessons().length > 0) {
                 <a
-                  routerLink="/app/calendar"
+                  [routerLink]="lp('/app/calendar')"
                   [queryParams]="newLessonQuery()"
                   class="home-schedule__plan-link"
                 >
@@ -126,7 +126,7 @@
               </svg>
               <p class="home-schedule__empty">{{ t.lessonsEmpty }}</p>
               <a
-                routerLink="/app/calendar"
+                [routerLink]="lp('/app/calendar')"
                 [queryParams]="newLessonQuery()"
                 class="home-schedule__empty-btn"
               >
@@ -138,7 +138,7 @@
               @for (row of dayLessons(); track row.lesson.occurrenceKey ?? row.lesson._id + row.lesson.scheduledAt) {
                 <li>
                   <a
-                    routerLink="/app/calendar"
+                    [routerLink]="lp('/app/calendar')"
                     [queryParams]="calendarLessonQuery(row)"
                     class="home-timeline__item"
                     [class.home-timeline__item--overdue]="isLessonOverdue(row)"
@@ -195,7 +195,7 @@
                 @for (student of lowBalanceStudents(); track student._id) {
                   <li>
                     <a
-                      routerLink="/app/students"
+                      [routerLink]="lp('/app/students')"
                       [queryParams]="studentQuery(student)"
                       class="home-aside__row"
                     >
@@ -224,7 +224,7 @@
             <p class="home-aside__meta">{{ telegramLinkedLabel() }}</p>
             <p class="home-aside__meta">{{ telegramRemindersLabel() }}</p>
             @if (!telegramPlanEnabled()) {
-              <a routerLink="/app/pricing" class="home-telegram__more">{{ t.telegramBotLearnMore }}</a>
+              <a [routerLink]="lp('/app/pricing')" class="home-telegram__more">{{ t.telegramBotLearnMore }}</a>
             }
           </section>
         </aside>

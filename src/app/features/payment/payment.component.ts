@@ -19,6 +19,7 @@ import {
   isTaxModeConfigured,
   resolvePricingCountry,
 } from '../../core/utils/user-profile.utils';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 type CheckoutPlan = 'basis' | 'pro';
 type BillingInterval = 'monthly' | 'yearly';
@@ -42,6 +43,11 @@ function fill(template: string, vars: Record<string, string | number>): string {
 export class PaymentComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly userSvc = inject(UserService);
   private readonly billingSvc = inject(BillingService);
   readonly i18n = inject(I18nService);
@@ -185,8 +191,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
         id: 'mastercard',
         label: labels[1] ?? 'Mastercard',
         icon: 'assets/payment/mastercard.svg',
-      },
-    ];
+      }];
     if (this.pricing().currency === 'EUR') {
       marks.push({
         id: 'sepa',
@@ -363,7 +368,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
           const status = String(user.subscription_status || 'free');
           if (status === 'pro' || status === 'trial' || status === 'basis') {
             this.pollSub?.unsubscribe();
-            void this.router.navigate(['/app/home'], { queryParams: { billing: 'success' } });
+            void this.localeRouter.navigate('/app/home', { queryParams: { billing: 'success' } });
           }
         },
       });

@@ -28,12 +28,17 @@
           {{ i18n.accountUi().roundLessonPrices }}
           <span class="account-setting__hint">{{ i18n.accountUi().roundLessonPricesHint }}</span>
         </span>
-        <input
-          type="checkbox"
-          role="switch"
-          [checked]="profileSettings.roundLessonPrices()"
-          (change)="onRoundLessonPricesChange($any($event.target).checked)"
-        />
+        <span class="account-switch">
+          <input
+            type="checkbox"
+            role="switch"
+            [checked]="profileSettings.roundLessonPrices()"
+            (change)="onRoundLessonPricesChange($any($event.target).checked)"
+          />
+          <span class="account-switch__track" aria-hidden="true">
+            <span class="account-switch__thumb"></span>
+          </span>
+        </span>
       </label>
     </div>
   </section>

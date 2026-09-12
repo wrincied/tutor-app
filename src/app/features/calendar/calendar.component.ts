@@ -224,6 +224,12 @@ export class CalendarComponent implements OnInit {
   modesMenuOpen = signal(false);
   studentsSidebarOpen = signal(false);
   studentsSidebarQuery = signal('');
+  /** ПК ≥1024px: список учеников всегда справа, не drawer. */
+  desktopStudentsRail = computed(() => !this.isCompactHeader());
+  /** Ревизия фильтров — чтобы месячная сетка точно перерисовывалась. */
+  monthFilterRevision = computed(
+    () => `${this.focusedStatus() ?? ''}|${this.focusedStudentId() ?? ''}`,
+  );
   focusedStudentId = signal<string | null>(null);
   /** Фильтр сетки по статусу из чипов шапки (toggle). */
   focusedStatus = signal<LessonStatus | null>(null);
@@ -1403,12 +1409,31 @@ export class CalendarComponent implements OnInit {
     return this.lessonsByDay().get(this.dayKey(day)) ?? [];
   }
 
+  /** Уроки дня с учётом фильтра статуса / ученика (месячная сетка). */
+  monthVisibleLessonsForDay(day: Date): CalendarLesson[] {
+    const lessons = this.monthLessonsForDay(day);
+    const statusFilter = this.focusedStatus();
+    const studentFilter = this.focusedStudentId();
+    if (!statusFilter && !studentFilter) {
+      return lessons;
+    }
+    return lessons.filter((lesson) => {
+      if (statusFilter && lesson.status !== statusFilter) {
+        return false;
+      }
+      if (studentFilter && lesson.student_id !== studentFilter) {
+        return false;
+      }
+      return true;
+    });
+  }
+
   monthBadgeLessons(day: Date): CalendarLesson[] {
-    return this.monthLessonsForDay(day).slice(0, 3);
+    return this.monthVisibleLessonsForDay(day).slice(0, 3);
   }
 
   monthHiddenLessonCount(day: Date): number {
-    const total = this.monthLessonsForDay(day).length;
+    const total = this.monthVisibleLessonsForDay(day).length;
     return total > 3 ? total - 3 : 0;
   }
 
@@ -1534,7 +1559,17 @@ export class CalendarComponent implements OnInit {
   }
 
   lessonCountForDay(day: Date): number {
-    return this.lessonsByDay().get(this.dayKey(day))?.length ?? 0;
+    return this.monthVisibleLessonsForDay(day).length;
+  }
+
+  /** День с уроками, но ни один не проходит активный фильтр. */
+  monthCellFilterEmpty(day: Date): boolean {
+    const statusFilter = this.focusedStatus();
+    const studentFilter = this.focusedStudentId();
+    if (!statusFilter && !studentFilter) {
+      return false;
+    }
+    return this.monthLessonsForDay(day).length > 0 && this.monthVisibleLessonsForDay(day).length === 0;
   }
 
   /** Клик по заголовку дня или клетке месяца → режим «1 день» для выбранной даты. */
@@ -1606,7 +1641,9 @@ export class CalendarComponent implements OnInit {
   selectSidebarStudent(studentId: string): void {
     this.focusedStatus.set(null);
     this.focusedStudentId.set(studentId);
-    this.studentsSidebarOpen.set(false);
+    if (!this.desktopStudentsRail()) {
+      this.studentsSidebarOpen.set(false);
+    }
   }
 
   clearStudentFocus(): void {

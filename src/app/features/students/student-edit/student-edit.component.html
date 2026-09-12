@@ -1,0 +1,547 @@
+<div class="page app-scroll-page student-edit">
+  <header class="student-edit__mast">
+    <a class="student-edit__back" [routerLink]="lp('/app/students')">← {{ t.backToStudents }}</a>
+    <div class="student-edit__mast-row">
+      <div class="student-edit__identity">
+        <span
+          class="student-edit__marker"
+          [style.background-color]="mastColor()"
+          [style.--marker-glow]="mastColor()"
+          aria-hidden="true"
+        ></span>
+        <div class="student-edit__identity-text">
+          <h1 class="student-edit__title">
+            @if (form.name.trim()) {
+              {{ displayStudentName(form.name) }}
+            } @else if (student()) {
+              {{ pageTitle() }}
+            } @else {
+              {{ t.editModalTitle }}
+            }
+          </h1>
+          @if (student()) {
+            <p class="student-edit__subtitle">{{ mastSubtitle() }}</p>
+          }
+        </div>
+      </div>
+      <button
+        type="button"
+        class="btn-primary student-edit__save"
+        [disabled]="loading() || savingForm() || !student()"
+        (click)="onSubmit()"
+      >
+        {{ savingForm() ? t.saving : t.save }}
+      </button>
+    </div>
+  </header>
+
+  <nav #anchorsNav class="student-edit__anchors" aria-label="Sections">
+    <button
+      type="button"
+      class="student-edit__anchor"
+      data-section="se-main"
+      [class.student-edit__anchor--active]="activeSection() === 'se-main'"
+      (click)="scrollToSection('se-main', $event)"
+    >
+      {{ t.sectionMain }}
+    </button>
+    <button
+      type="button"
+      class="student-edit__anchor"
+      data-section="se-billing"
+      [class.student-edit__anchor--active]="activeSection() === 'se-billing'"
+      (click)="scrollToSection('se-billing', $event)"
+    >
+      {{ t.billingSectionTitle }}
+    </button>
+    <button
+      type="button"
+      class="student-edit__anchor"
+      data-section="se-telegram"
+      [class.student-edit__anchor--active]="activeSection() === 'se-telegram'"
+      (click)="scrollToSection('se-telegram', $event)"
+    >
+      {{ t.botNotifications }}
+    </button>
+    <button
+      type="button"
+      class="student-edit__anchor"
+      data-section="se-meeting"
+      [class.student-edit__anchor--active]="activeSection() === 'se-meeting'"
+      (click)="scrollToSection('se-meeting', $event)"
+    >
+      {{ t.meetingLinkLabel }}
+    </button>
+    <button
+      type="button"
+      class="student-edit__anchor"
+      data-section="se-danger"
+      [class.student-edit__anchor--active]="activeSection() === 'se-danger'"
+      (click)="scrollToSection('se-danger', $event)"
+    >
+      {{ t.dangerZoneTitle }}
+    </button>
+  </nav>
+
+  <div class="scrollable-content student-edit__body">
+    @if (toastMessage(); as toast) {
+      <div class="student-edit__toast" role="status">
+        <span>{{ toast }}</span>
+        <button
+          type="button"
+          class="student-edit__toast-close"
+          (click)="dismissToast()"
+          [attr.aria-label]="t.close"
+        >
+          ×
+        </button>
+      </div>
+    }
+
+    @if (resyncMessage(); as msg) {
+      <p class="student-edit__success" role="status">{{ msg }}</p>
+    }
+
+    @if (loading()) {
+      <p class="student-edit__hint" role="status">{{ t.loading }}</p>
+    } @else if (loadError(); as err) {
+      <p class="form-error" role="alert">{{ err }}</p>
+    } @else if (student(); as target) {
+      <form
+        #studentForm="ngForm"
+        (ngSubmit)="onSubmit(studentForm)"
+        class="student-edit__form"
+        novalidate
+      >
+        @if (formError(); as err) {
+          <p class="form-error" role="alert">{{ err }}</p>
+        }
+
+        <section id="se-main" class="student-edit__section">
+          <h2 class="student-edit__section-title">{{ t.sectionMain }}</h2>
+
+          <div class="field" [class.field--invalid]="isFieldInvalid('name', studentForm)">
+            <label for="se-name">{{ t.name }}</label>
+            <input
+              id="se-name"
+              type="text"
+              [(ngModel)]="form.name"
+              name="name"
+              required
+              autocomplete="name"
+            />
+          </div>
+
+          <div class="field field--rate-unit">
+            <div class="field-label-with-tip" id="se-rate-unit-label">
+              <span class="field-label">{{ t.rateUnitTitle }}</span>
+              <app-help-tip [label]="t.rateUnitInfoAria" [text]="t.rateUnitInfo" />
+            </div>
+            <div
+              class="rate-unit-segment"
+              role="group"
+              [attr.aria-labelledby]="'se-rate-unit-label'"
+            >
+              <button
+                type="button"
+                class="rate-unit-segment__btn"
+                [class.rate-unit-segment__btn--active]="rateUnit() === 'hour'"
+                [attr.aria-pressed]="rateUnit() === 'hour'"
+                (click)="setRateUnit('hour')"
+              >
+                {{ t.ratePerHour }}
+              </button>
+              <button
+                type="button"
+                class="rate-unit-segment__btn"
+                [class.rate-unit-segment__btn--active]="rateUnit() === 'lesson'"
+                [attr.aria-pressed]="rateUnit() === 'lesson'"
+                (click)="setRateUnit('lesson')"
+              >
+                {{ t.ratePerLesson }}
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="field field--rate-row"
+            [class.field--invalid]="isFieldInvalid('rate', studentForm)"
+          >
+            <label for="se-rate">
+              {{ rateUnit() === 'hour' ? t.rateHourLabel : t.ratePerLesson }}
+            </label>
+            <div class="rate-row">
+              <input
+                id="se-rate"
+                type="number"
+                [(ngModel)]="form.rate_per_hour"
+                name="rate"
+                required
+                min="1"
+                inputmode="decimal"
+                class="rate-row__amount"
+              />
+              <div class="field field--nested">
+                <label for="se-currency" class="sr-only">{{ t.currency }}</label>
+                <app-select
+                  id="se-currency"
+                  class="rate-row__currency"
+                  [(ngModel)]="form.rate_currency"
+                  name="rate_currency"
+                  size="compact"
+                  [options]="currencySelectOptions()"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="field field--color">
+            <label for="se-color">{{ t.calendarColor }}</label>
+            <div class="calendar-color">
+              <input
+                id="se-color"
+                type="color"
+                class="calendar-color__swatch"
+                [value]="formColorPickerHex()"
+                (input)="onFormColorPickerChange($any($event.target).value)"
+                name="color_hex"
+              />
+              <span class="calendar-color__hint">{{ t.calendarColorHint }}</span>
+              <button
+                type="button"
+                class="btn-link calendar-color__random"
+                (click)="randomizeFormColor()"
+              >
+                {{ t.randomColor }}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="se-billing" class="student-edit__section">
+          <h2 class="student-edit__section-title field-legend-with-tip">
+            <span>{{ t.billingSectionTitle }}</span>
+            <app-help-tip [label]="t.billingInfoAria" [text]="billingHelpText()" />
+          </h2>
+          <div
+            class="billing-type-options"
+            role="radiogroup"
+            [attr.aria-label]="t.billingSectionTitle"
+          >
+            <label class="billing-type-option">
+              <input
+                type="radio"
+                name="billing_type"
+                value="package"
+                [checked]="billingType() === 'package'"
+                (change)="setBillingType('package')"
+              />
+              <span>{{ t.billingTypePackage }}</span>
+            </label>
+            <label class="billing-type-option">
+              <input
+                type="radio"
+                name="billing_type"
+                value="postpaid"
+                [checked]="billingType() === 'postpaid'"
+                (change)="setBillingType('postpaid')"
+              />
+              <span>{{ t.billingTypePostpaid }}</span>
+            </label>
+          </div>
+          @if (isPackageBilling()) {
+            <div class="field">
+              <label for="se-balance">{{ balanceFieldLabel() }}</label>
+              <input
+                id="se-balance"
+                type="number"
+                [ngModel]="balanceLessons()"
+                (ngModelChange)="onBalanceLessonsChange($event)"
+                name="balance_lessons"
+                [step]="rateUnit() === 'hour' ? 0.5 : 1"
+                inputmode="decimal"
+              />
+              @if (balanceLessons() < 0) {
+                <p class="field-hint field-hint--warn">{{ t.balanceNegativeHint }}</p>
+              }
+            </div>
+          }
+          @if (isPostpaidBilling()) {
+            <div class="field">
+              <label for="se-credit">{{ t.creditLimitField }}</label>
+              <input
+                id="se-credit"
+                type="number"
+                [ngModel]="creditLimit()"
+                (ngModelChange)="creditLimit.set($event)"
+                name="credit_limit"
+                min="0"
+                step="1"
+                inputmode="numeric"
+              />
+            </div>
+          }
+
+          <div class="student-edit__payments-block">
+            <h2 class="student-edit__section-title">{{ t.paymentHistoryTitle }}</h2>
+            @if (paymentHistoryLoading()) {
+              <p class="student-edit__hint">{{ t.loading }}</p>
+            } @else if (paymentHistory().length === 0) {
+              <p class="student-edit__hint">{{ t.paymentHistoryEmpty }}</p>
+            } @else {
+              <ul class="student-edit__payments" role="list">
+                @for (row of paymentHistory(); track row.id) {
+                  <li class="student-edit__payment" role="listitem">
+                    <span class="student-edit__payment-amount">{{ row.amountLabel }}</span>
+                    <time class="student-edit__payment-date" [attr.datetime]="row.dateIso">{{
+                      row.dateLabel
+                    }}</time>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </section>
+
+        <section id="se-telegram" class="student-edit__section">
+          <h2 class="student-edit__section-title">{{ t.botNotifications }}</h2>
+          @if (isTelegramLinked()) {
+            <p class="field-hint">
+              <span class="tg-status-dot" aria-hidden="true"></span>
+              {{ t.tgConnected }}
+              @if (student()?.telegram_username; as username) {
+                · &#64;{{ username }}
+              }
+            </p>
+            @if (student() && isBlockingTelegramDeliveryError(student()!)) {
+              <p class="form-error" role="alert">{{ telegramErrorTooltip(student()!) }}</p>
+            }
+            <div class="telegram-actions">
+              <button
+                type="button"
+                class="btn-secondary"
+                [disabled]="!student()?.telegram_username"
+                (click)="openStudentTelegramChat()"
+              >
+                {{ t.tgOpenTelegram }}
+              </button>
+              <button type="button" class="btn-link danger" (click)="requestTelegramDisconnect()">
+                {{ t.botDisconnectConfirm }}
+              </button>
+            </div>
+          } @else {
+            <p class="field-hint">{{ t.tgNotConnected }}</p>
+            @if (formInviteLoading()) {
+              <p class="field-hint" aria-live="polite">{{ t.saving }}</p>
+            } @else if (formInviteError(); as err) {
+              <p class="form-error" role="alert">{{ err }}</p>
+              <button type="button" class="btn-secondary" (click)="connectTelegramFromForm()">
+                {{ t.tgStatusBind }}
+              </button>
+            } @else if (formInviteLink(); as link) {
+              <label [attr.for]="'se-tg-invite'">{{ t.studentTelegramSendLink }}</label>
+              <div class="telegram-invite">
+                <input
+                  id="se-tg-invite"
+                  type="text"
+                  readonly
+                  [value]="link"
+                  class="input-readonly"
+                />
+                <button type="button" class="btn-secondary" (click)="copyFormInviteLink()">
+                  {{ linkCopied() ? t.botLinkCopied : t.botCopyLink }}
+                </button>
+              </div>
+              <button type="button" class="btn-secondary" (click)="shareFormInviteLink()">
+                {{ t.tgShareInTelegram }}
+              </button>
+            } @else {
+              <button type="button" class="btn-secondary" (click)="connectTelegramFromForm()">
+                {{ t.tgStatusBind }}
+              </button>
+            }
+          }
+        </section>
+
+        <section id="se-meeting" class="student-edit__section">
+          <h2 class="student-edit__section-title">{{ t.meetingLinkLabel }}</h2>
+          <div class="video-call-presets" role="group" [attr.aria-label]="t.meetingLinkLabel">
+            <button
+              type="button"
+              class="video-call-presets__btn"
+              [class.video-call-presets__btn--active]="meetingPresetActive('meet')"
+              (click)="applyMeetingPreset('meet')"
+            >
+              {{ t.meetingLinkMeet }}
+            </button>
+            <button
+              type="button"
+              class="video-call-presets__btn"
+              [class.video-call-presets__btn--active]="meetingPresetActive('zoom')"
+              (click)="applyMeetingPreset('zoom')"
+            >
+              {{ t.meetingLinkZoom }}
+            </button>
+          </div>
+          <div class="field">
+            <label class="sr-only" for="se-meeting-url">{{ t.meetingLinkLabel }}</label>
+            <input
+              id="se-meeting-url"
+              type="url"
+              [(ngModel)]="form.meeting_link"
+              name="meeting_link"
+              [placeholder]="t.meetingLinkPlaceholder"
+            />
+          </div>
+        </section>
+
+        <section id="se-danger" class="student-edit__section student-edit__section--danger">
+          <h2 class="student-edit__section-title">{{ t.dangerZoneTitle }}</h2>
+          <div class="student-edit__danger-actions">
+            <button
+              type="button"
+              class="btn-link student-edit__danger-btn student-edit__danger-btn--archive"
+              (click)="openArchiveConfirm(target._id)"
+            >
+              {{ t.archive }}
+            </button>
+            <button
+              type="button"
+              class="btn-link student-edit__danger-btn"
+              (click)="openDeleteConfirm(target._id)"
+            >
+              {{ t.delete }}
+            </button>
+          </div>
+        </section>
+      </form>
+    }
+  </div>
+</div>
+
+<app-dialog
+  [open]="!!archiveTargetId()"
+  size="sm"
+  [title]="t.archiveStudentTitle"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="t.archive"
+  (cancel)="cancelArchive()"
+  (confirm)="confirmArchive()"
+>
+  <p>{{ archiveConfirmMessage() }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="!!deleteTargetId()"
+  size="sm"
+  [title]="t.deleteStudentTitle"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="t.delete"
+  [confirmDanger]="true"
+  (cancel)="cancelDelete()"
+  (confirm)="confirmDelete()"
+>
+  <p>{{ deleteConfirmMessage() }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="!!disconnectConfirm()"
+  size="sm"
+  [title]="t.botDisconnectTitle"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="t.botDisconnectConfirm"
+  [confirmDanger]="true"
+  (cancel)="cancelTelegramDisconnect()"
+  (confirm)="confirmTelegramDisconnect()"
+>
+  <p>{{ t.botDisconnectMessage }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="balanceChangeStep() === 1"
+  size="sm"
+  layout="center"
+  [stackOnTop]="true"
+  [title]="t.balanceChangeConfirmTitle"
+  [cancelLabel]="t.cancel"
+  [confirmLabel]="t.balanceChangeContinue"
+  (cancel)="cancelBalanceChangeConfirm()"
+  (confirm)="continueBalanceChangeConfirm()"
+>
+  <p>{{ balanceChangeIntroText() }}</p>
+  <fieldset class="field billing-section student-form__balance-reason">
+    <legend>{{ t.balanceAdjustReason }}</legend>
+    <label class="tg-radio-row">
+      <input
+        type="radio"
+        name="balance-change-reason"
+        value="no_show"
+        [checked]="balanceChangeReason() === 'no_show'"
+        (change)="balanceChangeReason.set('no_show')"
+      />
+      <span>{{ t.balanceAdjustReasonNoShow }}</span>
+    </label>
+    <label class="tg-radio-row">
+      <input
+        type="radio"
+        name="balance-change-reason"
+        value="bonus"
+        [checked]="balanceChangeReason() === 'bonus'"
+        (change)="balanceChangeReason.set('bonus')"
+      />
+      <span>{{ t.balanceAdjustReasonBonus }}</span>
+    </label>
+    <label class="tg-radio-row">
+      <input
+        type="radio"
+        name="balance-change-reason"
+        value="typo"
+        [checked]="balanceChangeReason() === 'typo'"
+        (change)="balanceChangeReason.set('typo')"
+      />
+      <span>{{ t.balanceAdjustReasonTypo }}</span>
+    </label>
+  </fieldset>
+  <p class="field-hint">{{ t.balanceChangeNotifyAlways }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="balanceChangeStep() === 2"
+  size="sm"
+  layout="center"
+  [stackOnTop]="true"
+  [title]="t.balanceChangeFinalTitle"
+  [cancelLabel]="t.balanceChangeBack"
+  [confirmLabel]="balanceChangeSaving() ? t.saving : t.balanceChangeApply"
+  (cancel)="backBalanceChangeConfirm()"
+  (confirm)="confirmBalanceChangeAndSave()"
+>
+  <p>{{ balanceChangeFinalText() }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="resyncPromptStudentId() !== null"
+  size="sm"
+  [title]="t.resyncLessonsTitle"
+  [cancelLabel]="t.resyncLessonsCancel"
+  [confirmLabel]="resyncingLessons() ? t.resyncLessonsRunning : t.resyncLessonsConfirm"
+  layout="center"
+  [closeOnOverlay]="false"
+  (cancel)="cancelResyncLessons()"
+  (confirm)="confirmResyncLessons()"
+>
+  <p>{{ t.resyncLessonsBody }}</p>
+</app-dialog>
+
+<app-dialog
+  [open]="planGateKind() !== null"
+  size="sm"
+  [title]="planGateTitle()"
+  [cancelLabel]="t.close"
+  [confirmLabel]="i18n.sharedUi().planUpgradeCta"
+  layout="center"
+  (cancel)="closePlanGate()"
+  (confirm)="goToPricingFromGate()"
+>
+  <p>{{ planGateBody() }}</p>
+</app-dialog>

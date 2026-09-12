@@ -21,6 +21,7 @@ import { resolveAccountAuthError } from '../../core/utils/auth-errors';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { ActivityLogPanelComponent } from '../../shared/activity-log-panel/activity-log-panel.component';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-account-profile',
@@ -34,6 +35,11 @@ export class AccountProfileComponent implements OnInit, OnDestroy, CanComponentD
   private readonly authSvc = inject(AuthService);
   private readonly billingSvc = inject(BillingService);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly profileSettings = inject(UserProfileSettingsService);
   private readonly unsavedDecision$ = new Subject<boolean>();
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -437,7 +443,7 @@ export class AccountProfileComponent implements OnInit, OnDestroy, CanComponentD
       this.saved.set(true);
       this.showToast(t.saved, 'success');
       if (emailChanging) {
-        void this.router.navigate(['/app/verify-email-notice']);
+        void this.localeRouter.navigate('/app/verify-email-notice');
       }
     };
 

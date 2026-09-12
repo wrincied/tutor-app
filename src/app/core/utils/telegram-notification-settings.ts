@@ -2,6 +2,16 @@ import type { StudentTelegramNotificationSettings } from '@interfaces';
 
 export type TelegramRoutingTarget = 'student' | 'parent' | 'tutor';
 
+/** Hidden in UI until tutor/parent delivery is ready. */
+export const DISABLED_ROUTING_TARGETS: TelegramRoutingTarget[] = ['parent', 'tutor'];
+
+function stripDisabledRoutingTargets(
+  targets: TelegramRoutingTarget[],
+): TelegramRoutingTarget[] {
+  const filtered = targets.filter((t) => !DISABLED_ROUTING_TARGETS.includes(t));
+  return filtered.length > 0 ? filtered : ['student'];
+}
+
 export const DEFAULT_TELEGRAM_SETTINGS: StudentTelegramNotificationSettings = {
   lesson_reminder_enabled: true,
   lesson_reminder_offset_minutes: 60,
@@ -57,10 +67,10 @@ export function targetsFromRouting(
   routing: StudentTelegramNotificationSettings['routing'] | undefined,
 ): TelegramRoutingTarget[] {
   if (routing === 'tutor') {
-    return ['tutor'];
+    return stripDisabledRoutingTargets(['tutor']);
   }
   if (routing === 'both') {
-    return ['student', 'tutor'];
+    return stripDisabledRoutingTargets(['student', 'tutor']);
   }
   return ['student'];
 }
@@ -86,7 +96,7 @@ export function normalizeRoutingTargets(
   if (Array.isArray(raw?.routing_targets)) {
     const unique = [...new Set(raw.routing_targets.filter(isTarget))];
     if (unique.length > 0) {
-      return unique;
+      return stripDisabledRoutingTargets(unique);
     }
   }
   return targetsFromRouting(raw?.routing);
@@ -113,6 +123,17 @@ export function normalizeTelegramSettings(
   };
 }
 
+export function isBlockingTelegramDeliveryError(student: {
+  telegram_delivery_status?: string | null;
+  telegram_delivery_error?: string | null;
+}): boolean {
+  if (student.telegram_delivery_status !== 'error') {
+    return false;
+  }
+  const code = student.telegram_delivery_error;
+  return code === 'BOT_BLOCKED' || code === 'CHAT_NOT_FOUND' || code === 'USER_DEACTIVATED';
+}
+
 export function canSendTelegramReceipt(student: {
   telegram_user_id?: string | null;
   telegram_chat_id?: string | null;
@@ -130,7 +151,7 @@ export function canSendTelegramReceipt(student: {
   if (!student.bot_active) {
     return false;
   }
-  if (student.telegram_delivery_status === 'error') {
+  if (isBlockingTelegramDeliveryError(student)) {
     return false;
   }
   return true;

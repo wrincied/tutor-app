@@ -273,7 +273,6 @@
     overflow: hidden;
     border-radius: 12px;
     touch-action: none;
-    padding-bottom: 1px;
   }
 
   @media (min-width: 769px) and (min-height: 441px) {
@@ -288,10 +287,12 @@
 
 .student-swipe-row__backdrop {
   position: absolute;
-  inset: 0;
+  /* Cover only the visible card area — leave archive/delete clickable. */
+  inset: 0 11rem 0 0;
   z-index: 2;
   border: 0;
-  background: rgb(255 255 255 / 0.45);
+  border-radius: 12px;
+  background: transparent;
   cursor: pointer;
 }
 
@@ -328,19 +329,22 @@
 .student-swipe-row__card {
   position: relative;
   z-index: 1;
+  width: 100%;
+  min-width: 100%;
   transition: transform 0.2s ease;
   will-change: transform;
   background: var(--nav-bg);
   pointer-events: none;
+  box-sizing: border-box;
+  border-radius: 12px;
 
   app-student-card {
     pointer-events: auto;
   }
 }
 
-.student-swipe-row--open .student-swipe-row__card,
 .student-swipe-row--dragging .student-swipe-row__card {
-  background: #f8fafc;
+  transition: none;
 }
 
 .student-form__danger {

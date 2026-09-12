@@ -458,6 +458,12 @@
   gap: 0.5rem;
   overflow: hidden;
   box-sizing: border-box;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
 }
 
 .cal-grid-section {
@@ -717,6 +723,10 @@
   &--has-lessons:not(&--today) .cal-month__day-num {
     font-weight: 700;
   }
+
+  &--filter-empty {
+    opacity: 0.45;
+  }
 }
 
 .cal-month__day-num {
@@ -767,6 +777,10 @@
   &--more {
     background: rgb(71 85 105 / 0.88);
     font-weight: 500;
+  }
+
+  &--focus {
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.95), 0 0 0 3px rgb(15 23 42 / 0.35);
   }
 }
 
@@ -1427,8 +1441,25 @@
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
   }
 
+  &--docked {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 17.5rem;
+    width: 17.5rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    align-self: stretch;
+    min-height: 0;
+    transform: none;
+    box-shadow: none;
+  }
+
   &--open {
     transform: translateX(0);
+  }
+
+  &--docked.cal-sidebar--open {
+    transform: none;
   }
 }
 

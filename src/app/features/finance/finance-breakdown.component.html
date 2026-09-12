@@ -104,7 +104,7 @@
                 @if (lesson.scheduledAt && !lesson.hiddenReason) {
                   <p class="finance-breakdown-list__note">
                     <a
-                      routerLink="/app/calendar"
+                      [routerLink]="lp('/app/calendar')"
                       [queryParams]="calendarLinkQuery(lesson)"
                       class="finance-link"
                     >
@@ -113,7 +113,7 @@
                   </p>
                 } @else if (!lesson.hiddenReason) {
                   <p class="finance-breakdown-list__note">
-                    <a routerLink="/app/calendar" class="finance-link">{{ t.breakdownOpenCalendar }}</a>
+                    <a [routerLink]="lp('/app/calendar')" class="finance-link">{{ t.breakdownOpenCalendar }}</a>
                   </p>
                 }
                 </li>

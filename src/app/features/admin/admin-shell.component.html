@@ -12,7 +12,7 @@
 
   <nav class="admin-tabs" [attr.aria-label]="i18n.adminUi().title">
     <a
-      routerLink="/app/admin"
+      [routerLink]="lp('/app/admin')"
       routerLinkActive="admin-tabs__tab--active"
       [routerLinkActiveOptions]="{ exact: true }"
       class="admin-tabs__tab"
@@ -20,21 +20,21 @@
       {{ i18n.adminUi().dashboardTab }}
     </a>
     <a
-      routerLink="/app/admin/users"
+      [routerLink]="lp('/app/admin/users')"
       routerLinkActive="admin-tabs__tab--active"
       class="admin-tabs__tab"
     >
       {{ i18n.adminUi().usersTab }}
     </a>
     <a
-      routerLink="/app/admin/settings"
+      [routerLink]="lp('/app/admin/settings')"
       routerLinkActive="admin-tabs__tab--active"
       class="admin-tabs__tab"
     >
       {{ i18n.adminUi().settingsTab }}
     </a>
     <a
-      routerLink="/app/admin/landing"
+      [routerLink]="lp('/app/admin/landing')"
       routerLinkActive="admin-tabs__tab--active"
       class="admin-tabs__tab"
     >

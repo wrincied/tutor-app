@@ -126,7 +126,9 @@ export class StudentService {
   }
   topup(id: string, payload: StudentTopupPayload) {
     return this.http
-      .post<Student & { telegram_receipt_sent?: boolean }>(`${API}/${id}/topup`, payload)
+      .post<
+        Student & { telegram_receipt_sent?: boolean; telegram_receipt_attempted?: boolean }
+      >(`${API}/${id}/topup`, payload)
       .pipe(tap(() => this.invalidateListCache()));
   }
   adjustBalance(id: string, payload: StudentBalanceAdjustPayload) {

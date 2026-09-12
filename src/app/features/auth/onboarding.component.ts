@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 import { DOCUMENT } from '@angular/common';
 
@@ -48,6 +49,11 @@ export class OnboardingComponent implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly document = inject(DOCUMENT);
 
@@ -226,7 +232,7 @@ export class OnboardingComponent implements OnInit {
       next: () => {
         this.auth.logout().subscribe({
           next: () => {
-            void this.router.navigate(['/login'], { queryParams: { consent: 'declined' } });
+            void this.localeRouter.navigate('/login', { queryParams: { consent: 'declined' } });
           },
           error: () => {
             this.loading.set(false);

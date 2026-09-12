@@ -1,7 +1,7 @@
 <div class="bottom-nav-shell">
   <nav class="bottom-nav" aria-label="Main navigation">
     <a
-      routerLink="/app/home"
+      [routerLink]="lp('/app/home')"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: false }"
       class="bottom-link"
@@ -16,7 +16,7 @@
     </a>
 
     <a
-      routerLink="/app/students"
+      [routerLink]="lp('/app/students')"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: false }"
       class="bottom-link"
@@ -33,7 +33,7 @@
     </a>
 
     <a
-      routerLink="/app/calendar"
+      [routerLink]="lp('/app/calendar')"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: false }"
       class="bottom-link"
@@ -50,7 +50,7 @@
     </a>
 
     <a
-      routerLink="/app/finance"
+      [routerLink]="lp('/app/finance')"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: false }"
       class="bottom-link"
@@ -87,7 +87,7 @@
 
       @if (moreOpen()) {
         <div class="bottom-more__sheet" role="menu">
-          <a routerLink="/app/workspace" class="bottom-more__item" role="menuitem" (click)="closeMore()">
+          <a [routerLink]="lp('/app/workspace')" class="bottom-more__item" role="menuitem" (click)="closeMore()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <rect x="2" y="7" width="20" height="14" rx="2"/>
               <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
@@ -97,7 +97,7 @@
             <span>{{ i18n.nav().workspace }}</span>
           </a>
 
-          <a routerLink="/app/account" class="bottom-more__item" role="menuitem" (click)="closeMore()">
+          <a [routerLink]="lp('/app/account')" class="bottom-more__item" role="menuitem" (click)="closeMore()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
@@ -106,7 +106,7 @@
           </a>
 
           @if (isAdmin()) {
-            <a routerLink="/app/admin" class="bottom-more__item" role="menuitem" (click)="closeMore()">
+            <a [routerLink]="lp('/app/admin')" class="bottom-more__item" role="menuitem" (click)="closeMore()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M12 15v2"/>
                 <path d="M12 3v2"/>

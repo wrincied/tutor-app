@@ -12,9 +12,9 @@ import {
   SEO_OG_IMAGE,
   isNoindexPage,
   pageDescription,
-  seoLang,
   structuredDataJson,
 } from '../seo/seo-copy';
+import { URL_LANGS, asUrlLang, localizePath, stripLocalePrefix } from '../i18n/locale-url';
 
 const PAGE_TITLE_KEYS = new Set<PageTitleKey>([
   'default',
@@ -81,9 +81,10 @@ export class SeoService {
     const title = titles[key] ?? titles.default;
     const description = pageDescription(key, this.i18n.lang());
     const path = this.router.url.split('?')[0].split('#')[0] || '/';
-    const canonical = this.canonicalUrl(path);
+    const stripped = stripLocalePrefix(path);
+    const urlLang = asUrlLang(this.i18n.lang());
+    const canonical = this.canonicalUrl(localizePath(stripped, urlLang));
     const noindex = isNoindexPage(path, key);
-    const htmlLang = seoLang(this.i18n.lang());
 
     this.titleService.setTitle(title);
 
@@ -95,9 +96,15 @@ export class SeoService {
     this.meta.updateTag({ name: 'author', content: 'Simple4U, Graz, Austria' });
     this.upsertLink('canonical', canonical);
 
+    const ogLocale =
+      urlLang === 'de' ? 'de_AT' : urlLang === 'ru' ? 'ru_RU' : 'en_US';
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.meta.updateTag({ property: 'og:site_name', content: 'Simple4U' });
-    this.meta.updateTag({ property: 'og:locale', content: htmlLang === 'de' ? 'de_AT' : 'en_US' });
+    this.meta.updateTag({ property: 'og:locale', content: ogLocale });
+    this.meta.updateTag({
+      property: 'og:locale:alternate',
+      content: urlLang === 'de' ? 'en_US' : 'de_AT',
+    });
     this.meta.updateTag({ property: 'og:title', content: title });
     this.meta.updateTag({ property: 'og:description', content: description });
     this.meta.updateTag({ property: 'og:url', content: canonical });
@@ -109,6 +116,18 @@ export class SeoService {
     this.meta.updateTag({ name: 'twitter:image', content: SEO_OG_IMAGE });
     this.meta.updateTag({ name: 'twitter:title', content: title });
     this.meta.updateTag({ name: 'twitter:description', content: description });
+    this.meta.updateTag({ name: 'geo.region', content: 'AT-6' });
+    this.meta.updateTag({ name: 'geo.placename', content: 'Graz' });
+
+    // x-default → German (primary market); each locale gets its own crawlable URL.
+    this.upsertLink('alternate', this.canonicalUrl(localizePath(stripped, 'de')), {
+      hreflang: 'x-default',
+    });
+    for (const lang of URL_LANGS) {
+      this.upsertLink('alternate', this.canonicalUrl(localizePath(stripped, lang)), {
+        hreflang: lang,
+      });
+    }
 
     this.upsertJsonLd(structuredDataJson(this.i18n.lang()));
   }
@@ -128,12 +147,25 @@ export class SeoService {
     return `${origin}${clean}`;
   }
 
-  private upsertLink(rel: string, href: string): void {
+  private upsertLink(
+    rel: string,
+    href: string,
+    attrs: Record<string, string> = {},
+  ): void {
     const head = this.document.head;
-    let el = head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+    const attrSelector = Object.entries(attrs)
+      .map(([key, value]) => `[${key}="${value}"]`)
+      .join('');
+    let el = head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]${attrSelector}`);
+    if (!el && !Object.keys(attrs).length) {
+      el = head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]:not([hreflang])`);
+    }
     if (!el) {
       el = this.document.createElement('link');
       el.rel = rel;
+      for (const [key, value] of Object.entries(attrs)) {
+        el.setAttribute(key, value);
+      }
       head.appendChild(el);
     }
     el.href = href;
