@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import type { Student } from '@interfaces';
+import { isBlockingTelegramDeliveryError } from '../../../core/utils/telegram-notification-settings';
 
 export type TelegramCellState = 'connected' | 'paused' | 'error' | 'disconnected';
 
@@ -7,7 +8,7 @@ export function telegramCellState(student: Student): TelegramCellState {
   if (!student.telegram_user_id && !student.telegram_chat_id) {
     return 'disconnected';
   }
-  if (student.telegram_delivery_status === 'error') {
+  if (isBlockingTelegramDeliveryError(student)) {
     return 'error';
   }
   if (!student.bot_active) {

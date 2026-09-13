@@ -13,13 +13,14 @@ import type { LegalCmsDocId } from '@interfaces';
 import { I18nService } from '../../core/services/i18n.service';
 import { PublicContentService } from '../../core/services/public-content.service';
 import { renderSafeMarkdown } from '../../core/utils/safe-markdown';
+import { RevealDirective } from '../../shared/reveal/reveal.directive';
 
 export type LegalDocumentId = 'data-processing' | 'cookies' | 'impressum' | 'terms';
 
 @Component({
   selector: 'app-legal-document',
   standalone: true,
-  imports: [],
+  imports: [RevealDirective],
   templateUrl: './legal-document.component.html',
   styleUrl: './legal-document.component.scss',
   // CMS body is [innerHTML]; emulated encapsulation never matches those nodes.

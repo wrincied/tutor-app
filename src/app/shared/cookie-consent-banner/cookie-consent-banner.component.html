@@ -10,7 +10,7 @@
         <h2 class="cookie-cmp__title">{{ i18n.authUi().cookieBannerTitle }}</h2>
         <p class="cookie-cmp__body">
           {{ i18n.authUi().cookieBannerBody }}
-          <a routerLink="/legal/cookies" class="cookie-cmp__link">{{
+          <a [routerLink]="lp('/legal/cookies')" class="cookie-cmp__link">{{
             i18n.authUi().cookiePolicyLink
           }}</a>
         </p>

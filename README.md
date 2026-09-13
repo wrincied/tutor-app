@@ -2,7 +2,7 @@
 
 **Simple4U** is a web application (CRM and scheduler) for private tutors: manage students, plan lessons, track finances, and subscribe to Pro. The client is an **Angular 21** SPA with a multilingual UI, deployed on **Firebase Hosting** and **Firebase App Hosting**.
 
-**Link: https://simple4u-64822.web.app/** 
+**Link: https://simple4u-64822.web.app/**
 
 Companion API documentation: [backend/README.md](https://github.com/wrincied/tutor-app-backend/blob/master/README.md).
 
@@ -10,10 +10,10 @@ Companion API documentation: [backend/README.md](https://github.com/wrincied/tut
 
 ## Product overview
 
-| Audience | Goal |
-|----------|------|
-| Tutor | Maintain a student base, schedule and reschedule lessons, view income and expenses |
-| Super admin | Manage subscriptions and user statistics |
+| Audience    | Goal                                                                               |
+| ----------- | ---------------------------------------------------------------------------------- |
+| Tutor       | Maintain a student base, schedule and reschedule lessons, view income and expenses |
+| Super admin | Manage subscriptions and user statistics                                           |
 
 ### Key UI capabilities
 
@@ -26,21 +26,21 @@ Companion API documentation: [backend/README.md](https://github.com/wrincied/tut
 - **Pricing** — Pro subscription via Stripe Checkout
 - **Account** — profile, workspace customization, subscription, tax settings
 - **Legal** — data processing and cookie policies
-- **Theming** — light / dark mode; **6 languages**: Russian, English, German, Kazakh, Ukrainian, Belarusian
+- **Theming** — light; **3 languages**: Russian, English, German
 
 ---
 
 ## Tech stack
 
-| Category | Technologies |
-|----------|--------------|
-| Framework | Angular 21 (standalone components, signals, lazy-loaded routes) |
-| Styling | SCSS, Tailwind CSS 4, CSS variables for theming |
+| Category   | Technologies                                                        |
+| ---------- | ------------------------------------------------------------------- |
+| Framework  | Angular 21 (standalone components, signals, lazy-loaded routes)     |
+| Styling    | SCSS, Tailwind CSS 4, CSS variables for theming                     |
 | Auth & SDK | `@angular/fire`, Firebase Auth / Analytics / Firestore (client SDK) |
-| HTTP | `HttpClient` + interceptors → REST API |
-| Recurrence | `rrule` (aligned with backend recurrence logic) |
-| Tests | Vitest + jsdom |
-| Build | `@angular/build`, production output → `dist/tutor/browser` |
+| HTTP       | `HttpClient` + interceptors → REST API                              |
+| Recurrence | `rrule` (aligned with backend recurrence logic)                     |
+| Tests      | Vitest + jsdom                                                      |
+| Build      | `@angular/build`, production output → `dist/tutor/browser`          |
 
 Application data (students, lessons, finance) is loaded through the **REST API**, not directly from Firestore security rules on the client. Firebase on the frontend is used for authentication and analytics.
 
@@ -101,20 +101,20 @@ tutor/                              # frontend root
 
 ## Application routes
 
-| URL | Screen | Access |
-|-----|--------|--------|
-| `/` | Landing | public |
-| `/login`, `/register` | Sign in / sign up | public |
-| `/legal/*` | Legal documents | public |
-| `/app/verify-email-notice` | Email verification reminder | authenticated |
-| `/app/onboarding` | Initial setup | email verified |
-| `/app/home` | Home | full access |
-| `/app/students` | Students | full access |
-| `/app/calendar` | Calendar | full access |
-| `/app/finance` | Finance | full access |
-| `/app/pricing` | Pricing | full access |
-| `/app/account/*` | Account | full access |
-| `/app/admin` | Admin panel | super-admin |
+| URL                        | Screen                      | Access         |
+| -------------------------- | --------------------------- | -------------- |
+| `/`                        | Landing                     | public         |
+| `/login`, `/register`      | Sign in / sign up           | public         |
+| `/legal/*`                 | Legal documents             | public         |
+| `/app/verify-email-notice` | Email verification reminder | authenticated  |
+| `/app/onboarding`          | Initial setup               | email verified |
+| `/app/home`                | Home                        | full access    |
+| `/app/students`            | Students                    | full access    |
+| `/app/calendar`            | Calendar                    | full access    |
+| `/app/finance`             | Finance                     | full access    |
+| `/app/pricing`             | Pricing                     | full access    |
+| `/app/account/*`           | Account                     | full access    |
+| `/app/admin`               | Admin panel                 | super-admin    |
 
 **Guard chain:** `authGuard` → `emailVerifiedGuard` → `dataConsentGuard` → `onboardingGuard`.
 
@@ -183,10 +183,10 @@ Shared domain types: `src/assets/Interfaces.ts` (path alias `@interfaces` in `ts
 
 ## Deployment
 
-| Environment | Method |
-|-------------|--------|
+| Environment    | Method                                                                                  |
+| -------------- | --------------------------------------------------------------------------------------- |
 | Static hosting | `firebase deploy --only hosting` (site: `simple4u-64822`, `predeploy`: `npm run build`) |
-| App Hosting | `firebase.json` → `apphosting.backendId: tutor-app`, root `.` |
+| App Hosting    | `firebase.json` → `apphosting.backendId: tutor-app`, root `.`                           |
 
 Production API URL and CORS are configured on the backend (`FRONTEND_URL`). Example production frontend URL: `https://simple4u-64822.web.app`.
 
@@ -206,14 +206,14 @@ Suggested screens for a live demo:
 
 ## Useful commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev:local` | Frontend :4200 + local API :3001 |
-| `npm run dev:remote` | Frontend :4200 + remote (prod) API |
-| `npm run build` | Production build |
-| `npm run build:hosting` | Production build for Firebase Hosting |
-| `npm test` | Vitest unit tests |
-| `ng generate component …` | Angular CLI scaffolding |
+| Command                   | Description                           |
+| ------------------------- | ------------------------------------- |
+| `npm run dev:local`       | Frontend :4200 + local API :3001      |
+| `npm run dev:remote`      | Frontend :4200 + remote (prod) API    |
+| `npm run build`           | Production build                      |
+| `npm run build:hosting`   | Production build for Firebase Hosting |
+| `npm test`                | Vitest unit tests                     |
+| `ng generate component …` | Angular CLI scaffolding               |
 
 ---
 
@@ -221,7 +221,6 @@ Suggested screens for a live demo:
 
 - [Backend API — README](https://github.com/wrincied/tutor-app-backend/blob/master/README.md)
 
-
 ---
 
-*Simple4U — CRM and scheduler for tutors. Frontend: Angular 21 + Firebase Auth + REST.*
+_Simple4U — CRM and scheduler for tutors. Frontend: Angular 21 + Firebase Auth + REST._

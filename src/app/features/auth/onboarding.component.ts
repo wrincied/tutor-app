@@ -1,10 +1,11 @@
 import { ChangeDetectorRef, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 import { DOCUMENT } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
 
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import type { UserProfile } from '@interfaces';
 
@@ -47,6 +48,12 @@ export class OnboardingComponent implements OnInit {
   private readonly userSvc = inject(UserService);
 
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly document = inject(DOCUMENT);
 
@@ -219,41 +226,26 @@ export class OnboardingComponent implements OnInit {
 
 
   declineDataCollection(): void {
-
     const t = this.i18n.authUi();
-
     this.loading.set(true);
-
     this.userSvc.declineOnboarding().subscribe({
-
       next: () => {
-
         this.auth.logout().subscribe({
-
-          error: () => {
-
-            this.loading.set(false);
-
-            this.error.set(t.onboardingDeclineError);
-
+          next: () => {
+            void this.localeRouter.navigate('/login', { queryParams: { consent: 'declined' } });
           },
-
+          error: () => {
+            this.loading.set(false);
+            this.error.set(t.onboardingDeclineError);
+          },
         });
-
       },
-
       error: () => {
-
         this.loading.set(false);
-
         this.error.set(t.onboardingDeclineError);
-
       },
-
     });
-
   }
-
 }
 
 

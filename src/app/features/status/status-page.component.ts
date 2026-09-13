@@ -7,6 +7,7 @@ import {
   type HealthServiceState,
   type ServiceHealthStatus,
 } from '../../core/services/system-status.service';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 type ServiceRowKey = 'statusApp' | 'statusDatabase' | 'statusStripe';
 
@@ -19,6 +20,11 @@ type ServiceRowKey = 'statusApp' | 'statusDatabase' | 'statusStripe';
 })
 export class StatusPageComponent implements OnInit {
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   readonly status = inject(SystemStatusService);
 
   readonly rows = computed(() => {
@@ -26,8 +32,7 @@ export class StatusPageComponent implements OnInit {
     return [
       { key: 'statusApp' as const, state: services.app },
       { key: 'statusDatabase' as const, state: services.database },
-      { key: 'statusStripe' as const, state: services.stripe },
-    ];
+      { key: 'statusStripe' as const, state: services.stripe }];
   });
 
   ngOnInit(): void {

@@ -47,8 +47,9 @@ body {
 
   @media (max-width: 768px), (max-height: 440px) {
     margin-left: 0;
-    height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
-    padding: 16px;
+    height: calc(100dvh - var(--bottom-nav-reserve));
+    padding: 16px 16px calc(16px + var(--bottom-nav-content-clearance));
+    margin-bottom: 64px;
   }
 
   /* app-calendar живёт внутри .app-page-host, не как прямой потомок */
@@ -65,16 +66,18 @@ body {
 
     @media (max-width: 768px), (max-height: 440px) {
       padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-      height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
-      height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px));
-      max-height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
-      max-height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px));
+      height: calc(100dvh - var(--bottom-nav-reserve));
+      height: calc(100svh - var(--bottom-nav-reserve));
+      max-height: calc(100dvh - var(--bottom-nav-reserve));
+      max-height: calc(100svh - var(--bottom-nav-reserve));
     }
   }
 }
 
 // Navbar вне потока документа — не скроллится вместе со страницей
-app-navbar {
+app-navbar,
+app-bottom-nav,
+app-header {
   display: contents;
 }
 
@@ -87,7 +90,7 @@ app-navbar {
   height: 100%;
   overflow: hidden;
   touch-action: none;
-  border-radius: 12px;
+  border-radius: 5px;
 
   > router-outlet {
     display: contents;
@@ -116,19 +119,20 @@ app-navbar {
   > router-outlet > app-calendar {
     touch-action: pan-y;
   }
+
+  > router-outlet > app-students {
+    touch-action: pan-y;
+  }
 }
 
 // Плавное появление страниц при навигации (@starting-style; модалки — соседи .page/.cal-page)
+// Без transform: иначе position:fixed (toast и т.п.) цепляется к странице, а не к вьюпорту.
 @mixin route-view-enter {
   opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 
   @starting-style {
     opacity: 0;
-    transform: translateY(0.375rem);
   }
 }
 
@@ -231,4 +235,15 @@ html.app-select-dropdown-open {
   inset: 0;
   z-index: 40;
   overflow: auto;
+}
+
+/**
+ * Hide Google reCAPTCHA floating badge (Enterprise / v3).
+ * Allowed only with visible Privacy Policy + Terms disclosure near forms.
+ * @see https://developers.google.com/recaptcha/docs/faq#id-like-to-hide-the-recaptcha-badge.-what-is-allowed
+ */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

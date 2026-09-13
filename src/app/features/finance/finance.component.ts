@@ -2,12 +2,26 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { FINANCE_REPORT_CURRENCIES, type Expense, type FinanceSummary } from '@interfaces';
+import { of } from 'rxjs';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
+import {
+  FINANCE_REPORT_CURRENCIES,
+  type Expense,
+  type FinanceExpenseBreakdown,
+  type FinanceStrings,
+  type FinanceSummary,
+} from '@interfaces';
 import { FinanceService } from '../../core/services/finance.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import {
+  financeAnchorFromQuery,
+  financeCanShiftForward,
+  financeCurrentAnchor,
+  financeIsCurrentPeriod,
   financePeriodRange,
+  financeShiftAnchor,
+  type FinancePeriodAnchor,
   type FinancePeriodPreset,
 } from '../../core/utils/finance-period';
 import { convertWithEurRates } from '../../core/utils/finance-currency';
@@ -27,6 +41,30 @@ import { createFinanceTeaserDemo } from '../../core/utils/finance-teaser-demo';
 import { planEntitlementsFromProfile } from '../../core/utils/user-profile.utils';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
+import { Auth } from '@angular/fire/auth';
+import {
+  EXPENSE_CATEGORY_PALETTE,
+  loadExpenseHiddenCategories,
+  loadExpenseQuickCategories,
+  mergeExpenseCategoryOptions,
+  normalizeExpenseCategoryLabel,
+  rememberExpenseQuickCategory,
+  removeExpenseQuickCategory,
+  resolveExpenseCategoryColor,
+  type ExpenseQuickCategory,
+} from '../../core/utils/expense-quick-categories';
+
+function expensesFromSummaryBreakdown(rows: FinanceExpenseBreakdown[] | undefined): Expense[] {
+  return (rows ?? []).map((row) => ({
+    _id: row.id,
+    title: row.title,
+    amount: row.amount,
+    currency: row.currency,
+    expense_date: row.expense_date,
+    category: row.category || '',
+  }));
+}
 
 @Component({
   selector: 'app-finance',
@@ -39,8 +77,14 @@ export class FinanceComponent implements OnInit {
   private readonly financeSvc = inject(FinanceService);
   private readonly userSvc = inject(UserService);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly route = inject(ActivatedRoute);
   readonly i18n = inject(I18nService);
+  private readonly auth = inject(Auth);
 
   loading = signal(true);
   readonly skeletonKpiSlots = [0, 1, 2, 3];
@@ -52,7 +96,8 @@ export class FinanceComponent implements OnInit {
   isTeaser = signal(false);
   upgradeModalOpen = signal(false);
 
-  periodPreset = signal<FinancePeriodPreset>('all');
+  periodPreset = signal<FinancePeriodPreset>('month');
+  periodAnchor = signal<FinancePeriodAnchor>(financeCurrentAnchor());
   reportCurrency = signal(this.readStoredReportCurrency());
 
   displayCurrency = computed(() => this.reportCurrency() || this.summary()?.currency || 'EUR');
@@ -69,17 +114,30 @@ export class FinanceComponent implements OnInit {
     category: '',
   };
 
-  incomeByCurrencyRows = computed(() => {
-    const by = this.summary()?.income.byCurrency ?? {};
-    return Object.entries(by)
-      .filter(([, amount]) => amount > 0)
-      .sort(([a], [b]) => a.localeCompare(b));
-  });
+  /** Saved categories for chips (presets merged in computed). */
+  private quickCategoriesSaved = signal<ExpenseQuickCategory[]>([]);
+  private quickCategoriesHidden = signal<string[]>([]);
+  readonly expenseCategoryPalette = EXPENSE_CATEGORY_PALETTE;
+  readonly normalizeExpenseCategoryLabel = normalizeExpenseCategoryLabel;
 
-  showMixedCurrencyNote = computed(() => {
-    const codes = Object.keys(this.summary()?.income.byCurrency ?? {});
-    const report = this.displayCurrency();
-    return codes.length > 1 || codes.some((c) => c !== report);
+  expenseCategoryChips = computed(() => {
+    this.i18n.lang();
+    const t = this.t;
+    const presets = [
+      t.expenseCatSoftware,
+      t.expenseCatMaterials,
+      t.expenseCatSpace,
+      t.expenseCatTransport,
+    ];
+    const fromExpenses = this.expenses()
+      .map((e) => e.category ?? '')
+      .filter(Boolean);
+    return mergeExpenseCategoryOptions(
+      presets,
+      this.quickCategoriesSaved(),
+      fromExpenses,
+      this.quickCategoriesHidden(),
+    );
   });
 
   combinedIncome = computed(() => {
@@ -102,14 +160,38 @@ export class FinanceComponent implements OnInit {
 
   periodPresetLabel = computed(() => {
     const preset = this.periodPreset();
-    if (preset === 'month') {
-      return this.t.periodMonth;
+    if (preset === 'all') {
+      return this.t.periodAll;
     }
-    if (preset === 'year') {
-      return this.t.periodYear;
+    if (financeIsCurrentPeriod(preset, this.periodAnchor())) {
+      return preset === 'month' ? this.t.periodMonth : this.t.periodYear;
     }
-    return this.t.periodAll;
+    return this.periodNavLabel();
   });
+
+  periodNavLabel = computed(() => {
+    this.i18n.lang();
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return '';
+    }
+    const anchor = this.periodAnchor();
+    if (financeIsCurrentPeriod(preset, anchor)) {
+      return preset === 'month' ? this.t.periodMonth : this.t.periodYear;
+    }
+    const locale = this.i18n.localeId();
+    if (preset === 'year') {
+      return String(anchor.year);
+    }
+    return new Date(anchor.year, anchor.month - 1, 1).toLocaleDateString(locale, {
+      month: 'long',
+      year: 'numeric',
+    });
+  });
+
+  canShiftPeriodForward = computed(() =>
+    financeCanShiftForward(this.periodPreset(), this.periodAnchor()),
+  );
 
   periodRangeLabel = computed(() => {
     this.i18n.lang();
@@ -117,12 +199,12 @@ export class FinanceComponent implements OnInit {
     if (preset === 'all') {
       return '';
     }
-    const range = financePeriodRange(preset);
+    const range = financePeriodRange(preset, this.periodAnchor());
     if (!range.from || !range.to) {
       return '';
     }
     if (preset === 'year') {
-      return String(new Date(`${range.from}T12:00:00`).getFullYear());
+      return '';
     }
     const locale = this.i18n.localeId();
     const fmt = (iso: string) =>
@@ -137,7 +219,7 @@ export class FinanceComponent implements OnInit {
   });
 
   filteredExpenses = computed(() => {
-    const range = financePeriodRange(this.periodPreset());
+    const range = financePeriodRange(this.periodPreset(), this.periodAnchor());
     const items = this.expenses();
     if (!range.from && !range.to) {
       return items;
@@ -162,20 +244,120 @@ export class FinanceComponent implements OnInit {
     if (isFinancePeriodPreset(periodParam)) {
       this.periodPreset.set(periodParam);
     }
+    const atParam = this.route.snapshot.queryParamMap.get('at');
+    const parsedAnchor = financeAnchorFromQuery(atParam, this.periodPreset());
+    if (parsedAnchor) {
+      this.periodAnchor.set(parsedAnchor);
+    }
     const currencyParam = this.route.snapshot.queryParamMap.get('currency');
     if (currencyParam) {
       this.reportCurrency.set(currencyParam);
     }
     this.syncRouteQuery();
+    this.reloadQuickCategories();
     this.reload();
   }
 
-  get t() {
+  private financeUserId(): string {
+    return this.auth.currentUser?.uid ?? '';
+  }
+
+  private reloadQuickCategories(): void {
+    const uid = this.financeUserId();
+    this.quickCategoriesSaved.set(loadExpenseQuickCategories(uid));
+    this.quickCategoriesHidden.set(loadExpenseHiddenCategories(uid));
+  }
+
+  isExpenseCategorySelected(category: string): boolean {
+    return (
+      normalizeExpenseCategoryLabel(this.expenseForm.category).toLowerCase() ===
+      normalizeExpenseCategoryLabel(category).toLowerCase()
+    );
+  }
+
+  selectExpenseCategory(category: string): void {
+    const label = normalizeExpenseCategoryLabel(category);
+    if (!label) {
+      return;
+    }
+    if (this.isExpenseCategorySelected(label)) {
+      this.expenseForm.category = '';
+      return;
+    }
+    this.expenseForm.category = label;
+    // Persist chip so color edits stick for presets / used-on-expense labels.
+    this.quickCategoriesSaved.set(
+      rememberExpenseQuickCategory(
+        this.financeUserId(),
+        label,
+        resolveExpenseCategoryColor(label, this.quickCategoriesSaved()),
+      ),
+    );
+  }
+
+  removeExpenseCategoryChip(category: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const label = normalizeExpenseCategoryLabel(category);
+    if (!label) {
+      return;
+    }
+    const next = removeExpenseQuickCategory(this.financeUserId(), label);
+    this.quickCategoriesSaved.set(next.categories);
+    this.quickCategoriesHidden.set(next.hidden);
+    if (this.isExpenseCategorySelected(label)) {
+      this.expenseForm.category = '';
+    }
+  }
+
+  expenseCategoryColor(label: string): string {
+    return resolveExpenseCategoryColor(label, this.quickCategoriesSaved());
+  }
+
+  setExpenseCategoryColor(color: string): void {
+    const label = normalizeExpenseCategoryLabel(this.expenseForm.category);
+    if (!label) {
+      return;
+    }
+    this.quickCategoriesSaved.set(
+      rememberExpenseQuickCategory(this.financeUserId(), label, color),
+    );
+  }
+
+  formatExpenseDate(isoDate: string): string {
+    const raw = String(isoDate ?? '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      return raw;
+    }
+    return new Date(`${raw}T12:00:00`).toLocaleDateString(this.i18n.localeId(), {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  get t(): FinanceStrings {
     return this.i18n.financeUi();
   }
 
   setPeriod(preset: FinancePeriodPreset): void {
+    if (preset !== 'all' && this.periodPreset() === 'all') {
+      this.periodAnchor.set(financeCurrentAnchor());
+    }
     this.periodPreset.set(preset);
+    this.syncRouteQuery();
+    this.reload();
+  }
+
+  shiftPeriod(delta: -1 | 1): void {
+    const preset = this.periodPreset();
+    if (preset === 'all') {
+      return;
+    }
+    if (delta === 1 && !this.canShiftPeriodForward()) {
+      return;
+    }
+    this.periodAnchor.set(financeShiftAnchor(preset, this.periodAnchor(), delta));
     this.syncRouteQuery();
     this.reload();
   }
@@ -198,7 +380,6 @@ export class FinanceComponent implements OnInit {
       this.summary.set(remapFinanceSummary(current, code));
     }
     this.syncRouteQuery();
-    this.reload();
   }
 
   private readStoredReportCurrency(): string {
@@ -211,7 +392,11 @@ export class FinanceComponent implements OnInit {
   private syncRouteQuery(): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+      queryParams: financeRouteQueryParams(
+        this.periodPreset(),
+        this.reportCurrency(),
+        this.periodAnchor(),
+      ),
       replaceUrl: true,
     });
   }
@@ -220,24 +405,27 @@ export class FinanceComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    // Always fetch fresh /me — ensureProfile can keep a pre-upgrade Free cache.
-    this.userSvc.refreshProfile().subscribe({
-      next: (profile) => {
-        const unlocked = planEntitlementsFromProfile(profile).hasFinance;
-        this.isTeaser.set(!unlocked);
-        if (!unlocked) {
+    // Cached /me when available (Home/nav already warm it). Fresh fetch only if empty.
+    this.userSvc
+      .ensureProfile()
+      .pipe(
+        switchMap((profile) => {
+          const unlocked = planEntitlementsFromProfile(profile).hasFinance;
+          this.isTeaser.set(!unlocked);
+          if (!unlocked) {
+            this.applyTeaserDemo();
+            return of(null);
+          }
+          return this.fetchLiveSummary$();
+        }),
+        catchError(() => {
+          this.isTeaser.set(true);
           this.applyTeaserDemo();
-          this.loading.set(false);
-          return;
-        }
-        this.loadLiveData();
-      },
-      error: () => {
-        this.isTeaser.set(true);
-        this.applyTeaserDemo();
-        this.loading.set(false);
-      },
-    });
+          return of(null);
+        }),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe();
   }
 
   private applyTeaserDemo(): void {
@@ -249,46 +437,30 @@ export class FinanceComponent implements OnInit {
     this.error.set(null);
   }
 
-  private loadLiveData(): void {
-    const range = financePeriodRange(this.periodPreset());
+  /** One /summary call — expenses come from expensesBreakdown (no second RTT). */
+  private fetchLiveSummary$() {
+    const range = financePeriodRange(this.periodPreset(), this.periodAnchor());
     const currency = this.reportCurrency();
     const summaryQuery = {
       ...range,
       ...(currency ? { currency } : {}),
     };
-    let pending = 2;
-    const finish = () => {
-      pending -= 1;
-      if (pending === 0) {
-        this.loading.set(false);
-      }
-    };
-
-    this.financeSvc.getSummary(summaryQuery).subscribe({
-      next: (data) => {
+    return this.financeSvc.getSummary(summaryQuery).pipe(
+      map((data) => {
         const target = this.reportCurrency() || data.currency;
         if (!this.reportCurrency()) {
           this.reportCurrency.set(target);
         }
-        this.summary.set(remapFinanceSummary(data, target));
-        finish();
-      },
-      error: () => {
+        const remapped = remapFinanceSummary(data, target);
+        this.summary.set(remapped);
+        this.expenses.set(expensesFromSummaryBreakdown(remapped.expensesBreakdown));
+        return remapped;
+      }),
+      catchError(() => {
         this.error.set(this.t.loadError);
-        finish();
-      },
-    });
-
-    this.financeSvc.getExpenses().subscribe({
-      next: (list) => {
-        this.expenses.set(list);
-        finish();
-      },
-      error: () => {
-        this.error.set(this.t.loadError);
-        finish();
-      },
-    });
+        return of(null);
+      }),
+    );
   }
 
   formatMoney(amount: number, currencyCode?: string): string {
@@ -381,8 +553,12 @@ export class FinanceComponent implements OnInit {
 
   openBreakdown(panel: FinanceBreakdownPanel): void {
     this.gateOrRun(() => {
-      void this.router.navigate(['/app/finance/breakdown', panel], {
-        queryParams: financeRouteQueryParams(this.periodPreset(), this.reportCurrency()),
+      void this.localeRouter.navigate(`/app/finance/breakdown/${panel}`, {
+        queryParams: financeRouteQueryParams(
+        this.periodPreset(),
+        this.reportCurrency(),
+        this.periodAnchor(),
+      ),
       });
     });
   }
@@ -436,8 +612,14 @@ export class FinanceComponent implements OnInit {
       amount,
       currency: this.expenseForm.currency,
       expense_date: this.expenseForm.expense_date,
-      category: this.expenseForm.category.trim() || undefined,
+      category: normalizeExpenseCategoryLabel(this.expenseForm.category) || undefined,
     };
+
+    if (payload.category) {
+      this.quickCategoriesSaved.set(
+        rememberExpenseQuickCategory(this.financeUserId(), payload.category),
+      );
+    }
 
     this.expenseSaving.set(true);
     const edit = this.expenseEditTarget();
@@ -490,6 +672,6 @@ export class FinanceComponent implements OnInit {
 
   goToPricing(): void {
     this.upgradeModalOpen.set(false);
-    void this.router.navigate(['/app/pricing']);
+    void this.localeRouter.navigate('/app/pricing');
   }
 }

@@ -1,4 +1,4 @@
-import { Component, computed, HostListener, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
@@ -21,6 +21,7 @@ import { resolveAccountAuthError } from '../../core/utils/auth-errors';
 import { AppDialogComponent } from '../../shared/app-dialog/app-dialog.component';
 import { AppSelectComponent, type AppSelectOption } from '../../shared/app-select';
 import { ActivityLogPanelComponent } from '../../shared/activity-log-panel/activity-log-panel.component';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-account-profile',
@@ -29,13 +30,19 @@ import { ActivityLogPanelComponent } from '../../shared/activity-log-panel/activ
   templateUrl: './account-profile.component.html',
   styleUrls: ['./account-page-host.scss', './account.component.scss'],
 })
-export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
+export class AccountProfileComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private readonly userSvc = inject(UserService);
   private readonly authSvc = inject(AuthService);
   private readonly billingSvc = inject(BillingService);
   private readonly router = inject(Router);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   private readonly profileSettings = inject(UserProfileSettingsService);
   private readonly unsavedDecision$ = new Subject<boolean>();
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly i18n = inject(I18nService);
   readonly skeletonFieldSlots = [0, 1, 2, 3];
@@ -44,6 +51,8 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
   saving = signal(false);
   saved = signal(false);
   error = signal<string | null>(null);
+  toastMessage = signal<string | null>(null);
+  toastKind = signal<'success' | 'error'>('success');
   profile = signal<UserProfile | null>(null);
   taxConfirmOpen = signal(false);
   pendingTaxMode = signal<TaxMode | null>(null);
@@ -53,6 +62,7 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
   hasUnsavedTaxChange = signal(false);
   cancelConfirmOpen = signal(false);
   billingActionLoading = signal(false);
+  referralCopied = signal(false);
 
   firstName = '';
   lastName = '';
@@ -85,15 +95,43 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
     });
   });
 
+  referralLink = computed(() => {
+    const code = String(this.profile()?.referralCode || '').trim();
+    if (!code) {
+      return '';
+    }
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://simple4u.at';
+    return `${origin}/register?ref=${code}`;
+  });
+
+  referralCreditText = computed(() => {
+    const notice = this.profile()?.stripe_credit_notice;
+    if (!notice) {
+      return null;
+    }
+    return this.i18n
+      .accountUi()
+      .referralCreditNotice.replace('{amount}', String(notice.amount))
+      .replace('{currency}', notice.currency);
+  });
+
   isPaidPlan = computed(() => {
     const status = this.subscription_status;
     return status === 'pro' || status === 'trial' || status === 'basis';
   });
 
-  cancelScheduled = computed(() => this.profile()?.cancel_at_period_end === true);
+  cancelScheduled = computed(
+    () =>
+      this.profile()?.cancel_at_period_end === true || this.profile()?.pending_plan === 'basis',
+  );
 
   cancelScheduledHint = computed(() => {
-    const raw = this.profile()?.subscription_cancel_at || this.profile()?.trial_ends_at;
+    const profile = this.profile();
+    const raw =
+      profile?.pending_plan_at ||
+      profile?.subscription_cancel_at ||
+      profile?.subscription_current_period_end ||
+      profile?.trial_ends_at;
     if (!raw) {
       return this.i18n.accountUi().cancelSubscriptionScheduled.replace('{date}', '—');
     }
@@ -101,8 +139,6 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     }).format(new Date(raw));
     return this.i18n.accountUi().cancelSubscriptionScheduled.replace('{date}', label);
   });
@@ -145,6 +181,47 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
         this.loading.set(false);
       },
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+  }
+
+  showToast(message: string, kind: 'success' | 'error' = 'success'): void {
+    this.toastKind.set(kind);
+    this.toastMessage.set(message);
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    this.toastTimer = setTimeout(() => {
+      this.toastTimer = null;
+      this.toastMessage.set(null);
+    }, 3200);
+  }
+
+  dismissToast(): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+    this.toastMessage.set(null);
+  }
+
+  copyReferralLink(): void {
+    const link = this.referralLink();
+    if (!link) {
+      return;
+    }
+    void navigator.clipboard.writeText(link).then(
+      () => {
+        this.referralCopied.set(true);
+        window.setTimeout(() => this.referralCopied.set(false), 2000);
+      },
+      () => undefined,
+    );
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -310,6 +387,7 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
       this.newPassword !== this.confirmPassword
     ) {
       this.error.set(t.passwordsMismatch);
+      this.showToast(t.passwordsMismatch, 'error');
       return;
     }
 
@@ -328,6 +406,7 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
 
     if (!isTaxModeConfigured(this.tax_mode)) {
       this.error.set(t.taxModeRequiredHint);
+      this.showToast(t.taxModeRequiredHint, 'error');
       return;
     }
     const currentTax = normalizeTaxMode(current?.tax_mode);
@@ -341,11 +420,13 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
 
     if (passwordChanging && !this.currentPassword) {
       this.error.set(t.currentPasswordRequired);
+      this.showToast(t.currentPasswordRequired, 'error');
       return;
     }
 
     if (emailChanging && this.showPasswordSection() && !this.currentPassword) {
       this.error.set(t.currentPasswordRequired);
+      this.showToast(t.currentPasswordRequired, 'error');
       return;
     }
 
@@ -360,9 +441,16 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
       this.confirmPassword = '';
       this.saving.set(false);
       this.saved.set(true);
+      this.showToast(t.saved, 'success');
       if (emailChanging) {
-        void this.router.navigate(['/app/verify-email-notice']);
+        void this.localeRouter.navigate('/app/verify-email-notice');
       }
+    };
+
+    const fail = (message: string) => {
+      this.saving.set(false);
+      this.error.set(message);
+      this.showToast(message, 'error');
     };
 
     if (passwordChanging || (emailChanging && this.showPasswordSection())) {
@@ -376,10 +464,7 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
         .subscribe({
           next: (user) => finish(user),
           error: (err) => {
-            this.saving.set(false);
-            this.error.set(
-              resolveAccountAuthError(err, t, this.i18n.authUi().passwordMinLength),
-            );
+            fail(resolveAccountAuthError(err, t, this.i18n.authUi().passwordMinLength));
           },
         });
       return;
@@ -392,10 +477,7 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
         .subscribe({
           next: (user) => finish(user),
           error: (err) => {
-            this.saving.set(false);
-            this.error.set(
-              resolveAccountAuthError(err, t, this.i18n.authUi().passwordMinLength),
-            );
+            fail(resolveAccountAuthError(err, t, this.i18n.authUi().passwordMinLength));
           },
         });
       return;
@@ -404,8 +486,7 @@ export class AccountProfileComponent implements OnInit, CanComponentDeactivate {
     profileUpdate$().subscribe({
       next: (user) => finish(user),
       error: (err) => {
-        this.saving.set(false);
-        this.error.set(err?.error?.message ?? t.saveError);
+        fail(err?.error?.message ?? t.saveError);
       },
     });
   }

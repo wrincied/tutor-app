@@ -12,6 +12,8 @@ import {
 import { filter, interval } from 'rxjs';
 import { environment } from '../environments/environment';
 import { NavbarComponent } from './shared/navbar/navbar.component';
+import { BottomNavComponent } from './shared/bottom-nav/bottom-nav.component';
+import { AppHeaderComponent } from './shared/app-header/app-header.component';
 import { AppDialogComponent } from './shared/app-dialog/app-dialog.component';
 import { CookieConsentBannerComponent } from './shared/cookie-consent-banner/cookie-consent-banner.component';
 import { LandingSkeletonComponent } from './features/landing/landing-skeleton.component';
@@ -22,13 +24,18 @@ import { I18nService } from './core/services/i18n.service';
 import { SeoService } from './core/services/seo.service';
 import { ThemeService } from './core/services/theme.service';
 import { purgeStaleOverlayLayers } from './core/utils/purge-stale-overlay-layers';
-import { consumeBillingReturnFlag } from './core/utils/billing-return';
+import { takeBillingReturn } from './core/utils/billing-return';
+import { BillingService } from './core/services/billing.service';
+import { UserService } from './core/services/user.service';
+import { asUrlLang, isAppShellPath, localizePath, stripLocalePrefix } from './core/i18n/locale-url';
 
 @Component({
   selector: 'app-root',
   imports: [
     RouterOutlet,
     NavbarComponent,
+    BottomNavComponent,
+    AppHeaderComponent,
     AppDialogComponent,
     LandingSkeletonComponent,
     CookieConsentBannerComponent,
@@ -38,6 +45,8 @@ import { consumeBillingReturnFlag } from './core/utils/billing-return';
 export class App {
   auth = inject(AuthService);
   router = inject(Router);
+  private readonly billingSvc = inject(BillingService);
+  private readonly userSvc = inject(UserService);
   readonly unlinkAlert = inject(BotUnlinkAlertService);
   private readonly i18n = inject(I18nService);
   /** Глобальная тема (localStorage + data-theme). */
@@ -53,26 +62,46 @@ export class App {
     inject(AnalyticsService);
     void this._theme;
     if ((environment as { designMode?: boolean }).designMode) {
-      this.document.documentElement.dataset['design'] = 'v2';
+      // Domino/SSR documentElement may lack `dataset`; only set in the browser.
+      const root = this.document.documentElement;
+      if (root?.dataset) {
+        root.dataset['design'] = 'v2';
+      } else {
+        root?.setAttribute?.('data-design', 'v2');
+      }
     } else {
-      delete this.document.documentElement.dataset['design'];
+      const root = this.document.documentElement;
+      if (root?.dataset) {
+        delete root.dataset['design'];
+      } else {
+        root?.removeAttribute?.('data-design');
+      }
     }
     // После HMR могут остаться невидимые слои select — они блокируют клики по всему UI
     purgeStaleOverlayLayers(this.document);
 
-    // Stripe returns to /?billing=success#/… — ensure we land on home for the congrats modal.
-    const billingReturn = consumeBillingReturnFlag();
-    if (billingReturn === 'success') {
-      // Re-arm so Home can still consume and open the modal.
-      try {
-        sessionStorage.setItem('simple4u_billing_return_v1', 'success');
-      } catch {
-        /* ignore */
-      }
+    // Stripe returns to /{lang}/app/home?billing=success (legacy: /app/home?…).
+    // Browser Back leaves sessionStorage=pending — treat as cancel and force Free if no Stripe sub.
+    const billingReturn = takeBillingReturn();
+    if (billingReturn.kind === 'success') {
       const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
-      if (!hash.includes('/app/home')) {
-        void this.router.navigateByUrl('/app/home?billing=success');
+      const path = typeof window !== 'undefined' ? window.location.pathname : '';
+      const alreadyHome =
+        stripLocalePrefix(path).startsWith('/app/home') || hash.includes('/app/home');
+      if (!alreadyHome) {
+        const qs = new URLSearchParams({ billing: 'success' });
+        if (billingReturn.sessionId) {
+          qs.set('session_id', billingReturn.sessionId);
+        }
+        const home = localizePath('/app/home', asUrlLang(this.i18n.lang()));
+        void this.router.navigateByUrl(`${home}?${qs.toString()}`);
       }
+    } else if (billingReturn.kind === 'cancel' && this.auth.isLoggedIn()) {
+      this.userSvc.invalidateProfile();
+      this.billingSvc.syncSubscription().subscribe({
+        next: (user) => this.userSvc.cacheProfile(user),
+        error: () => undefined,
+      });
     }
 
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((e) => {
@@ -98,7 +127,7 @@ export class App {
         if (!this.showNavbar()) {
           return;
         }
-        const path = this.router.url.split('?')[0];
+        const path = stripLocalePrefix(this.router.url.split('?')[0]);
         // Students page already loads GET /students and calls ingestStudents.
         if (path === '/app/students') {
           return;
@@ -119,15 +148,19 @@ export class App {
     if (this.isStandaloneNotFound()) {
       return false;
     }
-    const path = this.router.url.split('?')[0];
-    if (!this.auth.isLoggedIn() || !path.startsWith('/app')) {
+    const path = stripLocalePrefix(this.router.url.split('?')[0]);
+    if (!this.auth.isLoggedIn() || !isAppShellPath(path)) {
       return false;
     }
-    return path !== '/app/onboarding' && path !== '/app/verify-email-notice';
+    return (
+      path !== '/app/onboarding' &&
+      path !== '/app/verify-email-notice' &&
+      path !== '/app/payment'
+    );
   }
 
   private isLandingUrl(url: string): boolean {
-    const path = url.split('?')[0].split('#')[0];
+    const path = stripLocalePrefix(url.split('?')[0].split('#')[0]);
     return path === '/' || path === '';
   }
 
@@ -148,13 +181,15 @@ export class App {
     return this.i18n.studentsUi().botUnlinkAlertOk;
   }
 
-  unlinkDialogMessage(): string {
-    const alert = this.unlinkAlert.alert();
-    const t = this.i18n.studentsUi();
-    if (!alert) {
-      return '';
-    }
-    const username = alert.telegramUsername ? ` (@${alert.telegramUsername})` : '';
-    return t.botUnlinkAlertMessage.replace('{name}', alert.studentName).replace('{username}', username);
+  unlinkDialogLead(): string {
+    return this.i18n.studentsUi().botUnlinkAlertMessageLead;
+  }
+
+  unlinkDialogTail(): string {
+    return this.i18n.studentsUi().botUnlinkAlertMessageTail;
+  }
+
+  unlinkDialogNote(): string {
+    return this.i18n.studentsUi().botUnlinkAlertMessageNote;
   }
 }

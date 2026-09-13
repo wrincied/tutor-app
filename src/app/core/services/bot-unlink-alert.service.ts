@@ -5,6 +5,7 @@ import { StudentService } from './student.service';
 export type BotUnlinkAlert = {
   studentId: string;
   studentName: string;
+  studentColor: string;
   telegramUsername: string | null;
 };
 
@@ -29,6 +30,7 @@ export class BotUnlinkAlertService {
     this.alert.set({
       studentId: pending._id,
       studentName: pending.name,
+      studentColor: pending.color_hex || '#ff7e26',
       telegramUsername: pending.telegram_unlinked_username || null,
     });
   }

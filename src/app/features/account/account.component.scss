@@ -48,29 +48,28 @@
 }
 
 .account-panel {
-  padding: 1.25rem 1.35rem;
-  border: 1px solid var(--nav-border);
-  border-radius: 1.1rem;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, #fff 72%, var(--foam, #e7f5ef)) 0%, var(--nav-bg) 100%);
-  box-shadow: 0 10px 30px rgb(7 23 20 / 0.04);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .account-section {
   & + & {
     margin-top: 1.35rem;
     padding-top: 1.35rem;
-    border-top: 1px solid var(--border-light, var(--nav-border));
+    border-top: 1px solid color-mix(in srgb, var(--nav-border, #e2e8f0) 85%, transparent);
   }
 }
 
 .account-section__title {
   margin: 0 0 1rem;
   font-family: var(--font-heading, 'Figtree', sans-serif);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
 
   &--flush {
     margin-bottom: 0;
@@ -104,10 +103,16 @@
 }
 
 .account-setting__hint {
-  margin: 0;
+  display: block;
+  margin: 0.25rem 0 0;
   font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.account-setting--toggle {
+  align-items: flex-start;
 }
 
 .account-setting__label {
@@ -147,9 +152,9 @@
 .account-lang-select {
   flex: 1 0 0;
   min-width: 0;
-  max-width: 100%;
+  max-width: 16rem;
 
-  app-select {
+  app-lang-switcher {
     display: block;
     width: 100%;
   }
@@ -225,12 +230,16 @@
     color: var(--text-secondary);
   }
 
-  > input:not([type='checkbox']):not([type='radio']):not([type='color']) {
+  > input:not([type='checkbox']):not([type='radio']):not([type='color']),
+  > textarea {
+    width: 100%;
+    box-sizing: border-box;
     padding: 11px 14px;
     border: 1px solid var(--border-color, var(--input-border, #e2e8f0));
     border-radius: 10px;
     background: #fff;
     color: var(--text-primary);
+    font: inherit;
     font-size: 14px;
     line-height: 1.4;
     min-height: 2.65rem;
@@ -249,6 +258,11 @@
       background: #fff;
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--moss, #0f3d34) 14%, transparent);
     }
+  }
+
+  > textarea {
+    min-height: 7rem;
+    resize: vertical;
   }
 
   > app-select {
@@ -316,6 +330,23 @@
   color: var(--moss, #0f3d34);
 }
 
+.account-referral {
+  margin: 0.25rem 0 1rem;
+}
+
+.account-referral__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+
+  .app-input {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+}
+
 .account-readonly {
   display: flex;
   flex-wrap: wrap;
@@ -364,30 +395,25 @@
 
 .account-mobile-logout {
   display: none;
-  flex: 0 0 auto;
-  width: 100%;
-  margin-top: 0;
-  padding-top: 1rem;
-  border-top: 1px solid var(--nav-border);
-
-  @media (max-width: 768px), (max-height: 440px) {
-    display: flex;
-    margin-bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
-  }
 }
 
 .account-logout-btn {
-  display: block;
-  width: 100%;
-  flex: 1 0 0;
-  min-width: 0;
-  padding: 0.8rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 8.5rem;
+  margin: 0;
+  padding: 0.7rem 1.15rem;
   border: 1px solid color-mix(in srgb, var(--danger, #dc2626) 35%, transparent);
   border-radius: 0.75rem;
   background: transparent;
   color: var(--danger, #c5221f);
   font-size: 0.9375rem;
   font-weight: 600;
+  line-height: 1.25;
   cursor: pointer;
   transition: background 0.15s;
 
@@ -497,14 +523,73 @@
   }
 }
 
+.account-toast {
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: max(1.25rem, env(safe-area-inset-right, 0px));
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: max-content;
+  max-width: min(22rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: 0.85rem 0.95rem;
+  border-radius: 10px;
+  background: #0d382c;
+  color: #fff;
+  box-shadow: 0 12px 32px rgb(7 23 20 / 0.22);
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: account-toast-in 0.22s ease-out;
+
+  @media (max-width: 768px), (max-height: 440px) {
+    bottom: calc(var(--bottom-nav-reserve) + 0.5rem);
+  }
+
+  &--error {
+    background: #9b1c1c;
+    box-shadow: 0 12px 32px rgb(155 28 28 / 0.28);
+  }
+}
+
+.account-toast__close {
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 0;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(255 255 255 / 0.2);
+  }
+}
+
+@keyframes account-toast-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 [data-theme='dark'] {
   .account-panel {
-    background: color-mix(in srgb, var(--nav-bg) 92%, #000);
+    background: transparent;
     box-shadow: none;
   }
 
   .account-select,
   .field--stack > input:not([type='checkbox']):not([type='radio']):not([type='color']),
+  .field--stack > textarea,
   .account-workspace__day {
     background: color-mix(in srgb, var(--page-bg) 70%, #000);
   }

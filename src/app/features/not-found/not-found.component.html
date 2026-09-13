@@ -13,9 +13,9 @@
     <div class="not-found__actions">
       <a class="not-found__cta" [routerLink]="primaryLink()">{{ primaryLabel() }}</a>
       @if (loggedIn()) {
-        <a class="not-found__link" routerLink="/">{{ i18n.authUi().backHome }}</a>
+        <a class="not-found__link" [routerLink]="lp('/')">{{ i18n.authUi().backHome }}</a>
       } @else {
-        <a class="not-found__link" routerLink="/login">{{ i18n.authUi().login }}</a>
+        <a class="not-found__link" [routerLink]="lp('/login')">{{ i18n.authUi().login }}</a>
       }
     </div>
   </div>

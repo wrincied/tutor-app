@@ -1,7 +1,9 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, Injector, computed, inject, signal } from '@angular/core';
 import { provideAppInitializer } from '@angular/core';
+import { Router } from '@angular/router';
 import type { Lang, RateCurrency, TaxMode } from '@interfaces';
 import { loadLocalePack, type LocalePack } from '../i18n/locale-pack';
+import { asUrlLang, langFromPath, localizePath, stripLocalePrefix } from '../i18n/locale-url';
 
 export type { Lang, RateCurrency } from '@interfaces';
 
@@ -11,23 +13,36 @@ const STORAGE_KEY = 'tutor_lang';
 const LANG_LABEL: Record<Lang, string> = {
   de: 'Deutsch',
   en: 'English',
-  by: 'Беларуская',
-  uk: 'Українська',
   ru: 'Русский',
-  kz: 'Қазақша',
+  by: 'Русский',
+  uk: 'Українська',
+  kz: 'Русский',
 };
 
-const ALL_LANGS: Lang[] = ['de', 'en', 'by', 'uk', 'ru', 'kz'];
+/** UI picker + crawlable URL langs: DE / EN / RU. */
+const ALL_LANGS: Lang[] = ['de', 'en', 'ru'];
 
 const LOCALE_TO_LANG: Record<string, Lang> = {
   ru: 'ru',
   en: 'en',
   de: 'de',
-  kk: 'kz',
-  kz: 'kz',
-  uk: 'uk',
-  be: 'by',
+  kk: 'ru',
+  kz: 'ru',
+  uk: 'ru',
+  be: 'ru',
 };
+
+function coerceUiLang(raw: string | null | undefined): Lang | null {
+  const value = String(raw ?? '').trim().toLowerCase();
+  if (value === 'en' || value === 'de' || value === 'ru') {
+    return value;
+  }
+  // Former UI langs map to Russian until packs are re-enabled.
+  if (value === 'uk' || value === 'by' || value === 'kz' || value === 'kk' || value === 'be') {
+    return 'ru';
+  }
+  return null;
+}
 
 function mapLocaleToLang(tag: string): Lang | null {
   const primary = tag.trim().toLowerCase().split(/[-_]/)[0];
@@ -36,16 +51,16 @@ function mapLocaleToLang(tag: string): Lang | null {
 
 function detectDeviceLang(): Lang {
   if (typeof navigator === 'undefined') {
-    return 'en';
+    return 'de';
   }
   const candidates = [...(navigator.languages ?? []), navigator.language].filter(Boolean);
   for (const tag of candidates) {
-    const lang = mapLocaleToLang(tag);
+    const lang = coerceUiLang(mapLocaleToLang(tag));
     if (lang) {
       return lang;
     }
   }
-  return 'en';
+  return 'de';
 }
 
 function syncDocumentLang(lang: Lang): void {
@@ -65,16 +80,22 @@ function syncDocumentLang(lang: Lang): void {
 
 function readStoredLang(): Lang {
   if (typeof localStorage !== 'undefined') {
-    const v = localStorage.getItem(STORAGE_KEY);
-    if (v && (ALL_LANGS as string[]).includes(v)) {
-      return v as Lang;
+    const stored = coerceUiLang(localStorage.getItem(STORAGE_KEY));
+    if (stored) {
+      if (localStorage.getItem(STORAGE_KEY) !== stored) {
+        localStorage.setItem(STORAGE_KEY, stored);
+      }
+      return stored;
     }
   }
-  return detectDeviceLang();
+  // Default for first visit: Austrian market → German.
+  return 'de';
 }
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
+  /** Lazy Router lookup — avoids I18n → Router → routes → components cycle. */
+  private readonly injector = inject(Injector);
   private readonly _lang = signal<Lang>(readStoredLang());
   private readonly _pack = signal<LocalePack | null>(null);
   private loadSeq = 0;
@@ -116,6 +137,8 @@ export class I18nService {
   readonly activityLogUi = computed(() => this.requirePack().activityLog);
   readonly homeUi = computed(() => this.requirePack().home);
   readonly pricingUi = computed(() => this.requirePack().pricing);
+  readonly paymentUi = computed(() => this.requirePack().payment);
+  readonly helpFormUi = computed(() => this.requirePack().helpForm);
   readonly adminUi = computed(() => this.requirePack().admin);
 
   readonly allLangs = ALL_LANGS;
@@ -134,28 +157,66 @@ export class I18nService {
 
   /**
    * Switch UI language. Loads the pack on demand (cached after first fetch).
-   * Fire-and-forget safe: UI updates when the pack arrives.
+   * By default also rewrites the URL locale prefix (`/de/...` → `/en/...`).
    */
-  setLang(lang: Lang): void {
-    void this.setLangAsync(lang);
+  setLang(lang: Lang, opts?: { navigate?: boolean }): void {
+    void this.setLangAsync(lang, opts);
   }
 
-  async setLangAsync(lang: Lang): Promise<void> {
+  async setLangAsync(lang: Lang, opts?: { navigate?: boolean }): Promise<void> {
+    const uiLang = coerceUiLang(lang) ?? 'en';
     const seq = ++this.loadSeq;
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, lang);
+      localStorage.setItem(STORAGE_KEY, uiLang);
     }
-    syncDocumentLang(lang);
-    const pack = await loadLocalePack(lang);
+    syncDocumentLang(uiLang);
+    const pack = await loadLocalePack(uiLang);
     if (seq !== this.loadSeq) {
       return;
     }
     this._pack.set(pack);
-    this._lang.set(lang);
+    this._lang.set(uiLang);
+
+    if (opts?.navigate === false) {
+      return;
+    }
+    this.rewriteUrlLang(asUrlLang(uiLang));
+  }
+
+  /** Replace `/{oldLang}/...` with `/{newLang}/...` (keeps query + hash). */
+  rewriteUrlLang(nextLang: Lang): void {
+    const router = this.injector.get(Router);
+    const url = router.url;
+    const [pathPart, query = ''] = url.split('?');
+    const [pathOnly, hash = ''] = pathPart.split('#');
+    const current = langFromPath(pathOnly);
+    if (!current) {
+      return;
+    }
+    const next = asUrlLang(nextLang, current);
+    if (current === next) {
+      return;
+    }
+    const nextPath = localizePath(stripLocalePrefix(pathOnly), next);
+    const suffix = `${query ? `?${query}` : ''}${hash ? `#${hash}` : ''}`;
+    void router.navigateByUrl(`${nextPath}${suffix}`, { replaceUrl: true });
   }
 
   labelForLang(code: Lang): string {
     return LANG_LABEL[code];
+  }
+
+  /** Short badge in language pickers (UA for Ukrainian — not ISO `UK`). */
+  codeForLang(code: Lang): string {
+    const map: Record<Lang, string> = {
+      de: 'DE',
+      en: 'EN',
+      by: 'BY',
+      uk: 'UA',
+      ru: 'RU',
+      kz: 'KZ',
+    };
+    return map[code];
   }
 
   currencyLabel(code: RateCurrency): string {

@@ -73,6 +73,12 @@ export class AdminDashboardLayoutService {
       selected.add('kpi-basis-users');
       selected.add('kpi-pro-users');
     }
+    if (allowed.has('kpi-core-activation')) {
+      selected.add('kpi-core-activation');
+    }
+    if (allowed.has('kpi-finance-adoption')) {
+      selected.add('kpi-finance-adoption');
+    }
     const order = ADMIN_DASHBOARD_WIDGETS.map((w) => w.id);
     const filtered = order.filter((id) => selected.has(id));
     return filtered.length ? filtered : [...DEFAULT_ADMIN_DASHBOARD_WIDGETS];

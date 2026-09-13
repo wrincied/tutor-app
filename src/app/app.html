@@ -1,11 +1,13 @@
 @if (showNavbar()) {
   <div class="app-shell">
     <app-navbar />
+    <app-header />
     <div class="app-content">
       <div class="app-page-host">
         <router-outlet />
       </div>
     </div>
+    <app-bottom-nav />
   </div>
 } @else {
   <div class="app-public-host">
@@ -25,7 +27,14 @@
   [dismissLabel]="unlinkDialogOk()"
   (cancel)="unlinkAlert.dismiss()"
 >
-  <p>{{ unlinkDialogMessage() }}</p>
+  @if (unlinkAlert.alert(); as alert) {
+    <p class="bot-unlink-alert">
+      {{ unlinkDialogLead() }}<strong [style.color]="alert.studentColor">{{ alert.studentName }}</strong>@if (alert.telegramUsername) {
+        <span> (@{{ alert.telegramUsername }})</span>
+      }{{ unlinkDialogTail() }}
+    </p>
+    <p class="bot-unlink-alert__note">{{ unlinkDialogNote() }}</p>
+  }
 </app-dialog>
 
 <app-cookie-consent-banner />

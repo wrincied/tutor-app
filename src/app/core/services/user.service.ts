@@ -12,6 +12,7 @@ import type {
 
 import { apiUrl } from '../config/api-url';
 import { AuthService } from './auth.service';
+import { clearStoredReferral } from '../utils/referral-capture';
 
 const API = apiUrl('');
 
@@ -145,6 +146,9 @@ export class UserService {
   }
 
   private replaceCachedProfile(profile: UserProfile): void {
+    if (profile.referredBy) {
+      clearStoredReferral();
+    }
     const uid = this.auth.firebaseUser()?.uid ?? null;
     this.cachedUid = uid;
     this.profile$ = of(profile).pipe(shareReplay({ bufferSize: 1, refCount: false }));

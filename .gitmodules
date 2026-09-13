@@ -1,0 +1,6 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/wrincied/tutor-app-backend.git
+[submodule "bot"]
+	path = bot
+	url = https://github.com/wrincied/tutor-app-bot.git

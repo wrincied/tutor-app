@@ -127,6 +127,19 @@
   height: 24px;
   margin: 0 8px;
   border-left: 1px solid var(--cal-header-border);
+
+  @media (min-width: 1024px) {
+    /* Divider before students toggle — hide with the button on desktop rail. */
+    &:has(+ .cal-action-btn--students) {
+      display: none;
+    }
+  }
+}
+
+.cal-action-btn--students {
+  @media (min-width: 1024px) {
+    display: none !important;
+  }
 }
 
 /* Ghost burger — no chrome */

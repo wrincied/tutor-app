@@ -36,6 +36,7 @@ export function lessonsForDay(
         lesson,
         studentName: student?.name?.trim() || lesson.student_name?.trim() || '—',
         studentColor: student?.color_hex ?? '#94a3b8',
+        student: student ?? null,
       };
     });
 }

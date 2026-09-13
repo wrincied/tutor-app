@@ -1,0 +1,83 @@
+<div class="student-card__header">
+  <span class="student-card__marker" [style.background-color]="student().color" aria-hidden="true"></span>
+  <span class="student-card__name">{{ student().name | titlecase }}</span>
+  <button
+    type="button"
+    class="student-card__tg"
+    [class.student-card__tg--active]="student().hasTelegram"
+    [attr.title]="student().hasTelegram ? labels().telegramConnected : labels().telegramDisconnected"
+    [attr.aria-label]="student().hasTelegram ? labels().telegramConnected : labels().telegramDisconnected"
+    (click)="onTgConnect($event)"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.695.056-1.219-.46-1.89-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.788.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
+      />
+    </svg>
+  </button>
+  <span class="student-card__rate">{{ rateText() }}</span>
+</div>
+
+<div class="student-card__body">
+  <p
+    class="student-card__balance"
+    [class.student-card__balance--empty]="balanceTone() === 'empty'"
+    [class.student-card__balance--warning]="balanceTone() === 'warning'"
+  >
+    {{ balanceValue() }} {{ balanceUnit() }}
+  </p>
+  <p class="student-card__last-paid">
+    {{ labels().lastPaymentPrefix }}: {{ lastPaymentText() }}
+  </p>
+</div>
+
+<div class="student-card__actions">
+  <button
+    type="button"
+    class="student-card__icon-btn student-card__bell"
+    [class.student-card__bell--on]="student().notificationsEnabled"
+    [attr.title]="student().notificationsEnabled ? labels().notificationsOn : labels().notificationsOff"
+    [attr.aria-label]="student().notificationsEnabled ? labels().notificationsOn : labels().notificationsOff"
+    (click)="onToggleNotifications($event)"
+  >
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </button>
+
+  <button type="button" class="student-card__topup" (click)="onTopUp($event)">
+    {{ labels().topUp }}
+  </button>
+
+  <button
+    type="button"
+    class="student-card__icon-btn student-card__open"
+    [attr.title]="labels().openDetails"
+    [attr.aria-label]="labels().openDetails"
+    (click)="onOpenDetails($event)"
+  >
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7 17 17 7M8 7h9v9"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </button>
+</div>

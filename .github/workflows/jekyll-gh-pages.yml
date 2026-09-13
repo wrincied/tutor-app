@@ -68,6 +68,9 @@ jobs:
       - name: Build Angular for GitHub Pages
         run: npx ng build --configuration=production-design --base-href=/tutor-app/dev/
 
+      - name: SPA fallback for GitHub Pages
+        run: cp dist/tutor/browser/index.html dist/tutor/browser/404.html
+
       - name: Create Root Redirect Fallback
         run: |
           mkdir -p dist/root_fallback

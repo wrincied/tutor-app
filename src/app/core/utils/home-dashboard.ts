@@ -8,6 +8,7 @@ export interface HomeLessonRow {
   lesson: CalendarLesson;
   studentName: string;
   studentColor: string;
+  student: Student | null;
 }
 
 /**
@@ -52,6 +53,7 @@ export function lessonsFromFinanceBreakdown(
         lesson,
         studentName: student?.name?.trim() || row.studentName?.trim() || '—',
         studentColor: student?.color_hex ?? '#94a3b8',
+        student: student ?? null,
       };
     });
 }
@@ -85,4 +87,52 @@ export function studentsLowBalance(students: readonly Student[], maxBalance = 1)
       return student.balance_lessons <= maxBalance;
     })
     .sort((left, right) => left.balance_lessons - right.balance_lessons);
+}
+
+export type HomePaymentBadge = { kind: 'package' | 'unpaid'; text: string };
+
+/** Бейдж оплаты для карточки урока на дашборде. */
+export function paymentBadgeForStudent(
+  student: Student | null | undefined,
+  labels: { package: string; packageProgress: string; unpaid: string },
+): HomePaymentBadge {
+  if (!student) {
+    return { kind: 'unpaid', text: labels.unpaid };
+  }
+
+  const billing = student.billing_type ?? 'package';
+  const balance = Number(student.balance_lessons) || 0;
+  const unpaid = Number(student.unpaid_lessons_count) || 0;
+  const packSize = Number(student.last_topup?.units) || 0;
+
+  if (billing === 'postpaid') {
+    return unpaid > 0
+      ? { kind: 'unpaid', text: labels.unpaid }
+      : { kind: 'package', text: labels.package };
+  }
+
+  if (balance <= 0) {
+    return { kind: 'unpaid', text: labels.unpaid };
+  }
+
+  if (packSize > 0) {
+    const left = formatBalance(balance);
+    const total = formatBalance(packSize);
+    return {
+      kind: 'package',
+      text: labels.packageProgress.replace('{left}', left).replace('{total}', total),
+    };
+  }
+
+  return {
+    kind: 'package',
+    text: `${labels.package} ${formatBalance(balance)}`,
+  };
+}
+
+function formatBalance(value: number): string {
+  if (Number.isInteger(value)) {
+    return String(value);
+  }
+  return value.toFixed(1).replace(/\.0$/, '');
 }

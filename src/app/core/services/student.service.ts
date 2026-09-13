@@ -80,6 +80,16 @@ export class StudentService {
   remove(id: string) {
     return this.http.delete(`${API}/${id}`).pipe(tap(() => this.invalidateListCache()));
   }
+  archive(id: string) {
+    return this.http
+      .post<Student>(`${API}/${id}/archive`, {})
+      .pipe(tap(() => this.invalidateListCache()));
+  }
+  unarchive(id: string) {
+    return this.http
+      .post<Student>(`${API}/${id}/unarchive`, {})
+      .pipe(tap(() => this.invalidateListCache()));
+  }
   disconnectTelegram(id: string) {
     return this.http
       .post<Student>(`${API}/${id}/telegram-disconnect`, {})
@@ -99,6 +109,16 @@ export class StudentService {
       })
       .pipe(tap(() => this.invalidateListCache()));
   }
+  ensureParentTelegramInvite(id: string) {
+    return this.http
+      .post<Student>(`${API}/${id}/telegram-parent-invite`, {})
+      .pipe(tap(() => this.invalidateListCache()));
+  }
+  disconnectParentTelegram(id: string) {
+    return this.http
+      .post<Student>(`${API}/${id}/telegram-parent-disconnect`, {})
+      .pipe(tap(() => this.invalidateListCache()));
+  }
   saveTelegramSettings(id: string, settings: StudentTelegramNotificationSettings) {
     return this.http
       .put<Student>(`${API}/${id}/telegram-settings`, settings)
@@ -106,7 +126,9 @@ export class StudentService {
   }
   topup(id: string, payload: StudentTopupPayload) {
     return this.http
-      .post<Student & { telegram_receipt_sent?: boolean }>(`${API}/${id}/topup`, payload)
+      .post<
+        Student & { telegram_receipt_sent?: boolean; telegram_receipt_attempted?: boolean }
+      >(`${API}/${id}/topup`, payload)
       .pipe(tap(() => this.invalidateListCache()));
   }
   adjustBalance(id: string, payload: StudentBalanceAdjustPayload) {

@@ -1,11 +1,15 @@
 import { WORKSPACE_CURRENCIES, type WorkspaceCurrency } from '../constants/currencies';
+import { normalizeCustomReminderOffsets } from './telegram-notification-settings';
 
 export type { WorkspaceCurrency };
 export { WORKSPACE_CURRENCIES };
 
 export const WORKSPACE_LESSON_DURATIONS = [45, 60, 90, 120] as const;
 
-export type WorkspaceLessonDuration = (typeof WORKSPACE_LESSON_DURATIONS)[number];
+export const LESSON_DURATION_MIN = 5;
+export const LESSON_DURATION_MAX = 480;
+
+export type WorkspaceLessonDuration = number;
 
 /** ISO weekday: 1 = Monday … 7 = Sunday. */
 export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -14,6 +18,10 @@ export interface UserWorkspaceSettings {
   name: string;
   currency: WorkspaceCurrency;
   defaultLessonDuration: WorkspaceLessonDuration;
+  /** When true, calendar rate labels round to whole currency units. */
+  roundLessonPrices: boolean;
+  /** Tutor-saved custom lesson-reminder offsets in minutes. */
+  customReminderOffsets: number[];
 }
 
 export interface UserWorkingHoursSettings {
@@ -33,6 +41,8 @@ export const DEFAULT_WORKSPACE: UserWorkspaceSettings = {
   name: '',
   currency: 'EUR',
   defaultLessonDuration: 60,
+  roundLessonPrices: false,
+  customReminderOffsets: [],
 };
 
 export const DEFAULT_WORKING_HOURS: UserWorkingHoursSettings = {
@@ -53,6 +63,18 @@ export const HOUR_OPTIONS: readonly string[] = Array.from(
   (_, h) => `${String(h).padStart(2, '0')}:00`,
 );
 
+export function clampLessonDurationMinutes(raw: unknown): number {
+  const minutes = Math.round(Number(raw));
+  if (!Number.isFinite(minutes)) {
+    return DEFAULT_WORKSPACE.defaultLessonDuration;
+  }
+  return Math.min(LESSON_DURATION_MAX, Math.max(LESSON_DURATION_MIN, minutes));
+}
+
+export function isWorkspaceDurationPreset(minutes: number): boolean {
+  return (WORKSPACE_LESSON_DURATIONS as readonly number[]).includes(minutes);
+}
+
 export function parseHourToken(value: string): number {
   const match = /^(\d{1,2}):00$/.exec(String(value ?? '').trim());
   if (!match) {
@@ -67,17 +89,14 @@ export function normalizeWorkspace(raw: unknown): UserWorkspaceSettings {
   const currency = WORKSPACE_CURRENCIES.includes(data['currency'] as WorkspaceCurrency)
     ? (data['currency'] as WorkspaceCurrency)
     : DEFAULT_WORKSPACE.currency;
-  const durationNum = Number(data['defaultLessonDuration']);
-  const defaultLessonDuration = WORKSPACE_LESSON_DURATIONS.includes(
-    durationNum as WorkspaceLessonDuration,
-  )
-    ? (durationNum as WorkspaceLessonDuration)
-    : DEFAULT_WORKSPACE.defaultLessonDuration;
+  const defaultLessonDuration = clampLessonDurationMinutes(data['defaultLessonDuration']);
 
   return {
     name: String(data['name'] ?? '').trim().slice(0, 120),
     currency,
     defaultLessonDuration,
+    roundLessonPrices: data['roundLessonPrices'] === true,
+    customReminderOffsets: normalizeCustomReminderOffsets(data['customReminderOffsets']),
   };
 }
 

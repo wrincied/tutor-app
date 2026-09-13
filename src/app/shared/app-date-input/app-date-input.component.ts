@@ -253,6 +253,7 @@ export class AppDateInputComponent implements ControlValueAccessor, OnDestroy {
       minuteIncrement: 5,
       locale: flatpickrLocale(lang),
       monthSelectorType: 'static',
+      appendTo: typeof document !== 'undefined' ? document.body : undefined,
       onReady: (_dates, _str, instance) => {
         instance.calendarContainer.classList.add('app-flatpickr');
       },
@@ -267,13 +268,17 @@ export class AppDateInputComponent implements ControlValueAccessor, OnDestroy {
     if (useAlt) {
       const alt = this.fp.altInput;
       if (alt) {
-        alt.className = `${el.className} app-date-input__alt`.trim();
+        const visibleClass = String(this.inputClass() || 'app-input').trim();
+        alt.className = `app-date-input__alt ${visibleClass}`.trim();
         if (this.id()) {
           alt.id = this.id()!;
           el.removeAttribute('id');
         }
         if (this.ariaLabel()) {
           alt.setAttribute('aria-label', this.ariaLabel()!);
+        }
+        if (this.name()) {
+          alt.setAttribute('name', this.name()!);
         }
       }
     }

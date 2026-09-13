@@ -17,18 +17,29 @@
       <h2 class="account-section__title">{{ i18n.accountUi().settingsSection }}</h2>
 
       <div class="account-setting account-setting--row">
-        <label class="account-setting__label" for="account-lang">{{ i18n.accountUi().language }}</label>
+        <label class="account-setting__label" id="account-lang-label">{{ i18n.accountUi().language }}</label>
         <div class="account-lang-select">
-          <app-select
-            id="account-lang"
-            name="accountLang"
-            [ngModel]="i18n.lang()"
-            (ngModelChange)="pickLang($event)"
-            [options]="languageOptions()"
-            menuPlacement="below"
-          />
+          <app-lang-switcher variant="account" />
         </div>
       </div>
+
+      <label class="account-setting account-setting--row account-setting--toggle">
+        <span class="account-setting__label">
+          {{ i18n.accountUi().roundLessonPrices }}
+          <span class="account-setting__hint">{{ i18n.accountUi().roundLessonPricesHint }}</span>
+        </span>
+        <span class="account-switch">
+          <input
+            type="checkbox"
+            role="switch"
+            [checked]="profileSettings.roundLessonPrices()"
+            (change)="onRoundLessonPricesChange($any($event.target).checked)"
+          />
+          <span class="account-switch__track" aria-hidden="true">
+            <span class="account-switch__thumb"></span>
+          </span>
+        </span>
+      </label>
     </div>
   </section>
 }

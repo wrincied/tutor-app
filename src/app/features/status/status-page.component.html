@@ -1,6 +1,6 @@
 <article class="status-page">
   <header class="status-page__header">
-    <a routerLink="/" class="status-page__back">← {{ i18n.authUi().backHome }}</a>
+    <a [routerLink]="lp('/')" class="status-page__back">← {{ i18n.authUi().backHome }}</a>
   </header>
 
   <h1>{{ i18n.authUi().statusTitle }}</h1>

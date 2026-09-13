@@ -16,8 +16,8 @@ const PRO_PRICING_BY_COUNTRY: Record<string, SubscriptionPricing> = {
   PL: { country: 'PL', currency: 'PLN', monthly: 39, yearly: 390 },
   US: { country: 'US', currency: 'USD', monthly: 11.99, yearly: 119.99 },
   KZ: { country: 'KZ', currency: 'KZT', monthly: 3900, yearly: 39000 },
-  BY: { country: 'BY', currency: 'BYN', monthly: 19.99, yearly: 199.99 },
-  RU: { country: 'RU', currency: 'RUB', monthly: 590, yearly: 5900 },
+  BY: { country: 'BY', currency: 'BYN', monthly: 25.99, yearly: 259.99 },
+  RU: { country: 'RU', currency: 'RUB', monthly: 790, yearly: 7900 },
   UA: { country: 'UA', currency: 'UAH', monthly: 399, yearly: 3990 },
 };
 
@@ -28,8 +28,8 @@ const BASIS_PRICING_BY_COUNTRY: Record<string, SubscriptionPricing> = {
   PL: { country: 'PL', currency: 'PLN', monthly: 23, yearly: 230 },
   US: { country: 'US', currency: 'USD', monthly: 6.99, yearly: 69.99 },
   KZ: { country: 'KZ', currency: 'KZT', monthly: 2300, yearly: 23000 },
-  BY: { country: 'BY', currency: 'BYN', monthly: 11.99, yearly: 119.99 },
-  RU: { country: 'RU', currency: 'RUB', monthly: 349, yearly: 3490 },
+  BY: { country: 'BY', currency: 'BYN', monthly: 15.99, yearly: 159.99 },
+  RU: { country: 'RU', currency: 'RUB', monthly: 479, yearly: 4790 },
   UA: { country: 'UA', currency: 'UAH', monthly: 239, yearly: 2390 },
 };
 
@@ -62,4 +62,14 @@ export function getPlanPricing(
 export function formatSubscriptionPrice(amount: number, currency: string, locale: string): string {
   const fractionDigits = Number.isFinite(amount) && !Number.isInteger(amount) ? 2 : 0;
   return formatMoneyWithCode(amount, currency, locale, fractionDigits);
+}
+
+export const EARLY_ADOPTER_YEARLY_EUR = 59.99;
+const STANDARD_YEARLY_EUR = 99.99;
+
+export function getEarlyAdopterYearly(pricing: SubscriptionPricing): number {
+  if (String(pricing.currency).toUpperCase() === 'EUR') {
+    return EARLY_ADOPTER_YEARLY_EUR;
+  }
+  return Math.round(pricing.yearly * (EARLY_ADOPTER_YEARLY_EUR / STANDARD_YEARLY_EUR) * 100) / 100;
 }

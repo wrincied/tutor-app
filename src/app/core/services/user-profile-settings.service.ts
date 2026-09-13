@@ -17,6 +17,7 @@ import {
   type WorkspaceCurrency,
   type WorkspaceLessonDuration,
 } from '../utils/user-workspace-settings';
+import { normalizeCustomReminderOffsets } from '../utils/telegram-notification-settings';
 import { UserService, type UpdateProfilePayload } from './user.service';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +26,7 @@ export class UserProfileSettingsService {
   private readonly profile = signal<UserProfile | null>(null);
   private readonly saveQueue$ = new Subject<UpdateProfilePayload>();
   readonly workspace = computed(() => normalizeWorkspace(this.profile()?.workspace));
+  readonly roundLessonPrices = computed(() => this.workspace().roundLessonPrices === true);
   readonly workingHours = computed(() => normalizeWorkingHours(this.profile()?.workingHours));
   readonly vacation = computed(() => normalizeVacation(this.profile()?.vacation));
   readonly gridStartHour = computed(() => parseHourToken(this.workingHours().start));
@@ -67,6 +69,23 @@ export class UserProfileSettingsService {
 
   updateWorkspaceDuration(defaultLessonDuration: WorkspaceLessonDuration): void {
     this.patchProfile({ workspace: { ...this.workspace(), defaultLessonDuration } });
+  }
+
+  updateRoundLessonPrices(roundLessonPrices: boolean): void {
+    this.patchProfile({ workspace: { ...this.workspace(), roundLessonPrices } });
+  }
+
+  addCustomReminderOffset(minutes: number): void {
+    const next = normalizeCustomReminderOffsets([
+      ...this.workspace().customReminderOffsets,
+      minutes,
+    ]);
+    this.patchProfile({ workspace: { ...this.workspace(), customReminderOffsets: next } });
+  }
+
+  removeCustomReminderOffset(minutes: number): void {
+    const next = this.workspace().customReminderOffsets.filter((item) => item !== minutes);
+    this.patchProfile({ workspace: { ...this.workspace(), customReminderOffsets: next } });
   }
 
   updateWorkingHoursStart(start: string): void {

@@ -1,5 +1,10 @@
-/** Set before redirecting to Stripe Checkout; consumed on return to the app. */
-export const BILLING_RETURN_STORAGE_KEY = 'simple4u_billing_return_v1';
+/** Checkout return marker. Bumped so old cached clients cannot reuse a stale `pending` success path. */
+export const BILLING_RETURN_STORAGE_KEY = 'simple4u_billing_return_v3';
+const LEGACY_BILLING_RETURN_KEYS = [
+  'simple4u_billing_return_v1',
+  'simple4u_billing_return_v2',
+  BILLING_RETURN_STORAGE_KEY,
+];
 
 export type BillingReturnKind = 'success' | 'cancel';
 
@@ -10,6 +15,44 @@ export function markBillingCheckoutPending(): void {
   sessionStorage.setItem(BILLING_RETURN_STORAGE_KEY, 'pending');
 }
 
+function readCheckoutSessionId(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const fromSearch = new URLSearchParams(window.location.search).get('session_id');
+  if (fromSearch && fromSearch.startsWith('cs_')) {
+    return fromSearch;
+  }
+  const hash = window.location.hash || '';
+  const hashQuery = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+  const fromHash = new URLSearchParams(hashQuery).get('session_id');
+  if (fromHash && fromHash.startsWith('cs_')) {
+    return fromHash;
+  }
+  return null;
+}
+
+export function peekCheckoutSessionId(): string | null {
+  return readCheckoutSessionId();
+}
+
+/**
+ * Read session_id before consume/clear. Home used to wipe the query string first,
+ * then confirmCheckout never ran and the Trial modal never opened.
+ */
+export function takeBillingReturn(): {
+  kind: BillingReturnKind | null;
+  sessionId: string | null;
+} {
+  const sessionId = readCheckoutSessionId();
+  const kind = consumeBillingReturnFlag();
+  return { kind, sessionId: kind === 'success' ? sessionId : null };
+}
+
+/**
+ * Success ONLY with Stripe redirect: billing=success + session_id=cs_…
+ * Browser Back / pending storage must never unlock Pro/Trial.
+ */
 export function consumeBillingReturnFlag(): BillingReturnKind | null {
   if (typeof window === 'undefined') {
     return null;
@@ -20,36 +63,38 @@ export function consumeBillingReturnFlag(): BillingReturnKind | null {
   const hashQuery = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
   const fromHash = new URLSearchParams(hashQuery).get('billing');
   const fromUrl = fromSearch || fromHash;
+  const sessionId = readCheckoutSessionId();
 
-  let fromStorage: string | null = null;
+  let hadPending = false;
   try {
-    fromStorage = sessionStorage.getItem(BILLING_RETURN_STORAGE_KEY);
+    for (const key of LEGACY_BILLING_RETURN_KEYS) {
+      const value = sessionStorage.getItem(key);
+      if (value === 'pending' || value === 'success') {
+        hadPending = true;
+      }
+      sessionStorage.removeItem(key);
+    }
   } catch {
-    fromStorage = null;
+    /* ignore */
   }
 
-  if (fromUrl === 'success' || fromStorage === 'pending' || fromStorage === 'success') {
-    try {
-      sessionStorage.removeItem(BILLING_RETURN_STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
+  if (fromUrl === 'success' && sessionId) {
     return 'success';
   }
 
-  if (fromUrl === 'cancel') {
-    try {
-      sessionStorage.removeItem(BILLING_RETURN_STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
+  if (fromUrl === 'success' && !sessionId) {
+    // Fake/legacy success without Stripe session id → treat as cancel.
+    return 'cancel';
+  }
+
+  if (fromUrl === 'cancel' || hadPending) {
     return 'cancel';
   }
 
   return null;
 }
 
-/** Strip billing= from both search and hash query without leaving the current route. */
+/** Strip billing= / session_id from URL without leaving the current route. */
 export function clearBillingQueryFromUrl(): void {
   if (typeof window === 'undefined' || typeof history === 'undefined') {
     return;

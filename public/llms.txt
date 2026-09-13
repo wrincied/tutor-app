@@ -1,0 +1,20 @@
+# Simple4U
+
+> Official site: https://simple4u.at
+> SaaS CRM and lesson planner for private tutors and teachers (Austria / EU).
+> Not affiliated with simple4u.io (US engineering firm) or simple4u.net.
+
+Simple4U is a web app for independent tutors: calendar and recurring lessons, student records, package balances, finance/tax estimates, and optional Telegram reminders.
+
+Operator: Arsen Mileuski, Köflacher Gasse 9, 2.218, 8020 Graz, Austria.
+Email: support@simple4u.com
+Imprint: https://simple4u.at/legal/impressum
+
+## Public pages
+
+- [Home](https://simple4u.at/): product overview
+- [Pricing](https://simple4u.at/pricing): Free, Basis, Pro
+- [Register](https://simple4u.at/register)
+- [Help](https://simple4u.at/help)
+- [Privacy](https://simple4u.at/legal/data-processing)
+- [Terms](https://simple4u.at/legal/terms)

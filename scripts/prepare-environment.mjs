@@ -119,6 +119,8 @@ function buildEnvironmentSource() {
     appId: firstEnv('FIREBASE_APP_ID'),
     measurementId: firstEnv('FIREBASE_MEASUREMENT_ID') || 'PLACEHOLDER',
   };
+  const turnstileSiteKey = firstEnv('TURNSTILE_SITE_KEY', 'CF_TURNSTILE_SITE_KEY');
+  const recaptchaSiteKey = firstEnv('RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SITE_KEY');
 
   if (requireSecrets) {
     const missing = [];
@@ -148,6 +150,8 @@ export const environment = {
   designMode: ${designMode},
   apiUrl: ${JSON.stringify(apiUrl)},
   appUrl: ${JSON.stringify(appUrl)},
+  turnstileSiteKey: ${JSON.stringify(turnstileSiteKey)},
+  recaptchaSiteKey: ${JSON.stringify(recaptchaSiteKey)},
   firebaseConfig: {
     apiKey: ${JSON.stringify(firebase.apiKey)},
     authDomain: ${JSON.stringify(firebase.authDomain)},

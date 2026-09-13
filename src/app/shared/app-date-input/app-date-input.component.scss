@@ -9,10 +9,15 @@
   }
 }
 
-/* Only hide the storage input when an alt (visible) input exists — date mode. */
+/* Hide flatpickr's storage input only — not the visible alt field. */
 .app-date-input:not(.app-date-input--datetime):not(.app-date-input--time)
-  .app-date-input__field.flatpickr-input:not(.flatpickr-mobile) {
+  input.app-date-input__field.flatpickr-input:not(.flatpickr-mobile):not(.app-date-input__alt) {
   display: none;
+}
+
+.app-date-input__alt,
+input.app-date-input__alt {
+  display: block !important;
 }
 
 /* Datetime / time: the same input stays visible and editable. */
@@ -29,9 +34,9 @@ input.app-date-input__alt {
   min-width: 0;
   min-height: 2.75rem;
   padding: 11px 14px;
-  border: 1px solid var(--input-border, var(--border-light, #e2e8f0));
+  // border: 1px solid var(--input-border, var(--border-light, #e2e8f0));
   border-radius: 10px;
-  background-color: var(--input-bg, #fff);
+  // background-color: var(--input-bg, #fff);
   color: var(--text-primary);
   font-size: 14px;
   font-family: inherit;

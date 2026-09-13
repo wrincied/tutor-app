@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import type { PageTitleKey } from '@interfaces';
 import { environment } from '@environment';
 import { adminGuard } from './core/guards/admin.guard';
@@ -10,6 +11,9 @@ import {
   onboardingPageGuard,
 } from './core/guards/onboarding.guard';
 import { onboardingProfileResolver } from './core/resolvers/onboarding-profile.resolver';
+import { langSegmentCanMatch, langSyncGuard, legacyLocaleRedirect } from './core/i18n/locale-routing';
+import { asUrlLang, isUrlLang, readStoredUrlLang, stripLocalePrefix } from './core/i18n/locale-url';
+import { I18nService } from './core/services/i18n.service';
 
 /** Корень: landing-v2 при designMode, иначе старый LandingComponent. */
 const rootLandingLoad =
@@ -18,16 +22,22 @@ const rootLandingLoad =
         import('./features/landing-v2/landing-v2.component').then((m) => m.LandingV2Component)
     : () => import('./features/landing/landing.component').then((m) => m.LandingComponent);
 
-export const routes: Routes = [
+/** Public + authenticated routes under `/{lang}/...`. */
+const localizedChildren: Routes = [
   {
     path: '',
     loadComponent: rootLandingLoad,
     data: { title: 'landing' satisfies PageTitleKey },
   },
   {
-    path: 'login',
+    path: 'auth/action',
     loadComponent: () =>
-      import('./features/auth/login.component').then((m) => m.LoginComponent),
+      import('./features/auth/auth-action.component').then((m) => m.AuthActionComponent),
+    data: { title: 'authAction' satisfies PageTitleKey },
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
     data: { title: 'login' satisfies PageTitleKey },
   },
   {
@@ -41,6 +51,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/pricing/pricing.component').then((m) => m.PricingComponent),
     data: { title: 'pricing' satisfies PageTitleKey },
+  },
+  {
+    path: 'payment',
+    redirectTo: ({ queryParams }) => {
+      const lang = asUrlLang(inject(I18nService).lang(), readStoredUrlLang());
+      return inject(Router).createUrlTree(['/', lang, 'app', 'payment'], { queryParams });
+    },
+    pathMatch: 'full',
   },
   {
     path: 'legal/data-processing',
@@ -105,7 +123,6 @@ export const routes: Routes = [
         data: { title: 'onboarding' satisfies PageTitleKey },
       },
       {
-        // Admin console: GitHub + role only — no email verify / onboarding / consent gates
         path: 'admin',
         canActivate: [adminGuard],
         loadComponent: () =>
@@ -129,13 +146,17 @@ export const routes: Routes = [
           {
             path: 'settings',
             loadComponent: () =>
-              import('./features/admin/admin-settings.component').then((m) => m.AdminSettingsComponent),
+              import('./features/admin/admin-settings.component').then(
+                (m) => m.AdminSettingsComponent,
+              ),
             data: { title: 'adminSettings' satisfies PageTitleKey },
           },
           {
             path: 'landing',
             loadComponent: () =>
-              import('./features/admin/admin-landing.component').then((m) => m.AdminLandingComponent),
+              import('./features/admin/admin-landing.component').then(
+                (m) => m.AdminLandingComponent,
+              ),
             data: { title: 'adminLanding' satisfies PageTitleKey },
           },
         ],
@@ -155,6 +176,14 @@ export const routes: Routes = [
             path: 'students',
             loadComponent: () =>
               import('./features/students/students.component').then((m) => m.StudentsComponent),
+            data: { title: 'students' satisfies PageTitleKey },
+          },
+          {
+            path: 'students/:id',
+            loadComponent: () =>
+              import('./features/students/student-edit/student-edit.component').then(
+                (m) => m.StudentEditComponent,
+              ),
             data: { title: 'students' satisfies PageTitleKey },
           },
           {
@@ -190,28 +219,44 @@ export const routes: Routes = [
             data: { title: 'pricing' satisfies PageTitleKey },
           },
           {
-            path: 'account',
+            path: 'payment',
             loadComponent: () =>
-              import('./features/account/account-shell.component').then((m) => m.AccountShellComponent),
+              import('./features/payment/payment.component').then((m) => m.PaymentComponent),
+            data: { title: 'payment' satisfies PageTitleKey },
+          },
+          {
+            path: 'account',
+            canDeactivate: [canDeactivateGuard],
+            loadComponent: () =>
+              import('./features/account/account-shell.component').then(
+                (m) => m.AccountShellComponent,
+              ),
             data: { title: 'account' satisfies PageTitleKey },
             children: [
               { path: '', redirectTo: 'customization', pathMatch: 'full' },
               {
                 path: 'customization',
                 loadComponent: () =>
-                  import('./features/account/account-customization.component').then(
-                    (m) => m.AccountCustomizationComponent,
+                  import('./features/account/account-section-stub.component').then(
+                    (m) => m.AccountSectionStubComponent,
                   ),
                 data: { title: 'accountCustomization' satisfies PageTitleKey },
               },
               {
                 path: 'profile',
-                canDeactivate: [canDeactivateGuard],
                 loadComponent: () =>
-                  import('./features/account/account-profile.component').then(
-                    (m) => m.AccountProfileComponent,
+                  import('./features/account/account-section-stub.component').then(
+                    (m) => m.AccountSectionStubComponent,
                   ),
                 data: { title: 'accountProfile' satisfies PageTitleKey },
+              },
+              {
+                path: 'support',
+                loadComponent: () =>
+                  import('./features/account/account-section-stub.component').then(
+                    (m) => m.AccountSectionStubComponent,
+                  ),
+                data: { title: 'account' satisfies PageTitleKey },
               },
               {
                 path: 'administration',
@@ -236,4 +281,54 @@ export const routes: Routes = [
       import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
     data: { title: 'notFound' satisfies PageTitleKey },
   },
+];
+
+/** Unprefixed paths → `/{storedLang}/...` (bookmarks + old links). */
+const legacyRedirects: Routes = [
+  {
+    path: '',
+    pathMatch: 'full',
+    canActivate: [legacyLocaleRedirect('/')],
+    loadComponent: rootLandingLoad,
+  },
+  {
+    // Anything that is not `/{lang}/...` (lang handled above).
+    path: '**',
+    canMatch: [(_route, segments) => !isUrlLang(segments[0]?.path)],
+    canActivate: [
+      (route, state) => {
+        const router = inject(Router);
+        const url = router.getCurrentNavigation()?.extractedUrl ?? router.parseUrl(state.url);
+        const segs = url.root.children['primary']?.segments.map((s) => s.path).join('/') ?? '';
+        const clean = segs ? `/${segs}` : '/';
+        const first = segs.split('/')[0] ?? '';
+        const pathWithoutLang = stripLocalePrefix(clean);
+        // Former UI langs always land on Russian.
+        if (first === 'uk' || first === 'by' || first === 'kz') {
+          const tree = router.parseUrl(
+            pathWithoutLang === '/' ? '/ru' : `/ru${pathWithoutLang.startsWith('/') ? pathWithoutLang : `/${pathWithoutLang}`}`,
+          );
+          if (url.queryParams) {
+            tree.queryParams = { ...url.queryParams };
+          }
+          if (url.fragment) {
+            tree.fragment = url.fragment;
+          }
+          return tree;
+        }
+        return legacyLocaleRedirect(pathWithoutLang)(route, state);
+      },
+    ],
+    loadComponent: rootLandingLoad,
+  },
+];
+
+export const routes: Routes = [
+  {
+    path: ':lang',
+    canMatch: [langSegmentCanMatch],
+    canActivate: [langSyncGuard],
+    children: localizedChildren,
+  },
+  ...legacyRedirects,
 ];

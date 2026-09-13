@@ -79,6 +79,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.admin-segment__hint {
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--text-muted, #64748b);
+}
+
 .admin-funnel {
   list-style: none;
   margin: 0;

@@ -4,6 +4,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { MarketingConsentService } from '../../core/services/marketing-consent.service';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
+import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
 @Component({
   selector: 'app-cookie-consent-banner',
@@ -14,6 +15,11 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class CookieConsentBannerComponent {
   readonly i18n = inject(I18nService);
+  private readonly localeRouter = inject(LocaleRouter);
+  /** Locale-aware absolute path for routerLink. */
+  lp(path: string): string {
+    return this.localeRouter.path(path);
+  }
   readonly consent = inject(MarketingConsentService);
   private readonly auth = inject(AuthService);
   private readonly users = inject(UserService);

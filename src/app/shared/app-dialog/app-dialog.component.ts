@@ -49,6 +49,8 @@ export class AppDialogComponent implements OnDestroy {
 
   open = input(false, { transform: booleanAttribute });
   title = input.required<string>();
+  /** Optional line under the title (e.g. student name). Truncated with ellipsis in CSS. */
+  subtitle = input<string | null>(null);
   variant = input<AppDialogVariant>('default');
   /** `drawer` — телефон: bottom sheet; ≥768px: slide-over справа. */
   layout = input<'center' | 'sheet' | 'drawer'>('center');
@@ -63,12 +65,18 @@ export class AppDialogComponent implements OnDestroy {
   cancelLabel = input<string | null>(null);
   /** Красная кнопка отмены (как btn-link.danger). */
   cancelDanger = input(false, { transform: booleanAttribute });
+  /** Приглушённая отмена без рамки (текст #64748B). */
+  cancelMuted = input(false, { transform: booleanAttribute });
+  /** На мобильных: кнопки столбцом, primary сверху на всю ширину. */
+  actionsStackMobile = input(false, { transform: booleanAttribute });
   /** Левая кнопка в actions (например «Удалить»), отдельно от cancel/confirm. */
   leadingLabel = input<string | null>(null);
   leadingDanger = input(false, { transform: booleanAttribute });
   confirmLabel = input<string | null>(null);
   /** Красная кнопка подтверждения (удаление и т.п.). */
   confirmDanger = input(false, { transform: booleanAttribute });
+  /** Контурная акцентная кнопка вместо залитой primary. */
+  confirmOutline = input(false, { transform: booleanAttribute });
   /** Блокирует кнопку подтверждения (например конфликт расписания). */
   confirmDisabled = input(false, { transform: booleanAttribute });
   /** Одна кнопка (например «Понятно») — если нет confirm/cancel. */
@@ -80,7 +88,7 @@ export class AppDialogComponent implements OnDestroy {
   stackOnTop = input(false, { transform: booleanAttribute });
   /** Скрыть стандартный title (кастомный header в content). */
   hideTitle = input(false, { transform: booleanAttribute });
-  /** Drag-handle для sheet (мобильный bottom sheet). */
+  /** Visual sheet cue only — no drag-to-dismiss yet. Prefer false until swipe is implemented. */
   showHandle = input(false, { transform: booleanAttribute });
   /** Кнопка × в шапке (закрывает через cancel). */
   showClose = input(false, { transform: booleanAttribute });
@@ -181,7 +189,19 @@ export class AppDialogComponent implements OnDestroy {
   }
 
   private getPortalHost(): HTMLElement {
-    if (!this.portalHost) {
+    if (!this.portalHost || !this.portalHost.isConnected) {
+      if (this.bodyOutlet) {
+        try {
+          if (this.bodyOutlet.hasAttached()) {
+            this.bodyOutlet.detach();
+          }
+          this.bodyOutlet.dispose();
+        } catch {
+          /* host may already be gone */
+        }
+        this.bodyOutlet = null;
+        this.attachedPortal = null;
+      }
       this.portalHost = this.document.createElement('div');
       this.portalHost.className = 'app-dialog-portal-host';
     }

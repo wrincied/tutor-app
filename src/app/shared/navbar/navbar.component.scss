@@ -41,6 +41,9 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
 }
 
 .sidebar-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: var(--font-heading, 'Figtree', sans-serif);
   font-size: 18px;
   font-weight: 700;
@@ -53,6 +56,19 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
   @media (max-width: 890px) {
     display: none;
   }
+}
+
+.sidebar-logo__mark {
+  display: block;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: contain;
+}
+
+.sidebar-logo__text {
+  line-height: 1;
+  padding-top: 0.05em;
 }
 
 .sidebar-logo-toggle {
@@ -120,11 +136,6 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
   transition: background 0.15s, color 0.15s;
 
   svg { flex-shrink: 0; }
-
-  /* Students-иконка визуально смещена влево в viewBox — чуть подвинуть */
-  .nav-icon--students {
-    transform: translateX(0.25rem);
-  }
 
   &:hover { background: var(--nav-hover); }
 
@@ -212,60 +223,4 @@ $nav-compact: "(max-width: 768px), (max-height: 440px)";
   opacity: 0;
   width: 0;
   overflow: hidden;
-}
-
-// ─── Mobile bottom nav ─────────────────────────────────────────────────────────
-
-.bottom-nav {
-  display: none;
-
-  @media #{$nav-compact} {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: calc(56px + env(safe-area-inset-bottom, 0px));
-    min-height: 56px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: var(--nav-bg);
-    border-top: 1px solid var(--nav-border);
-    justify-content: space-around;
-    align-items: center;
-    overflow: hidden;
-    overscroll-behavior: none;
-    touch-action: none;
-    z-index: var(--z-app-navbar);
-  }
-}
-
-.bottom-link {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  color: var(--nav-text);
-  text-decoration: none;
-  font-size: 9px;
-  flex: 1;
-  padding: 6px 0;
-  overflow: hidden;
-  text-align: center;
-  line-height: 1.15;
-  transition: color 0.15s;
-
-  svg {
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-  }
-
-  .nav-icon--students {
-    transform: translateX(0.05rem);
-  }
-
-  &.active {
-    color: var(--nav-accent);
-  }
 }

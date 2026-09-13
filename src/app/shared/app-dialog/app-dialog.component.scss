@@ -80,15 +80,39 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
   @media (max-width: $dialog-mobile-max) {
     align-self: stretch;
     max-width: 100%;
-    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 0.5rem);
-    max-height: calc(100svh - env(safe-area-inset-top, 0px) - 0.5rem);
+    max-height: 85vh;
+    max-height: min(85vh, calc(100dvh - env(safe-area-inset-top, 0px) - 0.5rem));
+    max-height: min(85vh, calc(100svh - env(safe-area-inset-top, 0px) - 0.5rem));
     overflow: hidden;
-    padding: 1rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    padding: 1rem 1.25rem 0;
     border-radius: 1.25rem 1.25rem 0 0;
     box-shadow: var(--modal-shadow, 0 25px 50px -12px rgb(0 0 0 / 0.15));
     opacity: 1;
     transform: translateY(0);
     transform-origin: bottom center;
+
+    .app-dialog__body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 85vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 0.5rem;
+    }
+
+    .app-dialog__actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      flex-shrink: 0;
+      margin-top: 0;
+      margin-left: -1.25rem;
+      margin-right: -1.25rem;
+      padding: 0.875rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+      // border-top: 1px solid var(--nav-border, #e2e8f0);
+      background: var(--bg-surface, var(--modal-bg, #ffffff));
+    }
   }
 
   // Планшет/ПК: по центру (ширина — size tokens)
@@ -172,7 +196,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
       max-width: 100%;
     }
     border-color: rgb(254 202 202);
-    background: var(--nav-bg);
+    background: var(--modal-bg);
     color: white;
 
     .app-dialog__title {
@@ -240,6 +264,11 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     }
   }
 
+  &__titles {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
   &__title {
     flex: 1 1 auto;
     min-width: 0;
@@ -250,10 +279,26 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     line-height: 1.3;
   }
 
+  &__subtitle {
+    margin: -0.35rem 0 0.75rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--text-secondary, #64748b);
+  }
+
   &__header--with-close .app-dialog__title {
     margin-bottom: 0;
   }
 
+  &__header--with-close .app-dialog__subtitle {
+    margin-bottom: 0;
+    margin-top: 0.2rem;
+  }
   &__close {
     flex-shrink: 0;
     display: inline-flex;
@@ -330,6 +375,34 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     margin-left: auto;
   }
 
+  &--actions-stack-mobile {
+    @media (max-width: $dialog-mobile-max) {
+      .app-dialog__actions {
+        width: 100%;
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 0.35rem;
+      }
+
+      .app-dialog__actions-end {
+        width: 100%;
+        margin-left: 0;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .app-dialog__btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .app-dialog__btn--primary {
+        min-height: 3.15rem;
+        order: -1;
+      }
+    }
+  }
+
   &__btn {
     min-height: 3rem;
     min-width: 2.75rem;
@@ -353,6 +426,19 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
         background: #f8fafc;
         color: #0f172a;
         transition: all 0.15s ease;
+      }
+    }
+
+    &--muted {
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #64748b;
+      font-weight: 500;
+
+      &:hover {
+        background: #f8fafc;
+        color: #475569;
       }
     }
 
@@ -380,12 +466,32 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     &--primary {
       border: none;
       border-radius: 8px;
-      background: var(--btn-primary-bg, #052e16);
-      color: var(--btn-primary-fg, #ffffff);
+      background: #0d382c;
+      color: #ffffff;
 
       &:hover {
-        background-color: var(--btn-primary-hover, #022c22);
+        background-color: #0a2e24;
         box-shadow: none;
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+    }
+
+    &--outline {
+      border: 1.5px solid var(--nav-accent, #0f3d34);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--nav-accent, #0f3d34);
+
+      &:hover {
+        background: color-mix(in srgb, var(--nav-accent, #0f3d34) 8%, transparent);
       }
 
       &:active {
@@ -456,10 +562,14 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
       }
 
       .app-dialog__actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
         flex-shrink: 0;
         margin-top: 1rem;
         padding-top: 1rem;
         border-top: 1px solid var(--nav-border);
+        background: var(--bg-surface, var(--modal-bg, #ffffff));
       }
     }
   }
@@ -473,8 +583,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
       justify-content: center;
       align-items: center;
       padding: max(0.5rem, env(safe-area-inset-top, 0px))
-        max(0.5rem, env(safe-area-inset-right, 0px))
-        max(0.5rem, env(safe-area-inset-bottom, 0px))
+        max(0.5rem, env(safe-area-inset-right, 0px)) max(0.5rem, env(safe-area-inset-bottom, 0px))
         max(0.5rem, env(safe-area-inset-left, 0px));
       overflow-y: auto;
     }
