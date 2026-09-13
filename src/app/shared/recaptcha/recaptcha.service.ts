@@ -2,38 +2,38 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import './grecaptcha-globals';
 
-function loadEnterpriseScript(siteKey: string): Promise<void> {
+function loadV3Script(siteKey: string): Promise<void> {
   if (typeof window === 'undefined') {
     return Promise.resolve();
   }
-  if (window.grecaptcha?.enterprise?.execute) {
+  if (window.grecaptcha?.execute) {
     return Promise.resolve();
   }
-  if (window.__recaptchaEnterprisePromise) {
-    return window.__recaptchaEnterprisePromise;
+  if (window.__recaptchaV3Promise) {
+    return window.__recaptchaV3Promise;
   }
-  window.__recaptchaEnterprisePromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>('script[data-recaptcha-enterprise]');
+  window.__recaptchaV3Promise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-recaptcha-v3]');
     if (existing) {
       existing.addEventListener('load', () => resolve());
-      existing.addEventListener('error', () => reject(new Error('reCAPTCHA Enterprise script failed')));
+      existing.addEventListener('error', () => reject(new Error('reCAPTCHA v3 script failed')));
       return;
     }
     const script = document.createElement('script');
-    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`;
+    script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
     script.async = true;
     script.defer = true;
-    script.dataset['recaptchaEnterprise'] = '1';
+    script.dataset['recaptchaV3'] = '1';
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('reCAPTCHA Enterprise script failed'));
+    script.onerror = () => reject(new Error('reCAPTCHA v3 script failed'));
     document.head.appendChild(script);
   });
-  return window.__recaptchaEnterprisePromise;
+  return window.__recaptchaV3Promise;
 }
 
 /**
- * Google reCAPTCHA Enterprise (score-based, no checkbox).
- * Token is obtained on form submit via grecaptcha.enterprise.execute.
+ * Google reCAPTCHA v3 (score-based, no checkbox).
+ * Tokens are verified server-side via classic siteverify.
  */
 @Injectable({ providedIn: 'root' })
 export class RecaptchaService {
@@ -48,7 +48,7 @@ export class RecaptchaService {
     if (!this.enabled) {
       return;
     }
-    void loadEnterpriseScript(this.siteKey).catch(() => undefined);
+    void loadV3Script(this.siteKey).catch(() => undefined);
   }
 
   async execute(action = 'contact'): Promise<string | null> {
@@ -56,18 +56,23 @@ export class RecaptchaService {
       return null;
     }
     try {
-      await loadEnterpriseScript(this.siteKey);
-      const api = window.grecaptcha?.enterprise;
+      await loadV3Script(this.siteKey);
+      const api = window.grecaptcha;
       if (!api?.execute) {
         return null;
       }
       return await new Promise<string>((resolve, reject) => {
-        api.ready(() => {
+        const run = () => {
           api
-            .execute(this.siteKey, { action })
+            .execute!(this.siteKey, { action })
             .then(resolve)
             .catch(reject);
-        });
+        };
+        if (api.ready) {
+          api.ready(run);
+        } else {
+          run();
+        }
       });
     } catch (err) {
       console.warn('[recaptcha] execute failed', err);
