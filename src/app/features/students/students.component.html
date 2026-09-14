@@ -194,10 +194,11 @@
         type="button"
         class="btn-primary students-page__add"
         [disabled]="!canAddStudent()"
-        [attr.title]="studentLimitHint() ?? null"
+        [attr.aria-label]="t.newStudent"
+        [attr.title]="studentLimitHint() ?? t.newStudent"
         (click)="openCreate()"
       >
-        {{ t.addButton }}
+        <span aria-hidden="true">+</span>
       </button>
     </div>
   }
@@ -410,17 +411,30 @@
         #nameCtrl="ngModel"
       />
     </div>
-    <div class="field">
+    <div class="field field--subject">
       <label for="st-subject">{{ t.subject }}</label>
-      <input
-        id="st-subject"
-        type="text"
-        [(ngModel)]="form.subject"
-        name="subject"
-        maxlength="60"
-        [placeholder]="t.subjectPlaceholder"
-        autocomplete="off"
-      />
+      <div class="subject-row">
+        <input
+          id="st-subject"
+          type="text"
+          [(ngModel)]="form.subject"
+          name="subject"
+          maxlength="60"
+          [placeholder]="t.subjectPlaceholder"
+          autocomplete="off"
+        />
+        <input
+          id="st-subject-color"
+          type="color"
+          class="subject-row__swatch"
+          [value]="formSubjectColorPickerHex()"
+          (input)="onFormSubjectColorPickerChange($any($event.target).value)"
+          name="subject_color"
+          [attr.aria-label]="t.subjectColor"
+          [title]="t.subjectColor"
+        />
+      </div>
+      <p class="subject-row__hint">{{ t.subjectColorHint }}</p>
     </div>
     <div class="field field--rate-unit">
       <div class="field-label-with-tip" id="rate-unit-label">

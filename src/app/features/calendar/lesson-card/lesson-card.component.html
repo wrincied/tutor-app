@@ -13,7 +13,10 @@
 </div>
 @if (subjectText()) {
   <div class="cal-lesson-card__row cal-lesson-card__row--subject">
-    <span class="cal-lesson-card__subject">{{ subjectText() }}</span>
+    <span
+      class="cal-lesson-card__subject"
+      [class.cal-lesson-card__subject--tinted]="!!subjectColorCss()"
+    >{{ subjectText() }}</span>
   </div>
 }
 <div class="cal-lesson-card__row cal-lesson-card__row--bottom">

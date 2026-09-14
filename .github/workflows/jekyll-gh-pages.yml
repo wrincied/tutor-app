@@ -1,5 +1,7 @@
 name: Deploy Dev to GitHub Pages
 
+# Test frontend from `dev` → https://wrincied.github.io/tutor-app/dev/
+# Production hosting stays on Firebase (master / manual deploy).
 on:
   push:
     branches: ['dev']
@@ -32,6 +34,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -42,7 +46,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Generate studio environment for GitHub Pages
+      - name: Generate environment for GitHub Pages (dev test)
         run: |
           if [ -z "$DEV_API_URL" ]; then
             echo "::error::Set repository secret DEV_API_URL"
@@ -60,13 +64,13 @@ jobs:
           done
           export API_URL="$DEV_API_URL"
           export APP_URL="$DEV_APP_URL"
-          export DESIGN_MODE=true
+          export DESIGN_MODE=false
           export PRODUCTION=true
           export FORCE_ENV_GENERATE=1
-          node scripts/prepare-environment.mjs production-design
+          node scripts/prepare-environment.mjs production
 
       - name: Build Angular for GitHub Pages
-        run: npx ng build --configuration=production-design --base-href=/tutor-app/dev/
+        run: npx ng build --configuration=production --base-href=/tutor-app/dev/
 
       - name: SPA fallback for GitHub Pages
         run: cp dist/tutor/browser/index.html dist/tutor/browser/404.html

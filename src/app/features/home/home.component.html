@@ -155,6 +155,7 @@
                       <span
                         class="home-timeline__badge"
                         [class.home-timeline__badge--unpaid]="badge.kind === 'unpaid'"
+                        [class.home-timeline__badge--paid]="badge.kind === 'paid'"
                       >
                         {{ badge.text }}
                       </span>
