@@ -50,8 +50,11 @@
 
 .students-page.app-scroll-page > .scrollable-content.students-page__body {
   @media (max-width: 768px), (max-height: 440px) {
-    /* Inside scroll only — last rows + FAB clear the island; no outer chrome gap */
-    padding-bottom: calc(var(--bottom-nav-pad) + 3.75rem);
+    /*
+     * Override shared --bottom-nav-pad: list may sit under the floating island
+     * (same idea as calendar grid). Keep only FAB clearance.
+     */
+    padding-bottom: 3.75rem;
   }
 }
 
