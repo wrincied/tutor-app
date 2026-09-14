@@ -546,7 +546,7 @@
   animation: account-toast-in 0.22s ease-out;
 
   @media (max-width: 768px), (max-height: 440px) {
-    bottom: calc(var(--bottom-nav-reserve) + 0.5rem);
+    bottom: var(--bottom-nav-fab-offset);
   }
 
   &--error {
