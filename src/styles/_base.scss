@@ -47,8 +47,9 @@ body {
 
   @media (max-width: 768px), (max-height: 440px) {
     margin-left: 0;
-    height: calc(100dvh - var(--bottom-nav-reserve));
-    height: calc(100svh - var(--bottom-nav-reserve));
+    /* Full viewport — floating nav overlays; clearance via --bottom-nav-pad on scroll areas */
+    height: 100dvh;
+    height: 100svh;
     padding: 16px;
   }
 
@@ -66,10 +67,10 @@ body {
 
     @media (max-width: 768px), (max-height: 440px) {
       padding: 0;
-      height: calc(100dvh - var(--bottom-nav-reserve));
-      height: calc(100svh - var(--bottom-nav-reserve));
-      max-height: calc(100dvh - var(--bottom-nav-reserve));
-      max-height: calc(100svh - var(--bottom-nav-reserve));
+      height: 100dvh;
+      height: 100svh;
+      max-height: 100dvh;
+      max-height: 100svh;
     }
   }
 }

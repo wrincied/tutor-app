@@ -217,6 +217,8 @@ firebase deploy --only apphosting:tutor-app-backend --project tutorassis
 
 CORS: production `FRONTEND_URL` includes `simple4u.at` / `www` / Firebase Hosting / `wrincied.github.io` (gh-pages preview). `localhost` is stripped when `NODE_ENV=production` (`backend/src/utils/corsOrigins.js`). After changing CORS, redeploy the API and shift App Hosting traffic to the new revision.
 
+Mobile shell: floating bottom nav overlays full-height `.app-content`; clearance is `--bottom-nav-pad` on scroll areas (not `--bottom-nav-reserve` height subtract).
+
 ---
 
 ## Вложенные репозитории

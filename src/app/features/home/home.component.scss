@@ -125,10 +125,12 @@
   max-width: 1200px;
   width: 100%;
   padding-bottom: 2rem;
+}
 
+.home-dash.app-scroll-page > .scrollable-content.home-dash__body {
   @media (max-width: 768px), (max-height: 440px) {
     padding-top: 0;
-    padding-bottom: 4.25rem;
+    padding-bottom: calc(var(--bottom-nav-pad) + 3.75rem);
   }
 }
 
