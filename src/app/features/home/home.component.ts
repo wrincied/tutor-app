@@ -82,6 +82,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     return '';
   });
 
+  avatarLabel = computed(() => {
+    const profile = this.profile();
+    const first = profile?.first_name?.trim()?.charAt(0) ?? '';
+    const last = profile?.last_name?.trim()?.charAt(0) ?? '';
+    const initials = `${first}${last}`.toUpperCase();
+    if (initials) {
+      return initials;
+    }
+    const name = profile?.name?.trim();
+    if (name) {
+      return name.charAt(0).toUpperCase();
+    }
+    return '?';
+  });
+
   greeting = computed(() => {
     const t = this.i18n.homeUi();
     const name = this.displayName();
