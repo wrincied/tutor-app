@@ -54,11 +54,6 @@
   @media (min-width: 1024px) {
     padding: 1rem 1rem 0;
   }
-
-  @media (max-width: 768px), (max-height: 440px) {
-    /* Keep grid interactive area above the floating island; page bg fills under the nav */
-    padding-bottom: var(--bottom-nav-pad);
-  }
 }
 
 .cal-error {
@@ -484,6 +479,12 @@
   touch-action: pan-y;
   box-sizing: border-box;
 
+  @media (max-width: 768px), (max-height: 440px) {
+    /* Let the grid run under the floating island (no page-bg strip below the card) */
+    border-radius: 0.75rem 0.75rem 0 0;
+    border-bottom: none;
+  }
+
   &:not(.cal-grid-section--month) {
     max-height: 100%;
   }
@@ -635,6 +636,11 @@
   touch-action: pan-y;
   padding-bottom: max(var(--cal-grid-bottom-air), env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
+
+  @media (max-width: 768px), (max-height: 440px) {
+    padding-bottom: calc(var(--cal-grid-bottom-air, 1rem) + var(--bottom-nav-pad));
+    scroll-padding-bottom: var(--bottom-nav-pad);
+  }
 }
 
 .cal-month__weekdays {
@@ -959,6 +965,12 @@
   overscroll-behavior-y: contain;
   padding-bottom: var(--cal-grid-bottom-air, 1rem);
   box-sizing: border-box;
+
+  @media (max-width: 768px), (max-height: 440px) {
+    /* Clearance lives inside the scrolling grid so the section paints under the island */
+    padding-bottom: calc(var(--cal-grid-bottom-air, 1rem) + var(--bottom-nav-pad));
+    scroll-padding-bottom: var(--bottom-nav-pad);
+  }
 }
 
 .cal-grid-body {

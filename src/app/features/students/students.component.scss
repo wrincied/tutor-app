@@ -50,7 +50,7 @@
 
 .students-page.app-scroll-page > .scrollable-content.students-page__body {
   @media (max-width: 768px), (max-height: 440px) {
-    /* Shared overlay pad + room for the fixed + FAB */
+    /* Inside scroll only — last rows + FAB clear the island; no outer chrome gap */
     padding-bottom: calc(var(--bottom-nav-pad) + 3.75rem);
   }
 }

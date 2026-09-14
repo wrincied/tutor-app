@@ -47,10 +47,10 @@ body {
 
   @media (max-width: 768px), (max-height: 440px) {
     margin-left: 0;
-    /* Full viewport — floating nav overlays; clearance via --bottom-nav-pad on scroll areas */
+    /* Full viewport — floating nav overlays content (no bottom chrome gap) */
     height: 100dvh;
     height: 100svh;
-    padding: 16px;
+    padding: 16px 16px 0;
   }
 
   /* app-calendar живёт внутри .app-page-host, не как прямой потомок */
@@ -92,6 +92,11 @@ app-header {
   overflow: hidden;
   touch-action: none;
   border-radius: 5px;
+
+  @media (max-width: 768px), (max-height: 440px) {
+    /* Meet the bottom edge so the island overlays the page, not a chrome strip */
+    border-radius: 5px 5px 0 0;
+  }
 
   > router-outlet {
     display: contents;
