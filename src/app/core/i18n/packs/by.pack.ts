@@ -924,6 +924,8 @@ export const LOCALE_PACK = {
   paymentHistoryTitle: 'Гісторыя аплат',
   paymentHistoryEmpty: 'Пакуль няма аплат.',
   name: 'Імя',
+    subject: 'Прадмет',
+    subjectPlaceholder: 'напр. Матэматыка, Англійская',
   ratePerLesson: 'Стаўка за ўрок',
   ratePerHour: 'Стаўка за гадзіну',
   rateHourLabel: 'Hour',

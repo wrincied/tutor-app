@@ -993,6 +993,8 @@ export const LOCALE_PACK = {
     paymentHistoryTitle: 'Payment history',
     paymentHistoryEmpty: 'No payments yet.',
     name: 'Name',
+    subject: 'Subject',
+    subjectPlaceholder: 'e.g. Math, English',
     ratePerLesson: 'Rate per lesson',
     ratePerHour: 'Hourly rate',
     rateHourLabel: 'Hour',

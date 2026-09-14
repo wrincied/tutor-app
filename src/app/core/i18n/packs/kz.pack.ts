@@ -981,6 +981,8 @@ export const LOCALE_PACK = {
     paymentHistoryTitle: 'Төлемдер тарихы',
     paymentHistoryEmpty: 'Әзірге төлем жоқ.',
     name: 'Аты',
+    subject: 'Пән',
+    subjectPlaceholder: 'мыс. Математика, Ағылшын',
     ratePerLesson: 'Сабақ бағасы',
     ratePerHour: 'Сағаттық баға',
     rateHourLabel: 'Hour',

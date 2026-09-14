@@ -94,6 +94,7 @@ export class StudentEditComponent implements OnInit, OnDestroy {
 
   form = {
     name: '',
+    subject: '',
     rate_per_hour: 0,
     rate_currency: 'EUR' as RateCurrency,
     timezone: DEFAULT_STUDENT_TIMEZONE,
@@ -269,6 +270,7 @@ export class StudentEditComponent implements OnInit, OnDestroy {
     this.linkCopied.set(false);
     this.form = {
       name: s.name,
+      subject: s.subject || '',
       rate_per_hour: s.rate_per_hour,
       rate_currency: s.rate_currency ?? 'EUR',
       timezone: s.timezone || DEFAULT_STUDENT_TIMEZONE,
@@ -500,6 +502,7 @@ export class StudentEditComponent implements OnInit, OnDestroy {
     const billing_type = this.billingType();
     return {
       name: this.form.name,
+      subject: this.form.subject.trim() || null,
       rate_per_hour: this.form.rate_per_hour,
       rate_currency: this.form.rate_currency,
       timezone: this.form.timezone,

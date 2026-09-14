@@ -410,6 +410,18 @@
         #nameCtrl="ngModel"
       />
     </div>
+    <div class="field">
+      <label for="st-subject">{{ t.subject }}</label>
+      <input
+        id="st-subject"
+        type="text"
+        [(ngModel)]="form.subject"
+        name="subject"
+        maxlength="60"
+        [placeholder]="t.subjectPlaceholder"
+        autocomplete="off"
+      />
+    </div>
     <div class="field field--rate-unit">
       <div class="field-label-with-tip" id="rate-unit-label">
         <span class="field-label">{{ t.rateUnitTitle }}</span>

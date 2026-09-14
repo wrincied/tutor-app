@@ -1679,6 +1679,13 @@ export class CalendarComponent implements OnInit {
     return name ? toTitleCaseName(name) : '(без ученика)';
   }
 
+  getStudentSubject(studentId: string | null | undefined): string {
+    if (!studentId) {
+      return '';
+    }
+    return String(this.students().find((x) => x._id === studentId)?.subject || '').trim();
+  }
+
   displayStudentName(name: string | null | undefined): string {
     return toTitleCaseName(name);
   }

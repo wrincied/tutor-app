@@ -1605,6 +1605,10 @@ export interface StudentStrings {
   paymentHistoryTitle: string;
   paymentHistoryEmpty: string;
   name: string;
+  /** Label for optional subject / course field */
+  subject: string;
+  /** Placeholder e.g. Mathematik, English */
+  subjectPlaceholder: string;
   ratePerLesson: string;
   ratePerHour: string;
   /** Rate amount field label when hourly basis is selected */
@@ -1988,6 +1992,8 @@ export interface StudentLastTopup {
 export interface Student {
   _id: string;
   name: string;
+  /** Optional subject / course label (e.g. Mathematik), shown as calendar pill. */
+  subject?: string | null;
   rate_per_hour: number;
   /** Код валюты ставки; у старых записей может не быть — тогда на фронте подставляем EUR. */
   rate_currency?: RateCurrency;

@@ -67,6 +67,8 @@ export class LessonCardComponent {
   readonly status = input<LessonStatus>('scheduled');
   readonly studentName = input.required<string>();
   readonly studentColor = input('rgb(148 163 184)');
+  /** Optional subject pill (Mathematik, …). */
+  readonly subjectText = input('');
   /** Узкие колонки недели на телефоне. */
   readonly weekFit = input(false);
   readonly regionText = input('');

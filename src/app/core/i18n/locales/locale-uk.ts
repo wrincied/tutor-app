@@ -832,6 +832,8 @@ export const STUDENTS_UK: StudentStrings = {
   paymentHistoryTitle: 'Історія оплат',
   paymentHistoryEmpty: 'Поки немає оплат.',
   name: "Ім'я",
+  subject: 'Предмет',
+  subjectPlaceholder: 'напр. Математика, Англійська',
   ratePerLesson: 'Ставка за урок',
   ratePerHour: 'Ставка за годину',
   rateHourLabel: 'Година',

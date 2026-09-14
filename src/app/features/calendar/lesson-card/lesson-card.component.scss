@@ -61,7 +61,8 @@
 
   .cal-lesson-card__region,
   .cal-lesson-card__time,
-  .cal-lesson-card__rate {
+  .cal-lesson-card__rate,
+  .cal-lesson-card__subject {
     font-size: 8px;
     line-height: 1.2;
   }
@@ -156,6 +157,35 @@
 
 :host.cal-lesson-card--last-paid .cal-lesson-card__student-name {
   text-decoration: none;
+}
+
+.cal-lesson-card__row--subject {
+  justify-content: flex-start;
+  min-height: 0;
+}
+
+.cal-lesson-card__subject {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--moss, #0f3d34) 18%, transparent);
+  background: color-mix(in srgb, var(--foam, #e7f5ef) 88%, white);
+  color: var(--moss, #0f3d34);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+
+  @media (min-width: 640px) {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.45rem;
+  }
 }
 
 .cal-lesson-card__region,
