@@ -48,9 +48,8 @@
   min-height: 0;
 
   @media (max-width: 768px), (max-height: 440px) {
-    padding-bottom: calc(
-      4.5rem + var(--bottom-nav-content-clearance) + env(safe-area-inset-bottom, 0px)
-    );
+    /* Room for the fixed FAB inside the already-shrunk shell */
+    padding-bottom: 4.25rem;
   }
 }
 
@@ -65,10 +64,7 @@
     position: fixed;
     left: auto;
     right: 0.875rem;
-    bottom: calc(
-      var(--bottom-nav-island-gap) + env(safe-area-inset-bottom, 0px) + var(--bottom-nav-island-h) +
-        0.375rem
-    );
+    bottom: var(--bottom-nav-fab-offset);
     z-index: calc(var(--z-app-navbar) - 1);
     margin-top: 0;
     padding: 0;

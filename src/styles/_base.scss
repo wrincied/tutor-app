@@ -48,8 +48,8 @@ body {
   @media (max-width: 768px), (max-height: 440px) {
     margin-left: 0;
     height: calc(100dvh - var(--bottom-nav-reserve));
-    padding: 16px 16px calc(16px + var(--bottom-nav-content-clearance));
-    margin-bottom: 64px;
+    height: calc(100svh - var(--bottom-nav-reserve));
+    padding: 16px;
   }
 
   /* app-calendar живёт внутри .app-page-host, не как прямой потомок */
@@ -65,7 +65,7 @@ body {
     padding: 0;
 
     @media (max-width: 768px), (max-height: 440px) {
-      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      padding: 0;
       height: calc(100dvh - var(--bottom-nav-reserve));
       height: calc(100svh - var(--bottom-nav-reserve));
       max-height: calc(100dvh - var(--bottom-nav-reserve));
