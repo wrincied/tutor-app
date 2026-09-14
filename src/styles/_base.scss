@@ -53,8 +53,9 @@ body {
     padding: 16px 16px 0;
   }
 
-  /* app-calendar живёт внутри .app-page-host, не как прямой потомок */
-  &:has(app-calendar) {
+  /* Full-bleed pages: floating island overlays content (no shell chrome under the pill) */
+  &:has(app-calendar),
+  &:has(app-students) {
     display: flex;
     flex-direction: column;
     height: 100dvh;
@@ -96,6 +97,13 @@ app-header {
   @media (max-width: 768px), (max-height: 440px) {
     /* Meet the bottom edge so the island overlays the page, not a chrome strip */
     border-radius: 5px 5px 0 0;
+  }
+
+  &:has(app-calendar),
+  &:has(app-students) {
+    @media (max-width: 768px), (max-height: 440px) {
+      border-radius: 0;
+    }
   }
 
   > router-outlet {
