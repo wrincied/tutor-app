@@ -64,7 +64,7 @@
     position: fixed;
     left: auto;
     right: 0.875rem;
-    bottom: var(--bottom-nav-fab-offset);
+    bottom: calc(var(--bottom-nav-fab-offset) + env(safe-area-inset-bottom, 0px));
     z-index: calc(var(--z-app-navbar) - 1);
     margin-top: 0;
     padding: 0;

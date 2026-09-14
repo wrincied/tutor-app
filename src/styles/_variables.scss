@@ -41,11 +41,11 @@
   --bottom-nav-island-pop: 10px;
   /** Breathing room between page content and the nav pill. */
   --bottom-nav-content-clearance: 0.5rem;
-  /** How far FABs sit above the physical bottom of the viewport. */
-  --bottom-nav-fab-offset: calc(
-    var(--bottom-nav-island-gap) + env(safe-area-inset-bottom, 0px) + var(--bottom-nav-island-h) +
-      0.375rem
-  );
+  /**
+   * FAB lift above the island (safe-area added at use-site — do not nest env() here).
+   * bottom: calc(var(--bottom-nav-fab-offset) + env(safe-area-inset-bottom, 0px));
+   */
+  --bottom-nav-fab-offset: calc(var(--bottom-nav-island-gap) + var(--bottom-nav-island-h) + 0.375rem);
   /**
    * Single bottom reservation for shell height.
    * Do NOT also add margin-bottom: 64px or re-add clearance/safe-area on .app-content.
