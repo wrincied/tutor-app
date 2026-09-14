@@ -215,7 +215,7 @@ firebase deploy --only hosting --project tutorassis
 firebase deploy --only apphosting:tutor-app-backend --project tutorassis
 ```
 
-CORS: production `FRONTEND_URL` is only `simple4u.at` / `www` / Firebase Hosting. `localhost` is stripped when `NODE_ENV=production` (`backend/src/utils/corsOrigins.js`). After changing CORS, redeploy the API.
+CORS: production `FRONTEND_URL` includes `simple4u.at` / `www` / Firebase Hosting / `wrincied.github.io` (gh-pages preview). `localhost` is stripped when `NODE_ENV=production` (`backend/src/utils/corsOrigins.js`). After changing CORS, redeploy the API and shift App Hosting traffic to the new revision.
 
 ---
 
