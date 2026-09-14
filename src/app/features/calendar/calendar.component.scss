@@ -54,6 +54,11 @@
   @media (min-width: 1024px) {
     padding: 1rem 1rem 0;
   }
+
+  @media (max-width: 768px), (max-height: 440px) {
+    /* Keep grid interactive area above the floating island; page bg fills under the nav */
+    padding-bottom: var(--bottom-nav-pad);
+  }
 }
 
 .cal-error {

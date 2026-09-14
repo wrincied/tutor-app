@@ -39,7 +39,7 @@
   --bottom-nav-island-h: 58px;
   --bottom-nav-island-gap: 18px;
   --bottom-nav-island-pop: 10px;
-  /** Breathing room between page content and the nav pill. */
+  /** Breathing room above the pill for last scroll items. */
   --bottom-nav-content-clearance: 0.5rem;
   /**
    * FAB lift above the island (safe-area added at use-site — do not nest env() here).
@@ -47,13 +47,14 @@
    */
   --bottom-nav-fab-offset: calc(var(--bottom-nav-island-gap) + var(--bottom-nav-island-h) + 0.375rem);
   /**
-   * Single bottom reservation for shell height.
-   * Do NOT also add margin-bottom: 64px or re-add clearance/safe-area on .app-content.
+   * Island footprint from the physical bottom of the viewport (gap + pill + safe-area).
+   * Content stays full-height and paints under this zone; do not subtract from shell height.
    */
-  --bottom-nav-reserve: calc(
-    var(--bottom-nav-island-h) + var(--bottom-nav-island-gap) * 2 + var(--bottom-nav-island-pop) +
-      var(--bottom-nav-content-clearance) + env(safe-area-inset-bottom, 0px)
+  --bottom-nav-overlay: calc(
+    var(--bottom-nav-island-h) + var(--bottom-nav-island-gap) + env(safe-area-inset-bottom, 0px)
   );
+  /** Padding / scroll-padding so interactive content clears the floating pill. */
+  --bottom-nav-pad: calc(var(--bottom-nav-overlay) + var(--bottom-nav-content-clearance));
 
   /* Mobile app header (profile avatar) */
   --app-header-h: 52px;
