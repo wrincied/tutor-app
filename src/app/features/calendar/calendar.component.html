@@ -338,6 +338,19 @@
                                         )
                                       }}</span>
                                     </div>
+                                    @if (getStudentSubject(phantomLesson.student_id); as phantomSubject) {
+                                      <div class="cal-lesson-card__row cal-lesson-card__row--subject">
+                                        <span
+                                          class="cal-lesson-card__subject"
+                                          [class.cal-lesson-card__subject--tinted]="
+                                            !!getStudentSubjectColor(phantomLesson.student_id)
+                                          "
+                                          [style.--subject-color]="
+                                            getStudentSubjectColor(phantomLesson.student_id) || null
+                                          "
+                                        >{{ phantomSubject }}</span>
+                                      </div>
+                                    }
                                     <div class="cal-lesson-card__row cal-lesson-card__row--bottom">
                                       <span class="cal-lesson-card__time lesson-phantom__time">{{
                                         phantomDropTimeLabel() || formatLessonTimeRange(phantomLesson)
@@ -360,6 +373,8 @@
                                   [status]="lesson.status"
                                   [studentName]="getStudentName(lesson.student_id)"
                                   [studentColor]="getStudentColor(lesson.student_id)"
+                                  [subjectText]="getStudentSubject(lesson.student_id)"
+                                  [subjectColor]="getStudentSubjectColor(lesson.student_id)"
                                   [weekFit]="isWeekFitLayout()"
                                   [regionText]="formatLessonRegion(lesson)"
                                   [rateText]="formatLessonSnapshotRate(lesson)"
@@ -959,28 +974,24 @@
       <ul class="cal-lesson-form-v2__occupancy-list">
         @for (slot of lessonFormOccupancySlots(); track slot.id) {
           <li
-            class="cal-lesson-form-v2__slot"
+            class="cal-lesson-form-v2__slot cal-lesson-form-v2__slot--card"
             [class.cal-lesson-form-v2__slot--draft]="slot.kind === 'draft'"
             [class.cal-lesson-form-v2__slot--conflict]="slot.conflict"
-            [class.cal-lesson-form-v2__slot--scheduled]="slot.status === 'scheduled'"
-            [class.cal-lesson-form-v2__slot--completed]="slot.status === 'completed'"
-            [class.cal-lesson-form-v2__slot--missed]="slot.status === 'missed'"
-            [class.cal-lesson-form-v2__slot--canceled]="slot.status === 'canceled'"
           >
-            <span class="cal-lesson-form-v2__slot-name">
-              <span
-                class="cal-lesson-form-v2__slot-student-dot"
-                [style.background-color]="slot.studentColor"
-                aria-hidden="true"
-              ></span>
-              <span>{{ slot.studentName }}</span>
-            </span>
-            <div class="cal-lesson-form-v2__slot-meta">
-              <span class="cal-lesson-form-v2__slot-time">{{ slot.timeLabel }}</span>
-              @if (slot.conflict) {
-                <span class="cal-lesson-form-v2__slot-error">{{ i18n.calendarUi().timeSlotBusy }}</span>
-              }
-            </div>
+            <app-lesson-card
+              [staticLayout]="true"
+              [status]="slot.status"
+              [studentName]="slot.studentName"
+              [studentColor]="slot.studentColor"
+              [subjectText]="slot.subjectText"
+              [subjectColor]="slot.subjectColor"
+              [regionText]="slot.regionText"
+              [rateText]="slot.rateText"
+              [timeText]="slot.timeLabel"
+            />
+            @if (slot.conflict) {
+              <span class="cal-lesson-form-v2__slot-error">{{ i18n.calendarUi().timeSlotBusy }}</span>
+            }
           </li>
         }
       </ul>

@@ -77,6 +77,10 @@ interface LessonOccupancySlot {
   kind: 'existing' | 'draft';
   status: LessonStatus;
   studentColor: string;
+  subjectText: string;
+  subjectColor: string;
+  regionText: string;
+  rateText: string;
   startMs: number;
   endMs: number;
   timeLabel: string;
@@ -431,6 +435,10 @@ export class CalendarComponent implements OnInit {
         kind: 'existing',
         status: lesson.status,
         studentColor: this.getStudentColor(lesson.student_id),
+        subjectText: this.getStudentSubject(lesson.student_id),
+        subjectColor: this.getStudentSubjectColor(lesson.student_id),
+        regionText: this.formatLessonRegion(lesson),
+        rateText: this.formatLessonSnapshotRate(lesson),
         startMs: interval.start,
         endMs: interval.end,
         timeLabel: this.formatOccupancyTimeRange(interval.start, interval.end),
@@ -457,6 +465,12 @@ export class CalendarComponent implements OnInit {
           kind: 'draft',
           status: 'scheduled',
           studentColor: student?.color_hex || DEFAULT_STUDENT_BORDER_COLOR,
+          subjectText: String(student?.subject || '').trim(),
+          subjectColor: String(student?.subject_color || '').trim(),
+          regionText: this.formatOccupancyDraftRegion(student, raw),
+          rateText: student
+            ? this.lessonFormStudentMetaRate(student)
+            : '—',
           startMs: draftInterval.start,
           endMs: draftInterval.end,
           timeLabel: this.formatOccupancyTimeRange(draftInterval.start, draftInterval.end),
@@ -1679,6 +1693,20 @@ export class CalendarComponent implements OnInit {
     return name ? toTitleCaseName(name) : '(без ученика)';
   }
 
+  getStudentSubject(studentId: string | null | undefined): string {
+    if (!studentId) {
+      return '';
+    }
+    return String(this.students().find((x) => x._id === studentId)?.subject || '').trim();
+  }
+
+  getStudentSubjectColor(studentId: string | null | undefined): string {
+    if (!studentId) {
+      return '';
+    }
+    return String(this.students().find((x) => x._id === studentId)?.subject_color || '').trim();
+  }
+
   displayStudentName(name: string | null | undefined): string {
     return toTitleCaseName(name);
   }
@@ -2072,6 +2100,19 @@ export class CalendarComponent implements OnInit {
       return parts[parts.length - 1].replace(/_/g, ' ');
     }
     return tz;
+  }
+
+  private formatOccupancyDraftRegion(
+    student: Student | undefined,
+    scheduledAtIso: string,
+  ): string {
+    const tz = student?.timezone?.trim() || '';
+    const region = tz ? this.formatTimezoneLabel(tz) : '—';
+    const regionTime = this.formatClockInTimezone(scheduledAtIso, tz);
+    if (!regionTime) {
+      return region;
+    }
+    return `${region} ${regionTime}`;
   }
 
   formatLessonSnapshotRate(lesson: Lesson): string {

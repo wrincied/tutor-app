@@ -52,21 +52,29 @@ const STATUS_THEME: Record<
     '[class.cal-lesson-card--focus-dim]': 'focusDim()',
     '[class.cal-lesson-card--route-highlight]': 'routeHighlight()',
     '[class.cal-lesson-card--week-fit]': 'weekFit()',
+    '[class.cal-lesson-card--static]': 'staticLayout()',
     '[style.--status-accent]': 'theme().accent',
     '[style.--status-tint]': 'theme().tint',
     '[style.--status-ink]': 'theme().ink',
     '[style.--student-color]': 'studentColor()',
+    '[style.--subject-color]': 'subjectColorCss()',
     '[attr.draggable]': 'nativeDraggable() ? true : null',
-    '(click)': 'cardClick.emit($event)',
-    '(pointerdown)': 'cardPointerDown.emit($event)',
-    '(dragstart)': 'cardDragStart.emit($event)',
-    '(dragend)': 'cardDragEnd.emit($event)',
+    '(click)': 'staticLayout() ? null : cardClick.emit($event)',
+    '(pointerdown)': 'staticLayout() ? null : cardPointerDown.emit($event)',
+    '(dragstart)': 'staticLayout() ? null : cardDragStart.emit($event)',
+    '(dragend)': 'staticLayout() ? null : cardDragEnd.emit($event)',
   },
 })
 export class LessonCardComponent {
   readonly status = input<LessonStatus>('scheduled');
   readonly studentName = input.required<string>();
   readonly studentColor = input('rgb(148 163 184)');
+  /** Optional subject pill (Mathematik, …). */
+  readonly subjectText = input('');
+  /** Optional pastel color for the subject pill. */
+  readonly subjectColor = input('');
+  /** Relative layout for dialog previews (not absolute calendar grid). */
+  readonly staticLayout = input(false);
   /** Узкие колонки недели на телефоне. */
   readonly weekFit = input(false);
   readonly regionText = input('');
@@ -85,4 +93,5 @@ export class LessonCardComponent {
   readonly cardDragEnd = output<DragEvent>();
 
   readonly theme = computed(() => STATUS_THEME[this.status()] ?? STATUS_THEME.scheduled);
+  readonly subjectColorCss = computed(() => this.subjectColor().trim() || null);
 }

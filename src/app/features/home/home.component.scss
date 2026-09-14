@@ -539,6 +539,11 @@
     color: #c2410c;
   }
 
+  &--paid {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
   @media (max-width: 768px), (max-height: 440px) {
     grid-area: badge;
     justify-self: end;

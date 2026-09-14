@@ -256,11 +256,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   paymentBadge(row: HomeLessonRow) {
-    return paymentBadgeForStudent(row.student, {
-      package: this.t.paymentPackage,
-      packageProgress: this.t.paymentPackageProgress,
-      unpaid: this.t.paymentUnpaid,
-    });
+    return paymentBadgeForStudent(
+      row.student,
+      {
+        package: this.t.paymentPackage,
+        packageProgress: this.t.paymentPackageProgress,
+        unpaid: this.t.paymentUnpaid,
+        paid: this.t.paymentPaid,
+      },
+      row.lesson,
+    );
   }
 
   lessonTime(iso: string): string {
