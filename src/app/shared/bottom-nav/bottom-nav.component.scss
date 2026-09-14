@@ -165,12 +165,4 @@ $nav-compact: '(max-width: 768px), (max-height: 440px)';
   &:hover {
     background: var(--nav-hover);
   }
-
-  &--logout {
-    color: var(--danger, #dc2626);
-
-    svg {
-      color: inherit;
-    }
-  }
 }

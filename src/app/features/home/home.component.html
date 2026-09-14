@@ -4,9 +4,19 @@
       <p class="home-dash__date">{{ todayDateLabel() }}</p>
       <h1 class="home-dash__greeting">{{ greeting() }}</h1>
     </div>
-    <a [routerLink]="lp('/app/calendar')" [queryParams]="newLessonQuery()" class="home-dash__new">
-      {{ t.newLessonCta }}
-    </a>
+    <div class="home-dash__actions">
+      <a [routerLink]="lp('/app/calendar')" [queryParams]="newLessonQuery()" class="home-dash__new">
+        {{ t.newLessonCta }}
+      </a>
+      <a
+        [routerLink]="lp('/app/account')"
+        class="home-dash__profile"
+        [attr.aria-label]="i18n.nav().account"
+        [attr.title]="i18n.nav().account"
+      >
+        <span class="home-dash__profile-avatar" aria-hidden="true">{{ avatarLabel() }}</span>
+      </a>
+    </div>
   </header>
 
   <a
