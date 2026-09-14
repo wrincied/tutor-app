@@ -64,13 +64,14 @@ jobs:
           done
           export API_URL="$DEV_API_URL"
           export APP_URL="$DEV_APP_URL"
-          export DESIGN_MODE=false
+          # Landing V2 + design-system preview (not the classic landing).
+          export DESIGN_MODE=true
           export PRODUCTION=true
           export FORCE_ENV_GENERATE=1
-          node scripts/prepare-environment.mjs production
+          node scripts/prepare-environment.mjs production-design
 
       - name: Build Angular for GitHub Pages
-        run: npx ng build --configuration=production --base-href=/tutor-app/dev/
+        run: npx ng build --configuration=production-design --base-href=/tutor-app/dev/
 
       - name: SPA shell + .nojekyll for GitHub Pages
         run: |
