@@ -72,12 +72,19 @@ jobs:
       - name: Build Angular for GitHub Pages
         run: npx ng build --configuration=production --base-href=/tutor-app/dev/
 
-      - name: SPA fallback for GitHub Pages
-        run: cp dist/tutor/browser/index.html dist/tutor/browser/404.html
+      - name: SPA shell + .nojekyll for GitHub Pages
+        run: |
+          # Prerender leaves a tiny locale redirect as index.html; use the CSR shell.
+          if [ -f dist/tutor/browser/index.csr.html ]; then
+            cp dist/tutor/browser/index.csr.html dist/tutor/browser/index.html
+          fi
+          cp dist/tutor/browser/index.html dist/tutor/browser/404.html
+          touch dist/tutor/browser/.nojekyll
 
       - name: Create Root Redirect Fallback
         run: |
           mkdir -p dist/root_fallback
+          touch dist/root_fallback/.nojekyll
           cat > dist/root_fallback/index.html << 'EOF'
           <!doctype html>
           <html lang="en">
