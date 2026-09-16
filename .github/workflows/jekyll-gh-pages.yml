@@ -1,5 +1,7 @@
 name: Deploy Dev to GitHub Pages
 
+# Test frontend from `dev` → https://wrincied.github.io/tutor-app/dev/
+# Production hosting stays on Firebase (master / manual deploy).
 on:
   push:
     branches: ['dev']
@@ -32,6 +34,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -42,7 +46,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Generate studio environment for GitHub Pages
+      - name: Generate environment for GitHub Pages (dev test)
         run: |
           if [ -z "$DEV_API_URL" ]; then
             echo "::error::Set repository secret DEV_API_URL"
@@ -60,6 +64,7 @@ jobs:
           done
           export API_URL="$DEV_API_URL"
           export APP_URL="$DEV_APP_URL"
+          # Landing V2 + design-system preview (not the classic landing).
           export DESIGN_MODE=true
           export PRODUCTION=true
           export FORCE_ENV_GENERATE=1
@@ -68,12 +73,24 @@ jobs:
       - name: Build Angular for GitHub Pages
         run: npx ng build --configuration=production-design --base-href=/tutor-app/dev/
 
-      - name: SPA fallback for GitHub Pages
-        run: cp dist/tutor/browser/index.html dist/tutor/browser/404.html
+      - name: SPA shell + .nojekyll for GitHub Pages
+        run: |
+          # Prerender leaves a tiny locale redirect as index.html; use the CSR shell.
+          if [ -f dist/tutor/browser/index.csr.html ]; then
+            cp dist/tutor/browser/index.csr.html dist/tutor/browser/index.html
+          fi
+          BUILD_ID="${GITHUB_SHA:0:7}"
+          BUILD_AT="$(date -u +%Y-%m-%dT%H:%MZ)"
+          # Visible in View Source so we can confirm the deploy is fresh.
+          sed -i "s|<head>|<head>\n    <!-- simple4u-pages-build ${BUILD_ID} ${BUILD_AT} -->|" dist/tutor/browser/index.html
+          cp dist/tutor/browser/index.html dist/tutor/browser/404.html
+          touch dist/tutor/browser/.nojekyll
+          echo "PAGES_BUILD=${BUILD_ID} ${BUILD_AT}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create Root Redirect Fallback
         run: |
           mkdir -p dist/root_fallback
+          touch dist/root_fallback/.nojekyll
           cat > dist/root_fallback/index.html << 'EOF'
           <!doctype html>
           <html lang="en">
@@ -96,6 +113,7 @@ jobs:
           folder: dist/tutor/browser
           target-folder: dev
           branch: gh-pages
+          clean: true
 
       - name: Deploy Root Redirect
         uses: JamesIves/github-pages-deploy-action@v4
@@ -104,3 +122,13 @@ jobs:
           target-folder: .
           branch: gh-pages
           clean: false
+
+      - name: Remove obsolete /design preview folder
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist/root_fallback
+          target-folder: design
+          branch: gh-pages
+          clean: true
+          # Replace stale studio preview with a redirect to /dev/
+          single-commit: false

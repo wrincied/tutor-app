@@ -116,6 +116,63 @@
         }
       </div>
 
+      @if (showZoomControls()) {
+        <div class="cal-zoom-seg" role="group">
+          <button
+            type="button"
+            class="cal-zoom-seg__btn"
+            (click)="zoomOutClick.emit()"
+            [disabled]="!canZoomOut()"
+            [attr.aria-label]="zoomOutLabel()"
+            [attr.title]="zoomOutLabel()"
+          >
+            <svg class="cal-zoom-seg__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <circle cx="10.5" cy="10.5" r="6.25" fill="none" stroke="currentColor" stroke-width="1.75" />
+              <path
+                d="M15.25 15.25 20 20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+              <path
+                d="M7.75 10.5h5.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="cal-zoom-seg__btn"
+            (click)="zoomInClick.emit()"
+            [disabled]="!canZoomIn()"
+            [attr.aria-label]="zoomInLabel()"
+            [attr.title]="zoomInLabel()"
+          >
+            <svg class="cal-zoom-seg__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <circle cx="10.5" cy="10.5" r="6.25" fill="none" stroke="currentColor" stroke-width="1.75" />
+              <path
+                d="M15.25 15.25 20 20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+              <path
+                d="M7.75 10.5h5.5M10.5 7.75v5.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      }
+
       <div class="cal-header__divider cal-header__divider--after-modes" aria-hidden="true"></div>
 
       <ul class="cal-status-pills" [attr.aria-label]="statusLegendAria()">

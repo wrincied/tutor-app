@@ -77,6 +77,10 @@ interface LessonOccupancySlot {
   kind: 'existing' | 'draft';
   status: LessonStatus;
   studentColor: string;
+  subjectText: string;
+  subjectColor: string;
+  regionText: string;
+  rateText: string;
   startMs: number;
   endMs: number;
   timeLabel: string;
@@ -171,12 +175,42 @@ export class CalendarComponent implements OnInit {
   /** Длительность нового урока по умолчанию (1 ч 30 мин). */
   private static readonly DEFAULT_LESSON_DURATION_MIN = 90;
 
-  /** Мин. высота часа (ниже — появляется скролл). */
-  private static readonly MIN_HOUR_HEIGHT_PX = 65;
-  /** Высота одного часа: растягивается под доступную высоту viewport. */
-  readonly hourHeightPx = signal(CalendarComponent.MIN_HOUR_HEIGHT_PX);
+  /** Пол подгонкой под viewport (без user zoom). */
+  private static readonly MIN_FIT_HOUR_HEIGHT_PX = 65;
+  /** Абсолютный пол высоты часа при zoom-out. */
+  private static readonly MIN_HOUR_HEIGHT_PX = 40;
+  /** Абсолютный потолок высоты часа. */
+  private static readonly MAX_HOUR_HEIGHT_PX = 180;
+  private static readonly GRID_ZOOM_MIN = 0.7;
+  private static readonly GRID_ZOOM_MAX = 2.5;
+  private static readonly GRID_ZOOM_STEP = 0.1;
+  private static readonly GRID_ZOOM_STORAGE_KEY = 'simple4u.cal.gridZoom';
+
+  /** Высота часа при zoom = 1 (из ResizeObserver). */
+  readonly fitHourHeightPx = signal(CalendarComponent.MIN_FIT_HOUR_HEIGHT_PX);
+  /** Пользовательский масштаб timeline (persist в localStorage). */
+  readonly gridZoomFactor = signal(1);
+  /** Высота одного часа: fit × zoom, с clamp. */
+  readonly hourHeightPx = computed(() => {
+    const fit = this.fitHourHeightPx();
+    const zoom = this.gridZoomFactor();
+    const raw = Math.round(fit * zoom);
+    return Math.min(
+      CalendarComponent.MAX_HOUR_HEIGHT_PX,
+      Math.max(CalendarComponent.MIN_HOUR_HEIGHT_PX, raw),
+    );
+  });
   /** 1 минута = hourHeight / 60. */
   readonly minuteHeightPx = computed(() => this.hourHeightPx() / 60);
+  readonly canZoomIn = computed(
+    () => this.gridZoomFactor() < CalendarComponent.GRID_ZOOM_MAX - 1e-6,
+  );
+  readonly canZoomOut = computed(
+    () => this.gridZoomFactor() > CalendarComponent.GRID_ZOOM_MIN + 1e-6,
+  );
+  readonly showGridZoomControls = computed(
+    () => !this.isMonthOverview() && !this.isCompactHeader(),
+  );
   readonly gridHours = computed(() => this.profileSettings.gridHours());
   readonly gridStartHour = computed(() => this.profileSettings.gridStartHour());
   readonly gridEndHour = computed(() => this.profileSettings.gridEndHour());
@@ -185,8 +219,13 @@ export class CalendarComponent implements OnInit {
     const span = this.gridEndHour() - this.gridStartHour();
     return Math.max(1, span) * this.hourHeightPx();
   });
-  /** Небольшой отступ под последней линией сетки (в scroll-контейнере). */
-  readonly gridBottomPaddingPx = 16;
+  /**
+   * Хвост сетки под последним часом (underlay): зависит от viewport и сжатия часа,
+   * а не от фиксированного --bottom-nav-pad.
+   */
+  readonly gridUnderlayPx = signal(16);
+  /** Небольшой запас при fit-подгонке (часы заполняют viewport; underlay — отдельно снизу). */
+  private static readonly FIT_VIEWPORT_RESERVE_PX = 16;
   /** Плейсхолдеры скелета сетки (7 колонок). */
   readonly skeletonGridCols = [0, 1, 2, 3, 4, 5, 6];
   readonly skeletonHourRows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -431,6 +470,10 @@ export class CalendarComponent implements OnInit {
         kind: 'existing',
         status: lesson.status,
         studentColor: this.getStudentColor(lesson.student_id),
+        subjectText: this.getStudentSubject(lesson.student_id),
+        subjectColor: this.getStudentSubjectColor(lesson.student_id),
+        regionText: this.formatLessonRegion(lesson),
+        rateText: this.formatLessonSnapshotRate(lesson),
         startMs: interval.start,
         endMs: interval.end,
         timeLabel: this.formatOccupancyTimeRange(interval.start, interval.end),
@@ -457,6 +500,12 @@ export class CalendarComponent implements OnInit {
           kind: 'draft',
           status: 'scheduled',
           studentColor: student?.color_hex || DEFAULT_STUDENT_BORDER_COLOR,
+          subjectText: String(student?.subject || '').trim(),
+          subjectColor: String(student?.subject_color || '').trim(),
+          regionText: this.formatOccupancyDraftRegion(student, raw),
+          rateText: student
+            ? this.lessonFormStudentMetaRate(student)
+            : '—',
           startMs: draftInterval.start,
           endMs: draftInterval.end,
           timeLabel: this.formatOccupancyTimeRange(draftInterval.start, draftInterval.end),
@@ -1014,6 +1063,9 @@ export class CalendarComponent implements OnInit {
   private readonly scrollContainerRef = viewChild<ElementRef<HTMLElement>>('scrollContainer');
   private readonly headersScrollRef = viewChild<ElementRef<HTMLElement>>('headersScroll');
   private syncingGridScroll = false;
+  private pinchStartDistance = 0;
+  private pinchStartZoom = 1;
+  private pinchActive = false;
 
   /** Любая модалка календаря — navbar снизу уходит под оверлей. */
   private readonly calendarModalOpen = computed(
@@ -1038,7 +1090,9 @@ export class CalendarComponent implements OnInit {
         afterNextRender(() => this.scrollGridToNow(), { injector: this.injector });
       }
     });
+    this.loadGridZoomFromStorage();
     this.bindGridHeightToViewport();
+    this.bindGridZoomGestures();
     this.destroyRef.onDestroy(() => {
       if (this.periodTransitionTimer !== null) {
         clearTimeout(this.periodTransitionTimer);
@@ -1052,7 +1106,7 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  /** Растягивает час сетки, чтобы день заполнял доступную высоту (iPad / высокий экран). */
+  /** Подгоняет fitHourHeightPx под viewport; user zoom не перезаписывается. */
   private bindGridHeightToViewport(): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
@@ -1061,32 +1115,44 @@ export class CalendarComponent implements OnInit {
       const el = this.gridScrollRef()?.nativeElement ?? null;
       const span = Math.max(1, this.gridEndHour() - this.gridStartHour());
       this.hasLoaded();
+      this.gridZoomFactor();
+      this.isBottomNavLayout();
       if (!el || this.isMonthOverview()) {
         return;
       }
 
       const apply = () => {
         this.syncHeaderDaysAreaWidth(el);
-        const padding = this.gridBottomPaddingPx;
+        const padding = CalendarComponent.FIT_VIEWPORT_RESERVE_PX;
         let available = el.clientHeight - padding;
         // Пока flex-цепочка не собралась, clientHeight ≈ контент (min hours) —
         // берём высоту родителя секции, иначе час залипает на MIN и не растягивается.
-        if (available <= CalendarComponent.MIN_HOUR_HEIGHT_PX * span) {
+        if (available <= CalendarComponent.MIN_FIT_HOUR_HEIGHT_PX * span) {
           const section = el.closest('.cal-grid-section') as HTMLElement | null;
           const parentH = section?.clientHeight ?? el.parentElement?.clientHeight ?? 0;
           if (parentH > available + padding) {
             available = parentH - padding;
           }
         }
-        if (available < CalendarComponent.MIN_HOUR_HEIGHT_PX) {
+        if (available < CalendarComponent.MIN_FIT_HOUR_HEIGHT_PX) {
           return;
         }
         const next = Math.max(
-          CalendarComponent.MIN_HOUR_HEIGHT_PX,
+          CalendarComponent.MIN_FIT_HOUR_HEIGHT_PX,
           Math.floor(available / span),
         );
-        if (next !== this.hourHeightPx()) {
-          this.hourHeightPx.set(next);
+        if (next !== this.fitHourHeightPx()) {
+          const prevHour = this.hourHeightPx();
+          const anchor = this.captureScrollTimeAnchor(el);
+          this.fitHourHeightPx.set(next);
+          this.restoreScrollTimeAnchor(el, anchor, prevHour);
+        }
+
+        const fitH = this.fitHourHeightPx();
+        const hourH = this.hourHeightPx();
+        const underlay = this.computeGridUnderlayPx(el.clientHeight, hourH, fitH);
+        if (underlay !== this.gridUnderlayPx()) {
+          this.gridUnderlayPx.set(underlay);
         }
       };
 
@@ -1104,6 +1170,221 @@ export class CalendarComponent implements OnInit {
       }
       onCleanup(() => ro.disconnect());
     });
+  }
+
+  /**
+   * Хвост сетки под island: доля часа + частичное покрытие nav —
+   * сильнее на низком экране / сжатом fit, слабее когда час уже просторный.
+   */
+  private computeGridUnderlayPx(viewportH: number, hourH: number, fitH: number): number {
+    const minFit = CalendarComponent.MIN_FIT_HOUR_HEIGHT_PX;
+    const comfortFit = 96;
+    const squeeze = Math.min(1, Math.max(0, (comfortFit - fitH) / Math.max(1, comfortFit - minFit)));
+    const shortScreen = Math.min(1, Math.max(0, (640 - viewportH) / 280));
+
+    const airRatio = Math.min(1.15, 0.35 + squeeze * 0.5 + shortScreen * 0.3);
+    const air = Math.max(12, Math.round(hourH * airRatio));
+
+    if (!this.isBottomNavLayout()) {
+      return air;
+    }
+
+    const island = this.readCssLengthPx('--bottom-nav-overlay') || 76;
+    const cover = Math.min(1, 0.4 + squeeze * 0.45 + shortScreen * 0.2);
+    return Math.max(air, Math.round(island * cover));
+  }
+
+  private readCssLengthPx(varName: string): number {
+    const raw = getComputedStyle(this.document.documentElement).getPropertyValue(varName).trim();
+    const n = Number.parseFloat(raw);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  /** Ctrl/Cmd+wheel и pinch над `.cal-grid-scroll`. */
+  private bindGridZoomGestures(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    effect((onCleanup) => {
+      const el = this.gridScrollRef()?.nativeElement ?? null;
+      if (!el || this.isMonthOverview()) {
+        return;
+      }
+
+      const onWheel = (event: WheelEvent) => {
+        if (!(event.ctrlKey || event.metaKey)) {
+          return;
+        }
+        event.preventDefault();
+        const direction = event.deltaY > 0 ? -1 : 1;
+        this.setGridZoomFactor(
+          this.gridZoomFactor() + direction * CalendarComponent.GRID_ZOOM_STEP,
+          { clientY: event.clientY },
+        );
+      };
+
+      const onTouchStart = (event: TouchEvent) => {
+        if (event.touches.length !== 2 || this.dragActiveLessonId()) {
+          this.pinchActive = false;
+          return;
+        }
+        this.periodSwipeStart = null;
+        this.pinchActive = true;
+        this.pinchStartDistance = this.touchDistance(event.touches[0], event.touches[1]);
+        this.pinchStartZoom = this.gridZoomFactor();
+      };
+
+      const onTouchMove = (event: TouchEvent) => {
+        if (!this.pinchActive || event.touches.length !== 2 || this.dragActiveLessonId()) {
+          return;
+        }
+        if (this.pinchStartDistance <= 0) {
+          return;
+        }
+        event.preventDefault();
+        const dist = this.touchDistance(event.touches[0], event.touches[1]);
+        const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+        this.setGridZoomFactor(this.pinchStartZoom * (dist / this.pinchStartDistance), {
+          clientY: midY,
+        });
+      };
+
+      const onTouchEnd = (event: TouchEvent) => {
+        if (event.touches.length < 2) {
+          this.pinchActive = false;
+        }
+      };
+
+      el.addEventListener('wheel', onWheel, { passive: false });
+      el.addEventListener('touchstart', onTouchStart, { passive: true });
+      el.addEventListener('touchmove', onTouchMove, { passive: false });
+      el.addEventListener('touchend', onTouchEnd, { passive: true });
+      el.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+      onCleanup(() => {
+        el.removeEventListener('wheel', onWheel);
+        el.removeEventListener('touchstart', onTouchStart);
+        el.removeEventListener('touchmove', onTouchMove);
+        el.removeEventListener('touchend', onTouchEnd);
+        el.removeEventListener('touchcancel', onTouchEnd);
+        this.pinchActive = false;
+      });
+    });
+  }
+
+  zoomGridIn(): void {
+    this.setGridZoomFactor(this.gridZoomFactor() + CalendarComponent.GRID_ZOOM_STEP, 'center');
+  }
+
+  zoomGridOut(): void {
+    this.setGridZoomFactor(this.gridZoomFactor() - CalendarComponent.GRID_ZOOM_STEP, 'center');
+  }
+
+  private setGridZoomFactor(
+    next: number,
+    anchor: { clientY: number } | 'center',
+  ): void {
+    const clamped = Math.round(
+      Math.min(
+        CalendarComponent.GRID_ZOOM_MAX,
+        Math.max(CalendarComponent.GRID_ZOOM_MIN, next),
+      ) * 100,
+    ) / 100;
+    if (Math.abs(clamped - this.gridZoomFactor()) < 1e-6) {
+      return;
+    }
+    const el = this.gridScrollRef()?.nativeElement ?? null;
+    const prevHour = this.hourHeightPx();
+    const scrollAnchor =
+      el && anchor === 'center'
+        ? this.captureScrollTimeAnchor(el)
+        : el && typeof anchor === 'object'
+          ? this.captureScrollTimeAnchor(el, anchor.clientY)
+          : null;
+    this.gridZoomFactor.set(clamped);
+    this.persistGridZoom(clamped);
+    if (el && scrollAnchor) {
+      this.restoreScrollTimeAnchor(el, scrollAnchor, prevHour);
+    }
+  }
+
+  private loadGridZoomFromStorage(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(CalendarComponent.GRID_ZOOM_STORAGE_KEY);
+      if (raw == null) {
+        return;
+      }
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) {
+        return;
+      }
+      const clamped =
+        Math.round(
+          Math.min(
+            CalendarComponent.GRID_ZOOM_MAX,
+            Math.max(CalendarComponent.GRID_ZOOM_MIN, parsed),
+          ) * 100,
+        ) / 100;
+      this.gridZoomFactor.set(clamped);
+    } catch {
+      /* private mode / blocked storage */
+    }
+  }
+
+  private persistGridZoom(value: number): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    try {
+      localStorage.setItem(CalendarComponent.GRID_ZOOM_STORAGE_KEY, String(value));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private touchDistance(a: Touch, b: Touch): number {
+    const dx = a.clientX - b.clientX;
+    const dy = a.clientY - b.clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  /** Минуты от начала сетки под точкой (или центром viewport). */
+  private captureScrollTimeAnchor(
+    el: HTMLElement,
+    clientY?: number,
+  ): { minutesFromStart: number; offsetInViewport: number } | null {
+    const hourH = this.hourHeightPx();
+    if (hourH <= 0) {
+      return null;
+    }
+    const offsetInViewport =
+      clientY == null
+        ? el.clientHeight / 2
+        : clientY - el.getBoundingClientRect().top;
+    const contentY = el.scrollTop + offsetInViewport;
+    return {
+      minutesFromStart: (contentY / hourH) * 60,
+      offsetInViewport,
+    };
+  }
+
+  private restoreScrollTimeAnchor(
+    el: HTMLElement,
+    anchor: { minutesFromStart: number; offsetInViewport: number } | null,
+    prevHourHeight: number,
+  ): void {
+    if (!anchor || prevHourHeight <= 0) {
+      return;
+    }
+    const newHour = this.hourHeightPx();
+    if (newHour <= 0 || Math.abs(newHour - prevHourHeight) < 1e-6) {
+      return;
+    }
+    const contentY = (anchor.minutesFromStart / 60) * newHour;
+    el.scrollTop = Math.max(0, contentY - anchor.offsetInViewport);
   }
 
   /** Правый spacer шапки забирает остаток; ширина дней = `.cal-days-scroll`, не scrollbar. */
@@ -1679,6 +1960,20 @@ export class CalendarComponent implements OnInit {
     return name ? toTitleCaseName(name) : '(без ученика)';
   }
 
+  getStudentSubject(studentId: string | null | undefined): string {
+    if (!studentId) {
+      return '';
+    }
+    return String(this.students().find((x) => x._id === studentId)?.subject || '').trim();
+  }
+
+  getStudentSubjectColor(studentId: string | null | undefined): string {
+    if (!studentId) {
+      return '';
+    }
+    return String(this.students().find((x) => x._id === studentId)?.subject_color || '').trim();
+  }
+
   displayStudentName(name: string | null | undefined): string {
     return toTitleCaseName(name);
   }
@@ -2074,7 +2369,20 @@ export class CalendarComponent implements OnInit {
     return tz;
   }
 
-  formatLessonSnapshotRate(lesson: Lesson): string {
+  private formatOccupancyDraftRegion(
+    student: Student | undefined,
+    scheduledAtIso: string,
+  ): string {
+    const tz = student?.timezone?.trim() || '';
+    const region = tz ? this.formatTimezoneLabel(tz) : '—';
+    const regionTime = this.formatClockInTimezone(scheduledAtIso, tz);
+    if (!regionTime) {
+      return region;
+    }
+    return `${region} ${regionTime}`;
+  }
+
+  formatLessonSnapshotRate(lesson: Lesson, compact = this.isCompactHeader()): string {
     if (!this.lessonHasSnapshotRate(lesson)) {
       return '—';
     }
@@ -2086,12 +2394,21 @@ export class CalendarComponent implements OnInit {
     );
     const formatted = this.formatMoneyAmount(amount, lesson.lesson_currency || 'EUR');
     if (priceMode === 'fixed') {
-      return `${formatted}${this.i18n.studentsUi().perLesson}`;
+      return `${formatted}${this.rateUnitSuffix('fixed', compact)}`;
     }
     if (lesson.lesson_duration === 60) {
-      return `${formatted}${this.i18n.studentsUi().perHour}`;
+      return `${formatted}${this.rateUnitSuffix('hourly', compact)}`;
     }
     return formatted;
+  }
+
+  /** Full unit on desktop; compact (Std / Utd / Eh) on phone, tablet, small laptop. */
+  private rateUnitSuffix(priceMode: 'fixed' | 'hourly', compact = this.isCompactHeader()): string {
+    const s = this.i18n.studentsUi();
+    if (priceMode === 'fixed') {
+      return compact ? s.perLessonCompact : s.perLesson;
+    }
+    return compact ? s.perHourCompact : s.perHour;
   }
 
   lessonPriceMode(lesson: Lesson) {
@@ -2106,10 +2423,7 @@ export class CalendarComponent implements OnInit {
       priceMode,
     );
     const formatted = this.formatMoneyAmount(amount, student.rate_currency || 'EUR');
-    const unit =
-      priceMode === 'fixed'
-        ? this.i18n.studentsUi().perLesson
-        : this.i18n.studentsUi().perHour;
+    const unit = this.rateUnitSuffix(priceMode === 'fixed' ? 'fixed' : 'hourly');
     if (priceMode === 'hourly' && (durationMinutes ?? this.duration()) !== 60) {
       return formatted;
     }
@@ -2124,10 +2438,7 @@ export class CalendarComponent implements OnInit {
       Number(lesson.lesson_price),
       lesson.lesson_currency || 'EUR',
     );
-    const unit =
-      this.lessonPriceMode(lesson) === 'fixed'
-        ? this.i18n.studentsUi().perLesson
-        : this.i18n.studentsUi().perHour;
+    const unit = this.rateUnitSuffix(this.lessonPriceMode(lesson) === 'fixed' ? 'fixed' : 'hourly');
     return `${formatted}${unit}`;
   }
 
@@ -2191,8 +2502,8 @@ export class CalendarComponent implements OnInit {
     const pretty = Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
     const unit =
       String(student.rate_unit ?? '').toLowerCase() === 'lesson'
-        ? this.i18n.studentsUi().lessonsShort
-        : this.i18n.studentsUi().hoursShort;
+        ? this.compactUnitWord('lesson')
+        : this.compactUnitWord('hour');
     return `${pretty} ${unit}`;
   }
 
@@ -2209,11 +2520,16 @@ export class CalendarComponent implements OnInit {
       Number(student.rate_per_hour),
       student.rate_currency || 'EUR',
     );
-    const unit =
-      priceMode === 'fixed'
-        ? this.i18n.studentsUi().perLesson
-        : this.i18n.studentsUi().perHour;
+    const unit = this.rateUnitSuffix(priceMode === 'fixed' ? 'fixed' : 'hourly');
     return `${formatted}${unit}`;
+  }
+
+  private compactUnitWord(kind: 'lesson' | 'hour'): string {
+    const s = this.i18n.studentsUi();
+    if (this.isCompactHeader()) {
+      return kind === 'lesson' ? s.lessonsShortCompact : s.hoursShortCompact;
+    }
+    return kind === 'lesson' ? s.lessonsShort : s.hoursShort;
   }
 
   private formatMoneyAmount(amount: number, currency: string): string {
@@ -3822,7 +4138,6 @@ export class CalendarComponent implements OnInit {
             ),
           );
         }
-        this.refreshStudentsList();
         this.deletingLesson.set(false);
         this.closeDeleteRecurringModal();
         this.closeLessonForm();
@@ -3850,7 +4165,6 @@ export class CalendarComponent implements OnInit {
     this.lessonsSvc.delete(id).subscribe({
       next: () => {
         this.lessons.update((list) => list.filter((l) => l._id !== id));
-        this.refreshStudentsList();
         this.deletingLesson.set(false);
         this.closeLessonForm();
       },

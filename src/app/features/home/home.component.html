@@ -4,10 +4,41 @@
       <p class="home-dash__date">{{ todayDateLabel() }}</p>
       <h1 class="home-dash__greeting">{{ greeting() }}</h1>
     </div>
-    <a [routerLink]="lp('/app/calendar')" [queryParams]="newLessonQuery()" class="home-dash__new">
-      {{ t.newLessonCta }}
-    </a>
+    <div class="home-dash__actions">
+      <a [routerLink]="lp('/app/calendar')" [queryParams]="newLessonQuery()" class="home-dash__new">
+        {{ t.newLessonCta }}
+      </a>
+      <a
+        [routerLink]="lp('/app/account')"
+        class="home-dash__profile"
+        [attr.aria-label]="i18n.nav().account"
+        [attr.title]="i18n.nav().account"
+      >
+        <span class="home-dash__profile-avatar" aria-hidden="true">{{ avatarLabel() }}</span>
+      </a>
+    </div>
   </header>
+
+  <a
+    [routerLink]="lp('/app/calendar')"
+    [queryParams]="newLessonQuery()"
+    class="home-dash__fab"
+    [attr.aria-label]="t.newLessonCta"
+    [attr.title]="t.newLessonCta"
+  >
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      aria-hidden="true"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  </a>
 
   <div class="scrollable-content home-dash__body">
     @if (loading()) {
@@ -155,6 +186,7 @@
                       <span
                         class="home-timeline__badge"
                         [class.home-timeline__badge--unpaid]="badge.kind === 'unpaid'"
+                        [class.home-timeline__badge--paid]="badge.kind === 'paid'"
                       >
                         {{ badge.text }}
                       </span>

@@ -19,16 +19,42 @@
   --z-app-tooltip: 1200;
   --z-app-dropdown-top: 1300;
 
+  /* Breakpoints (CRM shell) — use these, not one-off 767/769 */
+  --bp-mobile: 768px;
+  --bp-mobile-short: 440px;
+  --bp-tablet: 1024px;
+
+  /* Density / type floors */
+  --touch-min: 44px;
+  --type-dense: 0.75rem; /* 12px */
+  --type-ui-min: 0.6875rem; /* 11px — calendar grid floor */
+  --type-body: 0.875rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+
   /* Floating bottom nav island (mobile) */
   --bottom-nav-island-h: 58px;
   --bottom-nav-island-gap: 18px;
-  // --bottom-nav-island-pop: 10px;
-  /** Visible gap between page content and the nav pill (tune this first). */
+  --bottom-nav-island-pop: 10px;
+  /** Breathing room above the pill for last scroll items. */
   --bottom-nav-content-clearance: 0.5rem;
-  --bottom-nav-reserve: calc(
-    var(--bottom-nav-island-h) + var(--bottom-nav-island-gap) * 2 + var(--bottom-nav-island-pop) +
-      var(--bottom-nav-content-clearance) + env(safe-area-inset-bottom, 0px)
+  /**
+   * FAB lift above the island (safe-area added at use-site — do not nest env() here).
+   * bottom: calc(var(--bottom-nav-fab-offset) + env(safe-area-inset-bottom, 0px));
+   */
+  --bottom-nav-fab-offset: calc(var(--bottom-nav-island-gap) + var(--bottom-nav-island-h) + 0.375rem);
+  /**
+   * Island footprint from the physical bottom of the viewport (gap + pill + safe-area).
+   * Content stays full-height and paints under this zone; do not subtract from shell height.
+   */
+  --bottom-nav-overlay: calc(
+    var(--bottom-nav-island-h) + var(--bottom-nav-island-gap) + env(safe-area-inset-bottom, 0px)
   );
+  /** Padding / scroll-padding so interactive content clears the floating pill. */
+  --bottom-nav-pad: calc(var(--bottom-nav-overlay) + var(--bottom-nav-content-clearance));
 
   /* Mobile app header (profile avatar) */
   --app-header-h: 52px;
@@ -88,7 +114,7 @@
   --tg-badge-neutral-bg: #f1f3f4;
   --tg-badge-neutral-fg: #5f746c;
   --tg-badge-error-bg: #fce8e6;
-  --tg-badge-error-fg: #c5221f;
+  --tg-badge-error-fg: #cc0000;
 
   /* app-dialog desktop widths (size=sm|md|lg) */
   --dialog-w-sm: 30rem; /* 480px */

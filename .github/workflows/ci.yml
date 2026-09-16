@@ -57,4 +57,5 @@ jobs:
       - name: Build (development)
         run: npm run build:dev
 
-  # Pages deploy lives in jekyll-gh-pages.yml (secrets-only env generation).
+  # Pages deploy: jekyll-gh-pages.yml on push to `dev` only
+  # → https://wrincied.github.io/tutor-app/dev/

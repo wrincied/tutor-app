@@ -363,7 +363,7 @@
   padding: 0.75rem 0.875rem;
   border-radius: 0.75rem;
   background: rgb(254 226 226);
-  color: rgb(153 27 27);
+  color: #cc0000;
   font-size: 0.875rem;
   line-height: 1.35;
 }
@@ -478,6 +478,34 @@
   border: 1px solid var(--nav-border);
   border-radius: 0.5rem;
   background: var(--modal-bg, #fff);
+}
+
+.subject-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subject-row > input[type='text'] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.subject-row__swatch {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--nav-border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  background: transparent;
+}
+
+.subject-row__hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: var(--muted, #6b7280);
 }
 
 .calendar-color__swatch {

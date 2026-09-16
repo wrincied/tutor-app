@@ -51,14 +51,12 @@ describe('finance period navigation', () => {
     expect(financeShiftAnchor('month', anchor, -1)).toEqual({ year: 2026, month: 4 });
   });
 
-  it('blocks forward at current month', () => {
-    expect(financeCanShiftForward('month', anchor, now)).toBe(false);
-    expect(financeCanShiftForward('month', { year: 2026, month: 4 }, now)).toBe(true);
-  });
-
-  it('blocks forward at current year', () => {
-    expect(financeCanShiftForward('year', anchor, now)).toBe(false);
-    expect(financeCanShiftForward('year', { year: 2025, month: 5 }, now)).toBe(true);
+  it('allows forward past current month/year', () => {
+    expect(financeCanShiftForward('month', anchor, now)).toBe(true);
+    expect(financeCanShiftForward('month', { year: 2027, month: 11 }, now)).toBe(true);
+    expect(financeCanShiftForward('year', anchor, now)).toBe(true);
+    expect(financeCanShiftForward('year', { year: 2030, month: 5 }, now)).toBe(true);
+    expect(financeCanShiftForward('all', anchor, now)).toBe(false);
   });
 
   it('parses anchor query', () => {

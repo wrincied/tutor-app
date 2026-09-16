@@ -66,7 +66,10 @@ function resolveRateUnit(raw?: string): StudentRateUnit {
   return raw === 'lesson' ? 'lesson' : 'hour';
 }
 
-function rateUnitSuffix(unit: StudentRateUnit, t: { perHour: string; perLesson: string }): string {
+function rateUnitSuffix(
+  unit: StudentRateUnit,
+  t: { perHour: string; perLesson: string },
+): string {
   return unit === 'lesson' ? t.perLesson : t.perHour;
 }
 
@@ -107,6 +110,8 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   form = {
     name: '',
+    subject: '',
+    subject_color: generatePastelColor(),
     rate_per_hour: 0,
     rate_currency: 'EUR' as RateCurrency,
     timezone: DEFAULT_STUDENT_TIMEZONE,
@@ -165,6 +170,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
   topupPreset = signal<'1' | '2' | '3' | 'custom'>('custom');
   /** Sticky: hidden on open at 0; shown after first amount > 0 and kept visible. */
   topupSummaryVisible = signal(false);
+  topupSaving = signal(false);
   adjustTarget = signal<Student | null>(null);
   adjustNextBalance = signal(0);
   adjustReason = signal<StudentBalanceAdjustReason>('typo');
@@ -363,6 +369,18 @@ export class StudentsComponent implements OnInit, OnDestroy {
 
   randomizeFormColor(): void {
     this.form.color_hex = generatePastelColor();
+  }
+
+  formSubjectColorPickerHex(): string {
+    return colorToHexForPicker(this.form.subject_color);
+  }
+
+  onFormSubjectColorPickerChange(hex: string): void {
+    this.form.subject_color = hexToStoredColor(hex);
+  }
+
+  randomizeFormSubjectColor(): void {
+    this.form.subject_color = generatePastelColor();
   }
 
   load() {
@@ -639,7 +657,8 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   balanceUnitLabel(student: Student | null | undefined): string {
-    return resolveRateUnit(student?.rate_unit) === 'lesson' ? this.t.lessonsShort : this.t.hoursShort;
+    const lesson = resolveRateUnit(student?.rate_unit) === 'lesson';
+    return lesson ? this.t.lessonsShort : this.t.hoursShort;
   }
 
   formatStudentBalance(student: Student): string {
@@ -748,8 +767,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
   formatTopupSummaryLine(student: Student): string {
     const units = this.topupUnits();
     const pretty = Number.isInteger(units) ? String(units) : String(Math.round(units * 100) / 100);
-    const unitLabel =
-      resolveRateUnit(student.rate_unit) === 'hour' ? this.t.hoursShort : this.t.lessonsShort;
+    const unitLabel = this.balanceUnitLabel(student);
     return this.t.topupSummaryLine.replace('{amount}', pretty).replace('{unit}', unitLabel);
   }
 
@@ -760,9 +778,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
   formatTopupUnits(student: Student): string {
     const units = this.topupUnits();
     const pretty = Number.isInteger(units) ? String(units) : String(Math.round(units * 100) / 100);
-    const unitLabel =
-      resolveRateUnit(student.rate_unit) === 'hour' ? this.t.hoursShort : this.t.lessonsShort;
-    return `${pretty} ${unitLabel}`;
+    return `${pretty} ${this.balanceUnitLabel(student)}`;
   }
 
   selectTopupPreset(preset: { id: '1' | '2' | '3'; money: number }): void {
@@ -847,6 +863,8 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.linkCopied.set(false);
     this.form = {
       name: '',
+      subject: '',
+      subject_color: generatePastelColor(),
       rate_per_hour: 0,
       rate_currency: 'EUR',
       timezone: DEFAULT_STUDENT_TIMEZONE,
@@ -920,6 +938,10 @@ export class StudentsComponent implements OnInit, OnDestroy {
     const billing_type = this.billingType();
     return {
       name: this.form.name,
+      subject: this.form.subject.trim() || null,
+      subject_color: this.form.subject.trim()
+        ? this.form.subject_color || generatePastelColor()
+        : null,
       rate_per_hour: this.form.rate_per_hour,
       rate_currency: this.form.rate_currency,
       timezone: this.form.timezone,
@@ -1550,6 +1572,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     this.topupAmountSource.set('money');
     this.topupPreset.set('custom');
     this.topupSummaryVisible.set(false);
+    this.topupSaving.set(false);
     this.setTopupMoneyValue(0);
     this.svc.getOne(id).subscribe({
       next: (student) => {
@@ -1582,6 +1605,9 @@ export class StudentsComponent implements OnInit, OnDestroy {
   }
 
   closeTopup() {
+    if (this.topupSaving()) {
+      return;
+    }
     this.topupTargetId.set(null);
     this.topupSummaryVisible.set(false);
   }
@@ -1682,7 +1708,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
     const id = this.topupTargetId();
     const student = this.topupStudent();
     const n = this.normalizeTopupUnits(this.topupUnits(), student);
-    if (!id || !(n > 0)) {
+    if (!id || !(n > 0) || this.topupSaving()) {
       return;
     }
     const settings = student ? normalizeTelegramSettings(student.telegram_notification_settings) : null;
@@ -1705,10 +1731,12 @@ export class StudentsComponent implements OnInit, OnDestroy {
       payload.send_receipt = this.topupSendReceipt();
     }
     const expectedReceipt = autoReceipt && payload.send_receipt === true;
+    this.topupSaving.set(true);
     this.svc
       .topup(id, payload)
       .subscribe({
         next: (updated) => {
+          this.topupSaving.set(false);
           this.closeTopup();
           this.patchStudent(updated);
           const receiptAttempted = Boolean(
@@ -1720,6 +1748,7 @@ export class StudentsComponent implements OnInit, OnDestroy {
           }
         },
         error: (err) => {
+          this.topupSaving.set(false);
           this.showToast(this.apiErrorMessage(err));
         },
       });
