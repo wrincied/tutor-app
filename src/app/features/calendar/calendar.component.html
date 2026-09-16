@@ -1093,13 +1093,17 @@
               [class.cal-recurrence-end-list__item--active]="recurrenceConfig().endMode === 'never'"
               (click)="onRecurrenceConfigEndModeChange('never')"
             >
-              <span class="cal-recurrence-pick__main">
-                <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
-                <span>{{ opt.label }}</span>
+              <span class="cal-recurrence-end-list__main">
+                <span class="cal-recurrence-end-list__icon-wrap" aria-hidden="true">
+                  <img class="cal-recurrence-end-list__icon" [src]="opt.icon" width="18" height="18" alt="" />
+                </span>
+                <span class="cal-recurrence-end-list__label">{{ opt.label }}</span>
               </span>
-              @if (recurrenceConfig().endMode === 'never') {
-                <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
-              }
+              <span
+                class="cal-recurrence-end-list__radio"
+                [class.cal-recurrence-end-list__radio--on]="recurrenceConfig().endMode === 'never'"
+                aria-hidden="true"
+              ></span>
             </button>
           } @else if (opt.value === 'until') {
             <div
@@ -1113,13 +1117,17 @@
                 [attr.aria-checked]="recurrenceConfig().endMode === 'until'"
                 (click)="onRecurrenceConfigEndModeChange('until')"
               >
-                <span class="cal-recurrence-pick__main">
-                  <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
-                  <span>{{ opt.label }}</span>
+                <span class="cal-recurrence-end-list__main">
+                  <span class="cal-recurrence-end-list__icon-wrap" aria-hidden="true">
+                    <img class="cal-recurrence-end-list__icon" [src]="opt.icon" width="18" height="18" alt="" />
+                  </span>
+                  <span class="cal-recurrence-end-list__label">{{ opt.label }}</span>
                 </span>
-                @if (recurrenceConfig().endMode === 'until') {
-                  <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
-                }
+                <span
+                  class="cal-recurrence-end-list__radio"
+                  [class.cal-recurrence-end-list__radio--on]="recurrenceConfig().endMode === 'until'"
+                  aria-hidden="true"
+                ></span>
               </button>
               @if (recurrenceConfig().endMode === 'until') {
                 <div class="field field--date cal-recurrence-end-list__field">
@@ -1147,13 +1155,17 @@
                 [attr.aria-checked]="recurrenceConfig().endMode === 'count'"
                 (click)="onRecurrenceConfigEndModeChange('count')"
               >
-                <span class="cal-recurrence-pick__main">
-                  <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
-                  <span>{{ opt.label }}</span>
+                <span class="cal-recurrence-end-list__main">
+                  <span class="cal-recurrence-end-list__icon-wrap" aria-hidden="true">
+                    <img class="cal-recurrence-end-list__icon" [src]="opt.icon" width="18" height="18" alt="" />
+                  </span>
+                  <span class="cal-recurrence-end-list__label">{{ opt.label }}</span>
                 </span>
-                @if (recurrenceConfig().endMode === 'count') {
-                  <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
-                }
+                <span
+                  class="cal-recurrence-end-list__radio"
+                  [class.cal-recurrence-end-list__radio--on]="recurrenceConfig().endMode === 'count'"
+                  aria-hidden="true"
+                ></span>
               </button>
               @if (recurrenceConfig().endMode === 'count') {
                 <div class="cal-recurrence-interval cal-recurrence-end-list__field">
