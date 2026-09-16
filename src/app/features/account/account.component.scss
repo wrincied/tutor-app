@@ -23,7 +23,7 @@
 }
 
 .account-page__error {
-  color: var(--danger, #dc2626);
+  color: var(--danger, #cc0000);
 }
 
 .account-page__success {
@@ -546,11 +546,11 @@
   animation: account-toast-in 0.22s ease-out;
 
   @media (max-width: 768px), (max-height: 440px) {
-    bottom: calc(var(--bottom-nav-reserve) + 0.5rem);
+    bottom: calc(var(--bottom-nav-fab-offset) + env(safe-area-inset-bottom, 0px));
   }
 
   &--error {
-    background: #9b1c1c;
+    background: #cc0000;
     box-shadow: 0 12px 32px rgb(155 28 28 / 0.28);
   }
 }

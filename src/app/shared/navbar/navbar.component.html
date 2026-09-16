@@ -11,34 +11,37 @@
       />
       <span class="sidebar-logo__text">Simple4U</span>
     </div>
-    <button
-      type="button"
-      class="sidebar-logo-toggle"
-      [class.sidebar-logo-toggle--collapsed]="collapsed()"
-      (click)="toggle()"
-      [attr.aria-label]="collapsed() ? i18n.nav().sidebarExpand : i18n.nav().sidebarCollapse"
-      [attr.aria-expanded]="!collapsed()"
-      [attr.title]="collapsed() ? i18n.nav().sidebarExpand : i18n.nav().sidebarCollapse"
+  </div>
+
+  <button
+    type="button"
+    class="sidebar-collapse-btn"
+    (click)="toggle()"
+    [attr.aria-label]="collapsed() ? i18n.nav().sidebarExpand : i18n.nav().sidebarCollapse"
+    [attr.aria-expanded]="!collapsed()"
+    [attr.title]="collapsed() ? i18n.nav().sidebarExpand : i18n.nav().sidebarCollapse"
+  >
+    <svg
+      class="sidebar-collapse-btn__icon"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
     >
       @if (collapsed()) {
-        <span class="sidebar-logo-toggle__letter" aria-hidden="true">S</span>
+        <polyline points="9 18 15 12 9 6" />
+        <polyline points="15 18 21 12 15 6" />
       } @else {
-        <svg
-          class="sidebar-logo-toggle__close"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          aria-hidden="true"
-        >
-          <path d="M18 6 6 18M6 6l12 12" />
-        </svg>
+        <polyline points="15 18 9 12 15 6" />
+        <polyline points="9 18 3 12 9 6" />
       }
-    </button>
-  </div>
+    </svg>
+  </button>
 
   <nav class="nav-links">
     <a [routerLink]="lp('/app/home')" routerLinkActive="active" class="nav-link">

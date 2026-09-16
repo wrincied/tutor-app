@@ -47,6 +47,7 @@ export function lessonsFromFinanceBreakdown(
         reminder_sent: false,
         occurrenceKey: row.id,
         isRecurring: row.isRecurring,
+        paymentUnpaid: row.paymentUnpaid === true,
       } as CalendarLesson;
 
       return {
@@ -89,12 +90,13 @@ export function studentsLowBalance(students: readonly Student[], maxBalance = 1)
     .sort((left, right) => left.balance_lessons - right.balance_lessons);
 }
 
-export type HomePaymentBadge = { kind: 'package' | 'unpaid'; text: string };
+export type HomePaymentBadge = { kind: 'package' | 'unpaid' | 'paid'; text: string };
 
 /** Бейдж оплаты для карточки урока на дашборде. */
 export function paymentBadgeForStudent(
   student: Student | null | undefined,
-  labels: { package: string; packageProgress: string; unpaid: string },
+  labels: { package: string; packageProgress: string; unpaid: string; paid?: string },
+  lesson?: Pick<CalendarLesson, 'status' | 'paymentUnpaid'> | null,
 ): HomePaymentBadge {
   if (!student) {
     return { kind: 'unpaid', text: labels.unpaid };
@@ -104,6 +106,19 @@ export function paymentBadgeForStudent(
   const balance = Number(student.balance_lessons) || 0;
   const unpaid = Number(student.unpaid_lessons_count) || 0;
   const packSize = Number(student.last_topup?.units) || 0;
+  const status = String(lesson?.status || '');
+  const isBillableDone =
+    status === 'completed' || status === 'missed' || status === 'canceled';
+
+  if (isBillableDone && lesson?.paymentUnpaid === true) {
+    return { kind: 'unpaid', text: labels.unpaid };
+  }
+  if (isBillableDone && lesson?.paymentUnpaid === false) {
+    return {
+      kind: 'paid',
+      text: labels.paid || labels.package,
+    };
+  }
 
   if (billing === 'postpaid') {
     return unpaid > 0

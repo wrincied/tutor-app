@@ -645,7 +645,7 @@ const AUTH: Record<Lang, AuthStrings> = {
     loggingIn: 'Входим...',
     createAccount: 'Создать аккаунт',
     creating: 'Создаём...',
-    backHome: 'На главную',
+    backHome: 'Назад',
     notFoundTitle: 'Страница не найдена',
     notFoundBody: 'Такого адреса нет. Проверьте ссылку или вернитесь в кабинет.',
     notFoundGoApp: 'В кабинет',
@@ -811,7 +811,7 @@ const AUTH: Record<Lang, AuthStrings> = {
     loggingIn: 'Signing in...',
     createAccount: 'Create account',
     creating: 'Creating...',
-    backHome: 'Back to home',
+    backHome: 'Back',
     notFoundTitle: 'Page not found',
     notFoundBody: 'That address does not exist. Check the link or go back to your workspace.',
     notFoundGoApp: 'Open workspace',
@@ -974,7 +974,7 @@ const AUTH: Record<Lang, AuthStrings> = {
     loggingIn: 'Anmeldung...',
     createAccount: 'Konto erstellen',
     creating: 'Wird erstellt...',
-    backHome: 'Zur Startseite',
+    backHome: 'Zurück',
     notFoundTitle: 'Seite nicht gefunden',
     notFoundBody:
       'Diese Adresse gibt es nicht. Prüfen Sie den Link oder kehren Sie zum Arbeitsbereich zurück.',
@@ -1140,7 +1140,7 @@ const AUTH: Record<Lang, AuthStrings> = {
     loggingIn: 'Кіруде...',
     createAccount: 'Аккаунт құру',
     creating: 'Құрылуда...',
-    backHome: 'Басты бетке',
+    backHome: 'Артқа',
     notFoundTitle: 'Бет табылмады',
     notFoundBody: 'Мұндай мекенжай жоқ. Сілтемені тексеріңіз немесе кабинетке оралыңыз.',
     notFoundGoApp: 'Кабинетке',
@@ -1239,7 +1239,7 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
       'Мы обрабатываем персональные данные на основании DSGVO/TKG. Ниже — краткое резюме; полный немецкий текст отдаётся через CMS.',
     section1Title: 'Ответственный (Verantwortlicher)',
     section1Body:
-      'Оператор Simple4U. Контакт: support@simple4u.com. Реквизиты: см. Impressum ([Firmenname], [Anschrift], [Telefon]).',
+      'Оператор Simple4U. Контакт: support@simple4u.at. Реквизиты: см. Impressum ([Firmenname], [Anschrift], [Telefon]).',
     section2Title: 'Какие данные мы обрабатываем',
     section2Body:
       'IP и технические данные; email и имя аккаунта; данные об учениках, уроках и финансах; Stripe при оплате; Telegram chat ID при привязке; cookies/аналитика.',
@@ -1251,7 +1251,7 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
       'Firebase/Google, Stripe, при необходимости Telegram, хостинг в EU. Передача в США — EU-US Data Privacy Framework / SCC. Хранение: пока есть аккаунт; платежи — по налоговым срокам.',
     section5Title: 'Ваши права и жалоба',
     section5Body:
-      'Доступ, исправление, удаление, ограничение, переносимость, возражение, отзыв согласия — support@simple4u.com. Жалоба: надзорный орган (AT: Datenschutzbehörde, dsb.gv.at). Art. 22 нет.',
+      'Доступ, исправление, удаление, ограничение, переносимость, возражение, отзыв согласия — support@simple4u.at. Жалоба: надзорный орган (AT: Datenschutzbehörde, dsb.gv.at). Art. 22 нет.',
   },
   en: {
     ...LEGAL_COMMON.en,
@@ -1260,7 +1260,7 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
       'We process personal data under the GDPR and TKG. Short summary below; the full German policy is served via CMS.',
     section1Title: 'Controller (Verantwortlicher)',
     section1Body:
-      'Operator of Simple4U. Contact: support@simple4u.com. Legal details: see Impressum ([Firmenname], [Anschrift], [Telefon]).',
+      'Operator of Simple4U. Contact: support@simple4u.at. Legal details: see Impressum ([Firmenname], [Anschrift], [Telefon]).',
     section2Title: 'What data we process',
     section2Body:
       'IP and technical visit data; account email and name; student, lesson and finance data you enter; Stripe payment data; Telegram chat ID if linked; cookies/analytics.',
@@ -1272,7 +1272,7 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
       'Firebase/Google, Stripe, Telegram if used, EU hosting. US transfers may rely on the EU-US Data Privacy Framework / SCCs. Retention: while the account exists; payments per tax rules.',
     section5Title: 'Your rights and complaints',
     section5Body:
-      'Access, rectification, erasure, restriction, portability, objection, withdraw consent — support@simple4u.com. Complaint to a supervisory authority (AT: dsb.gv.at). No Art. 22 automated decisions.',
+      'Access, rectification, erasure, restriction, portability, objection, withdraw consent — support@simple4u.at. Complaint to a supervisory authority (AT: dsb.gv.at). No Art. 22 automated decisions.',
   },
   de: {
     ...LEGAL_COMMON.de,
@@ -1281,7 +1281,7 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
       'Wir verarbeiten personenbezogene Daten auf Grundlage von DSGVO und TKG. Kurzfassung; der vollständige Text wird über CMS / Server-Default ausgeliefert.',
     section1Title: 'Verantwortlicher',
     section1Body:
-      'Betreiber von Simple4U. E-Mail: support@simple4u.com. Anschrift/Firma: siehe Impressum ([Firmenname], [Anschrift], [Telefon]).',
+      'Betreiber von Simple4U. E-Mail: support@simple4u.at. Anschrift/Firma: siehe Impressum ([Firmenname], [Anschrift], [Telefon]).',
     section2Title: 'Welche Daten wir verarbeiten',
     section2Body:
       'IP und technische Verbindungsdaten; Konto-E-Mail und Name; Schüler-, Unterrichts- und Finanzdaten; Zahlungsdaten über Stripe; Telegram-Chat-ID bei Verknüpfung; Cookies/Analytics.',
@@ -1293,7 +1293,7 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
       'Firebase/Google, Stripe, ggf. Telegram, Hosting in der EU. Übermittlungen in die USA ggf. über EU-US Data Privacy Framework / SCC. Speicherung: solange das Konto besteht; Zahlungsdaten nach steuerlichen Fristen.',
     section5Title: 'Ihre Rechte und Beschwerde',
     section5Body:
-      'Auskunft, Berichtigung, Löschung, Einschränkung, Portabilität, Widerspruch, Widerruf — support@simple4u.com. Beschwerde bei einer Aufsichtsbehörde (AT: Datenschutzbehörde, dsb.gv.at). Keine automatisierte Entscheidung nach Art. 22 DSGVO.',
+      'Auskunft, Berichtigung, Löschung, Einschränkung, Portabilität, Widerspruch, Widerruf — support@simple4u.at. Beschwerde bei einer Aufsichtsbehörde (AT: Datenschutzbehörde, dsb.gv.at). Keine automatisierte Entscheidung nach Art. 22 DSGVO.',
   },
   kz: {
     ...LEGAL_COMMON.kz,
@@ -1302,7 +1302,7 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
       'Біз деректерді DSGVO/TKG негізінде өңдейміз. Қысқаша түйіндеме; толық неміс мәтіні CMS арқылы беріледі.',
     section1Title: 'Жауапты тұлға (Verantwortlicher)',
     section1Body:
-      'Simple4U операторы. Байланыс: support@simple4u.com. Заңды деректемелер: Impressum ([Firmenname], [Anschrift], [Telefon]).',
+      'Simple4U операторы. Байланыс: support@simple4u.at. Заңды деректемелер: Impressum ([Firmenname], [Anschrift], [Telefon]).',
     section2Title: 'Қандай деректер',
     section2Body:
       'IP және техникалық деректер; аккаунт email/аты; оқушы, сабақ, қаржы деректері; Stripe; Telegram chat ID; cookies/аналитика.',
@@ -1314,7 +1314,7 @@ const LEGAL_DATA: Record<Lang, LegalDataProcessingStrings> = {
       'Firebase/Google, Stripe, Telegram (қажет болса), EU хостинг. АҚШ — DPF/SCC. Сақтау: аккаунт бар кезде; төлемдер — салық мерзімі.',
     section5Title: 'Құқықтарыңыз және шағым',
     section5Body:
-      'Қол жеткізу, түзету, жою — support@simple4u.com. Шағым: қадағалау органы (AT: dsb.gv.at). Art. 22 жоқ.',
+      'Қол жеткізу, түзету, жою — support@simple4u.at. Шағым: қадағалау органы (AT: dsb.gv.at). Art. 22 жоқ.',
   },
   uk: LEGAL_DATA_UK,
   by: LEGAL_DATA_BY,

@@ -11,14 +11,14 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
-import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { UserService } from '../../core/services/user.service';
 import type { UserProfile } from '@interfaces';
 import { stripLocalePrefix } from '../../core/i18n/locale-url';
 import { LocaleRouter } from '../../core/i18n/locale-router.service';
 
-const MORE_ROUTES = ['/app/workspace', '/app/account', '/app/admin', '/app/pricing'];
+/** Routes that live under the admin-only ⋯ sheet. */
+const MORE_ROUTES = ['/app/workspace', '/app/admin'];
 
 @Component({
   selector: 'app-bottom-nav',
@@ -29,7 +29,6 @@ const MORE_ROUTES = ['/app/workspace', '/app/account', '/app/admin', '/app/prici
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BottomNavComponent {
-  private readonly auth = inject(AuthService);
   private readonly userSvc = inject(UserService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -94,10 +93,5 @@ export class BottomNavComponent {
 
   closeMore(): void {
     this.moreOpen.set(false);
-  }
-
-  logout(): void {
-    this.moreOpen.set(false);
-    this.auth.logout().subscribe();
   }
 }

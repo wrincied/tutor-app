@@ -1,6 +1,6 @@
 <article class="help-page">
   <header class="help-page__header u-rise">
-    <a [routerLink]="lp('/')" class="help-page__back">← {{ i18n.authUi().backHome }}</a>
+    <a [routerLink]="lp('/')" class="help-page__back"> {{ i18n.authUi().backHome }}</a>
   </header>
 
   @if (loading()) {
@@ -25,12 +25,19 @@
     </ul>
 
     <div class="help-page__actions u-rise u-rise-delay-2">
-      <a href="#landing-v2-faq" class="help-page__cta help-page__cta--ghost" (click)="openFaq($event)">{{
-        i18n.authUi().helpFaqCta
-      }}</a>
+      <a
+        href="#landing-v2-faq"
+        class="help-page__cta help-page__cta--ghost"
+        (click)="openFaq($event)"
+        >{{ i18n.authUi().helpFaqCta }}</a
+      >
     </div>
 
-    <section class="help-page__form-block u-rise u-rise-delay-3" appReveal aria-labelledby="help-form-title">
+    <section
+      class="help-page__form-block u-rise u-rise-delay-3"
+      appReveal
+      aria-labelledby="help-form-title"
+    >
       <h2 id="help-form-title">{{ i18n.helpFormUi().formTitle }}</h2>
       <p class="help-page__mail-hint">
         {{ mailHintText() }}
@@ -94,7 +101,11 @@
           <p class="help-page__error" role="alert">{{ error() }}</p>
         }
 
-        <button type="submit" class="help-page__cta help-page__cta--solid" [disabled]="submitting()">
+        <button
+          type="submit"
+          class="help-page__cta help-page__cta--solid"
+          [disabled]="submitting()"
+        >
           {{ submitting() ? i18n.helpFormUi().sending : i18n.helpFormUi().submit }}
         </button>
         <app-recaptcha-legal />

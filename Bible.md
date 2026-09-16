@@ -215,7 +215,9 @@ firebase deploy --only hosting --project tutorassis
 firebase deploy --only apphosting:tutor-app-backend --project tutorassis
 ```
 
-CORS: production `FRONTEND_URL` is only `simple4u.at` / `www` / Firebase Hosting. `localhost` is stripped when `NODE_ENV=production` (`backend/src/utils/corsOrigins.js`). After changing CORS, redeploy the API.
+CORS: production `FRONTEND_URL` includes `simple4u.at` / `www` / Firebase Hosting / `wrincied.github.io` (gh-pages preview). `localhost` is stripped when `NODE_ENV=production` (`backend/src/utils/corsOrigins.js`). After changing CORS, redeploy the API and shift App Hosting traffic to the new revision.
+
+Mobile shell: floating bottom nav overlays full-height `.app-content`; clearance is `--bottom-nav-pad` on scroll areas (not `--bottom-nav-reserve` height subtract).
 
 ---
 
@@ -248,6 +250,8 @@ simple4u-bot
 ```
 
 HTTP API для Express: `POST /v1/notify/...` + `X-Bot-Secret`. Подробности: `bot/README.md`.
+
+Prod Cloud Run (`simple4u-bot`, `europe-west4`): держать **`--min-instances=1`**, иначе после простоя scale-to-zero → cold start. При `gcloud run deploy --source .` всегда передавать `--min-instances=1 --max-instances=3` (иначе minScale сбрасывается).
 
 ---
 

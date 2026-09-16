@@ -7,7 +7,7 @@
 Simple4U is a web app for independent tutors: calendar and recurring lessons, student records, package balances, finance/tax estimates, and optional Telegram reminders.
 
 Operator: Arsen Mileuski, Köflacher Gasse 9, 2.218, 8020 Graz, Austria.
-Email: support@simple4u.com
+Email: support@simple4u.at
 Imprint: https://simple4u.at/legal/impressum
 
 ## Public pages

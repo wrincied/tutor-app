@@ -1,4 +1,4 @@
-<div class="cal-page">
+<div class="cal-page" [style.--cal-grid-underlay.px]="gridUnderlayPx()">
   <div class="cal-page__inner">
     @if (loadError) {
       <p class="cal-error">{{ loadError }}</p>
@@ -106,6 +106,11 @@
         [viewModeOptions]="headerViewModeOptions()"
         [modesMenuOpen]="modesMenuOpen()"
         [studentsSidebarOpen]="studentsSidebarOpen()"
+        [showZoomControls]="showGridZoomControls()"
+        [canZoomIn]="canZoomIn()"
+        [canZoomOut]="canZoomOut()"
+        [zoomInLabel]="i18n.calendarUi().zoomIn"
+        [zoomOutLabel]="i18n.calendarUi().zoomOut"
         (burgerClick)="toggleModesMenu()"
         (todayClick)="goToToday()"
         (prevClick)="navPrev()"
@@ -113,6 +118,8 @@
         (studentsClick)="toggleStudentsSidebar()"
         (viewModeChange)="setViewMode($event)"
         (statusChipClick)="toggleStatusFilter($event)"
+        (zoomInClick)="zoomGridIn()"
+        (zoomOutClick)="zoomGridOut()"
       />
 
       <div class="cal-layout">
@@ -242,15 +249,16 @@
                     #gridScroll
                     #scrollContainer
                     [style.--cal-day-count]="dayColumnCount()"
+                    [style.--cal-grid-underlay.px]="gridUnderlayPx()"
                     (scroll)="onGridHorizontalScroll($event)"
                     (dragover)="onScrollContainerDragOver($event)"
                   >
                     <div
                       class="cal-grid-body"
                       [style.--cal-grid-height.px]="gridHeightPx()"
-                      [style.--cal-grid-bottom-air.px]="gridBottomPaddingPx"
+                      [style.--cal-hour-height.px]="hourHeightPx()"
                     >
-                      <div class="cal-time-axis" [style.height.px]="gridHeightPx()">
+                      <div class="cal-time-axis">
                         @for (hour of gridHours(); track hour) {
                           <div class="cal-time-slot" [style.height.px]="hourHeightPx()">
                             {{ formatHourLabel(hour) }}
@@ -300,6 +308,7 @@
                               @if (showPhantomInColumn(col)) {
                                 <div
                                   class="lesson-phantom cal-lesson-card"
+                                  [class.cal-lesson-card--week-fit]="isWeekFitLayout()"
                                   [class.cal-lesson-card--scheduled]="
                                     draggedLesson()?.status === 'scheduled'
                                   "
@@ -315,7 +324,7 @@
                                   [style.top.px]="phantomTopForColumn(col) ?? 0"
                                 >
                                   @if (draggedLesson(); as phantomLesson) {
-                                    <div class="cal-lesson-card__row cal-lesson-card__row--top">
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--name">
                                       <p class="cal-lesson-card__title">
                                         <span
                                           class="cal-lesson-card__student-dot"
@@ -331,19 +340,28 @@
                                           }}
                                         </span>
                                       </p>
-                                      <span class="cal-lesson-card__region">{{
-                                        formatLessonRegion(
-                                          phantomLesson,
-                                          currentDropTime() || displayScheduledAt(phantomLesson)
-                                        )
-                                      }}</span>
                                     </div>
-                                    <div class="cal-lesson-card__row cal-lesson-card__row--bottom">
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--time">
                                       <span class="cal-lesson-card__time lesson-phantom__time">{{
                                         phantomDropTimeLabel() || formatLessonTimeRange(phantomLesson)
                                       }}</span>
+                                    </div>
+                                    @if (getStudentSubject(phantomLesson.student_id); as phantomSubject) {
+                                      <div class="cal-lesson-card__row cal-lesson-card__row--subject">
+                                        <span
+                                          class="cal-lesson-card__subject"
+                                          [class.cal-lesson-card__subject--tinted]="
+                                            !!getStudentSubjectColor(phantomLesson.student_id)
+                                          "
+                                          [style.--subject-color]="
+                                            getStudentSubjectColor(phantomLesson.student_id) || null
+                                          "
+                                        >{{ phantomSubject }}</span>
+                                      </div>
+                                    }
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--rate">
                                       <span class="cal-lesson-card__rate">{{
-                                        formatLessonSnapshotRate(phantomLesson)
+                                        formatLessonSnapshotRate(phantomLesson, isCompactHeader())
                                       }}</span>
                                     </div>
                                   }
@@ -360,9 +378,11 @@
                                   [status]="lesson.status"
                                   [studentName]="getStudentName(lesson.student_id)"
                                   [studentColor]="getStudentColor(lesson.student_id)"
+                                  [subjectText]="getStudentSubject(lesson.student_id)"
+                                  [subjectColor]="getStudentSubjectColor(lesson.student_id)"
                                   [weekFit]="isWeekFitLayout()"
-                                  [regionText]="formatLessonRegion(lesson)"
-                                  [rateText]="formatLessonSnapshotRate(lesson)"
+                                  [compact]="isCompactHeader()"
+                                  [rateText]="formatLessonSnapshotRate(lesson, isCompactHeader())"
                                   [timeText]="formatLessonTimeRange(lesson)"
                                   [lastPaid]="!!lesson.isLastPaid"
                                   [dragging]="dragActiveLessonId() === lesson._id"
@@ -959,28 +979,23 @@
       <ul class="cal-lesson-form-v2__occupancy-list">
         @for (slot of lessonFormOccupancySlots(); track slot.id) {
           <li
-            class="cal-lesson-form-v2__slot"
+            class="cal-lesson-form-v2__slot cal-lesson-form-v2__slot--card"
             [class.cal-lesson-form-v2__slot--draft]="slot.kind === 'draft'"
             [class.cal-lesson-form-v2__slot--conflict]="slot.conflict"
-            [class.cal-lesson-form-v2__slot--scheduled]="slot.status === 'scheduled'"
-            [class.cal-lesson-form-v2__slot--completed]="slot.status === 'completed'"
-            [class.cal-lesson-form-v2__slot--missed]="slot.status === 'missed'"
-            [class.cal-lesson-form-v2__slot--canceled]="slot.status === 'canceled'"
           >
-            <span class="cal-lesson-form-v2__slot-name">
-              <span
-                class="cal-lesson-form-v2__slot-student-dot"
-                [style.background-color]="slot.studentColor"
-                aria-hidden="true"
-              ></span>
-              <span>{{ slot.studentName }}</span>
-            </span>
-            <div class="cal-lesson-form-v2__slot-meta">
-              <span class="cal-lesson-form-v2__slot-time">{{ slot.timeLabel }}</span>
-              @if (slot.conflict) {
-                <span class="cal-lesson-form-v2__slot-error">{{ i18n.calendarUi().timeSlotBusy }}</span>
-              }
-            </div>
+            <app-lesson-card
+              [staticLayout]="true"
+              [status]="slot.status"
+              [studentName]="slot.studentName"
+              [studentColor]="slot.studentColor"
+              [subjectText]="slot.subjectText"
+              [subjectColor]="slot.subjectColor"
+              [rateText]="slot.rateText"
+              [timeText]="slot.timeLabel"
+            />
+            @if (slot.conflict) {
+              <span class="cal-lesson-form-v2__slot-error">{{ i18n.calendarUi().timeSlotBusy }}</span>
+            }
           </li>
         }
       </ul>
@@ -1078,13 +1093,17 @@
               [class.cal-recurrence-end-list__item--active]="recurrenceConfig().endMode === 'never'"
               (click)="onRecurrenceConfigEndModeChange('never')"
             >
-              <span class="cal-recurrence-pick__main">
-                <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
-                <span>{{ opt.label }}</span>
+              <span class="cal-recurrence-end-list__main">
+                <span class="cal-recurrence-end-list__icon-wrap" aria-hidden="true">
+                  <img class="cal-recurrence-end-list__icon" [src]="opt.icon" width="18" height="18" alt="" />
+                </span>
+                <span class="cal-recurrence-end-list__label">{{ opt.label }}</span>
               </span>
-              @if (recurrenceConfig().endMode === 'never') {
-                <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
-              }
+              <span
+                class="cal-recurrence-end-list__radio"
+                [class.cal-recurrence-end-list__radio--on]="recurrenceConfig().endMode === 'never'"
+                aria-hidden="true"
+              ></span>
             </button>
           } @else if (opt.value === 'until') {
             <div
@@ -1098,13 +1117,17 @@
                 [attr.aria-checked]="recurrenceConfig().endMode === 'until'"
                 (click)="onRecurrenceConfigEndModeChange('until')"
               >
-                <span class="cal-recurrence-pick__main">
-                  <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
-                  <span>{{ opt.label }}</span>
+                <span class="cal-recurrence-end-list__main">
+                  <span class="cal-recurrence-end-list__icon-wrap" aria-hidden="true">
+                    <img class="cal-recurrence-end-list__icon" [src]="opt.icon" width="18" height="18" alt="" />
+                  </span>
+                  <span class="cal-recurrence-end-list__label">{{ opt.label }}</span>
                 </span>
-                @if (recurrenceConfig().endMode === 'until') {
-                  <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
-                }
+                <span
+                  class="cal-recurrence-end-list__radio"
+                  [class.cal-recurrence-end-list__radio--on]="recurrenceConfig().endMode === 'until'"
+                  aria-hidden="true"
+                ></span>
               </button>
               @if (recurrenceConfig().endMode === 'until') {
                 <div class="field field--date cal-recurrence-end-list__field">
@@ -1132,13 +1155,17 @@
                 [attr.aria-checked]="recurrenceConfig().endMode === 'count'"
                 (click)="onRecurrenceConfigEndModeChange('count')"
               >
-                <span class="cal-recurrence-pick__main">
-                  <img class="cal-recurrence-pick__icon" [src]="opt.icon" width="20" height="20" alt="" aria-hidden="true" />
-                  <span>{{ opt.label }}</span>
+                <span class="cal-recurrence-end-list__main">
+                  <span class="cal-recurrence-end-list__icon-wrap" aria-hidden="true">
+                    <img class="cal-recurrence-end-list__icon" [src]="opt.icon" width="18" height="18" alt="" />
+                  </span>
+                  <span class="cal-recurrence-end-list__label">{{ opt.label }}</span>
                 </span>
-                @if (recurrenceConfig().endMode === 'count') {
-                  <span class="cal-recurrence-pick__check" aria-hidden="true">✓</span>
-                }
+                <span
+                  class="cal-recurrence-end-list__radio"
+                  [class.cal-recurrence-end-list__radio--on]="recurrenceConfig().endMode === 'count'"
+                  aria-hidden="true"
+                ></span>
               </button>
               @if (recurrenceConfig().endMode === 'count') {
                 <div class="cal-recurrence-interval cal-recurrence-end-list__field">

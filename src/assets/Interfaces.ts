@@ -806,10 +806,18 @@ export interface AuthStrings {
   landingBotBody: string;
   landingMockComingSoon: string;
   landingMockBotHeader: string;
-  landingMockBotBalance: string;
-  landingMockBotPayment: string;
-  landingMockBotLessonStart: string;
-  landingMockBotHomework: string;
+  /** Live-style notify cards (emoji title + body lines + tutor/footer). */
+  landingMockBotBalanceTitle: string;
+  landingMockBotBalanceBody: string;
+  landingMockBotPaymentTitle: string;
+  landingMockBotPaymentBody: string;
+  landingMockBotLessonStartTitle: string;
+  landingMockBotLessonStartBody: string;
+  landingMockBotLessonStartLink: string;
+  landingMockBotHomeworkTitle: string;
+  landingMockBotHomeworkBody: string;
+  landingMockBotTutor: string;
+  landingMockBotBrand: string;
   /** Vacation / absence mode preview. */
   landingVacationTitle: string;
   landingVacationBody: string;
@@ -1221,6 +1229,12 @@ export interface CalendarStrings {
   statusMissed: string;
   statusCanceled: string;
   statusLegendAria: string;
+  /** Aria: увеличить высоту часа в day/week сетке. */
+  zoomIn: string;
+  /** Aria: уменьшить высоту часа. */
+  zoomOut: string;
+  /** Aria: сбросить масштаб сетки. */
+  zoomReset: string;
   durationHourShort: string;
   durationMinShort: string;
   durationOneHour: string;
@@ -1321,6 +1335,7 @@ export interface HomeStrings {
   paymentPackage: string;
   paymentPackageProgress: string;
   paymentUnpaid: string;
+  paymentPaid: string;
   attentionTitle: string;
   telegramBotTitle: string;
   telegramBotActive: string;
@@ -1473,6 +1488,8 @@ export interface FinanceLessonBreakdown {
   incomeType: 'completed' | 'scheduled' | 'none';
   hiddenReason?: 'no_schedule' | 'broken_recurrence' | null;
   scheduleDerived?: boolean;
+  /** True when this lesson is still unpaid after package debt / postpaid (FIFO). */
+  paymentUnpaid?: boolean;
 }
 
 export interface FinanceExpenseBreakdown {
@@ -1605,6 +1622,14 @@ export interface StudentStrings {
   paymentHistoryTitle: string;
   paymentHistoryEmpty: string;
   name: string;
+  /** Label for optional subject / course field */
+  subject: string;
+  /** Placeholder e.g. Mathematik, English */
+  subjectPlaceholder: string;
+  /** Aria/title for subject pill color picker */
+  subjectColor: string;
+  /** Hint under subject + color picker */
+  subjectColorHint: string;
   ratePerLesson: string;
   ratePerHour: string;
   /** Rate amount field label when hourly basis is selected */
@@ -1625,6 +1650,9 @@ export interface StudentStrings {
   balanceLessons: string;
   perLesson: string;
   perHour: string;
+  /** Compact suffixes for narrow calendar / mobile (e.g. DE: / Utd, / Std). */
+  perLessonCompact: string;
+  perHourCompact: string;
   timezone: string;
   edit: string;
   delete: string;
@@ -1807,6 +1835,9 @@ export interface StudentStrings {
   quickActionsTitle: string;
   lessonsShort: string;
   hoursShort: string;
+  /** Compact unit words for narrow UI (e.g. DE: Eh, Std). */
+  lessonsShortCompact: string;
+  hoursShortCompact: string;
   billingSectionTitle: string;
   billingTypePackage: string;
   billingTypePostpaid: string;
@@ -1920,6 +1951,12 @@ export interface Lesson {
   balance_units_debited?: number;
   /** Списание/буфер 30 мин обработан (true = с баланса уже списано). */
   billing_processed?: boolean;
+  /** Урок проведён в долг и ещё не закрыт пополнением. */
+  unpaid_debt?: boolean;
+  /** ISO: урок закрыт платежом / пополнением (FIFO). */
+  settled_by_payment_at?: string | null;
+  /** UI/finance: урок ещё в неоплаченном долге. */
+  paymentUnpaid?: boolean;
   /** Время перевода в completed (старт 30-минутного буфера). */
   completed_at?: string;
   billing_processed_at?: string;
@@ -1988,6 +2025,10 @@ export interface StudentLastTopup {
 export interface Student {
   _id: string;
   name: string;
+  /** Optional subject / course label (e.g. Mathematik), shown as calendar pill. */
+  subject?: string | null;
+  /** Pastel color for the subject pill (HSL/hex); ignored when subject is empty. */
+  subject_color?: string | null;
   rate_per_hour: number;
   /** Код валюты ставки; у старых записей может не быть — тогда на фронте подставляем EUR. */
   rate_currency?: RateCurrency;

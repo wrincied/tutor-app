@@ -153,8 +153,10 @@
   margin-top: auto;
   padding: 1.25rem 0 0.5rem;
   border-top: 1px solid color-mix(in srgb, var(--nav-border, #e2e8f0) 85%, transparent);
+  @media (max-width: 768px), (max-height: 440px) {
+    padding-bottom: var(--bottom-nav-pad);
+  }
 }
-
 .account-page__logout .account-logout-btn {
   display: inline-flex;
   align-items: center;

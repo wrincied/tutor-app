@@ -47,9 +47,10 @@ body {
 
   @media (max-width: 768px), (max-height: 440px) {
     margin-left: 0;
-    height: calc(100dvh - var(--bottom-nav-reserve));
-    padding: 16px 16px calc(16px + var(--bottom-nav-content-clearance));
-    margin-bottom: 64px;
+    /* Full viewport — floating nav overlays content (no bottom chrome gap) */
+    height: 100dvh;
+    height: 100svh;
+    padding: 16px 16px 0;
   }
 
   /* app-calendar живёт внутри .app-page-host, не как прямой потомок */
@@ -65,11 +66,11 @@ body {
     padding: 0;
 
     @media (max-width: 768px), (max-height: 440px) {
-      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-      height: calc(100dvh - var(--bottom-nav-reserve));
-      height: calc(100svh - var(--bottom-nav-reserve));
-      max-height: calc(100dvh - var(--bottom-nav-reserve));
-      max-height: calc(100svh - var(--bottom-nav-reserve));
+      padding: 0;
+      height: 100dvh;
+      height: 100svh;
+      max-height: 100dvh;
+      max-height: 100svh;
     }
   }
 }
@@ -91,6 +92,11 @@ app-header {
   overflow: hidden;
   touch-action: none;
   border-radius: 5px;
+
+  @media (max-width: 768px), (max-height: 440px) {
+    /* Meet the bottom edge so the island overlays the page, not a chrome strip */
+    border-radius: 5px 5px 0 0;
+  }
 
   > router-outlet {
     display: contents;
@@ -238,7 +244,7 @@ html.app-select-dropdown-open {
 }
 
 /**
- * Hide Google reCAPTCHA floating badge (Enterprise / v3).
+ * Hide Google reCAPTCHA floating badge (v3).
  * Allowed only with visible Privacy Policy + Terms disclosure near forms.
  * @see https://developers.google.com/recaptcha/docs/faq#id-like-to-hide-the-recaptcha-badge.-what-is-allowed
  */

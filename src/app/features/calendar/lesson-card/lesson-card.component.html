@@ -1,4 +1,4 @@
-<div class="cal-lesson-card__row cal-lesson-card__row--top">
+<div class="cal-lesson-card__row cal-lesson-card__row--name">
   <p class="cal-lesson-card__title">
     <span
       class="cal-lesson-card__student-dot"
@@ -7,13 +7,22 @@
     ></span>
     <span class="cal-lesson-card__student-name">{{ studentName() }}</span>
   </p>
-  @if (regionText()) {
-    <span class="cal-lesson-card__region">{{ regionText() }}</span>
-  }
 </div>
-<div class="cal-lesson-card__row cal-lesson-card__row--bottom">
-  <span class="cal-lesson-card__time">{{ timeText() }}</span>
-  @if (rateText()) {
+@if (timeText()) {
+  <div class="cal-lesson-card__row cal-lesson-card__row--time">
+    <span class="cal-lesson-card__time">{{ timeText() }}</span>
+  </div>
+}
+@if (showSubject()) {
+  <div class="cal-lesson-card__row cal-lesson-card__row--subject">
+    <span
+      class="cal-lesson-card__subject"
+      [class.cal-lesson-card__subject--tinted]="!!subjectColorCss()"
+    >{{ subjectText() }}</span>
+  </div>
+}
+@if (rateText()) {
+  <div class="cal-lesson-card__row cal-lesson-card__row--rate">
     <span class="cal-lesson-card__rate">{{ rateText() }}</span>
-  }
-</div>
+  </div>
+}
