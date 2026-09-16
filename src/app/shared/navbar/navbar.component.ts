@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, PLATFORM_ID, DestroyRef, OnInit } from '@angular/core';
+import { Component, inject, signal, effect, PLATFORM_ID, OnInit } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,7 +8,6 @@ import { PresenceService } from '../../core/services/presence.service';
 import { MarketingConsentService } from '../../core/services/marketing-consent.service';
 import type { UserProfile } from '@interfaces';
 import { LocaleRouter } from '../../core/i18n/locale-router.service';
-const SIDEBAR_COLLAPSE_BTN_MAX = 890;
 
 @Component({
   selector: 'app-navbar',
@@ -28,27 +27,19 @@ export class NavbarComponent implements OnInit {
   private readonly presence = inject(PresenceService);
   private readonly consent = inject(MarketingConsentService);
   private platformId = inject(PLATFORM_ID);
-  private destroyRef = inject(DestroyRef);
   collapsed = signal(false);
   isSuperAdmin = signal(false);
 
   constructor() {
     effect(() => {
+      if (!isPlatformBrowser(this.platformId)) {
+        return;
+      }
       document.documentElement.style.setProperty(
         '--sidebar-w',
         this.collapsed() ? '64px' : '220px',
       );
     });
-
-    if (isPlatformBrowser(this.platformId)) {
-      const mq = window.matchMedia(`(max-width: ${SIDEBAR_COLLAPSE_BTN_MAX}px)`);
-      const onBreakpoint = () => {
-        if (!mq.matches) this.collapsed.set(false);
-      };
-      mq.addEventListener('change', onBreakpoint);
-      onBreakpoint();
-      this.destroyRef.onDestroy(() => mq.removeEventListener('change', onBreakpoint));
-    }
   }
 
   ngOnInit(): void {

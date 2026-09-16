@@ -806,10 +806,18 @@ export interface AuthStrings {
   landingBotBody: string;
   landingMockComingSoon: string;
   landingMockBotHeader: string;
-  landingMockBotBalance: string;
-  landingMockBotPayment: string;
-  landingMockBotLessonStart: string;
-  landingMockBotHomework: string;
+  /** Live-style notify cards (emoji title + body lines + tutor/footer). */
+  landingMockBotBalanceTitle: string;
+  landingMockBotBalanceBody: string;
+  landingMockBotPaymentTitle: string;
+  landingMockBotPaymentBody: string;
+  landingMockBotLessonStartTitle: string;
+  landingMockBotLessonStartBody: string;
+  landingMockBotLessonStartLink: string;
+  landingMockBotHomeworkTitle: string;
+  landingMockBotHomeworkBody: string;
+  landingMockBotTutor: string;
+  landingMockBotBrand: string;
   /** Vacation / absence mode preview. */
   landingVacationTitle: string;
   landingVacationBody: string;
@@ -1221,6 +1229,12 @@ export interface CalendarStrings {
   statusMissed: string;
   statusCanceled: string;
   statusLegendAria: string;
+  /** Aria: увеличить высоту часа в day/week сетке. */
+  zoomIn: string;
+  /** Aria: уменьшить высоту часа. */
+  zoomOut: string;
+  /** Aria: сбросить масштаб сетки. */
+  zoomReset: string;
   durationHourShort: string;
   durationMinShort: string;
   durationOneHour: string;
@@ -1636,6 +1650,9 @@ export interface StudentStrings {
   balanceLessons: string;
   perLesson: string;
   perHour: string;
+  /** Compact suffixes for narrow calendar / mobile (e.g. DE: / Utd, / Std). */
+  perLessonCompact: string;
+  perHourCompact: string;
   timezone: string;
   edit: string;
   delete: string;
@@ -1818,6 +1835,9 @@ export interface StudentStrings {
   quickActionsTitle: string;
   lessonsShort: string;
   hoursShort: string;
+  /** Compact unit words for narrow UI (e.g. DE: Eh, Std). */
+  lessonsShortCompact: string;
+  hoursShortCompact: string;
   billingSectionTitle: string;
   billingTypePackage: string;
   billingTypePostpaid: string;

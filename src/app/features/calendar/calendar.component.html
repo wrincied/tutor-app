@@ -1,4 +1,4 @@
-<div class="cal-page">
+<div class="cal-page" [style.--cal-grid-underlay.px]="gridUnderlayPx()">
   <div class="cal-page__inner">
     @if (loadError) {
       <p class="cal-error">{{ loadError }}</p>
@@ -106,6 +106,11 @@
         [viewModeOptions]="headerViewModeOptions()"
         [modesMenuOpen]="modesMenuOpen()"
         [studentsSidebarOpen]="studentsSidebarOpen()"
+        [showZoomControls]="showGridZoomControls()"
+        [canZoomIn]="canZoomIn()"
+        [canZoomOut]="canZoomOut()"
+        [zoomInLabel]="i18n.calendarUi().zoomIn"
+        [zoomOutLabel]="i18n.calendarUi().zoomOut"
         (burgerClick)="toggleModesMenu()"
         (todayClick)="goToToday()"
         (prevClick)="navPrev()"
@@ -113,6 +118,8 @@
         (studentsClick)="toggleStudentsSidebar()"
         (viewModeChange)="setViewMode($event)"
         (statusChipClick)="toggleStatusFilter($event)"
+        (zoomInClick)="zoomGridIn()"
+        (zoomOutClick)="zoomGridOut()"
       />
 
       <div class="cal-layout">
@@ -242,15 +249,16 @@
                     #gridScroll
                     #scrollContainer
                     [style.--cal-day-count]="dayColumnCount()"
+                    [style.--cal-grid-underlay.px]="gridUnderlayPx()"
                     (scroll)="onGridHorizontalScroll($event)"
                     (dragover)="onScrollContainerDragOver($event)"
                   >
                     <div
                       class="cal-grid-body"
                       [style.--cal-grid-height.px]="gridHeightPx()"
-                      [style.--cal-grid-bottom-air.px]="gridBottomPaddingPx"
+                      [style.--cal-hour-height.px]="hourHeightPx()"
                     >
-                      <div class="cal-time-axis" [style.height.px]="gridHeightPx()">
+                      <div class="cal-time-axis">
                         @for (hour of gridHours(); track hour) {
                           <div class="cal-time-slot" [style.height.px]="hourHeightPx()">
                             {{ formatHourLabel(hour) }}
@@ -300,6 +308,7 @@
                               @if (showPhantomInColumn(col)) {
                                 <div
                                   class="lesson-phantom cal-lesson-card"
+                                  [class.cal-lesson-card--week-fit]="isWeekFitLayout()"
                                   [class.cal-lesson-card--scheduled]="
                                     draggedLesson()?.status === 'scheduled'
                                   "
@@ -315,7 +324,7 @@
                                   [style.top.px]="phantomTopForColumn(col) ?? 0"
                                 >
                                   @if (draggedLesson(); as phantomLesson) {
-                                    <div class="cal-lesson-card__row cal-lesson-card__row--top">
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--name">
                                       <p class="cal-lesson-card__title">
                                         <span
                                           class="cal-lesson-card__student-dot"
@@ -331,11 +340,10 @@
                                           }}
                                         </span>
                                       </p>
-                                      <span class="cal-lesson-card__region">{{
-                                        formatLessonRegion(
-                                          phantomLesson,
-                                          currentDropTime() || displayScheduledAt(phantomLesson)
-                                        )
+                                    </div>
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--time">
+                                      <span class="cal-lesson-card__time lesson-phantom__time">{{
+                                        phantomDropTimeLabel() || formatLessonTimeRange(phantomLesson)
                                       }}</span>
                                     </div>
                                     @if (getStudentSubject(phantomLesson.student_id); as phantomSubject) {
@@ -351,12 +359,9 @@
                                         >{{ phantomSubject }}</span>
                                       </div>
                                     }
-                                    <div class="cal-lesson-card__row cal-lesson-card__row--bottom">
-                                      <span class="cal-lesson-card__time lesson-phantom__time">{{
-                                        phantomDropTimeLabel() || formatLessonTimeRange(phantomLesson)
-                                      }}</span>
+                                    <div class="cal-lesson-card__row cal-lesson-card__row--rate">
                                       <span class="cal-lesson-card__rate">{{
-                                        formatLessonSnapshotRate(phantomLesson)
+                                        formatLessonSnapshotRate(phantomLesson, isCompactHeader())
                                       }}</span>
                                     </div>
                                   }
@@ -376,8 +381,8 @@
                                   [subjectText]="getStudentSubject(lesson.student_id)"
                                   [subjectColor]="getStudentSubjectColor(lesson.student_id)"
                                   [weekFit]="isWeekFitLayout()"
-                                  [regionText]="formatLessonRegion(lesson)"
-                                  [rateText]="formatLessonSnapshotRate(lesson)"
+                                  [compact]="isCompactHeader()"
+                                  [rateText]="formatLessonSnapshotRate(lesson, isCompactHeader())"
                                   [timeText]="formatLessonTimeRange(lesson)"
                                   [lastPaid]="!!lesson.isLastPaid"
                                   [dragging]="dragActiveLessonId() === lesson._id"
@@ -985,7 +990,6 @@
               [studentColor]="slot.studentColor"
               [subjectText]="slot.subjectText"
               [subjectColor]="slot.subjectColor"
-              [regionText]="slot.regionText"
               [rateText]="slot.rateText"
               [timeText]="slot.timeLabel"
             />

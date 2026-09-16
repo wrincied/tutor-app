@@ -52,6 +52,7 @@ const STATUS_THEME: Record<
     '[class.cal-lesson-card--focus-dim]': 'focusDim()',
     '[class.cal-lesson-card--route-highlight]': 'routeHighlight()',
     '[class.cal-lesson-card--week-fit]': 'weekFit()',
+    '[class.cal-lesson-card--compact]': 'compact()',
     '[class.cal-lesson-card--static]': 'staticLayout()',
     '[style.--status-accent]': 'theme().accent',
     '[style.--status-tint]': 'theme().tint',
@@ -77,6 +78,8 @@ export class LessonCardComponent {
   readonly staticLayout = input(false);
   /** Узкие колонки недели на телефоне. */
   readonly weekFit = input(false);
+  /** Phone / tablet / small laptop — denser card, short rate units from parent. */
+  readonly compact = input(false);
   readonly regionText = input('');
   readonly rateText = input('');
   readonly timeText = input('');
@@ -94,4 +97,8 @@ export class LessonCardComponent {
 
   readonly theme = computed(() => STATUS_THEME[this.status()] ?? STATUS_THEME.scheduled);
   readonly subjectColorCss = computed(() => this.subjectColor().trim() || null);
+  /** Timezone hidden from calendar cards (keeps name / time / price). */
+  readonly showRegion = computed(() => false);
+  /** Subject pill: hide on week-fit; CSS may still clip on short cards. */
+  readonly showSubject = computed(() => !!this.subjectText().trim() && !this.weekFit());
 }

@@ -75,6 +75,13 @@ export class CalendarHeaderComponent {
   readonly modesMenuOpen = input(false);
   readonly studentsSidebarOpen = input(false);
 
+  /** Zoom controls for day/week timeline (hidden in month). */
+  readonly showZoomControls = input(false);
+  readonly canZoomIn = input(true);
+  readonly canZoomOut = input(true);
+  readonly zoomInLabel = input('');
+  readonly zoomOutLabel = input('');
+
   readonly burgerClick = output<void>();
   readonly todayClick = output<void>();
   readonly prevClick = output<void>();
@@ -82,6 +89,8 @@ export class CalendarHeaderComponent {
   readonly studentsClick = output<void>();
   readonly viewModeChange = output<CalendarHeaderViewMode>();
   readonly statusChipClick = output<LessonStatus>();
+  readonly zoomInClick = output<void>();
+  readonly zoomOutClick = output<void>();
 
   readonly statusChips = computed((): CalendarStatusChip[] => {
     const counts = this.statusCounts();

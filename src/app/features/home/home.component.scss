@@ -182,7 +182,7 @@
 .home-dash.app-scroll-page > .scrollable-content.home-dash__body {
   @media (max-width: 768px), (max-height: 440px) {
     padding-top: 0;
-    padding-bottom: calc(var(--bottom-nav-pad) + 3.75rem);
+    padding-bottom: calc(var(--bottom-nav-pad));
   }
 }
 

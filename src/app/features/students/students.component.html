@@ -13,195 +13,216 @@
   </div>
 
   <div class="scrollable-content students-page__body">
-  @if (studentLimitHint(); as limitHint) {
-    <p class="students-page__plan-hint" role="status">
-      {{ limitHint }}
-      <button type="button" class="btn-link" (click)="goToPricingFromGate()">
-        {{ i18n.sharedUi().planUpgradeCta }}
-      </button>
-    </p>
-  }
-
-  @if (resyncMessage(); as msg) {
-    <p class="students-page__success" role="status">{{ msg }}</p>
-  }
-
-  @if (toastMessage(); as toast) {
-    <div class="students-toast" role="status">
-      <span>{{ toast }}</span>
-      <button
-        type="button"
-        class="students-toast__close"
-        (click)="dismissToast()"
-        [attr.aria-label]="t.close"
-      >
-        ×
-      </button>
-    </div>
-  }
-
-  @if (loading()) {
-    <div class="skeleton-page" role="status" aria-busy="true" [attr.aria-label]="t.loading">
-      <span class="sr-only">{{ t.loading }}</span>
-      <div class="skeleton-cards">
-        @for (i of skeletonCardSlots; track i) {
-          <div class="skeleton-card">
-            <div class="skeleton-card__body">
-              <span class="skeleton skeleton--line" style="width: 78%"></span>
-              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 64%"></span>
-              <span class="skeleton skeleton--line skeleton--line-sm" style="width: 36%"></span>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  } @else if (activeStudents().length === 0 && archivedStudents().length === 0) {
-    <p class="hint">{{ t.emptyState }}</p>
-  } @else {
-    <div class="students-toolbar">
-      <div class="students-tabs" role="tablist" aria-label="Student lists">
-        <button
-          type="button"
-          role="tab"
-          class="students-tabs__btn"
-          [class.students-tabs__btn--active]="listTab() === 'active'"
-          [attr.aria-selected]="listTab() === 'active'"
-          (click)="setListTab('active')"
-        >
-          {{ t.tabActive }}
-          @if (activeStudents().length > 0) {
-            <span class="students-tabs__count">{{ activeStudents().length }}</span>
-          }
+    @if (studentLimitHint(); as limitHint) {
+      <p class="students-page__plan-hint" role="status">
+        {{ limitHint }}
+        <button type="button" class="btn-link" (click)="goToPricingFromGate()">
+          {{ i18n.sharedUi().planUpgradeCta }}
         </button>
-        <button
-          type="button"
-          role="tab"
-          class="students-tabs__btn"
-          [class.students-tabs__btn--active]="listTab() === 'archive'"
-          [attr.aria-selected]="listTab() === 'archive'"
-          (click)="setListTab('archive')"
-        >
-          {{ t.tabArchive }}
-          @if (archivedStudents().length > 0) {
-            <span class="students-tabs__count">{{ archivedStudents().length }}</span>
-          }
-        </button>
-      </div>
-      <input
-        type="search"
-        class="students-toolbar__search app-input"
-        [placeholder]="t.searchPlaceholder"
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event); closeStudentSwipe()"
-        autocomplete="off"
-      />
-    </div>
-
-    @if (listTab() === 'archive' && archivedStudents().length === 0) {
-      <p class="hint">{{ t.archiveEmptyState }}</p>
-    } @else if (listTab() === 'active' && activeStudents().length === 0) {
-      <p class="hint">{{ t.emptyState }}</p>
-    } @else if (filteredStudents().length === 0) {
-      <p class="hint">{{ t.searchNoResults }}</p>
-    } @else if (listTab() === 'archive') {
-    <div class="students-list">
-      <div class="students-cards students-cards--archive" role="list">
-        @for (s of filteredStudents(); track s._id) {
-          <div class="students-archive-row" role="listitem">
-            <div class="students-archive-row__main">
-              <span class="students-archive-row__name">{{ s.name }}</span>
-              <span class="students-archive-row__meta">
-                {{ s.balance_lessons }}
-                {{ s.rate_unit === 'lesson' ? i18n.studentsUi().lessonsShort : i18n.studentsUi().hoursShort }}
-              </span>
-            </div>
-            <div class="students-archive-row__actions">
-              <button type="button" class="btn-link" (click)="unarchiveStudent(s._id)">
-                {{ t.unarchive }}
-              </button>
-              <button type="button" class="btn-link danger" (click)="openDeleteConfirm(s._id)">
-                {{ t.delete }}
-              </button>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-    } @else {
-    <div class="students-list">
-      <div class="students-cards" role="list">
-        @for (s of filteredStudents(); track s._id) {
-          <div
-            class="student-swipe-row"
-            role="listitem"
-            [appStudentSwipeRow]="s._id"
-            [swipeBase]="studentSwipeBase(s._id)"
-            [swipeEnabled]="isStudentSwipeEnabled() && listTab() === 'active'"
-            (rowSwipeStart)="onStudentSwipeStart($event)"
-            (rowSwipeMove)="onStudentSwipeMove($event)"
-            (rowSwipeEnd)="onStudentSwipeEnd($event)"
-            [class.student-swipe-row--open]="swipedStudentId() === s._id"
-            [class.student-swipe-row--dragging]="swipeDraggingId() === s._id"
-          >
-            @if (swipedStudentId() === s._id) {
-              <button
-                type="button"
-                class="student-swipe-row__backdrop"
-                [attr.aria-label]="t.close"
-                (click)="closeStudentSwipe()"
-              ></button>
-            }
-            <div class="student-swipe-row__actions">
-              <button
-                type="button"
-                class="student-swipe-row__archive"
-                (click)="onStudentSwipeArchive(s._id, $event)"
-              >
-                {{ t.archive }}
-              </button>
-              <button
-                type="button"
-                class="student-swipe-row__delete"
-                (click)="onStudentSwipeDelete(s._id, $event)"
-              >
-                {{ t.delete }}
-              </button>
-            </div>
-            <div
-              class="student-swipe-row__card"
-              [style.transform]="studentSwipeTransform(s._id)"
-            >
-              <app-student-card
-                [student]="toStudentCardData(s)"
-                [labels]="studentCardLabels()"
-                [highlighted]="isStudentHighlighted(s._id)"
-                (openDetails)="onStudentCardOpenDetails($event)"
-                (topUp)="onStudentCardTopUp($event)"
-                (toggleNotifications)="onStudentCardToggleNotifications($event)"
-                (tgConnect)="onStudentCardTgConnect($event)"
-              />
-            </div>
-          </div>
-        }
-      </div>
-    </div>
+      </p>
     }
-  }
 
-  @if (listTab() === 'active') {
-    <div class="students-page__footer">
-      <button
-        type="button"
-        class="btn-primary students-page__add"
-        [disabled]="!canAddStudent()"
-        [attr.aria-label]="t.newStudent"
-        [attr.title]="studentLimitHint() ?? t.newStudent"
-        (click)="openCreate()"
-      >
-        <span aria-hidden="true">+</span>
-      </button>
-    </div>
-  }
+    @if (resyncMessage(); as msg) {
+      <p class="students-page__success" role="status">{{ msg }}</p>
+    }
+
+    @if (toastMessage(); as toast) {
+      <div class="students-toast" role="status">
+        <span>{{ toast }}</span>
+        <button
+          type="button"
+          class="students-toast__close"
+          (click)="dismissToast()"
+          [attr.aria-label]="t.close"
+        >
+          ×
+        </button>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="skeleton-page" role="status" aria-busy="true" [attr.aria-label]="t.loading">
+        <span class="sr-only">{{ t.loading }}</span>
+        <div class="skeleton-cards">
+          @for (i of skeletonCardSlots; track i) {
+            <div class="skeleton-card">
+              <div class="skeleton-card__body">
+                <span class="skeleton skeleton--line" style="width: 78%"></span>
+                <span class="skeleton skeleton--line skeleton--line-sm" style="width: 64%"></span>
+                <span class="skeleton skeleton--line skeleton--line-sm" style="width: 36%"></span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    } @else if (activeStudents().length === 0 && archivedStudents().length === 0) {
+      <p class="hint">{{ t.emptyState }}</p>
+    } @else {
+      <div class="students-toolbar">
+        <div class="students-tabs" role="tablist" aria-label="Student lists">
+          <button
+            type="button"
+            role="tab"
+            class="students-tabs__btn"
+            [class.students-tabs__btn--active]="listTab() === 'active'"
+            [attr.aria-selected]="listTab() === 'active'"
+            (click)="setListTab('active')"
+          >
+            {{ t.tabActive }}
+            @if (activeStudents().length > 0) {
+              <span class="students-tabs__count">{{ activeStudents().length }}</span>
+            }
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="students-tabs__btn"
+            [class.students-tabs__btn--active]="listTab() === 'archive'"
+            [attr.aria-selected]="listTab() === 'archive'"
+            (click)="setListTab('archive')"
+          >
+            {{ t.tabArchive }}
+            @if (archivedStudents().length > 0) {
+              <span class="students-tabs__count">{{ archivedStudents().length }}</span>
+            }
+          </button>
+        </div>
+        <label class="students-toolbar__search-wrap">
+          <svg
+            class="students-toolbar__search-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            class="students-toolbar__search app-input"
+            [placeholder]="t.searchPlaceholder"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event); closeStudentSwipe()"
+            autocomplete="off"
+          />
+        </label>
+      </div>
+
+      @if (listTab() === 'archive' && archivedStudents().length === 0) {
+        <p class="hint">{{ t.archiveEmptyState }}</p>
+      } @else if (listTab() === 'active' && activeStudents().length === 0) {
+        <p class="hint">{{ t.emptyState }}</p>
+      } @else if (filteredStudents().length === 0) {
+        <p class="hint">{{ t.searchNoResults }}</p>
+      } @else if (listTab() === 'archive') {
+        <div class="students-list">
+          <div class="students-cards students-cards--archive" role="list">
+            @for (s of filteredStudents(); track s._id) {
+              <div class="students-archive-row" role="listitem">
+                <div class="students-archive-row__main">
+                  <span class="students-archive-row__name">{{ s.name }}</span>
+                  <span class="students-archive-row__meta">
+                    {{ s.balance_lessons }}
+                    {{
+                      s.rate_unit === 'lesson'
+                        ? i18n.studentsUi().lessonsShort
+                        : i18n.studentsUi().hoursShort
+                    }}
+                  </span>
+                </div>
+                <div class="students-archive-row__actions">
+                  <button type="button" class="btn-link" (click)="unarchiveStudent(s._id)">
+                    {{ t.unarchive }}
+                  </button>
+                  <button type="button" class="btn-link danger" (click)="openDeleteConfirm(s._id)">
+                    {{ t.delete }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="students-list">
+          <div class="students-cards" role="list">
+            @for (s of filteredStudents(); track s._id) {
+              <div
+                class="student-swipe-row"
+                role="listitem"
+                [appStudentSwipeRow]="s._id"
+                [swipeBase]="studentSwipeBase(s._id)"
+                [swipeEnabled]="isStudentSwipeEnabled() && listTab() === 'active'"
+                (rowSwipeStart)="onStudentSwipeStart($event)"
+                (rowSwipeMove)="onStudentSwipeMove($event)"
+                (rowSwipeEnd)="onStudentSwipeEnd($event)"
+                [class.student-swipe-row--open]="swipedStudentId() === s._id"
+                [class.student-swipe-row--dragging]="swipeDraggingId() === s._id"
+              >
+                @if (swipedStudentId() === s._id) {
+                  <button
+                    type="button"
+                    class="student-swipe-row__backdrop"
+                    [attr.aria-label]="t.close"
+                    (click)="closeStudentSwipe()"
+                  ></button>
+                }
+                <div class="student-swipe-row__actions">
+                  <button
+                    type="button"
+                    class="student-swipe-row__archive"
+                    (click)="onStudentSwipeArchive(s._id, $event)"
+                  >
+                    {{ t.archive }}
+                  </button>
+                  <button
+                    type="button"
+                    class="student-swipe-row__delete"
+                    (click)="onStudentSwipeDelete(s._id, $event)"
+                  >
+                    {{ t.delete }}
+                  </button>
+                </div>
+                <div
+                  class="student-swipe-row__card"
+                  [style.transform]="studentSwipeTransform(s._id)"
+                >
+                  <app-student-card
+                    [student]="toStudentCardData(s)"
+                    [labels]="studentCardLabels()"
+                    [highlighted]="isStudentHighlighted(s._id)"
+                    (openDetails)="onStudentCardOpenDetails($event)"
+                    (topUp)="onStudentCardTopUp($event)"
+                    (toggleNotifications)="onStudentCardToggleNotifications($event)"
+                    (tgConnect)="onStudentCardTgConnect($event)"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+
+    @if (listTab() === 'active') {
+      <div class="students-page__footer">
+        <button
+          type="button"
+          class="btn-primary students-page__add"
+          [disabled]="!canAddStudent()"
+          [attr.aria-label]="t.newStudent"
+          [attr.title]="studentLimitHint() ?? t.newStudent"
+          (click)="openCreate()"
+        >
+          <span aria-hidden="true">+</span>
+        </button>
+      </div>
+    }
   </div>
 </div>
 
@@ -653,13 +674,7 @@
         } @else if (formInviteLink(); as link) {
           <label [attr.for]="'st-tg-invite'">{{ t.studentTelegramSendLink }}</label>
           <div class="telegram-invite">
-            <input
-              id="st-tg-invite"
-              type="text"
-              readonly
-              [value]="link"
-              class="input-readonly"
-            />
+            <input id="st-tg-invite" type="text" readonly [value]="link" class="input-readonly" />
             <button type="button" class="btn-secondary" (click)="copyFormInviteLink()">
               {{ linkCopied() ? t.botLinkCopied : t.botCopyLink }}
             </button>
@@ -872,11 +887,7 @@
             <span class="topup__tg-status-dot" aria-hidden="true"></span>
             {{ t.tgNotConnected }}
           </span>
-          <button
-            type="button"
-            class="btn-link topup__tg-bind"
-            (click)="openInviteDialog(student)"
-          >
+          <button type="button" class="btn-link topup__tg-bind" (click)="openInviteDialog(student)">
             {{ t.tgStatusBind }}
           </button>
         }

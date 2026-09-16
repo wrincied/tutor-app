@@ -83,25 +83,13 @@ export function financeShiftAnchor(
   return { year: date.getFullYear(), month: date.getMonth() + 1 };
 }
 
+/** Forward nav is always allowed (like a calendar); `all` has no period arrows. */
 export function financeCanShiftForward(
   preset: FinancePeriodPreset,
-  anchor: FinancePeriodAnchor,
-  now = new Date(),
+  _anchor?: FinancePeriodAnchor,
+  _now?: Date,
 ): boolean {
-  if (preset === 'all') {
-    return false;
-  }
-  const current = financeCurrentAnchor(now);
-  if (preset === 'year') {
-    return anchor.year < current.year;
-  }
-  if (anchor.year < current.year) {
-    return true;
-  }
-  if (anchor.year > current.year) {
-    return false;
-  }
-  return anchor.month < current.month;
+  return preset !== 'all';
 }
 
 export function financeIsCurrentPeriod(

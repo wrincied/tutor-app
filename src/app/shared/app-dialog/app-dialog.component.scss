@@ -200,7 +200,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
     color: white;
 
     .app-dialog__title {
-      color: rgb(153 27 27);
+      color: #cc0000;
     }
 
     .app-dialog__body {
@@ -349,7 +349,7 @@ $dialog-mobile-max: $dialog-desktop-min - 1px;
   }
 
   &--error .app-dialog__body :where(strong) {
-    color: rgb(153 27 27);
+    color: #cc0000;
   }
 
   &:not(.app-dialog--error) .app-dialog__body :where(strong) {
