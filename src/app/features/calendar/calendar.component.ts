@@ -3822,6 +3822,7 @@ export class CalendarComponent implements OnInit {
             ),
           );
         }
+        this.refreshStudentsList();
         this.deletingLesson.set(false);
         this.closeDeleteRecurringModal();
         this.closeLessonForm();
@@ -3849,6 +3850,7 @@ export class CalendarComponent implements OnInit {
     this.lessonsSvc.delete(id).subscribe({
       next: () => {
         this.lessons.update((list) => list.filter((l) => l._id !== id));
+        this.refreshStudentsList();
         this.deletingLesson.set(false);
         this.closeLessonForm();
       },
