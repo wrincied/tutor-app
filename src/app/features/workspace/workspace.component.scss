@@ -43,7 +43,17 @@
 .workspace-page__content {
   flex: 1 1 0;
   min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
+// @media (max-width: 768px), (max-height: 440px) {
+//   .workspace-page__content {
+//     padding-bottom: var(--bottom-nav-pad);
+//     scroll-padding-bottom: var(--bottom-nav-pad);
+//   }
+// }
 
 .workspace-page__inner {
   max-width: 800px;
@@ -55,7 +65,7 @@
 .workspace-page__error {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--danger, #dc2626);
+  color: var(--danger, #cc0000);
 }
 
 .workspace-form {
@@ -325,6 +335,14 @@
   margin-top: 0.25rem;
   padding: 0.75rem 0 0.25rem;
   background: linear-gradient(180deg, transparent 0%, var(--page-bg, #f9fafb) 35%);
+
+  @media (max-width: 768px), (max-height: 440px) {
+    /*
+     * sticky bottom is relative to the scrollport, not the viewport.
+     * Lift by island footprint so Save sits above the floating nav.
+     */
+    bottom: calc(var(--bottom-nav-overlay) + 0.35rem);
+  }
 }
 
 .workspace-save-btn {

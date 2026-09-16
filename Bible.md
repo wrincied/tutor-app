@@ -251,6 +251,8 @@ simple4u-bot
 
 HTTP API для Express: `POST /v1/notify/...` + `X-Bot-Secret`. Подробности: `bot/README.md`.
 
+Prod Cloud Run (`simple4u-bot`, `europe-west4`): держать **`--min-instances=1`**, иначе после простоя scale-to-zero → cold start. При `gcloud run deploy --source .` всегда передавать `--min-instances=1 --max-instances=3` (иначе minScale сбрасывается).
+
 ---
 
 ## SEO / индексация (simple4u.at)

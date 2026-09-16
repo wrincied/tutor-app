@@ -96,10 +96,9 @@
   align-items: center;
   gap: 0.35rem;
   margin-bottom: 1.15rem;
-  padding: 0.45rem 0.85rem 0.45rem 0.7rem;
+  padding: 0.45rem 0.85rem 0.45rem 0rem;
   border-radius: 999px;
   font-size: 0.875rem;
-  font-weight: 600;
   color: var(--pricing-accent);
   text-decoration: none;
   transition:
@@ -194,7 +193,7 @@
 }
 
 .pricing-page__error {
-  color: #dc2626;
+  color: #cc0000;
   margin-bottom: 1rem;
 }
 

@@ -60,7 +60,7 @@
 
     @media (max-width: 860px) {
       position: relative;
-      min-height: 8.5rem;
+      min-height: 1.5rem;
     }
   }
 
@@ -233,7 +233,7 @@
 .auth-split {
   .auth-error {
     background: #fce8e6;
-    color: #c5221f;
+    color: #cc0000;
     font-size: 13px;
     border-radius: 8px;
     padding: 8px 12px;
@@ -672,7 +672,7 @@
 
   .auth-error {
     background: #fce8e6;
-    color: #c5221f;
+    color: #cc0000;
     font-size: 13px;
     border-radius: 4px;
     padding: 8px 12px;
@@ -1440,7 +1440,7 @@
   padding: 0.65rem 0.8rem;
   border-radius: 0.55rem;
   background: #fef2f2;
-  color: #b91c1c;
+  color: #cc0000;
   font-size: 0.8125rem;
   line-height: 1.45;
 }

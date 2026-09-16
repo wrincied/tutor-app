@@ -5,7 +5,7 @@
   --student-card-muted: #6b7280;
   --student-card-tg-active: #229ed9;
   --student-card-tg-inactive: #94a3b8;
-  --student-card-warning: #ea580c;
+  --student-card-warning: #ff6633;
   --student-card-accent: var(--moss, #0f3d34);
 
   display: flex;
@@ -124,9 +124,9 @@
 .student-card__balance {
   margin: 0;
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  line-height: 1.1;
   letter-spacing: -0.01em;
   color: var(--student-card-text);
 

@@ -1,6 +1,6 @@
 <article class="status-page">
   <header class="status-page__header">
-    <a [routerLink]="lp('/')" class="status-page__back">← {{ i18n.authUi().backHome }}</a>
+    <a [routerLink]="lp('/')" class="status-page__back"> {{ i18n.authUi().backHome }}</a>
   </header>
 
   <h1>{{ i18n.authUi().statusTitle }}</h1>
@@ -30,7 +30,12 @@
         {{ checkedAt | date: 'medium' : undefined : i18n.localeId() }}
       </p>
     }
-    <button type="button" class="status-page__refresh" (click)="refresh()" [disabled]="status.loading()">
+    <button
+      type="button"
+      class="status-page__refresh"
+      (click)="refresh()"
+      [disabled]="status.loading()"
+    >
       {{ i18n.authUi().statusRefresh }}
     </button>
   </div>

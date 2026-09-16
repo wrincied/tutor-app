@@ -1,8 +1,12 @@
 <div class="page app-scroll-page finance-breakdown-page">
   <header class="finance-breakdown-header">
     <div class="finance-breakdown-header__main">
-      <a class="finance-breakdown-header__back" [routerLink]="backLink().path" [queryParams]="backLink().queryParams">
-        ← {{ t.breakdownBack }}
+      <a
+        class="finance-breakdown-header__back"
+        [routerLink]="backLink().path"
+        [queryParams]="backLink().queryParams"
+      >
+        {{ t.breakdownBack }}
       </a>
       <div class="finance-breakdown-header__titles">
         <h1 class="finance-breakdown-header__title">{{ pageTitle() }}</h1>
@@ -70,12 +74,16 @@
           } @else {
             <ul class="finance-breakdown-list">
               @for (lesson of lessonsBreakdown(); track lesson.id) {
-              <li
-                class="finance-breakdown-list__item"
-                [class.finance-breakdown-list__item--warn]="lesson.hiddenReason || lesson.scheduleDerived"
-              >
+                <li
+                  class="finance-breakdown-list__item"
+                  [class.finance-breakdown-list__item--warn]="
+                    lesson.hiddenReason || lesson.scheduleDerived
+                  "
+                >
                   <div class="finance-breakdown-list__row">
-                    <span class="finance-breakdown-list__date">{{ formatLessonRowDate(lesson) }}</span>
+                    <span class="finance-breakdown-list__date">{{
+                      formatLessonRowDate(lesson)
+                    }}</span>
                     <strong class="finance-breakdown-list__amount">{{
                       formatLessonRowAmount(lesson)
                     }}</strong>
@@ -85,37 +93,39 @@
                     <span>{{ lessonStatusLabel(lesson.status) }}</span>
                     <span>{{ lesson.durationMinutes }} {{ t.breakdownMinutes }}</span>
                   </div>
-                @if (lesson.isRecurring && !lesson.hiddenReason) {
-                  <p class="finance-breakdown-list__note">{{ t.breakdownRecurringNote }}</p>
-                }
-                @if (lesson.hiddenReason) {
-                  <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
-                    {{ hiddenReasonLabel(lesson.hiddenReason) }}
-                  </p>
-                } @else if (lesson.scheduleDerived) {
-                  <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
-                    {{ t.breakdownScheduleDerived }}
-                  </p>
-                } @else if (!lesson.visibleInCalendar) {
-                  <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
-                    {{ t.breakdownHiddenInCalendar }}
-                  </p>
-                }
-                @if (lesson.scheduledAt && !lesson.hiddenReason) {
-                  <p class="finance-breakdown-list__note">
-                    <a
-                      [routerLink]="lp('/app/calendar')"
-                      [queryParams]="calendarLinkQuery(lesson)"
-                      class="finance-link"
-                    >
-                      {{ t.breakdownOpenCalendarDate }}
-                    </a>
-                  </p>
-                } @else if (!lesson.hiddenReason) {
-                  <p class="finance-breakdown-list__note">
-                    <a [routerLink]="lp('/app/calendar')" class="finance-link">{{ t.breakdownOpenCalendar }}</a>
-                  </p>
-                }
+                  @if (lesson.isRecurring && !lesson.hiddenReason) {
+                    <p class="finance-breakdown-list__note">{{ t.breakdownRecurringNote }}</p>
+                  }
+                  @if (lesson.hiddenReason) {
+                    <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
+                      {{ hiddenReasonLabel(lesson.hiddenReason) }}
+                    </p>
+                  } @else if (lesson.scheduleDerived) {
+                    <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
+                      {{ t.breakdownScheduleDerived }}
+                    </p>
+                  } @else if (!lesson.visibleInCalendar) {
+                    <p class="finance-breakdown-list__note finance-breakdown-list__note--warn">
+                      {{ t.breakdownHiddenInCalendar }}
+                    </p>
+                  }
+                  @if (lesson.scheduledAt && !lesson.hiddenReason) {
+                    <p class="finance-breakdown-list__note">
+                      <a
+                        [routerLink]="lp('/app/calendar')"
+                        [queryParams]="calendarLinkQuery(lesson)"
+                        class="finance-link"
+                      >
+                        {{ t.breakdownOpenCalendarDate }}
+                      </a>
+                    </p>
+                  } @else if (!lesson.hiddenReason) {
+                    <p class="finance-breakdown-list__note">
+                      <a [routerLink]="lp('/app/calendar')" class="finance-link">{{
+                        t.breakdownOpenCalendar
+                      }}</a>
+                    </p>
+                  }
                 </li>
               }
             </ul>

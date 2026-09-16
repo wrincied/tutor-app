@@ -23,7 +23,7 @@
 }
 
 .account-page__error {
-  color: var(--danger, #dc2626);
+  color: var(--danger, #cc0000);
 }
 
 .account-page__success {
@@ -550,7 +550,7 @@
   }
 
   &--error {
-    background: #9b1c1c;
+    background: #cc0000;
     box-shadow: 0 12px 32px rgb(155 28 28 / 0.28);
   }
 }

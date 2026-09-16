@@ -303,6 +303,62 @@
   display: none;
 }
 
+/* Timeline zoom (loupe − / loupe +) — desktop only (≥1024px) */
+.cal-zoom-seg {
+  display: none;
+  align-items: stretch;
+  flex-shrink: 0;
+  height: var(--cal-ctrl-h);
+  border: 1px solid var(--cal-header-border);
+  border-radius: var(--cal-header-radius);
+  background: #fff;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  @media (min-width: 1024px) {
+    display: inline-flex;
+  }
+}
+
+.cal-zoom-seg__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 100%;
+  margin: 0;
+  padding: 0 0.35rem;
+  border: 0;
+  border-right: 1px solid var(--cal-header-border);
+  background: transparent;
+  color: var(--cal-header-ink-soft);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.cal-zoom-seg__btn:last-child {
+  border-right: 0;
+}
+
+.cal-zoom-seg__btn:hover:not(:disabled) {
+  background: var(--cal-header-muted);
+  color: var(--cal-header-ink);
+}
+
+.cal-zoom-seg__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.cal-zoom-seg__icon {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
 /* Status pills */
 .cal-status-pills {
   display: none;
@@ -611,7 +667,8 @@
   .cal-header__divider,
   .cal-mode-seg,
   .cal-status-pills,
-  .cal-action-btn__label {
+  .cal-action-btn__label,
+  .cal-zoom-seg {
     display: none !important;
   }
 
